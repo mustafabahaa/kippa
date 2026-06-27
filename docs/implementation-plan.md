@@ -2,9 +2,9 @@
 
 ## Phase 1: Foundation
 
-- Create Vite React app.
-- Install Material UI.
-- Configure Firebase project.
+- Continue from the existing Vite React app scaffold.
+- Continue from the existing Material UI setup.
+- Configure real Firebase project credentials.
 - Set up Firebase Authentication.
 - Create household membership model.
 - Define TypeScript types for accounts, transactions, ledger lines, categories, cycles, and reconciliations.
@@ -91,4 +91,3 @@ Acceptance:
 - Add export to CSV or Google Sheets.
 - Add closed-cycle summary.
 - Add revision/audit behavior for edits after cycle close.
-

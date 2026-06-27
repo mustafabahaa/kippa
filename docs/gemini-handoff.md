@@ -16,11 +16,23 @@ The user wants Gemini to take over implementation. The user does not want the ap
 - Firebase
 - PWA
 
+The repo includes a starter app shell and package setup. Start by running:
+
+```bash
+npm install
+npm run dev
+```
+
 Design system:
 
-https://designmd.me/s/workspace-google-dmepn
+- Local file: `docs/design-system`
+- The starter MUI theme is in `src/theme.ts`
 
-Please open the design system directly before implementing UI. This Codex environment could not access it.
+App icon:
+
+- Source SVG: `public/icons/icon.svg`
+- Maskable SVG: `public/icons/maskable.svg`
+- Generated PNGs: `public/icons/*.png`
 
 ## User's Real Financial Situation
 
@@ -74,3 +86,10 @@ Then build UI around those selectors.
 
 This order matters because the app's long-term value depends on data correctness, not the first dashboard layout.
 
+Current scaffold boundaries:
+
+- `src/domain/financeTypes.ts` contains starter TypeScript domain types.
+- `src/config/firebase.ts` contains Firebase initialization from Vite environment variables.
+- `src/features` is reserved for feature modules.
+- `src/services` is reserved for Firebase repositories, transaction writers, and derived selectors.
+- `src/App.tsx` is only a placeholder shell and should not be treated as product functionality.

@@ -22,13 +22,32 @@ The app must not hardcode dashboard logic into the stored data model. Store raw 
 - Target: Progressive Web App (PWA)
 - Users: household/shared use by husband and wife
 
+## Starter App
+
+This repo now includes a minimal React/Vite/MUI/Firebase/PWA scaffold. It is intentionally empty of finance implementation logic so Gemini can build from the docs without fighting hardcoded dashboard assumptions.
+
+Run locally:
+
+```bash
+npm install
+npm run dev
+```
+
+Build check:
+
+```bash
+npm run build
+```
+
+Firebase config should be added through `.env`, using [.env.example](./.env.example) as the template.
+
 ## Design System
 
-Use this design-system reference:
+Use the local design-system reference:
 
-https://designmd.me/s/workspace-google-dmepn
+[docs/design-system](./docs/design-system)
 
-This environment could not access the page directly, so the implementer must open it in a browser and extract the visual rules/tokens before UI implementation.
+The MUI theme has been initialized from the local Google Workspace-inspired design-system file.
 
 ## Key Product Decisions
 
@@ -52,3 +71,7 @@ This environment could not access the page directly, so the implementer must ope
 - [Notifications](./docs/notifications.md)
 - [Implementation plan](./docs/implementation-plan.md)
 - [Gemini handoff](./docs/gemini-handoff.md)
+
+## App Icon
+
+Icon source and generated PWA assets live in [public/icons](./public/icons).

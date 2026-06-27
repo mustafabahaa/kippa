@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">Household Finance Ledger maskable icon</title>
+  <desc id="desc">Google Workspace-inspired maskable PWA icon with a white background and centered logo graphics.</desc>
+  <rect width="512" height="512" fill="#FFFFFF"/>
+  
+  <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+    <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#202124" flood-opacity="0.08"/>
+  </filter>
+
+  <g transform="translate(51.2, 51.2) scale(0.8)" filter="url(#shadow)">
+    <!-- Base / Floor of the house (Ledger lines) -->
+    <rect x="120" y="380" width="272" height="18" rx="9" fill="#DADCE0"/>
+    <rect x="150" y="338" width="212" height="14" rx="7" fill="#E8EAED"/>
+    <rect x="180" y="296" width="152" height="14" rx="7" fill="#E8EAED"/>
+
+    <!-- Left Pillar - USD ($) (Google Blue) -->
+    <rect x="150" y="210" width="52" height="156" rx="14" fill="#1A73E8"/>
+    <!-- Right Pillar - EGP (ج.م) (Google Amber) -->
+    <rect x="310" y="240" width="52" height="126" rx="14" fill="#F9AB00"/>
+
+    <!-- Ledger Grid Details / Decorative Columns in background -->
+    <line x1="226" y1="250" x2="286" y2="250" stroke="#DADCE0" stroke-width="8" stroke-linecap="round"/>
+    <line x1="226" y1="292" x2="286" y2="292" stroke="#DADCE0" stroke-width="8" stroke-linecap="round"/>
+    <line x1="226" y1="334" x2="286" y2="334" stroke="#DADCE0" stroke-width="8" stroke-linecap="round"/>
+
+    <!-- Roof / Rising Savings Trendline (Google Green) -->
+    <path d="M 100 240 L 256 115 L 366 208 L 420 154" stroke="#1E8E3E" stroke-width="26" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    <!-- Arrowhead pointing up-right -->
+    <path d="M 378 154 L 420 154 L 420 196" stroke="#1E8E3E" stroke-width="26" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  </g>
+</svg>
