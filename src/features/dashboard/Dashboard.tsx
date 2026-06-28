@@ -54,9 +54,7 @@ interface DashboardProps {
   transactions: FinanceTransaction[];
   ledgerLines: LedgerLine[];
   displayUsdToEgpRate: number;
-  onUpdateDisplayRate: (rate: number) => void;
   onVoidTransaction: (txId: string) => void;
-  onNavigateToFastEntry: () => void;
   onNavigateToActivity: () => void;
 }
 
@@ -69,14 +67,9 @@ export function Dashboard({
   transactions,
   ledgerLines,
   displayUsdToEgpRate,
-  onUpdateDisplayRate,
   onVoidTransaction,
-  onNavigateToFastEntry,
   onNavigateToActivity
 }: DashboardProps) {
-  const [editingRate, setEditingRate] = useState(false);
-  const [rateInput, setRateInput] = useState(displayUsdToEgpRate.toString());
-
   // Edit Transaction Modal State
   const [editingTx, setEditingTx] = useState<FinanceTransaction | null>(null);
   const [editDesc, setEditDesc] = useState('');
@@ -130,15 +123,6 @@ export function Dashboard({
     );
 
     setEditingTx(null);
-    onUpdateDisplayRate(displayUsdToEgpRate); // simple callback ping to reload parent state!
-  };
-
-  const handleSaveRate = () => {
-    const parsed = parseFloat(rateInput);
-    if (!isNaN(parsed) && parsed > 0) {
-      onUpdateDisplayRate(parsed);
-      setEditingRate(false);
-    }
   };
 
   const getStatusColor = (status: DashboardData['saving']['status']) => {
@@ -469,73 +453,12 @@ export function Dashboard({
           </TableContainer>
         </Stack>
 
-        {/* Quick Actions Row */}
-        <Stack direction="row" spacing={1.5} sx={{ overflowX: 'auto', py: 0.5, '&::-webkit-scrollbar': { display: 'none' }, msOverflowStyle: 'none', scrollbarWidth: 'none' }}>
-          <Button 
-            onClick={onNavigateToFastEntry}
-            sx={{ 
-              flexShrink: 0, 
-              bgcolor: 'background.paper', 
-              color: 'text.primary', 
-              border: '1px solid', 
-              borderColor: 'divider', 
-              borderRadius: '999px', 
-              px: 3, 
-              py: 1, 
-              height: 48,
-              boxShadow: 'none',
-              '&:hover': { bgcolor: 'action.hover', borderColor: 'divider' } 
-            }}
-          >
-            <span className="material-symbols-outlined" style={{ color: 'var(--mui-palette-primary-main, #005c55)', marginRight: '6px' }}>bolt</span>
-            <Typography variant="body2" sx={{ fontWeight: 'bold' }}>Fast Entry</Typography>
-          </Button>
-
-          <Button 
-            sx={{ 
-              flexShrink: 0, 
-              bgcolor: 'background.paper', 
-              color: 'text.primary', 
-              border: '1px solid', 
-              borderColor: 'divider', 
-              borderRadius: '999px', 
-              px: 3, 
-              py: 1, 
-              height: 48,
-              boxShadow: 'none',
-              '&:hover': { bgcolor: 'action.hover', borderColor: 'divider' } 
-            }}
-          >
-            <span className="material-symbols-outlined" style={{ color: 'var(--mui-palette-primary-main, #005c55)', marginRight: '6px' }}>account_balance_wallet</span>
-            <Typography variant="body2" sx={{ fontWeight: 'bold' }}>Reconcile</Typography>
-          </Button>
-
-          <Box sx={{ display: 'flex', alignItems: 'center', ml: 'auto' }}>
-            {editingRate ? (
-              <Stack direction="row" spacing={1} alignItems="center">
-                <TextField
-                  size="small"
-                  label="USD/EGP Rate"
-                  value={rateInput}
-                  onChange={e => setRateInput(e.target.value)}
-                  sx={{ width: 90 }}
-                />
-                <IconButton size="small" onClick={handleSaveRate} color="success">
-                  <CheckIcon fontSize="small" />
-                </IconButton>
-              </Stack>
-            ) : (
-              <Stack direction="row" spacing={0.5} alignItems="center">
-                <Typography variant="body2" sx={{ fontSize: '11px', color: 'text.secondary' }}>
-                  USD/EGP: <strong>{displayUsdToEgpRate}</strong>
-                </Typography>
-                <IconButton size="small" onClick={() => setEditingRate(true)} sx={{ p: 0.5, width: 24, height: 24 }}>
-                  <EditIcon sx={{ fontSize: '12px' }} />
-                </IconButton>
-              </Stack>
-            )}
-          </Box>
-        </Stack>
+        {/* Live Rate Badge */}
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <Typography variant="body2" sx={{ fontSize: '11px', color: 'text.secondary' }}>
+            Live USD/EGP: <strong>{displayUsdToEgpRate.toFixed(2)}</strong>
+          </Typography>
+        </Box>
 
         {/* My Accounts */}
         <Stack spacing={1.5}>

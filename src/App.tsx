@@ -50,6 +50,7 @@ import { ledgerService } from './services/ledgerService';
 import { cycleService } from './services/cycleService';
 import { computeDashboard } from './services/selectors';
 import { transactionService } from './services/transactionService';
+import { currencyService } from './services/currencyService';
 
 import { UserProfile, Account, Category, BudgetCycle, FinanceTransaction } from './domain/financeTypes';
 
@@ -58,7 +59,12 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<string>(() => {
     return localStorage.getItem('finance_active_tab') || 'dashboard';
   });
-  const [displayRate, setDisplayRate] = useState<number>(50.0); // Default USD/EGP display exchange rate
+  const [displayRate, setDisplayRate] = useState<number>(50.0);
+
+  // Auto-fetch live USD/EGP rate on mount
+  useEffect(() => {
+    currencyService.getUsdToEgpRate().then(setDisplayRate).catch(() => {});
+  }, []);
 
   useEffect(() => {
     localStorage.setItem('finance_active_tab', activeTab);
@@ -395,9 +401,7 @@ export default function App() {
               transactions={transactions}
               ledgerLines={ledgerLines}
               displayUsdToEgpRate={displayRate}
-              onUpdateDisplayRate={(rate) => setDisplayRate(rate)}
               onVoidTransaction={handleVoidTransaction}
-              onNavigateToFastEntry={() => setActiveTab('entry')}
               onNavigateToActivity={() => setActiveTab('activity')}
             />
           )}
