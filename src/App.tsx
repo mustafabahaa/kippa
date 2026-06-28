@@ -129,7 +129,7 @@ export default function App() {
             {/* Left: Logo & Brand Name */}
             <Stack direction="row" spacing={1} alignItems="center">
               <img src={logoSrc} alt="Kippa Logo" style={{ height: 28, width: 'auto' }} />
-              <Typography variant="h3" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
+              <Typography variant="h3" sx={{ fontWeight: 'bold', letterSpacing: '0.05em', color: 'primary.main' }}>
                 Kippa
               </Typography>
             </Stack>

@@ -35,35 +35,35 @@ export const designTokens = {
     onError: '#ffffff',
     errorContainer: '#ffdad6',
 
-    // Surfaces (light)
-    surface:               '#faf8ff',
-    surfaceBright:         '#faf8ff',
-    surfaceContainer:      '#eaedff',
-    surfaceContainerHigh:  '#e2e7ff',
-    surfaceContainerHighest:'#dae2fd',
-    surfaceContainerLow:   '#f2f3ff',
+    // Surfaces (light) – brightened toward white to reduce grey cast
+    surface:               '#ffffff',
+    surfaceBright:         '#ffffff',
+    surfaceContainer:      '#fbfbfc',
+    surfaceContainerHigh:  '#f7f7f9',
+    surfaceContainerHighest:'#f2f2f4',
+    surfaceContainerLow:   '#fdfdfe',
     surfaceContainerLowest:'#ffffff',
-    surfaceDim:            '#d2d9f4',
+    surfaceDim:            '#f0f0f2',
     surfaceTint:           '#006a63',
-    surfaceVariant:        '#dae2fd',
+    surfaceVariant:        '#f2f2f4',
 
     // Custom named surfaces (from Stitch designMd)
     surfacePure:    '#FFFFFF',
-    surfaceOffWhite:'#F1F3F4',
+    surfaceOffWhite:'#f8f8fa',
     infoAccent:     '#E8F0FE',
 
     // On-surface / text hierarchy (light)
     onSurface:        '#131b2e',
-    onSurfaceVariant: '#3e4947',
+    onSurfaceVariant: '#4a5160',
     textPrimary:      '#131b2e',
-    textSecondary:    '#3e4947',
-    textTertiary:     '#495167',
-    disabled:         '#79747E',
+    textSecondary:    '#4a5160',
+    textTertiary:     '#5f6675',
+    disabled:         '#a0a6b0',
 
     // Borders & outlines (light)
-    borderGray:     '#bdc9c6',
+    borderGray:     '#ecedf0',
     outline:        '#6e7977',
-    outlineVariant: '#bdc9c6',
+    outlineVariant: '#ecedf0',
 
     // Inverse
     inverseSurface:   '#283044',
@@ -471,6 +471,35 @@ export function createAppTheme(mode: 'light' | 'dark'): Theme {
             borderRadius: designTokens.radius.moderate,
             border: `1px solid ${t.borderGray}`,
             boxShadow: designTokens.shadow.lifted,
+          },
+        },
+      },
+
+      // ── Table ──────────────────────────────────────────────────────────
+      MuiTableCell: {
+        styleOverrides: {
+          root: {
+            padding: '14px 16px',
+            borderBottom: `1px solid ${t.borderGray}`,
+          },
+          // Override MUI's dense variant, which strips horizontal padding.
+          // This key has higher specificity than `root`, so it's what the
+          // `size="small"` tables actually use.
+          sizeSmall: {
+            padding: '10px 16px',
+          },
+          head: {
+            fontWeight: 700,
+            color: t.textPrimary,
+          },
+        },
+      },
+      MuiTable: {
+        styleOverrides: {
+          root: {
+            // Keep tables within their card; never overflow horizontally
+            tableLayout: 'auto',
+            width: '100%',
           },
         },
       },
