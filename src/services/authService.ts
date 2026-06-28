@@ -3,53 +3,36 @@ import {
   onAuthStateChanged, 
   User as FirebaseUser,
   GoogleAuthProvider,
-  signInWithPopup
+  signInWithPopup,
+  Auth
 } from 'firebase/auth';
-import { auth, isFirebaseConfigured } from '../config/firebase';
+import { auth, isFirebaseConfigured, isFirebaseReady } from '../config/firebase';
 import { dbService } from './dbService';
 import { UserProfile, Household } from '../domain/financeTypes';
 
-const LOCAL_USER_KEY = 'ledger_local_user';
-const LOCAL_HOUSEHOLD_KEY = 'ledger_local_household';
+const FIREBASE_REQUIRED_MSG =
+  'Firebase is not configured. Copy .env.example to .env and set VITE_FIREBASE_* credentials.';
+
+function requireAuth(): Auth {
+  if (!isFirebaseReady || !auth) {
+    throw new Error(FIREBASE_REQUIRED_MSG);
+  }
+  return auth;
+}
 
 export const authService = {
-  // Callback when auth state change
   onAuthStateChanged(callback: (user: UserProfile | null) => void): () => void {
-    // If a mock or bypassed user exists in localStorage, use it immediately
-    const stored = localStorage.getItem(LOCAL_USER_KEY);
-    if (stored) {
-      callback(JSON.parse(stored));
+    if (!isFirebaseReady || !auth) {
+      callback(null);
       return () => {};
     }
 
-    if (!isFirebaseConfigured || !auth) {
-      // Local storage mock auth listener
-      const checkLocalUser = () => {
-        const stored = localStorage.getItem(LOCAL_USER_KEY);
-        if (stored) {
-          callback(JSON.parse(stored));
-        } else {
-          callback(null);
-        }
-      };
-      // Run once immediately
-      checkLocalUser();
-      // Simple window event listener to trigger updates across pages
-      window.addEventListener('storage', checkLocalUser);
-      return () => {
-        window.removeEventListener('storage', checkLocalUser);
-      };
-    }
-
-
     return onAuthStateChanged(auth, async (fbUser: FirebaseUser | null) => {
       if (fbUser) {
-        // Fetch user profile from firestore users collection
         const profile = await dbService.getDoc('system', 'users', fbUser.uid);
         if (profile) {
           callback(profile as UserProfile);
         } else {
-          // Fallback if auth exists but firestore doc doesn't yet
           const tempProfile: UserProfile = {
             uid: fbUser.uid,
             displayName: fbUser.displayName || fbUser.email?.split('@')[0] || 'User',
@@ -67,24 +50,9 @@ export const authService = {
   },
 
   async signInWithGoogle(): Promise<UserProfile> {
-    if (!isFirebaseConfigured || !auth) {
-      // Mock login with google
-      const mockProfile: UserProfile = {
-        uid: 'mock-uid-123',
-        displayName: 'Google Test User',
-        email: 'testuser@gmail.com',
-        householdId: localStorage.getItem(LOCAL_HOUSEHOLD_KEY) || null,
-        role: 'owner',
-        createdAt: new Date().toISOString(),
-      };
-      localStorage.setItem(LOCAL_USER_KEY, JSON.stringify(mockProfile));
-      // Trigger local storage event manually for same window
-      window.dispatchEvent(new Event('storage'));
-      return mockProfile;
-    }
-
+    const firebaseAuth = requireAuth();
     const provider = new GoogleAuthProvider();
-    const credentials = await signInWithPopup(auth, provider);
+    const credentials = await signInWithPopup(firebaseAuth, provider);
     const fbUser = credentials.user;
 
     const profile = await dbService.getDoc('system', 'users', fbUser.uid);
@@ -101,31 +69,15 @@ export const authService = {
     await dbService.setDoc('system', 'users', fbUser.uid, newProfile);
     return newProfile;
   },
-  async bypassLogin(): Promise<UserProfile> {
-    const demoProfile: UserProfile = {
-      uid: 'demo-uid-123',
-      displayName: 'Demo User',
-      email: 'demo@example.com',
-      householdId: 'demo-household-id',
-      role: 'owner',
-      createdAt: new Date().toISOString(),
-    };
-    localStorage.setItem(LOCAL_USER_KEY, JSON.stringify(demoProfile));
-    localStorage.setItem(LOCAL_HOUSEHOLD_KEY, 'demo-household-id');
-    window.dispatchEvent(new Event('storage'));
-    return demoProfile;
-  },
 
   async logout(): Promise<void> {
-    localStorage.removeItem(LOCAL_USER_KEY);
-    localStorage.removeItem(LOCAL_HOUSEHOLD_KEY);
-    window.dispatchEvent(new Event('storage'));
-    if (isFirebaseConfigured && auth) {
+    if (isFirebaseReady && auth) {
       await firebaseSignOut(auth);
     }
   },
 
   async createHousehold(userId: string, name: string): Promise<Household> {
+    requireAuth();
     const householdId = crypto.randomUUID();
     const now = new Date().toISOString();
     const household: Household = {
@@ -136,53 +88,32 @@ export const authService = {
       createdBy: userId,
     };
 
-    // Store household record
     await dbService.setDoc(householdId, 'householdInfo', 'info', household);
 
-    // Update user profile with household ID
-    if (!isFirebaseConfigured || !auth) {
-      const userStr = localStorage.getItem(LOCAL_USER_KEY);
-      if (userStr) {
-        const user = JSON.parse(userStr) as UserProfile;
-        user.householdId = householdId;
-        localStorage.setItem(LOCAL_USER_KEY, JSON.stringify(user));
-        localStorage.setItem(LOCAL_HOUSEHOLD_KEY, householdId);
-        window.dispatchEvent(new Event('storage'));
-      }
-    } else {
-      const profile = await dbService.getDoc('system', 'users', userId) as UserProfile | null;
-      if (profile) {
-        const updated = { ...profile, householdId };
-        await dbService.setDoc('system', 'users', userId, updated);
-      }
+    const profile = await dbService.getDoc('system', 'users', userId) as UserProfile | null;
+    if (profile) {
+      await dbService.setDoc('system', 'users', userId, { ...profile, householdId });
     }
 
     return household;
   },
 
   async joinHousehold(userId: string, householdId: string): Promise<void> {
-    // Check if household exists
+    requireAuth();
     const household = await dbService.getDoc(householdId, 'householdInfo', 'info');
     if (!household) {
       throw new Error('Household ID not found.');
     }
 
-    // Update user profile with household ID
-    if (!isFirebaseConfigured || !auth) {
-      const userStr = localStorage.getItem(LOCAL_USER_KEY);
-      if (userStr) {
-        const user = JSON.parse(userStr) as UserProfile;
-        user.householdId = householdId;
-        localStorage.setItem(LOCAL_USER_KEY, JSON.stringify(user));
-        localStorage.setItem(LOCAL_HOUSEHOLD_KEY, householdId);
-        window.dispatchEvent(new Event('storage'));
-      }
-    } else {
-      const profile = await dbService.getDoc('system', 'users', userId) as UserProfile | null;
-      if (profile) {
-        const updated = { ...profile, householdId, role: 'member' as const };
-        await dbService.setDoc('system', 'users', userId, updated);
-      }
+    const profile = await dbService.getDoc('system', 'users', userId) as UserProfile | null;
+    if (profile) {
+      await dbService.setDoc('system', 'users', userId, {
+        ...profile,
+        householdId,
+        role: 'member' as const,
+      });
     }
   }
 };
+
+export { isFirebaseConfigured, isFirebaseReady };

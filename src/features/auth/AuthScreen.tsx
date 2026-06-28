@@ -10,10 +10,7 @@ import {
   Typography, 
   Alert
 } from '@mui/material';
-import AccountBalanceWalletOutlinedIcon from '@mui/icons-material/AccountBalanceWalletOutlined';
-import GoogleIcon from '@mui/icons-material/Google';
-import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
-import { authService } from '../../services/authService';
+import { authService, isFirebaseReady } from '../../services/authService';
 import { UserProfile } from '../../domain/financeTypes';
 
 interface AuthScreenProps {
@@ -37,19 +34,6 @@ export function AuthScreen({ userProfile, onProfileUpdated }: AuthScreenProps) {
       onProfileUpdated(profile);
     } catch (err: any) {
       setError(err.message || 'Google Authentication failed');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleBypassLogin = async () => {
-    setError(null);
-    setLoading(true);
-    try {
-      const profile = await authService.bypassLogin();
-      onProfileUpdated(profile);
-    } catch (err: any) {
-      setError(err.message || 'Bypass failed');
     } finally {
       setLoading(false);
     }
@@ -94,6 +78,19 @@ export function AuthScreen({ userProfile, onProfileUpdated }: AuthScreenProps) {
   const handleLogout = async () => {
     await authService.logout();
   };
+
+  if (!isFirebaseReady) {
+    return (
+      <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', p: 3 }}>
+        <Container maxWidth="sm">
+          <Alert severity="error" sx={{ borderRadius: 3 }}>
+            Firebase is not configured. Copy <strong>.env.example</strong> to <strong>.env</strong> and set your{' '}
+            <strong>VITE_FIREBASE_*</strong> credentials.
+          </Alert>
+        </Container>
+      </Box>
+    );
+  }
 
   // If user is authenticated but has no household
   if (userProfile && !userProfile.householdId) {

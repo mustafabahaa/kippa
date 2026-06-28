@@ -12,7 +12,6 @@ const firebaseConfig = {
   measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
 };
 
-// Check if firebase configuration is fully set
 export const isFirebaseConfigured = !!(
   firebaseConfig.apiKey &&
   firebaseConfig.apiKey.trim() !== '' &&
@@ -30,10 +29,15 @@ if (isFirebaseConfigured) {
     auth = getAuth(firebaseApp);
     db = getFirestore(firebaseApp);
   } catch (error) {
-    console.warn('Firebase initialization failed, falling back to local mode:', error);
+    console.error('Firebase initialization failed:', error);
   }
 } else {
-  console.log('Firebase credentials not detected. Falling back to local storage mock mode.');
+  console.error(
+    'Firebase credentials missing. Copy .env.example to .env and set VITE_FIREBASE_* values. ' +
+    'All data is stored in Firestore — local storage is not used for ledger data.'
+  );
 }
+
+export const isFirebaseReady = isFirebaseConfigured && !!auth && !!db;
 
 export { firebaseApp, auth, db };

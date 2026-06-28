@@ -169,7 +169,13 @@ export function computeDashboard(
   const actualSpending = categoryStatus.reduce((acc, curr) => acc + curr.spent, 0);
   const plannedBudget = allocations.reduce((acc, curr) => acc + curr.plannedAmount, 0);
   const progRatio = cycleProgress ? cycleProgress.ratio : 1;
-  const projectedSpending = progRatio > 0 ? actualSpending / progRatio : actualSpending;
+
+  // Only project when at least 15% of the cycle has elapsed to avoid wild early extrapolation.
+  // Below that threshold, show actual spending as the projection.
+  const MIN_PROJECTION_RATIO = 0.15;
+  const projectedSpending = progRatio >= MIN_PROJECTION_RATIO
+    ? actualSpending / progRatio
+    : actualSpending;
 
   // 8. Income totals
   let actualIncome = 0;
