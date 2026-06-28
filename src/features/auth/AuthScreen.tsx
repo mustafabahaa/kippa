@@ -204,10 +204,10 @@ export function AuthScreen({ userProfile, onProfileUpdated }: AuthScreenProps) {
           {/* Brand Identity Section */}
           <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1.5, mb: 1 }}>
             <Box sx={{ width: 64, height: 64, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <img src="/icons/icon.svg" alt="FinanceFlow Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+              <img src="/icons/icon.svg" alt="Household Ledger Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
             </Box>
             <Typography variant="h3" sx={{ fontWeight: 'bold', color: 'text.primary', fontSize: '20px', tracking: '-0.5px' }}>
-              FinanceFlow
+              Household Ledger
             </Typography>
           </Box>
 
@@ -217,7 +217,7 @@ export function AuthScreen({ userProfile, onProfileUpdated }: AuthScreenProps) {
               Sign in
             </Typography>
             <Typography variant="body1" sx={{ color: 'text.secondary', mt: 0.5, fontSize: '14px' }}>
-              to continue to FinanceFlow
+              to continue to Household Ledger
             </Typography>
           </Box>
 
@@ -260,7 +260,7 @@ export function AuthScreen({ userProfile, onProfileUpdated }: AuthScreenProps) {
           {/* Contextual Information */}
           <Box sx={{ width: '100%', pt: 2, borderTop: '1px solid', borderColor: 'divider', mt: 1 }}>
             <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '12px', lineHeight: 1.5 }}>
-              To continue, Google will share your name, email address, language preference, and profile picture with FinanceFlow.
+              To continue, Google will share your name, email address, language preference, and profile picture with Household Ledger.
             </Typography>
             <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
               <Typography variant="body2" sx={{ color: 'primary.main', fontWeight: 'bold', cursor: 'pointer', fontSize: '12px' }}>

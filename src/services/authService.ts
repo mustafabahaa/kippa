@@ -33,9 +33,20 @@ export const authService = {
         if (profile) {
           // Migrate old profiles to support multiple households
           let householdIds = profile.householdIds || [];
+          let needsUpdate = false;
           if (profile.householdId && !householdIds.includes(profile.householdId)) {
             householdIds = [...householdIds, profile.householdId];
-            const updatedProfile = { ...profile, householdIds };
+            needsUpdate = true;
+          }
+          if (fbUser.photoURL && profile.photoURL !== fbUser.photoURL) {
+            needsUpdate = true;
+          }
+          if (needsUpdate) {
+            const updatedProfile = { 
+              ...profile, 
+              householdIds, 
+              photoURL: fbUser.photoURL || profile.photoURL 
+            };
             await dbService.setDoc('system', 'users', fbUser.uid, updatedProfile);
             callback(updatedProfile);
           } else {
@@ -50,6 +61,7 @@ export const authService = {
             householdIds: [],
             role: 'owner',
             createdAt: new Date().toISOString(),
+            photoURL: fbUser.photoURL || undefined,
           };
           callback(tempProfile);
         }
@@ -69,9 +81,20 @@ export const authService = {
     if (profile) {
       // Migrate here too just in case
       let householdIds = profile.householdIds || [];
+      let needsUpdate = false;
       if (profile.householdId && !householdIds.includes(profile.householdId)) {
         householdIds = [...householdIds, profile.householdId];
-        const updatedProfile = { ...profile, householdIds };
+        needsUpdate = true;
+      }
+      if (fbUser.photoURL && profile.photoURL !== fbUser.photoURL) {
+        needsUpdate = true;
+      }
+      if (needsUpdate) {
+        const updatedProfile = { 
+          ...profile, 
+          householdIds, 
+          photoURL: fbUser.photoURL || profile.photoURL 
+        };
         await dbService.setDoc('system', 'users', fbUser.uid, updatedProfile);
         return updatedProfile;
       }
@@ -86,6 +109,7 @@ export const authService = {
       householdIds: [],
       role: 'owner',
       createdAt: new Date().toISOString(),
+      photoURL: fbUser.photoURL || undefined,
     };
     await dbService.setDoc('system', 'users', fbUser.uid, newProfile);
     return newProfile;

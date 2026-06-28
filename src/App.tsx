@@ -213,9 +213,9 @@ export default function App() {
       <ThemeProvider theme={appTheme}>
         <CssBaseline />
         <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', bgcolor: 'background.paper', gap: 2 }}>
-          <img src="/icons/icon.svg" alt="FinanceFlow Logo" style={{ width: 64, height: 64, animation: 'pulse 1.5s infinite ease-in-out' }} />
+          <img src="/icons/icon.svg" alt="Household Ledger Logo" style={{ width: 64, height: 64, animation: 'pulse 1.5s infinite ease-in-out' }} />
           <Typography variant="h3" sx={{ fontWeight: 'bold', fontSize: '20px', color: 'primary.main' }}>
-            FinanceFlow
+            Household Ledger
           </Typography>
           <style>{`
             @keyframes pulse {
@@ -269,7 +269,10 @@ export default function App() {
                 aria-haspopup="true"
                 sx={{ p: 0.5, border: '1px solid', borderColor: 'divider', width: 40, height: 40 }}
               >
-                <Avatar sx={{ bgcolor: 'primary.main', width: 32, height: 32, fontSize: '0.875rem', fontWeight: 600 }}>
+                <Avatar 
+                  src={userProfile?.photoURL || undefined}
+                  sx={{ bgcolor: 'primary.main', width: 32, height: 32, fontSize: '0.875rem', fontWeight: 600 }}
+                >
                   {userProfile?.displayName ? userProfile.displayName.charAt(0).toUpperCase() : 'U'}
                 </Avatar>
               </IconButton>
@@ -277,9 +280,9 @@ export default function App() {
 
             {/* Center: Logo & Brand Name */}
             <Stack direction="row" spacing={1} alignItems="center" sx={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)' }}>
-              <img src="/icons/icon.svg" alt="FinanceFlow Logo" style={{ height: 28, width: 'auto' }} />
+              <img src="/icons/icon.svg" alt="Household Ledger Logo" style={{ height: 28, width: 'auto' }} />
               <Typography variant="h3" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
-                FinanceFlow
+                Household Ledger
               </Typography>
             </Stack>
 
@@ -333,7 +336,10 @@ export default function App() {
               {/* User details */}
               <Box sx={{ px: 2.5, py: 2 }}>
                 <Stack direction="row" spacing={2} alignItems="center">
-                  <Avatar sx={{ bgcolor: 'primary.main', width: 44, height: 44, fontSize: '1.1rem', fontWeight: 600 }}>
+                  <Avatar 
+                    src={userProfile?.photoURL || undefined}
+                    sx={{ bgcolor: 'primary.main', width: 44, height: 44, fontSize: '1.1rem', fontWeight: 600 }}
+                  >
                     {userProfile?.displayName ? userProfile.displayName.charAt(0).toUpperCase() : 'U'}
                   </Avatar>
                   <Box>

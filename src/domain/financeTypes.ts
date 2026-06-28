@@ -16,6 +16,7 @@ export type UserProfile = {
   householdIds?: string[];
   role: UserRole;
   createdAt: string;
+  photoURL?: string;
 };
 
 export type Household = {
