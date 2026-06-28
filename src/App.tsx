@@ -25,6 +25,8 @@ import AddCircleIcon from '@mui/icons-material/AddCircle';
 import SyncAltIcon from '@mui/icons-material/SyncAlt';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import SettingsIcon from '@mui/icons-material/Settings';
+import NotificationsActiveIcon from '@mui/icons-material/NotificationsActive';
+import CategoryIcon from '@mui/icons-material/Category';
 import LogoutIcon from '@mui/icons-material/Logout';
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
@@ -37,7 +39,10 @@ import { Dashboard } from './features/dashboard/Dashboard';
 import { FastEntry } from './features/transactions/FastEntry';
 import { Reconciliation } from './features/reconciliation/Reconciliation';
 import { Cycles } from './features/cycles/Cycles';
-import { Settings } from './features/settings/Settings';
+import { AccountsSection } from './features/settings/AccountsSection';
+import { HouseholdSection } from './features/settings/HouseholdSection';
+import { CategoriesSection } from './features/settings/CategoriesSection';
+import { NotificationsSection } from './features/settings/NotificationsSection';
 
 import { authService } from './services/authService';
 import { ledgerService } from './services/ledgerService';
@@ -339,11 +344,32 @@ export default function App() {
               <Divider />
 
               {/* Shortcuts */}
-              <MenuItem onClick={() => { handleCloseProfileMenu(); setActiveTab('settings'); }}>
+              <MenuItem onClick={() => { handleCloseProfileMenu(); setActiveTab('accounts'); }}>
                 <ListItemIcon>
-                  <SettingsIcon fontSize="small" />
+                  <AccountBalanceIcon fontSize="small" />
                 </ListItemIcon>
-                <ListItemText primary="Settings" />
+                <ListItemText primary="Bank Accounts" />
+              </MenuItem>
+
+              <MenuItem onClick={() => { handleCloseProfileMenu(); setActiveTab('household'); }}>
+                <ListItemIcon>
+                  <HomeIcon fontSize="small" />
+                </ListItemIcon>
+                <ListItemText primary="Household Sharing" />
+              </MenuItem>
+
+              <MenuItem onClick={() => { handleCloseProfileMenu(); setActiveTab('categories'); }}>
+                <ListItemIcon>
+                  <CategoryIcon fontSize="small" />
+                </ListItemIcon>
+                <ListItemText primary="Categories Settings" />
+              </MenuItem>
+
+              <MenuItem onClick={() => { handleCloseProfileMenu(); setActiveTab('notifications'); }}>
+                <ListItemIcon>
+                  <NotificationsActiveIcon fontSize="small" />
+                </ListItemIcon>
+                <ListItemText primary="Reminders & Alerts" />
               </MenuItem>
               
               <MenuItem onClick={() => { handleCloseProfileMenu(); handleLogout(); }} sx={{ color: 'error.main' }}>
@@ -406,13 +432,32 @@ export default function App() {
             />
           )}
 
-          {activeTab === 'settings' && (
-            <Settings
+          {activeTab === 'accounts' && (
+            <AccountsSection
               householdId={userProfile.householdId}
-              userId={userProfile.uid}
-              categories={categories}
               accounts={accounts}
               onDataUpdated={loadLedgerData}
+            />
+          )}
+
+          {activeTab === 'household' && (
+            <HouseholdSection
+              householdId={userProfile.householdId}
+            />
+          )}
+
+          {activeTab === 'categories' && (
+            <CategoriesSection
+              householdId={userProfile.householdId}
+              categories={categories}
+              onDataUpdated={loadLedgerData}
+            />
+          )}
+
+          {activeTab === 'notifications' && (
+            <NotificationsSection
+              householdId={userProfile.householdId}
+              userId={userProfile.uid}
             />
           )}
         </Box>
@@ -507,7 +552,6 @@ export default function App() {
             <BottomNavigationAction label="Fast Entry" value="entry" icon={<AddCircleIcon />} />
             <BottomNavigationAction label="Reconcile" value="reconciliation" icon={<SyncAltIcon />} />
             <BottomNavigationAction label="Cycles" value="cycles" icon={<CalendarMonthIcon />} />
-            <BottomNavigationAction label="Settings" value="settings" icon={<SettingsIcon />} />
           </BottomNavigation>
         </Paper>
       </Box>
