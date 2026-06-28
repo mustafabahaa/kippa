@@ -202,11 +202,15 @@ export const appTheme = createTheme({
   components: {
     // ── AppBar ────────────────────────────────────────────────────────
     MuiAppBar: {
+      defaultProps: {
+        elevation: 0,
+        color: 'transparent',
+      },
       styleOverrides: {
         root: {
-          backgroundColor: designTokens.color.surfacePure,
-          borderBottom: `1px solid ${designTokens.color.borderGray}`,
-          boxShadow: designTokens.shadow.raised,
+          backgroundColor: 'transparent',
+          backgroundImage: 'none',
+          boxShadow: 'none',
           color: designTokens.color.textPrimary,
         },
       },

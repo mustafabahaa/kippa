@@ -113,38 +113,38 @@ export default function App() {
   return (
     <ThemeProvider theme={appTheme}>
       <CssBaseline />
-      <Box sx={{ minHeight: '100vh', pb: { xs: 12, md: 14 }, bgcolor: 'background.default' }}>
+      <Box sx={{ minHeight: '100vh', pb: { xs: 10, md: 12 }, bgcolor: 'background.default' }}>
         {/* Top Navbar */}
-        <AppBar position="static" color="transparent" elevation={0} sx={{ borderBottom: '1px solid', borderColor: 'divider', py: 1 }}>
-          <Toolbar sx={{ justifyContent: 'space-between', px: { xs: 2, sm: 3 }, position: 'relative' }}>
-            {/* Left: User Profile Avatar */}
-            <Tooltip title="Account Menu">
-              <IconButton 
-                onClick={handleOpenProfileMenu}
-                aria-label="account profile menu"
-                aria-controls="profile-menu"
-                aria-haspopup="true"
-                sx={{ p: 0.5, border: '1px solid', borderColor: 'divider', width: 40, height: 40 }}
-              >
-                <Avatar 
-                  src={userProfile?.photoURL || undefined}
-                  sx={{ bgcolor: 'primary.main', width: 32, height: 32, fontSize: '0.875rem', fontWeight: 600 }}
-                >
-                  {userProfile?.displayName ? userProfile.displayName.charAt(0).toUpperCase() : 'U'}
-                </Avatar>
-              </IconButton>
-            </Tooltip>
-
-            {/* Center: Logo & Brand Name */}
-            <Stack direction="row" spacing={1} alignItems="center" sx={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)' }}>
+        <AppBar position="static" color="transparent" elevation={0} sx={{ py: 1 }}>
+          <Toolbar sx={{ justifyContent: 'space-between', px: { xs: 2, sm: 3 } }}>
+            {/* Left: Logo & Brand Name */}
+            <Stack direction="row" spacing={1} alignItems="center">
               <img src="/icons/icon.svg" alt="Household Ledger Logo" style={{ height: 28, width: 'auto' }} />
               <Typography variant="h3" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
                 Household Ledger
               </Typography>
             </Stack>
 
-            {/* Right: Activity Bell (household audit feed) */}
-            <ActivityBell onClick={() => setActiveTab('auditLog')} />
+            {/* Right: Activity Bell & Profile */}
+            <Stack direction="row" spacing={1} alignItems="center">
+              <ActivityBell onClick={() => setActiveTab('auditLog')} />
+              <Tooltip title="Account Menu">
+                <IconButton 
+                  onClick={handleOpenProfileMenu}
+                  aria-label="account profile menu"
+                  aria-controls="profile-menu"
+                  aria-haspopup="true"
+                  sx={{ p: 0.5, border: '1px solid', borderColor: 'divider', width: 40, height: 40 }}
+                >
+                  <Avatar 
+                    src={userProfile?.photoURL || undefined}
+                    sx={{ bgcolor: 'primary.main', width: 32, height: 32, fontSize: '0.875rem', fontWeight: 600 }}
+                  >
+                    {userProfile?.displayName ? userProfile.displayName.charAt(0).toUpperCase() : 'U'}
+                  </Avatar>
+                </IconButton>
+              </Tooltip>
+            </Stack>
 
             {/* Profile Dropdown Menu */}
             <Menu
@@ -370,8 +370,8 @@ export default function App() {
             onClick={() => setActiveTab('entry')}
             sx={{
               position: 'fixed',
-              bottom: 96,
-              right: 24,
+              bottom: { xs: 92, md: 100 },
+              right: 16,
               width: 56,
               height: 56,
               bgcolor: 'background.paper',
@@ -393,26 +393,29 @@ export default function App() {
           </Box>
         )}
 
-        {/* Flat Bottom Navigation for Mobile-first layout */}
-        <Paper 
-          sx={{ 
-            position: 'fixed', 
-            bottom: 0, 
-            left: 0,
-            right: 0,
-            width: '100%',
-            zIndex: 1000, 
-            borderRadius: 0,
-            borderTop: 1,
-            borderColor: 'divider',
-            borderLeft: 'none',
-            borderRight: 'none',
-            borderBottom: 'none',
-            bgcolor: 'background.paper',
-            boxShadow: 'rgba(0, 0, 0, 0.05) 0px -2px 6px 0px',
-            overflow: 'hidden'
-          }} 
+        {/* Floating Bottom Navigation (pill, not full-width) */}
+        <Paper
           elevation={0}
+          sx={{
+            position: 'fixed',
+            bottom: { xs: 16, md: 24 },
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 1000,
+            bgcolor: 'background.paper',
+            borderRadius: '32px',
+            border: '1px solid',
+            borderColor: 'divider',
+            boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.08)',
+            padding: '6px',
+            maxWidth: 'calc(100vw - 24px)',
+            overflow: 'hidden',
+            animation: 'navFloatIn 0.35s cubic-bezier(0.22, 1, 0.36, 1)',
+            '@keyframes navFloatIn': {
+              from: { opacity: 0, transform: 'translateX(-50%) translateY(20px)' },
+              to: { opacity: 1, transform: 'translateX(-50%) translateY(0)' },
+            },
+          }}
         >
           <BottomNavigation
             value={activeTab}
@@ -420,39 +423,38 @@ export default function App() {
             showLabels
             sx={{
               bgcolor: 'transparent',
-              height: 80,
+              height: 64,
               '& .MuiBottomNavigationAction-root': {
                 color: 'text.secondary',
                 minWidth: 'auto',
-                padding: '10px 0 14px',
+                paddingX: { xs: 1.5, sm: 2.5 },
+                paddingY: '4px',
+                borderRadius: '24px',
                 transition: 'all 0.2s ease',
                 '& .MuiBottomNavigationAction-label': {
-                  fontSize: '12px',
+                  fontSize: '11px',
                   fontWeight: 500,
                   marginTop: '2px',
-                  '&.Mui-selected': { fontSize: '12px' },
+                  '&.Mui-selected': { fontSize: '11px' },
                 },
                 '& .MuiSvgIcon-root': {
                   fontSize: '22px',
-                  padding: '4px 16px',
-                  borderRadius: '16px',
                   transition: 'all 0.2s ease',
                 },
                 '&.Mui-selected': {
-                  color: 'text.primary',
+                  color: 'primary.main',
                   '& .MuiBottomNavigationAction-label': {
-                    fontWeight: 'bold',
+                    fontWeight: 700,
                   },
                   '& .MuiSvgIcon-root': {
                     color: 'primary.main',
-                    backgroundColor: 'secondary.container',
-                  }
-                }
-              }
+                  },
+                },
+              },
             }}
           >
             <BottomNavigationAction label="Dashboard" value="dashboard" icon={<DashboardIcon />} />
-            <BottomNavigationAction label="Fast Entry" value="entry" icon={<AddCircleIcon />} />
+            <BottomNavigationAction label="Entry" value="entry" icon={<AddCircleIcon />} />
             <BottomNavigationAction label="Reconcile" value="reconciliation" icon={<SyncAltIcon />} />
             <BottomNavigationAction label="Cycles" value="cycles" icon={<CalendarMonthIcon />} />
           </BottomNavigation>
