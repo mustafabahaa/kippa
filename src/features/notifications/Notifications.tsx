@@ -12,7 +12,7 @@ import { NotificationSettings } from '../../domain/financeTypes';
 import { NotificationSettingsForm } from './NotificationSettingsForm';
 import { useAppContext } from '../../hooks/useAppContext';
 
-export function NotificationsSection() {
+export function Notifications() {
   const { householdId, userProfile } = useAppContext();
   const userId = userProfile?.uid || '';
 

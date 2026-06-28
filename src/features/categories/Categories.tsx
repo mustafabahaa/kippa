@@ -23,7 +23,7 @@ import {
 
 import { useAppContext } from '../../hooks/useAppContext';
 
-export function CategoriesSection() {
+export function Categories() {
   const { householdId } = useAppContext();
   const [newCatName, setNewCatName] = useState('');
   const [newCatType, setNewCatType] = useState<'income' | 'expense'>('expense');

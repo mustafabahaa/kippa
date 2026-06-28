@@ -34,7 +34,7 @@ import {
 import { Account, AccountType, CurrencyCode } from '../../domain/financeTypes';
 import { useAppContext } from '../../hooks/useAppContext';
 
-export function AccountsSection() {
+export function Accounts() {
   const { householdId } = useAppContext();
   const [newAccName, setNewAccName] = useState('');
   const [newAccType, setNewAccType] = useState<AccountType>('bank');

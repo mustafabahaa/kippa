@@ -33,10 +33,10 @@ import AddHomeIcon from '@mui/icons-material/AddHome';
 import GroupAddIcon from '@mui/icons-material/GroupAdd';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 
-import { Household } from '../../domain/financeTypes';
+import type { Household } from '../../domain/financeTypes';
 import { useAppContext } from '../../hooks/useAppContext';
 
-export function HouseholdSection() {
+export function Household() {
   const { 
     userProfile, 
     householdId, 

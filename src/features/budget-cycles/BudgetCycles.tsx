@@ -38,7 +38,7 @@ import {
 import { BudgetAllocationsConfig } from './BudgetAllocationsConfig';
 import { useAppContext } from '../../hooks/useAppContext';
 
-export function Cycles() {
+export function BudgetCycles() {
   const { householdId } = useAppContext();
   // Cycle Creation State
   const [openCreateDialog, setOpenCreateDialog] = useState(false);

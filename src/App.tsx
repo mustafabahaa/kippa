@@ -33,13 +33,13 @@ import NotificationsActiveIcon from '@mui/icons-material/NotificationsActive';
 import { appTheme } from './theme';
 import { AuthScreen } from './features/auth/AuthScreen';
 import { Dashboard } from './features/dashboard/Dashboard';
-import { FastEntry } from './features/transactions/FastEntry';
+import { FastEntry } from './features/fast-entry/FastEntry';
 import { Reconciliation } from './features/reconciliation/Reconciliation';
-import { Cycles } from './features/cycles/Cycles';
-import { AccountsSection } from './features/settings/AccountsSection';
-import { HouseholdSection } from './features/settings/HouseholdSection';
-import { CategoriesSection } from './features/settings/CategoriesSection';
-import { NotificationsSection } from './features/settings/NotificationsSection';
+import { BudgetCycles } from './features/budget-cycles/BudgetCycles';
+import { Accounts } from './features/accounts/Accounts';
+import { Household } from './features/household/Household';
+import { Categories } from './features/categories/Categories';
+import { Notifications } from './features/notifications/Notifications';
 import { Activity } from './features/transactions/Activity';
 import { useAppContext } from './hooks/useAppContext';
 
@@ -329,7 +329,7 @@ export default function App() {
           )}
 
           {activeTab === 'cycles' && (
-            <Cycles />
+            <BudgetCycles />
           )}
 
           {activeTab === 'reconciliation' && (
@@ -340,19 +340,19 @@ export default function App() {
           )}
 
           {activeTab === 'accounts' && (
-            <AccountsSection />
+            <Accounts />
           )}
 
           {activeTab === 'household' && (
-            <HouseholdSection />
+            <Household />
           )}
 
           {activeTab === 'categories' && (
-            <CategoriesSection />
+            <Categories />
           )}
 
           {activeTab === 'notifications' && (
-            <NotificationsSection />
+            <Notifications />
           )}
         </Box>
 
