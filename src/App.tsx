@@ -52,6 +52,10 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<string>('dashboard');
   const [displayRate, setDisplayRate] = useState<number>(50.0); // Default USD/EGP display exchange rate
   
+  // Loader states
+  const [isAuthLoading, setIsAuthLoading] = useState<boolean>(true);
+  const [isDataLoading, setIsDataLoading] = useState<boolean>(false);
+
   // Profile dropdown menu state
   const [profileAnchorEl, setProfileAnchorEl] = useState<null | HTMLElement>(null);
   const isProfileMenuOpen = Boolean(profileAnchorEl);
@@ -78,6 +82,7 @@ export default function App() {
   useEffect(() => {
     const unsubscribe = authService.onAuthStateChanged((profile) => {
       setUserProfile(profile);
+      setIsAuthLoading(false);
     });
     return () => unsubscribe();
   }, []);
@@ -86,6 +91,7 @@ export default function App() {
   const loadLedgerData = async () => {
     if (!userProfile?.householdId) return;
     const hhId = userProfile.householdId;
+    setIsDataLoading(true);
 
     try {
       // 1. Load accounts & categories
@@ -132,6 +138,8 @@ export default function App() {
       }
     } catch (err) {
       console.error('Error loading ledger data:', err);
+    } finally {
+      setIsDataLoading(false);
     }
   };
 
@@ -153,6 +161,27 @@ export default function App() {
       loadLedgerData();
     }
   };
+
+  if (isAuthLoading) {
+    return (
+      <ThemeProvider theme={appTheme}>
+        <CssBaseline />
+        <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', bgcolor: 'background.paper', gap: 2 }}>
+          <img src="/icons/icon.svg" alt="FinanceFlow Logo" style={{ width: 64, height: 64, animation: 'pulse 1.5s infinite ease-in-out' }} />
+          <Typography variant="h3" sx={{ fontWeight: 'bold', fontSize: '20px', color: 'primary.main' }}>
+            FinanceFlow
+          </Typography>
+          <style>{`
+            @keyframes pulse {
+              0% { transform: scale(0.95); opacity: 0.8; }
+              50% { transform: scale(1.05); opacity: 1; }
+              100% { transform: scale(0.95); opacity: 0.8; }
+            }
+          `}</style>
+        </Box>
+      </ThemeProvider>
+    );
+  }
 
   if (!userProfile || !userProfile.householdId) {
     return (
@@ -325,6 +354,7 @@ export default function App() {
         <Box sx={{ py: { xs: 2, sm: 4 } }}>
           {activeTab === 'dashboard' && (
             <Dashboard
+              isLoading={isDataLoading}
               data={dashboardData}
               accounts={accounts}
               categories={categories}

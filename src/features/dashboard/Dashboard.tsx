@@ -11,7 +11,8 @@ import {
   Divider,
   TextField,
   Chip,
-  IconButton
+  IconButton,
+  Skeleton
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import CheckIcon from '@mui/icons-material/Check';
@@ -25,6 +26,7 @@ import { DashboardData } from '../../services/selectors';
 import { Account, BudgetCycle, FinanceTransaction, Category, LedgerLine } from '../../domain/financeTypes';
 
 interface DashboardProps {
+  isLoading?: boolean;
   data: DashboardData;
   accounts: Account[];
   categories: Category[];
@@ -38,6 +40,7 @@ interface DashboardProps {
 }
 
 export function Dashboard({
+  isLoading = false,
   data,
   accounts,
   categories,
@@ -111,6 +114,72 @@ export function Dashboard({
     }
     return 'action.hover';
   };
+
+  if (isLoading) {
+    return (
+      <Container maxWidth="xs" sx={{ py: 1, px: 2 }}>
+        <Stack spacing={3}>
+          {/* Skeleton Header */}
+          <Box sx={{ mt: 1 }}>
+            <Skeleton variant="text" width="60%" height={32} animation="wave" />
+            <Skeleton variant="text" width="40%" height={20} animation="wave" sx={{ mt: 0.5 }} />
+          </Box>
+
+          {/* Skeleton Hero Card */}
+          <Box sx={{ bgcolor: 'action.hover', p: 2.5, borderRadius: '24px', minHeight: '180px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+            <Box>
+              <Skeleton variant="text" width="50%" height={24} animation="wave" />
+              <Skeleton variant="text" width="80%" height={48} animation="wave" sx={{ mt: 1 }} />
+            </Box>
+            <Stack direction="row" spacing={1} sx={{ mt: 2 }}>
+              <Skeleton variant="rectangular" width="30%" height={28} sx={{ borderRadius: '16px' }} animation="wave" />
+              <Skeleton variant="rectangular" width="30%" height={28} sx={{ borderRadius: '16px' }} animation="wave" />
+            </Stack>
+          </Box>
+
+          {/* Skeleton Budget Pulse */}
+          <Card sx={{ borderRadius: '20px', border: '1px solid', borderColor: 'divider', boxShadow: 'none' }}>
+            <CardContent sx={{ p: 2 }}>
+              <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1.5 }}>
+                <Skeleton variant="text" width="35%" height={24} animation="wave" />
+                <Skeleton variant="rectangular" width="25%" height={24} sx={{ borderRadius: '12px' }} animation="wave" />
+              </Stack>
+              <Skeleton variant="rectangular" width="100%" height={8} sx={{ borderRadius: 4, mb: 1.5 }} animation="wave" />
+              <Skeleton variant="text" width="70%" height={18} animation="wave" />
+            </CardContent>
+          </Card>
+
+          {/* Skeleton Quick Actions */}
+          <Stack direction="row" spacing={1} sx={{ overflowX: 'hidden' }}>
+            {[1, 2, 3].map(i => (
+              <Skeleton key={i} variant="rectangular" width={110} height={36} sx={{ borderRadius: '18px', flexShrink: 0 }} animation="wave" />
+            ))}
+          </Stack>
+
+          {/* Skeleton Accounts */}
+          <Box>
+            <Skeleton variant="text" width="30%" height={24} animation="wave" sx={{ mb: 1.5 }} />
+            <Stack spacing={1}>
+              {[1, 2].map(i => (
+                <Card key={i} sx={{ borderRadius: '16px', border: '1px solid', borderColor: 'divider', boxShadow: 'none' }}>
+                  <CardContent sx={{ p: 1.5, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <Stack direction="row" spacing={1.5} alignItems="center" sx={{ width: '60%' }}>
+                      <Skeleton variant="circular" width={40} height={40} animation="wave" />
+                      <Box sx={{ width: '70%' }}>
+                        <Skeleton variant="text" width="80%" height={20} animation="wave" />
+                        <Skeleton variant="text" width="60%" height={16} animation="wave" />
+                      </Box>
+                    </Stack>
+                    <Skeleton variant="text" width="20%" height={20} animation="wave" />
+                  </CardContent>
+                </Card>
+              ))}
+            </Stack>
+          </Box>
+        </Stack>
+      </Container>
+    );
+  }
 
   return (
     <Container maxWidth="xs" sx={{ py: 1, px: 2 }}>
