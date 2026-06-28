@@ -15,8 +15,14 @@ export const transactionsLib = {
     const transactionId = crypto.randomUUID();
     const nowStr = new Date().toISOString();
 
+    // Strip undefined values — Firestore rejects explicit `undefined` field values
+    // (e.g. `description: someString || undefined` from callers).
+    const cleanTransaction = Object.fromEntries(
+      Object.entries(transaction).filter(([, v]) => v !== undefined)
+    ) as FinanceTransaction;
+
     const newTransaction: FinanceTransaction = {
-      ...transaction,
+      ...cleanTransaction,
       id: transactionId,
       householdId,
       status: 'posted',
@@ -116,9 +122,14 @@ export const transactionsLib = {
     const transaction = await dbLib.getDoc(householdId, 'transactions', transactionId) as FinanceTransaction | null;
     if (!transaction) throw new Error('Transaction not found');
 
+    // Strip undefined values from updates — Firestore rejects explicit `undefined`.
+    const cleanUpdates = Object.fromEntries(
+      Object.entries(transactionUpdates).filter(([, v]) => v !== undefined)
+    ) as Partial<FinanceTransaction>;
+
     const updatedTransaction: FinanceTransaction = {
       ...transaction,
-      ...transactionUpdates,
+      ...cleanUpdates,
       updatedAt: new Date().toISOString()
     };
 
