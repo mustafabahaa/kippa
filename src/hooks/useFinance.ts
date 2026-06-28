@@ -230,6 +230,20 @@ export function useCreateCategoryMutation() {
   });
 }
 
+export function useUpdateCategoryMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: {
+      householdId: string;
+      categoryId: string;
+      updates: Partial<Pick<Category, 'name' | 'isActive'>>;
+    }) => ledgerLib.updateCategory(data.householdId, data.categoryId, data.updates),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['categories', variables.householdId] });
+    },
+  });
+}
+
 export function useCreateCycleMutation() {
   const queryClient = useQueryClient();
   return useMutation({

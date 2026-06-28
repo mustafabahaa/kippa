@@ -22,7 +22,6 @@ import {
 import AddIcon from '@mui/icons-material/Add';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import SettingsIcon from '@mui/icons-material/Settings';
 import EventIcon from '@mui/icons-material/Event';
@@ -104,8 +103,8 @@ export function BudgetCycles() {
   const [check2, setCheck2] = useState(false);
   const [check3, setCheck3] = useState(false);
 
-  // UI state
-  const [showAllocations, setShowAllocations] = useState(false);
+  // UI state — which cycle's budget is being edited (null = none)
+  const [editingCycleId, setEditingCycleId] = useState<string | null>(null);
 
   // Queries
   const { data: categories = [], isLoading: categoriesLoading } = useCategories(householdId);
@@ -113,18 +112,21 @@ export function BudgetCycles() {
   
   const activeCycle = cycles.find(c => c.status === 'open') || null;
 
-  const { data: dbAllocations = [], isLoading: allocsLoading } = useBudgetAllocations(householdId, activeCycle?.id);
+  // Fetch allocations for whichever cycle is being edited
+  const { data: dbAllocations = [], isLoading: allocsLoading } = useBudgetAllocations(householdId, editingCycleId ?? undefined);
+
+  // The cycle object being edited
+  const editingCycle = editingCycleId ? cycles.find(c => c.id === editingCycleId) : null;
 
   // Mutations
   const createCycleMutation = useCreateCycleMutation();
   const updateCycleStatusMutation = useUpdateCycleStatusMutation();
 
-  // Sorted cycles: active first, then planned, then closed (most recent first)
+  // Sorted cycles: planned first, then closed by start date desc
   const sortedHistory = useMemo(() => {
     return [...cycles]
       .filter(c => c.status !== 'open')
       .sort((a, b) => {
-        // planned first, then closed by start date desc
         if (a.status === 'planned' && b.status !== 'planned') return -1;
         if (b.status === 'planned' && a.status !== 'planned') return 1;
         return b.startDate.localeCompare(a.startDate);
@@ -179,6 +181,10 @@ export function BudgetCycles() {
     setCheck3(false);
   };
 
+  const handleToggleBudgetForCycle = (cycleId: string) => {
+    setEditingCycleId(prev => prev === cycleId ? null : cycleId);
+  };
+
   const isLoading = categoriesLoading || cyclesLoading;
 
   if (isLoading) {
@@ -231,8 +237,8 @@ export function BudgetCycles() {
             cycle={activeCycle}
             daysInfo={activeDaysInfo!}
             onCloseCycle={() => setOpenCloseDialog(true)}
-            showAllocations={showAllocations}
-            onToggleAllocations={() => setShowAllocations(!showAllocations)}
+            isEditingBudget={editingCycleId === activeCycle.id}
+            onToggleBudget={() => handleToggleBudgetForCycle(activeCycle.id)}
           />
         ) : (
           <Box
@@ -264,30 +270,67 @@ export function BudgetCycles() {
           </Box>
         )}
 
-        {/* ── Budget Allocations (collapsible) ── */}
-        {activeCycle && (
-          <Collapse in={showAllocations} timeout="auto">
+        {/* ── Budget Allocations Editor (for any selected cycle) ── */}
+        {editingCycle && (
+          <Collapse in={!!editingCycleId} timeout="auto">
             <Box
               sx={{
                 bgcolor: 'background.paper',
                 borderRadius: '20px',
                 border: '1px solid',
                 borderColor: 'divider',
-                p: 2.5,
+                overflow: 'hidden',
               }}
             >
-              {allocsLoading ? (
-                <Skeleton variant="rectangular" width="100%" height={200} sx={{ borderRadius: '12px' }} />
-              ) : (
-                <BudgetAllocationsConfig
-                  key={`${activeCycle.id}-${dbAllocations.length}`}
-                  householdId={householdId}
-                  activeCycle={activeCycle}
-                  categories={categories}
-                  dbAllocations={dbAllocations}
-                  cycles={cycles}
+              {/* Editor header — shows which cycle */}
+              <Box
+                sx={{
+                  px: 2.5,
+                  py: 1.5,
+                  bgcolor: 'action.hover',
+                  borderBottom: '1px solid',
+                  borderColor: 'divider',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                }}
+              >
+                <Box>
+                  <Typography variant="body2" sx={{ fontSize: '11px', color: 'text.secondary', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.03em' }}>
+                    Editing budget for
+                  </Typography>
+                  <Typography variant="body1" sx={{ fontWeight: 700, fontSize: '14px', color: 'text.primary', mt: 0.25 }}>
+                    {editingCycle.name}
+                  </Typography>
+                </Box>
+                <Chip
+                  label={editingCycle.status.toUpperCase()}
+                  size="small"
+                  sx={{
+                    fontWeight: 700,
+                    fontSize: '10px',
+                    height: 24,
+                    borderRadius: '6px',
+                    bgcolor: getStatusBgColor(editingCycle.status),
+                    color: getStatusColor(editingCycle.status),
+                  }}
                 />
-              )}
+              </Box>
+
+              <Box sx={{ p: 2.5 }}>
+                {allocsLoading ? (
+                  <Skeleton variant="rectangular" width="100%" height={200} sx={{ borderRadius: '12px' }} />
+                ) : (
+                  <BudgetAllocationsConfig
+                    key={`${editingCycle.id}-${dbAllocations.length}`}
+                    householdId={householdId}
+                    activeCycle={editingCycle}
+                    categories={categories}
+                    dbAllocations={dbAllocations}
+                    cycles={cycles}
+                  />
+                )}
+              </Box>
             </Box>
           </Collapse>
         )}
@@ -304,7 +347,12 @@ export function BudgetCycles() {
 
             <Stack spacing={1.5}>
               {sortedHistory.map(cycle => (
-                <CycleHistoryCard key={cycle.id} cycle={cycle} />
+                <CycleHistoryCard
+                  key={cycle.id}
+                  cycle={cycle}
+                  isEditing={editingCycleId === cycle.id}
+                  onToggleBudget={() => handleToggleBudgetForCycle(cycle.id)}
+                />
               ))}
             </Stack>
           </Box>
@@ -409,11 +457,11 @@ interface ActiveCycleCardProps {
   cycle: BudgetCycle;
   daysInfo: ReturnType<typeof getDaysInfo>;
   onCloseCycle: () => void;
-  showAllocations: boolean;
-  onToggleAllocations: () => void;
+  isEditingBudget: boolean;
+  onToggleBudget: () => void;
 }
 
-function ActiveCycleCard({ cycle, daysInfo, onCloseCycle, showAllocations, onToggleAllocations }: ActiveCycleCardProps) {
+function ActiveCycleCard({ cycle, daysInfo, onCloseCycle, isEditingBudget, onToggleBudget }: ActiveCycleCardProps) {
   return (
     <Box
       sx={{
@@ -437,16 +485,10 @@ function ActiveCycleCard({ cycle, daysInfo, onCloseCycle, showAllocations, onTog
           gap: 1,
         }}
       >
-        <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: '#1E8E3E', animation: 'pulse 2s infinite' }} />
+        <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: '#1E8E3E' }} />
         <Typography variant="body2" sx={{ fontSize: '11px', fontWeight: 600, color: '#1E8E3E', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
           Active Cycle
         </Typography>
-        <style>{`
-          @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.4; }
-          }
-        `}</style>
       </Box>
 
       <Box sx={{ p: 2.5 }}>
@@ -517,20 +559,20 @@ function ActiveCycleCard({ cycle, daysInfo, onCloseCycle, showAllocations, onTog
           <Button
             fullWidth
             variant="outlined"
-            startIcon={showAllocations ? <ExpandLessIcon /> : <SettingsIcon />}
-            onClick={onToggleAllocations}
+            startIcon={isEditingBudget ? <ExpandLessIcon /> : <SettingsIcon />}
+            onClick={onToggleBudget}
             sx={{
               borderRadius: '12px',
               textTransform: 'none',
               fontWeight: 600,
               fontSize: '13px',
               height: 42,
-              borderColor: 'divider',
-              color: 'text.primary',
+              borderColor: isEditingBudget ? 'primary.main' : 'divider',
+              color: isEditingBudget ? 'primary.main' : 'text.primary',
               '&:hover': { borderColor: 'primary.main', bgcolor: 'action.hover' },
             }}
           >
-            {showAllocations ? 'Hide Budget' : 'Configure Budget'}
+            {isEditingBudget ? 'Hide Budget' : 'Configure Budget'}
           </Button>
           <Button
             fullWidth
@@ -556,65 +598,92 @@ function ActiveCycleCard({ cycle, daysInfo, onCloseCycle, showAllocations, onTog
 
 // ── Cycle History Card ───────────────────────────────────────────────────
 
-function CycleHistoryCard({ cycle }: { cycle: BudgetCycle }) {
+interface CycleHistoryCardProps {
+  cycle: BudgetCycle;
+  isEditing: boolean;
+  onToggleBudget: () => void;
+}
+
+function CycleHistoryCard({ cycle, isEditing, onToggleBudget }: CycleHistoryCardProps) {
   const statusColor = getStatusColor(cycle.status);
   const statusBg = getStatusBgColor(cycle.status);
 
   return (
     <Box
       sx={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 2,
         p: 2,
         bgcolor: 'background.paper',
         borderRadius: '16px',
         border: '1px solid',
-        borderColor: 'divider',
-        transition: 'background-color 0.15s',
+        borderColor: isEditing ? 'primary.main' : 'divider',
+        transition: 'border-color 0.15s',
       }}
     >
-      {/* Timeline dot */}
-      <Box
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+        {/* Timeline dot */}
+        <Box
+          sx={{
+            width: 36,
+            height: 36,
+            borderRadius: '12px',
+            bgcolor: statusBg,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+          }}
+        >
+          <CalendarTodayIcon sx={{ fontSize: 18, color: statusColor }} />
+        </Box>
+
+        {/* Details */}
+        <Box sx={{ flex: 1, minWidth: 0 }}>
+          <Typography variant="body1" sx={{ fontWeight: 600, fontSize: '14px', color: 'text.primary' }}>
+            {cycle.name}
+          </Typography>
+          <Typography variant="body2" sx={{ fontSize: '11px', color: 'text.secondary', mt: 0.25 }}>
+            {formatDate(cycle.startDate)}{cycle.endDate ? ` — ${formatDate(cycle.endDate)}` : ''}
+          </Typography>
+        </Box>
+
+        {/* Status chip */}
+        <Chip
+          label={cycle.status.toUpperCase()}
+          size="small"
+          sx={{
+            fontWeight: 700,
+            fontSize: '10px',
+            height: 24,
+            borderRadius: '6px',
+            bgcolor: statusBg,
+            color: statusColor,
+            border: 'none',
+            letterSpacing: '0.03em',
+          }}
+        />
+      </Box>
+
+      {/* Configure Budget button */}
+      <Button
+        fullWidth
+        variant="outlined"
+        size="small"
+        startIcon={isEditing ? <ExpandLessIcon /> : <SettingsIcon />}
+        onClick={onToggleBudget}
         sx={{
-          width: 36,
-          height: 36,
-          borderRadius: '12px',
-          bgcolor: statusBg,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          flexShrink: 0,
+          mt: 1.5,
+          borderRadius: '10px',
+          textTransform: 'none',
+          fontWeight: 600,
+          fontSize: '12px',
+          height: 34,
+          borderColor: isEditing ? 'primary.main' : 'divider',
+          color: isEditing ? 'primary.main' : 'text.secondary',
+          '&:hover': { borderColor: 'primary.main', color: 'primary.main', bgcolor: 'action.hover' },
         }}
       >
-        <CalendarTodayIcon sx={{ fontSize: 18, color: statusColor }} />
-      </Box>
-
-      {/* Details */}
-      <Box sx={{ flex: 1, minWidth: 0 }}>
-        <Typography variant="body1" sx={{ fontWeight: 600, fontSize: '14px', color: 'text.primary' }}>
-          {cycle.name}
-        </Typography>
-        <Typography variant="body2" sx={{ fontSize: '11px', color: 'text.secondary', mt: 0.25 }}>
-          {formatDate(cycle.startDate)}{cycle.endDate ? ` — ${formatDate(cycle.endDate)}` : ''}
-        </Typography>
-      </Box>
-
-      {/* Status chip */}
-      <Chip
-        label={cycle.status.toUpperCase()}
-        size="small"
-        sx={{
-          fontWeight: 700,
-          fontSize: '10px',
-          height: 24,
-          borderRadius: '6px',
-          bgcolor: statusBg,
-          color: statusColor,
-          border: 'none',
-          letterSpacing: '0.03em',
-        }}
-      />
+        {isEditing ? 'Hide Budget' : 'Edit Budget'}
+      </Button>
     </Box>
   );
 }

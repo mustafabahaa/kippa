@@ -50,6 +50,14 @@ export const ledgerLib = {
     return id;
   },
 
+  async updateCategory(householdId: string, categoryId: string, updates: Partial<Pick<Category, 'name' | 'isActive'>>): Promise<void> {
+    const list = await dbLib.getDocs(householdId, 'categories');
+    const existing = (list as Category[]).find(c => c.id === categoryId);
+    if (!existing) throw new Error('Category not found');
+    const updated = { ...existing, ...updates };
+    await dbLib.setDoc(householdId, 'categories', categoryId, updated);
+  },
+
   async seedDefaultCategories(householdId: string): Promise<void> {
     const defaultCategories: Omit<Category, 'id' | 'householdId' | 'createdAt'>[] = [
       // Income
