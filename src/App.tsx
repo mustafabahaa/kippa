@@ -370,11 +370,11 @@ export default function App() {
             onClick={() => setActiveTab('entry')}
             sx={{
               position: 'fixed',
-              bottom: 88,
+              bottom: 96,
               right: 24,
               width: 56,
               height: 56,
-              bgcolor: 'secondary.container',
+              bgcolor: 'background.paper',
               color: 'primary.main',
               borderRadius: '16px',
               boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.15)',
@@ -420,16 +420,17 @@ export default function App() {
             showLabels
             sx={{
               bgcolor: 'transparent',
-              height: 72,
+              height: 80,
               '& .MuiBottomNavigationAction-root': {
                 color: 'text.secondary',
                 minWidth: 'auto',
-                padding: '8px 0',
+                padding: '10px 0 14px',
                 transition: 'all 0.2s ease',
                 '& .MuiBottomNavigationAction-label': {
                   fontSize: '12px',
                   fontWeight: 500,
-                  marginTop: '4px',
+                  marginTop: '2px',
+                  '&.Mui-selected': { fontSize: '12px' },
                 },
                 '& .MuiSvgIcon-root': {
                   fontSize: '22px',

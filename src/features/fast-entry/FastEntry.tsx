@@ -51,14 +51,25 @@ export function FastEntry() {
   const activeCycle = cycles.find(c => c.status === 'open') || null;
   const date = new Date().toISOString().split('T')[0];
 
+  // Sort accounts so EGP comes first, then cash accounts, then everything else (e.g. USD).
+  // Priority: EGP currency (0) -> cash type (1) -> other (2). Stable within each tier.
+  const sortedAccounts = [...accounts].sort((a, b) => {
+    const rank = (acc: typeof a) => {
+      if (acc.currency === 'EGP') return 0;
+      if (acc.type === 'cash') return 1;
+      return 2;
+    };
+    return rank(a) - rank(b);
+  });
+
   // Derive selected items
-  const selectedAccount = accounts.find(a => a.id === selectedAccountId) 
+  const selectedAccount = accounts.find(a => a.id === selectedAccountId)
     || accounts.find(a => a.id === localStorage.getItem('ledger_last_used_account'))
-    || accounts[0] 
+    || sortedAccounts[0]
     || null;
 
   const toAccount = accounts.find(a => a.id === toAccountId)
-    || accounts.find(a => a.id !== selectedAccount?.id)
+    || sortedAccounts.find(a => a.id !== selectedAccount?.id)
     || null;
 
   const modeCats = categories.filter(c => c.type === mode);
@@ -351,15 +362,11 @@ export function FastEntry() {
                 Category
               </Typography>
             </Box>
-            <Stack 
-              direction="row" 
-              spacing={1} 
-              sx={{ 
-                overflowX: 'auto', 
-                pb: 1, 
-                '&::-webkit-scrollbar': { display: 'none' }, 
-                msOverflowStyle: 'none', 
-                scrollbarWidth: 'none' 
+            <Box
+              sx={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: 1,
               }}
             >
               {categories.filter(c => c.type === mode).map(cat => {
@@ -383,7 +390,7 @@ export function FastEntry() {
                   />
                 );
               })}
-            </Stack>
+            </Box>
           </Box>
         )}
 
@@ -393,7 +400,7 @@ export function FastEntry() {
             {mode === 'transfer' || mode === 'conversion' ? 'Source Account' : 'From Account'}
           </Typography>
           <Stack direction="row" spacing={1.5}>
-            {accounts.map(acc => {
+            {sortedAccounts.map(acc => {
               const isSelected = selectedAccount?.id === acc.id;
               return (
                 <Box
@@ -433,8 +440,8 @@ export function FastEntry() {
               Destination Account
             </Typography>
             <Stack direction="row" spacing={1.5}>
-              {accounts.map(acc => {
-                const isSelected = toAccount?.id === acc.id;
+            {sortedAccounts.map(acc => {
+              const isSelected = toAccount?.id === acc.id;
                 return (
                   <Box
                     key={acc.id}
