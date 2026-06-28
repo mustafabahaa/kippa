@@ -24,7 +24,7 @@ export function ActivityBell({ onClick }: ActivityBellProps) {
       <IconButton
         aria-label={label}
         onClick={onClick}
-        sx={{ width: 40, height: 40 }}
+        sx={{ p: 0.5, width: 40, height: 40, border: '1px solid', borderColor: 'divider' }}
       >
         <Badge badgeContent={unreadCount} color="error">
           <NotificationsIcon sx={{ color: 'primary.main' }} />

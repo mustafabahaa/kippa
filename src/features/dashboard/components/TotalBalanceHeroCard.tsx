@@ -11,6 +11,8 @@ import {
 } from '../../../hooks/useFinance';
 import { computeDashboard } from '../../../libs/selectors';
 import { useAppContext } from '../../../hooks/useAppContext';
+import { InfoTooltip } from '../../shared/InfoTooltip';
+import { metricExplanations } from '../../shared/metricExplanations';
 
 export function TotalBalanceHeroCard() {
   const { householdId } = useAppContext();
@@ -85,7 +87,10 @@ export function TotalBalanceHeroCard() {
       />
       <Box>
         <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)', fontSize: '11px', fontWeight: 'bold', letterSpacing: '1px', textTransform: 'uppercase' }}>
-          Total EGP Equivalent
+          <InfoTooltip
+            label={<span style={{ color: 'rgba(255,255,255,0.7)' }}>Total EGP Equivalent</span>}
+            text={metricExplanations.totalEgpEquivalent}
+          />
         </Typography>
         <Typography variant="h1" sx={{ color: 'primary.contrastText', fontSize: '32px', fontWeight: 800, mt: 0.5 }}>
           EGP {data.totalEgpEquivalent.toLocaleString(undefined, { maximumFractionDigits: 0 })}
@@ -108,13 +113,19 @@ export function TotalBalanceHeroCard() {
         <Box sx={{ bgcolor: 'rgba(255,255,255,0.18)', px: 1.5, py: 0.5, borderRadius: '8px', display: 'flex', alignItems: 'center', gap: 0.5 }}>
           <span className="material-symbols-outlined" style={{ fontSize: '16px', color: '#fff' }}>schedule</span>
           <Typography variant="body2" sx={{ color: '#fff', fontSize: '12px', fontWeight: 500 }}>
-            {data.cycleProgress ? `${data.cycleProgress.remainingDays} days remaining` : '0 days left'}
+            <InfoTooltip
+              label={<span style={{ color: '#fff' }}>{data.cycleProgress ? `${data.cycleProgress.remainingDays} days remaining` : '0 days left'}</span>}
+              text={metricExplanations.daysRemaining}
+            />
           </Typography>
         </Box>
         <Box sx={{ bgcolor: 'rgba(255,255,255,0.18)', px: 1.5, py: 0.5, borderRadius: '8px', display: 'flex', alignItems: 'center', gap: 0.5 }}>
           <span className="material-symbols-outlined" style={{ fontSize: '16px', color: '#fff' }}>payments</span>
           <Typography variant="body2" sx={{ color: '#fff', fontSize: '12px', fontWeight: 500 }}>
-            Safe Daily: EGP {data.safeDailySpend.budgetSafe.toFixed(0)}
+            <InfoTooltip
+              label={<span style={{ color: '#fff' }}>Safe Daily: EGP {data.safeDailySpend.budgetSafe.toFixed(0)}</span>}
+              text={metricExplanations.safeDailyBudget}
+            />
           </Typography>
         </Box>
       </Stack>

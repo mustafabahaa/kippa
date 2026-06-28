@@ -1,15 +1,15 @@
 import { useState } from 'react';
-import { 
-  Box, 
-  Card, 
-  CardContent, 
-  Container, 
-  Stack, 
-  Typography, 
-  Button, 
-  TextField, 
-  Chip, 
-  Alert,
+import { useSnackbar } from 'notistack';
+import {
+  Box,
+  Card,
+  CardContent,
+  Container,
+  Stack,
+  Typography,
+  Button,
+  TextField,
+  Chip,
   Skeleton
 } from '@mui/material';
 import { 
@@ -28,6 +28,7 @@ import { PageHeader } from '../shared/PageHeader';
 type AdjustmentReason = 'forgotten expense' | 'bank fee' | 'exchange difference' | 'cash counting correction' | 'unknown difference';
 
 export function Reconciliation() {
+  const { enqueueSnackbar } = useSnackbar();
   const { householdId, userProfile } = useAppContext();
   // Queries
   const { data: accounts = [], isLoading: accountsLoading } = useAccounts(householdId);
@@ -45,8 +46,6 @@ export function Reconciliation() {
   const [actualBalanceInput, setActualBalanceInput] = useState('');
   const [reason, setReason] = useState<AdjustmentReason>('forgotten expense');
   const [note, setNote] = useState('');
-  const [success, setSuccess] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
   const activeCycle = cycles.find(c => c.status === 'open') || null;
@@ -93,8 +92,6 @@ export function Reconciliation() {
 
   const handleResolve = async () => {
     if (!selectedAccount) return;
-    setError(null);
-    setSuccess(null);
     setIsProcessing(true);
 
     try {
@@ -144,11 +141,11 @@ export function Reconciliation() {
         reconLog
       });
 
-      setSuccess(`Reconciliation saved successfully! Difference of ${difference.toFixed(2)} ${selectedAccount.currency} corrected.`);
+      enqueueSnackbar(`Reconciliation saved! Difference of ${difference.toFixed(2)} ${selectedAccount.currency} corrected.`, { variant: 'success' });
       setActualBalanceInput('');
       setNote('');
     } catch (err: any) {
-      setError(err.message || 'Failed to process reconciliation');
+      enqueueSnackbar(err.message || 'Failed to process reconciliation', { variant: 'error' });
     } finally {
       setIsProcessing(false);
     }
@@ -164,9 +161,6 @@ export function Reconciliation() {
           title="Reconciliation"
           subtitle="Audit your account balances manually to keep records perfectly aligned."
         />
-
-        {success && <Alert severity="success" sx={{ borderRadius: '16px' }}>{success}</Alert>}
-        {error && <Alert severity="error" sx={{ borderRadius: '16px' }}>{error}</Alert>}
 
         {/* Audit Form Card */}
         <Card sx={{ border: '1px solid', borderColor: 'divider', borderRadius: '20px' }}>
@@ -197,8 +191,6 @@ export function Reconciliation() {
                         onClick={() => {
                           setSelectedAccountId(acc.id);
                           setActualBalanceInput('');
-                          setError(null);
-                          setSuccess(null);
                         }}
                         variant={isSelected ? 'filled' : 'outlined'}
                         sx={{

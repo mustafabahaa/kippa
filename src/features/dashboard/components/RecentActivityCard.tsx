@@ -1,25 +1,26 @@
 import { useState } from 'react';
-import { 
-  Box, 
-  Card, 
-  Divider, 
-  Skeleton, 
-  Stack, 
-  Typography, 
-  IconButton, 
-  Dialog, 
-  DialogTitle, 
-  DialogContent, 
-  DialogActions, 
-  Button, 
-  RadioGroup, 
-  FormControlLabel, 
-  Radio, 
-  TextField, 
-  FormControl, 
-  InputLabel, 
-  Select, 
-  MenuItem 
+import { useSnackbar } from 'notistack';
+import {
+  Box,
+  Card,
+  Divider,
+  Skeleton,
+  Stack,
+  Typography,
+  IconButton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  RadioGroup,
+  FormControlLabel,
+  Radio,
+  TextField,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -53,6 +54,7 @@ interface RecentActivityCardProps {
 }
 
 export function RecentActivityCard({ onNavigateToActivity }: RecentActivityCardProps) {
+  const { enqueueSnackbar } = useSnackbar();
   const { householdId } = useAppContext();
   const { data: accounts = [] } = useAccounts(householdId);
   const { data: categories = [] } = useCategories(householdId);
@@ -105,7 +107,7 @@ export function RecentActivityCard({ onNavigateToActivity }: RecentActivityCardP
 
     const amount = parseFloat(editAmount);
     if (isNaN(amount) || amount <= 0) {
-      alert('Please enter a valid amount.');
+      enqueueSnackbar('Please enter a valid amount.', { variant: 'warning' });
       return;
     }
 

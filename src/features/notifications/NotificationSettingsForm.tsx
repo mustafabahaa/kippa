@@ -1,16 +1,16 @@
 import { useState } from 'react';
-import { 
-  Box, 
-  Card, 
-  CardContent, 
-  Container, 
-  Stack, 
-  Typography, 
-  Button, 
-  TextField, 
+import { useSnackbar } from 'notistack';
+import {
+  Box,
+  Card,
+  CardContent,
+  Container,
+  Stack,
+  Typography,
+  Button,
+  TextField,
   FormControlLabel,
-  Checkbox,
-  Alert
+  Checkbox
 } from '@mui/material';
 import { NotificationSettings } from '../../domain/financeTypes';
 
@@ -25,13 +25,12 @@ export function NotificationSettingsForm({
   onSave,
   isSaving
 }: NotificationSettingsFormProps) {
+  const { enqueueSnackbar } = useSnackbar();
   const [notifSettings, setNotifSettings] = useState<NotificationSettings>(dbSettings);
-  const [notifSuccess, setNotifSuccess] = useState<string | null>(null);
 
   const handleSaveNotifications = async () => {
-    setNotifSuccess(null);
     await onSave(notifSettings);
-    setNotifSuccess('Notification settings updated!');
+    enqueueSnackbar('Notification settings updated!', { variant: 'success' });
   };
 
   return (
@@ -45,12 +44,6 @@ export function NotificationSettingsForm({
             Manage reminder alerts, warning levels, and email notification configurations
           </Typography>
         </Box>
-
-        {notifSuccess && (
-          <Alert severity="success" sx={{ borderRadius: '12px' }}>
-            {notifSuccess}
-          </Alert>
-        )}
 
         <Card sx={{ border: '1px solid', borderColor: 'divider', borderRadius: '20px', boxShadow: 'none' }}>
           <CardContent sx={{ p: 2.5 }}>

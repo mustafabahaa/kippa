@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { 
   Box, 
   CssBaseline, 
@@ -30,8 +30,13 @@ import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import HomeIcon from '@mui/icons-material/Home';
 import NotificationsActiveIcon from '@mui/icons-material/NotificationsActive';
 import HistoryIcon from '@mui/icons-material/History';
+import LightModeIcon from '@mui/icons-material/LightMode';
+import DarkModeIcon from '@mui/icons-material/DarkMode';
+import SettingsBrightnessIcon from '@mui/icons-material/SettingsBrightness';
+import CheckIcon from '@mui/icons-material/Check';
 
-import { appTheme } from './theme';
+import { createAppTheme } from './theme';
+import { useThemeMode, type ThemeModePref } from './hooks/useThemeMode';
 import { AuthScreen } from './features/auth/AuthScreen';
 import { Dashboard } from './features/dashboard/Dashboard';
 import { FastEntry } from './features/fast-entry/FastEntry';
@@ -47,14 +52,17 @@ import { ActivityBell } from './features/activity/ActivityBell';
 import { useAppContext } from './hooks/useAppContext';
 
 export default function App() {
-  const { 
-    userProfile, 
-    householdId, 
-    isAuthLoading, 
-    userHouseholds, 
-    logout, 
-    switchHousehold 
+  const {
+    userProfile,
+    householdId,
+    isAuthLoading,
+    userHouseholds,
+    logout,
+    switchHousehold
   } = useAppContext();
+
+  const { modePref, resolvedMode, setModePref } = useThemeMode();
+  const theme = useMemo(() => createAppTheme(resolvedMode), [resolvedMode]);
 
   const [activeTab, setActiveTab] = useState<string>(() => {
     return localStorage.getItem('finance_active_tab') || 'dashboard';
@@ -82,7 +90,7 @@ export default function App() {
 
   if (isAuthLoading) {
     return (
-      <ThemeProvider theme={appTheme}>
+      <ThemeProvider theme={theme}>
         <CssBaseline />
         <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', bgcolor: 'background.paper', gap: 2 }}>
           <img src="/icons/icon.svg" alt="Household Ledger Logo" style={{ width: 64, height: 64, animation: 'pulse 1.5s infinite ease-in-out' }} />
@@ -103,7 +111,7 @@ export default function App() {
 
   if (!userProfile || !householdId) {
     return (
-      <ThemeProvider theme={appTheme}>
+      <ThemeProvider theme={theme}>
         <CssBaseline />
         <AuthScreen />
       </ThemeProvider>
@@ -111,11 +119,11 @@ export default function App() {
   }
 
   return (
-    <ThemeProvider theme={appTheme}>
+    <ThemeProvider theme={theme}>
       <CssBaseline />
       <Box sx={{ minHeight: '100vh', pb: { xs: 10, md: 12 }, bgcolor: 'background.default' }}>
         {/* Top Navbar */}
-        <AppBar position="static" color="transparent" elevation={0} sx={{ py: 1 }}>
+        <AppBar position="sticky" color="transparent" elevation={0} sx={{ py: 1, backdropFilter: 'blur(8px)' }}>
           <Toolbar sx={{ justifyContent: 'space-between', px: { xs: 2, sm: 3 } }}>
             {/* Left: Logo & Brand Name */}
             <Stack direction="row" spacing={1} alignItems="center">
@@ -274,6 +282,37 @@ export default function App() {
                   <Divider />
                 </>
               )}
+
+              {/* Appearance / Theme */}
+              <Box sx={{ px: 2.5, py: 1 }}>
+                <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.secondary', textTransform: 'uppercase', fontSize: '0.675rem', letterSpacing: '0.05em' }}>
+                  Appearance
+                </Typography>
+              </Box>
+              {([
+                { value: 'light' as ThemeModePref, label: 'Light', Icon: LightModeIcon },
+                { value: 'dark' as ThemeModePref, label: 'Dark', Icon: DarkModeIcon },
+                { value: 'system' as ThemeModePref, label: 'System default', Icon: SettingsBrightnessIcon },
+              ]).map(({ value, label, Icon }) => {
+                const selected = modePref === value;
+                return (
+                  <MenuItem
+                    key={value}
+                    onClick={() => { setModePref(value); handleCloseProfileMenu(); }}
+                    sx={{ px: 1.5, py: 0.75, borderRadius: '8px', mt: 0.25 }}
+                  >
+                    <ListItemIcon>
+                      <Icon fontSize="small" />
+                    </ListItemIcon>
+                    <ListItemText primary={label} primaryTypographyProps={{ fontSize: '0.875rem', fontWeight: 500 }} />
+                    {selected && (
+                      <CheckIcon fontSize="small" sx={{ color: 'primary.main', ml: 1 }} />
+                    )}
+                  </MenuItem>
+                );
+              })}
+
+              <Divider />
 
               {/* Shortcuts */}
               <MenuItem onClick={() => { handleCloseProfileMenu(); setActiveTab('accounts'); }}>

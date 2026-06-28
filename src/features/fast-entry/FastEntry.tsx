@@ -8,7 +8,6 @@ import {
   Typography,
   Chip,
   TextField,
-  Alert,
   Skeleton
 } from '@mui/material';
 import { MobileDatePicker } from '@mui/x-date-pickers/MobileDatePicker';
@@ -40,8 +39,6 @@ export function FastEntry() {
   const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null);
   const [description, setDescription] = useState('');
   const [showNoteField, setShowNoteField] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
 
   // Conversion / Transfer Specific States
   const [toAccountId, setToAccountId] = useState<string | null>(null);
@@ -72,24 +69,17 @@ export function FastEntry() {
     return rank(a) - rank(b);
   });
 
-  // Derive selected items
-  const selectedAccount = accounts.find(a => a.id === selectedAccountId)
-    || accounts.find(a => a.id === localStorage.getItem('ledger_last_used_account'))
-    || sortedAccounts[0]
-    || null;
+  // Derive selected items. Accounts default to nothing — the user must
+  // explicitly pick one, and we warn via snackbar if they forget on save.
+  const selectedAccount = accounts.find(a => a.id === selectedAccountId) || null;
 
-  const toAccount = accounts.find(a => a.id === toAccountId)
-    || sortedAccounts.find(a => a.id !== selectedAccount?.id)
-    || null;
+  const toAccount = accounts.find(a => a.id === toAccountId) || null;
 
   const selectedCategory = (selectedCategoryId && categories.find(c => c.id === selectedCategoryId && c.type === mode))
     || null;
 
   // Keypad controls
   const handleKeypadPress = (val: string) => {
-    setError(null);
-    setSuccess(null);
-    
     const activeSetter = isKeypadForDest ? setToAmountStr : setAmountStr;
     const activeVal = isKeypadForDest ? toAmountStr : amountStr;
 
@@ -105,12 +95,10 @@ export function FastEntry() {
   };
 
   const handleSave = async () => {
-    setError(null);
-    setSuccess(null);
     const amount = parseFloat(amountStr);
 
     if (isNaN(amount) || amount <= 0) {
-      setError('Please enter a valid amount');
+      enqueueSnackbar('Please enter a valid amount', { variant: 'warning' });
       return;
     }
 
@@ -120,7 +108,7 @@ export function FastEntry() {
     }
 
     if (!selectedAccount) {
-      setError('Please select an account');
+      enqueueSnackbar('Please select a From Account', { variant: 'warning' });
       return;
     }
 
@@ -145,7 +133,7 @@ export function FastEntry() {
           ]
         });
         localStorage.setItem('ledger_last_used_account', selectedAccount.id);
-        setSuccess(`Saved! Logged expense of ${amount} ${selectedAccount.currency}`);
+        enqueueSnackbar(`Saved! Logged expense of ${amount} ${selectedAccount.currency}`, { variant: 'success' });
         setAmountStr('0');
         setDescription('');
         setSelectedCategoryId(null);
@@ -170,16 +158,20 @@ export function FastEntry() {
             }
           ]
         });
-        setSuccess(`Saved! Logged income of ${amount} ${selectedAccount.currency}`);
+        enqueueSnackbar(`Saved! Logged income of ${amount} ${selectedAccount.currency}`, { variant: 'success' });
         setAmountStr('0');
         setDescription('');
         setSelectedCategoryId(null);
         setShowNoteField(false);
       } 
       else if (mode === 'conversion') {
+        if (!toAccount) {
+          enqueueSnackbar('Please select a Destination Account', { variant: 'warning' });
+          return;
+        }
         const toAmount = parseFloat(toAmountStr);
-        if (!toAccount || isNaN(toAmount) || toAmount <= 0) {
-          setError('Please select destination details');
+        if (isNaN(toAmount) || toAmount <= 0) {
+          enqueueSnackbar('Please enter a valid destination amount', { variant: 'warning' });
           return;
         }
 
@@ -205,7 +197,7 @@ export function FastEntry() {
             }
           ]
         });
-        setSuccess(`Saved conversion!`);
+        enqueueSnackbar('Saved conversion!', { variant: 'success' });
         setAmountStr('0');
         setToAmountStr('0');
         setDescription('');
@@ -213,7 +205,7 @@ export function FastEntry() {
       }
       else if (mode === 'transfer') {
         if (!toAccount) {
-          setError('Please select destination account');
+          enqueueSnackbar('Please select a Destination Account', { variant: 'warning' });
           return;
         }
 
@@ -239,13 +231,13 @@ export function FastEntry() {
             }
           ]
         });
-        setSuccess(`Saved transfer!`);
+        enqueueSnackbar('Saved transfer!', { variant: 'success' });
         setAmountStr('0');
         setDescription('');
         setShowNoteField(false);
       }
     } catch (err: any) {
-      setError(err?.message || 'Error occurred saving transaction');
+      enqueueSnackbar(err?.message || 'Error occurred saving transaction', { variant: 'error' });
     }
   };
 
@@ -279,8 +271,6 @@ export function FastEntry() {
               onClick={() => {
                 setMode(m);
                 setSelectedCategoryId(null);
-                setError(null);
-                setSuccess(null);
               }}
               variant={mode === m ? 'contained' : 'outlined'}
               sx={{ 
@@ -300,70 +290,6 @@ export function FastEntry() {
             </Button>
           ))}
         </Stack>
-
-        {/* Amount Display Area */}
-        <Box 
-          sx={{ 
-            display: 'flex', 
-            flexDirection: 'column', 
-            alignItems: 'center', 
-            justifyContent: 'center', 
-            py: 3, 
-            bgcolor: 'background.paper', 
-            borderRadius: '20px', 
-            border: '1px solid', 
-            borderColor: 'divider',
-            cursor: 'pointer'
-          }}
-          onClick={() => setIsKeypadForDest(false)}
-        >
-          <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '12px', fontWeight: 500, mb: 1 }}>
-            {mode === 'conversion' ? 'Source Amount' : 'Amount to Log'}
-          </Typography>
-          <Box display="flex" alignItems="baseline" sx={{ color: isKeypadForDest ? 'text.secondary' : 'primary.main' }}>
-            <Typography variant="h2" sx={{ fontSize: '28px', mr: 0.5, fontWeight: 500 }}>
-              {currentCurrencySymbol}
-            </Typography>
-            <Typography variant="h1" sx={{ fontSize: '44px', fontWeight: 700 }}>
-              {amountStr}
-            </Typography>
-          </Box>
-        </Box>
-
-        {/* Secondary Amount Display for Conversions */}
-        {mode === 'conversion' && (
-          <Box 
-            sx={{ 
-              display: 'flex', 
-              flexDirection: 'column', 
-              alignItems: 'center', 
-              justifyContent: 'center', 
-              py: 2.5, 
-              bgcolor: 'background.paper', 
-              borderRadius: '20px', 
-              border: '1px solid', 
-              borderColor: isKeypadForDest ? 'primary.main' : 'divider',
-              cursor: 'pointer'
-            }}
-            onClick={() => setIsKeypadForDest(true)}
-          >
-            <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '12px', fontWeight: 500, mb: 0.5 }}>
-              Destination Amount
-            </Typography>
-            <Box display="flex" alignItems="baseline" sx={{ color: isKeypadForDest ? 'primary.main' : 'text.secondary' }}>
-              <Typography variant="h2" sx={{ fontSize: '24px', mr: 0.5, fontWeight: 500 }}>
-                {toAccount?.currency === 'USD' ? '$' : 'EGP'}
-              </Typography>
-              <Typography variant="h1" sx={{ fontSize: '36px', fontWeight: 700 }}>
-                {toAmountStr}
-              </Typography>
-            </Box>
-          </Box>
-        )}
-
-        {/* Error / Success alerts */}
-        {error && <Alert severity="error" sx={{ borderRadius: '12px' }}>{error}</Alert>}
-        {success && <Alert severity="success" sx={{ borderRadius: '12px' }}>{success}</Alert>}
 
         {/* Category Selection (Only for expense/income) */}
         {(mode === 'expense' || mode === 'income') && (
@@ -407,9 +333,16 @@ export function FastEntry() {
 
         {/* Account Selection */}
         <Box sx={{ width: '100%' }}>
-          <Typography variant="body1" sx={{ fontWeight: 'bold', color: 'text.primary', fontSize: '14px', mb: 1 }}>
-            {mode === 'transfer' || mode === 'conversion' ? 'Source Account' : 'From Account'}
-          </Typography>
+          <Box display="flex" alignItems="center" justifyContent="space-between" sx={{ mb: 1 }}>
+            <Typography variant="body1" sx={{ fontWeight: 'bold', color: 'text.primary', fontSize: '14px' }}>
+              {mode === 'transfer' || mode === 'conversion' ? 'Source Account' : 'From Account'}
+            </Typography>
+            {!selectedAccount && (
+              <Typography variant="caption" sx={{ color: 'error.main', fontSize: '11px', fontWeight: 600 }}>
+                Tap to select
+              </Typography>
+            )}
+          </Box>
           <Stack direction="row" spacing={1.5}>
             {sortedAccounts.map(acc => {
               const isSelected = selectedAccount?.id === acc.id;
@@ -447,9 +380,16 @@ export function FastEntry() {
         {/* Target Account Selection (Only for transfer/conversion) */}
         {(mode === 'transfer' || mode === 'conversion') && (
           <Box sx={{ width: '100%' }}>
-            <Typography variant="body1" sx={{ fontWeight: 'bold', color: 'text.primary', fontSize: '14px', mb: 1 }}>
-              Destination Account
-            </Typography>
+            <Box display="flex" alignItems="center" justifyContent="space-between" sx={{ mb: 1 }}>
+              <Typography variant="body1" sx={{ fontWeight: 'bold', color: 'text.primary', fontSize: '14px' }}>
+                Destination Account
+              </Typography>
+              {!toAccount && (
+                <Typography variant="caption" sx={{ color: 'error.main', fontSize: '11px', fontWeight: 600 }}>
+                  Tap to select
+                </Typography>
+              )}
+            </Box>
             <Stack direction="row" spacing={1.5}>
             {sortedAccounts.map(acc => {
               const isSelected = toAccount?.id === acc.id;
@@ -548,6 +488,68 @@ export function FastEntry() {
 
         {/* Custom Numeric Keypad */}
         <Box sx={{ mt: 1 }}>
+          {/* Amount display lives directly above the keypad so the value being
+              entered is always visible while typing (mobile UX). */}
+          <Box
+            onClick={() => mode === 'conversion' && setIsKeypadForDest(false)}
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              py: 2,
+              mb: 1.5,
+              bgcolor: 'background.paper',
+              borderRadius: '16px',
+              border: '1px solid',
+              borderColor: isKeypadForDest && mode === 'conversion' ? 'divider' : 'primary.main',
+              cursor: mode === 'conversion' ? 'pointer' : 'default',
+            }}
+          >
+            <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '12px', fontWeight: 500, mb: 0.5 }}>
+              {mode === 'conversion' ? 'Source Amount' : 'Amount to Log'}
+            </Typography>
+            <Box display="flex" alignItems="baseline" gap={0.5} sx={{ color: isKeypadForDest ? 'text.secondary' : 'primary.main' }}>
+              <Typography sx={{ fontSize: '20px', fontWeight: 600 }}>
+                {currentCurrencySymbol}
+              </Typography>
+              <Typography sx={{ fontSize: '32px', fontWeight: 700 }}>
+                {amountStr}
+              </Typography>
+            </Box>
+          </Box>
+
+          {/* Destination amount (conversion mode only) */}
+          {mode === 'conversion' && (
+            <Box
+              onClick={() => setIsKeypadForDest(true)}
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                py: 1.5,
+                mb: 1.5,
+                bgcolor: 'background.paper',
+                borderRadius: '16px',
+                border: '1px solid',
+                borderColor: isKeypadForDest ? 'primary.main' : 'divider',
+                cursor: 'pointer',
+              }}
+            >
+              <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '12px', fontWeight: 500, mb: 0.5 }}>
+                Destination Amount
+              </Typography>
+              <Box display="flex" alignItems="baseline" gap={0.5} sx={{ color: isKeypadForDest ? 'primary.main' : 'text.secondary' }}>
+                <Typography sx={{ fontSize: '18px', fontWeight: 600 }}>
+                  {toAccount?.currency === 'USD' ? '$' : 'EGP'}
+                </Typography>
+                <Typography sx={{ fontSize: '28px', fontWeight: 700 }}>
+                  {toAmountStr}
+                </Typography>
+              </Box>
+            </Box>
+          )}
           <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1 }}>
             {['1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '0', 'back'].map(k => {
               const isBack = k === 'back';

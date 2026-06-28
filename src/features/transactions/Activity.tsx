@@ -1,26 +1,27 @@
 import { useState } from 'react';
-import { 
-  Box, 
-  Card, 
-  CardContent, 
-  Container, 
-  Stack, 
-  Typography, 
-  Button, 
-  TextField, 
-  Select, 
-  MenuItem, 
-  FormControl, 
-  InputLabel, 
-  FormControlLabel, 
-  Radio, 
-  RadioGroup, 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableContainer, 
-  TableHead, 
-  TableRow, 
+import { useSnackbar } from 'notistack';
+import {
+  Box,
+  Card,
+  CardContent,
+  Container,
+  Stack,
+  Typography,
+  Button,
+  TextField,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  FormControlLabel,
+  Radio,
+  RadioGroup,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
   Paper,
   Skeleton,
   IconButton,
@@ -60,6 +61,7 @@ function formatTime(iso: string): string {
 }
 
 export function Activity() {
+  const { enqueueSnackbar } = useSnackbar();
   const { householdId } = useAppContext();
   // Filter States
   const [searchTerm, setSearchTerm] = useState('');
@@ -125,7 +127,7 @@ export function Activity() {
 
     const amount = parseFloat(editAmount);
     if (isNaN(amount) || amount <= 0) {
-      alert('Please enter a valid amount.');
+      enqueueSnackbar('Please enter a valid amount.', { variant: 'warning' });
       return;
     }
 

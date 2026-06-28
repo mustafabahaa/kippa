@@ -1,16 +1,18 @@
 import { Box, Card, CardContent, LinearProgress, Skeleton, Stack, Typography } from '@mui/material';
-import { 
-  useAccounts, 
-  useTransactions, 
-  useLedgerLines, 
-  useCategories, 
-  useCycles, 
-  useUsdRate, 
-  useBudgetAllocations, 
-  useExpectedIncomes 
+import {
+  useAccounts,
+  useTransactions,
+  useLedgerLines,
+  useCategories,
+  useCycles,
+  useUsdRate,
+  useBudgetAllocations,
+  useExpectedIncomes
 } from '../../../hooks/useFinance';
 import { computeDashboard, DashboardData } from '../../../libs/selectors';
 import { useAppContext } from '../../../hooks/useAppContext';
+import { InfoTooltip } from '../../shared/InfoTooltip';
+import { metricExplanations } from '../../shared/metricExplanations';
 
 export function BudgetPulseCard() {
   const { householdId } = useAppContext();
@@ -101,10 +103,18 @@ export function BudgetPulseCard() {
             />
             <Box display="flex" justifyContent="space-between" sx={{ mt: 1 }}>
               <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                Spending ratio: {Math.round(data.spending.plannedBudget > 0 ? (data.spending.actual / data.spending.plannedBudget) * 100 : 0)}%
+                <InfoTooltip
+                  label="Spending ratio"
+                  text={metricExplanations.spendingRatio}
+                />
+                : {Math.round(data.spending.plannedBudget > 0 ? (data.spending.actual / data.spending.plannedBudget) * 100 : 0)}%
               </Typography>
               <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                Cycle progress: {data.cycleProgress ? Math.round(data.cycleProgress.ratio * 100) : 0}%
+                <InfoTooltip
+                  label="Cycle progress"
+                  text={metricExplanations.cycleProgress}
+                />
+                : {data.cycleProgress ? Math.round(data.cycleProgress.ratio * 100) : 0}%
               </Typography>
             </Box>
           </Box>
@@ -115,9 +125,43 @@ export function BudgetPulseCard() {
           </Box>
         </Box>
 
-        <Typography variant="body2" sx={{ mt: 1.5, color: 'text.secondary', fontStyle: 'italic', fontSize: '13px' }}>
-          Projected cycle spending: EGP <strong>{data.spending.projected.toFixed(0)}</strong> (Target: EGP {data.spending.plannedBudget.toFixed(0)})
-        </Typography>
+        <Box
+          sx={{
+            mt: 2,
+            p: 1.5,
+            borderRadius: 2,
+            border: '1px solid',
+            borderColor: 'divider',
+            bgcolor: 'action.hover',
+          }}
+        >
+          <Box display="flex" alignItems="center" gap={0.5} sx={{ mb: 1 }}>
+            <Typography variant="caption" sx={{ color: 'text.secondary', fontStyle: 'italic' }}>
+              <InfoTooltip
+                label="Projected cycle spending"
+                text={metricExplanations.projectedCycleSpending}
+              />
+            </Typography>
+          </Box>
+          <Box display="flex" justifyContent="space-between" alignItems="flex-end" gap={2}>
+            <Box>
+              <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
+                Projected
+              </Typography>
+              <Typography variant="h6" sx={{ fontWeight: 'bold', color: getStatusColor(data.saving.status), lineHeight: 1.2 }}>
+                EGP {data.spending.projected.toFixed(0)}
+              </Typography>
+            </Box>
+            <Box sx={{ textAlign: 'right' }}>
+              <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
+                Target
+              </Typography>
+              <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.primary', lineHeight: 1.2 }}>
+                EGP {data.spending.plannedBudget.toFixed(0)}
+              </Typography>
+            </Box>
+          </Box>
+        </Box>
       </CardContent>
     </Card>
   );

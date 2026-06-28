@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { 
-  Box, 
-  Button, 
-  TextField, 
+import { useSnackbar } from 'notistack';
+import {
+  Box,
+  Button,
+  TextField,
   IconButton,
   Stack,
   Typography,
@@ -14,8 +15,7 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
-  DialogActions,
-  Alert
+  DialogActions
 } from '@mui/material';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import AddIcon from '@mui/icons-material/Add';
@@ -49,6 +49,7 @@ export function BudgetAllocationsConfig({
   dbAllocations,
   cycles
 }: BudgetAllocationsConfigProps) {
+  const { enqueueSnackbar } = useSnackbar();
   const expenseCategories = categories.filter(c => c.type === 'expense');
 
   const [rows, setRows] = useState<AllocationRow[]>(() => {
@@ -72,8 +73,6 @@ export function BudgetAllocationsConfig({
     return initial;
   });
 
-  const [successMsg, setSuccessMsg] = useState<string | null>(null);
-
   // Rename dialog state
   const [renameDialogOpen, setRenameDialogOpen] = useState(false);
   const [renameCategoryId, setRenameCategoryId] = useState<string | null>(null);
@@ -94,19 +93,16 @@ export function BudgetAllocationsConfig({
 
   const handleAddExistingCategory = (categoryId: string) => {
     setRows(prev => [...prev, { categoryId, plannedAmount: '0' }]);
-    setSuccessMsg(null);
   };
 
   const handleRemoveCategory = (categoryId: string) => {
     setRows(prev => prev.filter(r => r.categoryId !== categoryId));
-    setSuccessMsg(null);
   };
 
   const handleAmountChange = (categoryId: string, value: string) => {
     setRows(prev => prev.map(r =>
       r.categoryId === categoryId ? { ...r, plannedAmount: value } : r
     ));
-    setSuccessMsg(null);
   };
 
   const handleOpenRename = (categoryId: string) => {
@@ -138,11 +134,9 @@ export function BudgetAllocationsConfig({
     setRows(prev => [...prev, { categoryId: newId, plannedAmount: '0' }]);
     setAddDialogOpen(false);
     setNewCategoryName('');
-    setSuccessMsg(null);
   };
 
   const handleSaveAllocations = async () => {
-    setSuccessMsg(null);
     const payload: Omit<BudgetAllocation, 'id' | 'householdId'>[] = rows.map(row => ({
       budgetCycleId: activeCycle.id,
       categoryId: row.categoryId,
@@ -156,19 +150,19 @@ export function BudgetAllocationsConfig({
       cycleId: activeCycle.id,
       allocations: payload
     });
-    setSuccessMsg('Allocations saved!');
+    enqueueSnackbar('Allocations saved!', { variant: 'success' });
   };
 
   const handleCopyPreviousAllocations = async () => {
     const closedCycle = cycles.find(c => c.status === 'closed');
     if (!closedCycle) {
-      alert('No previous cycle allocations found to copy.');
+      enqueueSnackbar('No previous cycle allocations found to copy.', { variant: 'warning' });
       return;
     }
 
     const prevAllocations = await cyclesLib.getBudgetAllocations(householdId, closedCycle.id);
     if (prevAllocations.length === 0) {
-      alert('Previous cycle had no allocations configured.');
+      enqueueSnackbar('Previous cycle had no allocations configured.', { variant: 'warning' });
       return;
     }
 
@@ -178,7 +172,6 @@ export function BudgetAllocationsConfig({
     }));
 
     setRows(newRows);
-    setSuccessMsg(null);
   };
 
   const getCategoryName = (catId: string) => {
@@ -296,12 +289,6 @@ export function BudgetAllocationsConfig({
           {saveAllocationsBatchMutation.isPending ? 'Saving...' : 'Save'}
         </Button>
       </Box>
-
-      {successMsg && (
-        <Alert severity="success" sx={{ mt: 1.5 }}>
-          {successMsg}
-        </Alert>
-      )}
 
       {/* Rename Category Dialog */}
       <Dialog open={renameDialogOpen} onClose={() => setRenameDialogOpen(false)}>

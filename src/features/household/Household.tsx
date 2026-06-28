@@ -1,15 +1,14 @@
 import { useState } from 'react';
-import { 
-  Box, 
-  Card, 
-  CardContent, 
-  Container, 
-  Stack, 
-  Typography, 
-  Button, 
+import { useSnackbar } from 'notistack';
+import {
+  Box,
+  Card,
+  CardContent,
+  Container,
+  Stack,
+  Typography,
+  Button,
   Divider,
-  Alert,
-  Snackbar,
   TextField,
   Chip,
   List,
@@ -37,31 +36,17 @@ import type { Household } from '../../domain/financeTypes';
 import { useAppContext } from '../../hooks/useAppContext';
 
 export function Household() {
-  const { 
-    userProfile, 
-    householdId, 
-    userHouseholds: householdsList, 
+  const { enqueueSnackbar } = useSnackbar();
+  const {
+    userProfile,
+    householdId,
+    userHouseholds: householdsList,
     isLoadingHouseholds: householdsLoading,
     switchHousehold,
     createHousehold,
     joinHousehold,
     leaveHousehold
   } = useAppContext();
-
-  // Toast Snackbar State
-  const [toast, setToast] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({
-    open: false,
-    message: '',
-    severity: 'success',
-  });
-
-  const showToast = (message: string, severity: 'success' | 'error') => {
-    setToast({ open: true, message, severity });
-  };
-
-  const handleCloseToast = () => {
-    setToast(prev => ({ ...prev, open: false }));
-  };
 
   // Leave Confirmation Dialog
   const [leaveConfirmOpen, setLeaveConfirmOpen] = useState(false);
@@ -74,16 +59,16 @@ export function Household() {
 
   const handleCopyHouseholdId = (id: string) => {
     navigator.clipboard.writeText(id);
-    showToast('Invite ID copied to clipboard!', 'success');
+    enqueueSnackbar('Invite ID copied to clipboard!', { variant: 'success' });
   };
 
   const handleSwitchHousehold = async (id: string) => {
     setActionLoading(true);
     try {
       await switchHousehold(id);
-      showToast(`Switched to household successfully!`, 'success');
+      enqueueSnackbar('Switched to household successfully!', { variant: 'success' });
     } catch (err: any) {
-      showToast(err.message || 'Failed to switch household.', 'error');
+      enqueueSnackbar(err.message || 'Failed to switch household.', { variant: 'error' });
     } finally {
       setActionLoading(false);
     }
@@ -91,16 +76,16 @@ export function Household() {
 
   const handleCreateHousehold = async () => {
     if (!newHouseholdName.trim()) {
-      showToast('Please enter a household name', 'error');
+      enqueueSnackbar('Please enter a household name', { variant: 'warning' });
       return;
     }
     setActionLoading(true);
     try {
       const newHh = await createHousehold(newHouseholdName.trim());
       setNewHouseholdName('');
-      showToast(`Household "${newHh.name}" created and set as active!`, 'success');
+      enqueueSnackbar(`Household "${newHh.name}" created and set as active!`, { variant: 'success' });
     } catch (err: any) {
-      showToast(err.message || 'Failed to create household', 'error');
+      enqueueSnackbar(err.message || 'Failed to create household', { variant: 'error' });
     } finally {
       setActionLoading(false);
     }
@@ -108,16 +93,16 @@ export function Household() {
 
   const handleJoinHousehold = async () => {
     if (!householdIdToJoin.trim()) {
-      showToast('Please enter a valid household ID', 'error');
+      enqueueSnackbar('Please enter a valid household ID', { variant: 'warning' });
       return;
     }
     setActionLoading(true);
     try {
       await joinHousehold(householdIdToJoin.trim());
       setHouseholdIdToJoin('');
-      showToast('Joined new household successfully!', 'success');
+      enqueueSnackbar('Joined new household successfully!', { variant: 'success' });
     } catch (err: any) {
-      showToast(err.message || 'Failed to join household. Make sure the ID is correct.', 'error');
+      enqueueSnackbar(err.message || 'Failed to join household. Make sure the ID is correct.', { variant: 'error' });
     } finally {
       setActionLoading(false);
     }
@@ -138,10 +123,10 @@ export function Household() {
     setActionLoading(true);
     try {
       await leaveHousehold(householdToLeave.id);
-      showToast(`Successfully left household "${householdToLeave.name}"`, 'success');
+      enqueueSnackbar(`Successfully left household "${householdToLeave.name}"`, { variant: 'success' });
       handleCloseLeaveConfirm();
     } catch (err: any) {
-      showToast(err.message || 'Failed to leave household.', 'error');
+      enqueueSnackbar(err.message || 'Failed to leave household.', { variant: 'error' });
     } finally {
       setActionLoading(false);
     }
@@ -402,18 +387,6 @@ export function Household() {
           </Button>
         </DialogActions>
       </Dialog>
-
-      {/* Toast Notification Snackbar */}
-      <Snackbar 
-        open={toast.open} 
-        autoHideDuration={6000} 
-        onClose={handleCloseToast}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-      >
-        <Alert onClose={handleCloseToast} severity={toast.severity} sx={{ width: '100%', borderRadius: '12px' }}>
-          {toast.message}
-        </Alert>
-      </Snackbar>
     </Container>
   );
 }

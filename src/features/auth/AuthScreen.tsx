@@ -1,28 +1,29 @@
 import { useState } from 'react';
-import { 
-  Box, 
-  Button, 
-  Card, 
-  CardContent, 
-  Container, 
-  Stack, 
-  TextField, 
-  Typography, 
+import { useSnackbar } from 'notistack';
+import {
+  Box,
+  Button,
+  Card,
+  CardContent,
+  Container,
+  Stack,
+  TextField,
+  Typography,
   Alert
 } from '@mui/material';
 import { isFirebaseReady } from '../../libs/auth';
 import { useAppContext } from '../../hooks/useAppContext';
 
 export function AuthScreen() {
-  const { 
-    userProfile, 
-    loginWithGoogle, 
-    logout, 
-    createHousehold, 
-    joinHousehold 
+  const { enqueueSnackbar } = useSnackbar();
+  const {
+    userProfile,
+    loginWithGoogle,
+    logout,
+    createHousehold,
+    joinHousehold
   } = useAppContext();
 
-  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   // Household setup state
@@ -30,12 +31,11 @@ export function AuthScreen() {
   const [householdIdToJoin, setHouseholdIdToJoin] = useState('');
 
   const handleGoogleSignIn = async () => {
-    setError(null);
     setLoading(true);
     try {
       await loginWithGoogle();
     } catch (err: any) {
-      setError(err.message || 'Google Authentication failed');
+      enqueueSnackbar(err.message || 'Google Authentication failed', { variant: 'error' });
     } finally {
       setLoading(false);
     }
@@ -44,15 +44,14 @@ export function AuthScreen() {
   const handleCreateHousehold = async () => {
     if (!userProfile) return;
     if (!householdName.trim()) {
-      setError('Please enter a household name');
+      enqueueSnackbar('Please enter a household name', { variant: 'warning' });
       return;
     }
-    setError(null);
     setLoading(true);
     try {
       await createHousehold(householdName.trim());
     } catch (err: any) {
-      setError(err.message || 'Failed to create household');
+      enqueueSnackbar(err.message || 'Failed to create household', { variant: 'error' });
     } finally {
       setLoading(false);
     }
@@ -61,15 +60,14 @@ export function AuthScreen() {
   const handleJoinHousehold = async () => {
     if (!userProfile) return;
     if (!householdIdToJoin.trim()) {
-      setError('Please enter a valid household ID');
+      enqueueSnackbar('Please enter a valid household ID', { variant: 'warning' });
       return;
     }
-    setError(null);
     setLoading(true);
     try {
       await joinHousehold(householdIdToJoin.trim());
     } catch (err: any) {
-      setError(err.message || 'Failed to join household. Make sure the ID is correct.');
+      enqueueSnackbar(err.message || 'Failed to join household. Make sure the ID is correct.', { variant: 'error' });
     } finally {
       setLoading(false);
     }
@@ -115,8 +113,6 @@ export function AuthScreen() {
                     Welcome, {userProfile.displayName}! You need to create or join a household container to start.
                   </Typography>
                 </Box>
-
-                {error && <Alert severity="error" sx={{ borderRadius: 3 }}>{error}</Alert>}
 
                 <Stack spacing={3.5}>
                   <Box>
@@ -220,8 +216,6 @@ export function AuthScreen() {
               to continue to Household Ledger
             </Typography>
           </Box>
-
-          {error && <Alert severity="error" sx={{ width: '100%', borderRadius: '12px' }}>{error}</Alert>}
 
           {/* Google Sign In Button */}
           <Box sx={{ width: '100%', py: 1 }}>
