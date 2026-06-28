@@ -22,6 +22,7 @@ import {
   useCreateTransactionMutation 
 } from '../../hooks/useFinance';
 import { useAppContext } from '../../hooks/useAppContext';
+import { PageHeader } from '../shared/PageHeader';
 
 type EntryMode = 'expense' | 'income' | 'conversion' | 'transfer';
 
@@ -234,7 +235,7 @@ export function FastEntry() {
     return (
       <Container maxWidth="xs" sx={{ py: 1, px: 2 }}>
         <Stack spacing={3}>
-          <Skeleton variant="text" width="60%" height={32} />
+          <PageHeader title="Fast Entry" subtitle="Log expenses, income, conversions & transfers" />
           <Skeleton variant="rectangular" width="100%" height={100} sx={{ borderRadius: '20px' }} />
           <Skeleton variant="rectangular" width="100%" height={250} sx={{ borderRadius: '20px' }} />
         </Stack>
@@ -246,6 +247,9 @@ export function FastEntry() {
     <Container maxWidth="xs" sx={{ py: 1, px: 2 }}>
       <Stack spacing={2.5}>
         
+        {/* Page Header */}
+        <PageHeader title="Fast Entry" subtitle="Log expenses, income, conversions & transfers" />
+
         {/* Mode Selector */}
         <Stack direction="row" spacing={1} sx={{ mt: 1 }}>
           {(['expense', 'income', 'conversion', 'transfer'] as EntryMode[]).map(m => (

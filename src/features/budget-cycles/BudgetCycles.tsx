@@ -1,14 +1,11 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { 
   Box, 
-  Card, 
-  CardContent, 
   Container, 
   Stack, 
   Typography, 
   Button, 
   TextField, 
-  Divider, 
   Dialog, 
   DialogTitle, 
   DialogContent, 
@@ -16,18 +13,21 @@ import {
   FormControlLabel, 
   Checkbox, 
   Grid, 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableContainer, 
-  TableHead, 
-  TableRow, 
-  Paper,
   Skeleton,
-  Chip
+  Chip,
+  IconButton,
+  LinearProgress,
+  Collapse
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
+import SettingsIcon from '@mui/icons-material/Settings';
+import EventIcon from '@mui/icons-material/Event';
+import TimerIcon from '@mui/icons-material/Timer';
+import HistoryIcon from '@mui/icons-material/History';
 import { 
   useCategories, 
   useCycles, 
@@ -37,9 +37,60 @@ import {
 } from '../../hooks/useFinance';
 import { BudgetAllocationsConfig } from './BudgetAllocationsConfig';
 import { useAppContext } from '../../hooks/useAppContext';
+import { PageHeader } from '../shared/PageHeader';
+import { BudgetCycle } from '../../domain/financeTypes';
+
+// ── Helpers ──────────────────────────────────────────────────────────────
+
+function getDaysInfo(startDate: string, endDate?: string) {
+  const start = new Date(startDate);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  start.setHours(0, 0, 0, 0);
+
+  const elapsed = Math.max(0, Math.floor((today.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)));
+
+  if (!endDate) {
+    return { elapsed, total: null, remaining: null, progress: null };
+  }
+
+  const end = new Date(endDate);
+  end.setHours(0, 0, 0, 0);
+  const total = Math.max(1, Math.floor((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)));
+  const remaining = Math.max(0, Math.floor((end.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)));
+  const progress = Math.min(100, Math.round((elapsed / total) * 100));
+
+  return { elapsed, total, remaining, progress };
+}
+
+function formatDate(dateStr: string) {
+  const d = new Date(dateStr);
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function getStatusColor(status: string) {
+  switch (status) {
+    case 'open': return '#1E8E3E';
+    case 'planned': return '#1a73e8';
+    case 'closed': return '#9AA0A6';
+    default: return '#9AA0A6';
+  }
+}
+
+function getStatusBgColor(status: string) {
+  switch (status) {
+    case 'open': return 'rgba(30, 142, 62, 0.08)';
+    case 'planned': return 'rgba(26, 115, 232, 0.08)';
+    case 'closed': return 'rgba(154, 160, 166, 0.08)';
+    default: return 'rgba(154, 160, 166, 0.08)';
+  }
+}
+
+// ── Main Component ───────────────────────────────────────────────────────
 
 export function BudgetCycles() {
   const { householdId } = useAppContext();
+
   // Cycle Creation State
   const [openCreateDialog, setOpenCreateDialog] = useState(false);
   const [newCycleNameState, setNewCycleNameState] = useState('');
@@ -53,6 +104,9 @@ export function BudgetCycles() {
   const [check2, setCheck2] = useState(false);
   const [check3, setCheck3] = useState(false);
 
+  // UI state
+  const [showAllocations, setShowAllocations] = useState(false);
+
   // Queries
   const { data: categories = [], isLoading: categoriesLoading } = useCategories(householdId);
   const { data: cycles = [], isLoading: cyclesLoading } = useCycles(householdId);
@@ -64,6 +118,18 @@ export function BudgetCycles() {
   // Mutations
   const createCycleMutation = useCreateCycleMutation();
   const updateCycleStatusMutation = useUpdateCycleStatusMutation();
+
+  // Sorted cycles: active first, then planned, then closed (most recent first)
+  const sortedHistory = useMemo(() => {
+    return [...cycles]
+      .filter(c => c.status !== 'open')
+      .sort((a, b) => {
+        // planned first, then closed by start date desc
+        if (a.status === 'planned' && b.status !== 'planned') return -1;
+        if (b.status === 'planned' && a.status !== 'planned') return 1;
+        return b.startDate.localeCompare(a.startDate);
+      });
+  }, [cycles]);
 
   const handleCreateCycle = async () => {
     if (!newCycleNameState.trim()) return;
@@ -117,61 +183,103 @@ export function BudgetCycles() {
 
   if (isLoading) {
     return (
-      <Container maxWidth="lg" sx={{ py: 4 }}>
-        <Stack spacing={4}>
-          <Box display="flex" justifyContent="space-between" alignItems="center">
-            <Skeleton variant="text" width="40%" height={40} />
-            <Skeleton variant="rectangular" width={120} height={36} sx={{ borderRadius: '8px' }} />
+      <Container maxWidth="xs" sx={{ py: 1, px: 2 }}>
+        <Stack spacing={3}>
+          <Box sx={{ mt: 1 }}>
+            <Skeleton variant="text" width="60%" height={32} />
+            <Skeleton variant="text" width="40%" height={20} />
           </Box>
-          <Skeleton variant="rectangular" width="100%" height={250} sx={{ borderRadius: '20px' }} />
+          <Skeleton variant="rectangular" width="100%" height={180} sx={{ borderRadius: '20px' }} />
+          <Skeleton variant="rectangular" width="100%" height={100} sx={{ borderRadius: '20px' }} />
         </Stack>
       </Container>
     );
   }
 
+  const activeDaysInfo = activeCycle ? getDaysInfo(activeCycle.startDate, activeCycle.endDate) : null;
+
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Stack spacing={4}>
-        {/* Header Section */}
-        <Box display="flex" justifyContent="space-between" alignItems="center">
-          <Typography variant="h1">Budget Cycles</Typography>
-          <Button 
-            variant="contained" 
-            startIcon={<AddIcon />} 
-            onClick={() => setOpenCreateDialog(true)}
-          >
-            New Cycle
-          </Button>
-        </Box>
+    <Container maxWidth="xs" sx={{ py: 1, px: 2 }}>
+      <Stack spacing={3}>
+        {/* Page Header */}
+        <PageHeader
+          title="Budget Cycles"
+          subtitle={activeCycle
+            ? `Active: ${activeCycle.name}`
+            : 'No active cycle'
+          }
+          action={
+            <IconButton
+              onClick={() => setOpenCreateDialog(true)}
+              sx={{
+                bgcolor: 'primary.main',
+                color: 'primary.contrastText',
+                width: 40,
+                height: 40,
+                borderRadius: '12px',
+                '&:hover': { bgcolor: 'primary.dark' },
+              }}
+            >
+              <AddIcon sx={{ fontSize: 22 }} />
+            </IconButton>
+          }
+        />
 
-        {/* Current Active Cycle Status */}
+        {/* ── Active Cycle Hero Card ── */}
         {activeCycle ? (
-          <Card sx={{ border: '1px solid', borderColor: 'divider', borderRadius: '20px', boxShadow: 'none' }}>
-            <CardContent sx={{ p: 3 }}>
-              <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
-                <Box>
-                  <Typography variant="h3">Active Cycle: {activeCycle.name}</Typography>
-                  <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-                    Started: {activeCycle.startDate} {activeCycle.endDate ? `• Target End: ${activeCycle.endDate}` : ''}
-                  </Typography>
-                </Box>
-                <Button 
-                  variant="outlined" 
-                  color="error" 
-                  startIcon={<CheckCircleOutlineIcon />}
-                  onClick={() => setOpenCloseDialog(true)}
-                >
-                  Close Cycle
-                </Button>
-              </Box>
+          <ActiveCycleCard
+            cycle={activeCycle}
+            daysInfo={activeDaysInfo!}
+            onCloseCycle={() => setOpenCloseDialog(true)}
+            showAllocations={showAllocations}
+            onToggleAllocations={() => setShowAllocations(!showAllocations)}
+          />
+        ) : (
+          <Box
+            sx={{
+              py: 5,
+              px: 3,
+              textAlign: 'center',
+              bgcolor: 'background.paper',
+              borderRadius: '20px',
+              border: '1px solid',
+              borderColor: 'divider',
+            }}
+          >
+            <CalendarTodayIcon sx={{ fontSize: 44, color: 'text.disabled', mb: 1.5 }} />
+            <Typography variant="body1" sx={{ color: 'text.secondary', fontWeight: 500 }}>
+              No active budget cycle
+            </Typography>
+            <Typography variant="body2" sx={{ color: 'text.disabled', mt: 0.5, fontSize: '12px' }}>
+              Create a new cycle to start tracking budgets
+            </Typography>
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={() => setOpenCreateDialog(true)}
+              sx={{ mt: 2.5, borderRadius: '12px', textTransform: 'none', fontWeight: 600 }}
+            >
+              New Cycle
+            </Button>
+          </Box>
+        )}
 
-              <Divider sx={{ my: 3 }} />
-
-              {/* Category Budget Allocations */}
+        {/* ── Budget Allocations (collapsible) ── */}
+        {activeCycle && (
+          <Collapse in={showAllocations} timeout="auto">
+            <Box
+              sx={{
+                bgcolor: 'background.paper',
+                borderRadius: '20px',
+                border: '1px solid',
+                borderColor: 'divider',
+                p: 2.5,
+              }}
+            >
               {allocsLoading ? (
-                <Skeleton variant="rectangular" width="100%" height={200} />
+                <Skeleton variant="rectangular" width="100%" height={200} sx={{ borderRadius: '12px' }} />
               ) : (
-                <BudgetAllocationsConfig 
+                <BudgetAllocationsConfig
                   key={`${activeCycle.id}-${dbAllocations.length}`}
                   householdId={householdId}
                   activeCycle={activeCycle}
@@ -180,52 +288,30 @@ export function BudgetCycles() {
                   cycles={cycles}
                 />
               )}
-            </CardContent>
-          </Card>
-        ) : (
-          <Card sx={{ p: 4, textAlign: 'center', border: '1px solid', borderColor: 'divider', borderRadius: '20px', boxShadow: 'none' }}>
-            <Typography variant="body1" color="text.secondary">
-              No active budget cycle. Create a new cycle to get started.
-            </Typography>
-          </Card>
+            </Box>
+          </Collapse>
         )}
 
-        {/* Cycles History */}
-        <Stack spacing={2}>
-          <Typography variant="h2">Cycle History</Typography>
-          <TableContainer component={Paper} sx={{ borderRadius: '16px', border: '1px solid', borderColor: 'divider', boxShadow: 'none' }}>
-            <Table>
-              <TableHead sx={{ bgcolor: 'action.hover' }}>
-                <TableRow>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Name</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Start Date</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>End Date</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {cycles.map(c => (
-                  <TableRow key={c.id}>
-                    <TableCell sx={{ fontWeight: 500 }}>{c.name}</TableCell>
-                    <TableCell>{c.startDate}</TableCell>
-                    <TableCell>{c.endDate || '-'}</TableCell>
-                    <TableCell>
-                      <Chip 
-                        label={c.status.toUpperCase()} 
-                        size="small" 
-                        color={c.status === 'open' ? 'success' : c.status === 'planned' ? 'info' : 'default'}
-                        sx={{ fontWeight: 'bold', borderRadius: '6px' }}
-                      />
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </Stack>
+        {/* ── Cycle History Timeline ── */}
+        {sortedHistory.length > 0 && (
+          <Box>
+            <Box display="flex" alignItems="center" gap={1} sx={{ mb: 2 }}>
+              <HistoryIcon sx={{ fontSize: 20, color: 'text.secondary' }} />
+              <Typography variant="body1" sx={{ fontWeight: 700, color: 'text.primary', fontSize: '15px' }}>
+                Cycle History
+              </Typography>
+            </Box>
+
+            <Stack spacing={1.5}>
+              {sortedHistory.map(cycle => (
+                <CycleHistoryCard key={cycle.id} cycle={cycle} />
+              ))}
+            </Stack>
+          </Box>
+        )}
       </Stack>
 
-      {/* Create Cycle Dialog */}
+      {/* ── Create Cycle Dialog ── */}
       <Dialog open={openCreateDialog} onClose={() => setOpenCreateDialog(false)}>
         <DialogTitle sx={{ fontWeight: 'bold' }}>Create Budget Cycle</DialogTitle>
         <DialogContent sx={{ minWidth: 320, pt: 1 }}>
@@ -279,7 +365,7 @@ export function BudgetCycles() {
         </DialogActions>
       </Dialog>
 
-      {/* Close Cycle Confirmation */}
+      {/* ── Close Cycle Confirmation ── */}
       <Dialog open={openCloseDialog} onClose={() => setOpenCloseDialog(false)}>
         <DialogTitle sx={{ fontWeight: 'bold', color: 'error.main' }}>Close Budget Cycle</DialogTitle>
         <DialogContent sx={{ pt: 1 }}>
@@ -314,5 +400,221 @@ export function BudgetCycles() {
         </DialogActions>
       </Dialog>
     </Container>
+  );
+}
+
+// ── Active Cycle Hero Card ───────────────────────────────────────────────
+
+interface ActiveCycleCardProps {
+  cycle: BudgetCycle;
+  daysInfo: ReturnType<typeof getDaysInfo>;
+  onCloseCycle: () => void;
+  showAllocations: boolean;
+  onToggleAllocations: () => void;
+}
+
+function ActiveCycleCard({ cycle, daysInfo, onCloseCycle, showAllocations, onToggleAllocations }: ActiveCycleCardProps) {
+  return (
+    <Box
+      sx={{
+        bgcolor: 'background.paper',
+        borderRadius: '20px',
+        border: '1px solid',
+        borderColor: 'divider',
+        overflow: 'hidden',
+      }}
+    >
+      {/* Status banner */}
+      <Box
+        sx={{
+          px: 2.5,
+          py: 1,
+          bgcolor: 'rgba(30, 142, 62, 0.06)',
+          borderBottom: '1px solid',
+          borderColor: 'divider',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1,
+        }}
+      >
+        <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: '#1E8E3E', animation: 'pulse 2s infinite' }} />
+        <Typography variant="body2" sx={{ fontSize: '11px', fontWeight: 600, color: '#1E8E3E', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+          Active Cycle
+        </Typography>
+        <style>{`
+          @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+          }
+        `}</style>
+      </Box>
+
+      <Box sx={{ p: 2.5 }}>
+        {/* Cycle name */}
+        <Typography variant="h2" sx={{ fontSize: '20px', fontWeight: 700, color: 'text.primary' }}>
+          {cycle.name}
+        </Typography>
+
+        {/* Date range */}
+        <Box display="flex" alignItems="center" gap={0.75} sx={{ mt: 1 }}>
+          <EventIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
+          <Typography variant="body2" sx={{ fontSize: '12px', color: 'text.secondary' }}>
+            {formatDate(cycle.startDate)}
+            {cycle.endDate ? ` — ${formatDate(cycle.endDate)}` : ' — Ongoing'}
+          </Typography>
+        </Box>
+
+        {/* Progress section */}
+        {daysInfo.progress !== null && (
+          <Box sx={{ mt: 2.5 }}>
+            <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
+              <Box display="flex" alignItems="center" gap={0.75}>
+                <TimerIcon sx={{ fontSize: 16, color: 'primary.main' }} />
+                <Typography variant="body2" sx={{ fontSize: '12px', fontWeight: 600, color: 'text.primary' }}>
+                  {daysInfo.remaining} days remaining
+                </Typography>
+              </Box>
+              <Typography variant="body2" sx={{ fontSize: '12px', color: 'text.secondary' }}>
+                {daysInfo.progress}%
+              </Typography>
+            </Box>
+            <LinearProgress
+              variant="determinate"
+              value={daysInfo.progress}
+              sx={{
+                height: 8,
+                borderRadius: '4px',
+                bgcolor: 'action.hover',
+                '& .MuiLinearProgress-bar': {
+                  borderRadius: '4px',
+                  bgcolor: daysInfo.progress > 85 ? 'warning.main' : 'primary.main',
+                  transition: 'width 0.6s ease',
+                },
+              }}
+            />
+            <Box display="flex" justifyContent="space-between" sx={{ mt: 0.75 }}>
+              <Typography variant="body2" sx={{ fontSize: '11px', color: 'text.disabled' }}>
+                Day {daysInfo.elapsed}
+              </Typography>
+              <Typography variant="body2" sx={{ fontSize: '11px', color: 'text.disabled' }}>
+                {daysInfo.total} days total
+              </Typography>
+            </Box>
+          </Box>
+        )}
+
+        {daysInfo.progress === null && (
+          <Box sx={{ mt: 2, display: 'flex', alignItems: 'center', gap: 0.75 }}>
+            <TimerIcon sx={{ fontSize: 16, color: 'primary.main' }} />
+            <Typography variant="body2" sx={{ fontSize: '12px', fontWeight: 600, color: 'text.primary' }}>
+              Day {daysInfo.elapsed + 1} — No end date set
+            </Typography>
+          </Box>
+        )}
+
+        {/* Action buttons */}
+        <Stack direction="row" spacing={1.5} sx={{ mt: 2.5 }}>
+          <Button
+            fullWidth
+            variant="outlined"
+            startIcon={showAllocations ? <ExpandLessIcon /> : <SettingsIcon />}
+            onClick={onToggleAllocations}
+            sx={{
+              borderRadius: '12px',
+              textTransform: 'none',
+              fontWeight: 600,
+              fontSize: '13px',
+              height: 42,
+              borderColor: 'divider',
+              color: 'text.primary',
+              '&:hover': { borderColor: 'primary.main', bgcolor: 'action.hover' },
+            }}
+          >
+            {showAllocations ? 'Hide Budget' : 'Configure Budget'}
+          </Button>
+          <Button
+            fullWidth
+            variant="outlined"
+            color="error"
+            startIcon={<CheckCircleOutlineIcon />}
+            onClick={onCloseCycle}
+            sx={{
+              borderRadius: '12px',
+              textTransform: 'none',
+              fontWeight: 600,
+              fontSize: '13px',
+              height: 42,
+            }}
+          >
+            Close Cycle
+          </Button>
+        </Stack>
+      </Box>
+    </Box>
+  );
+}
+
+// ── Cycle History Card ───────────────────────────────────────────────────
+
+function CycleHistoryCard({ cycle }: { cycle: BudgetCycle }) {
+  const statusColor = getStatusColor(cycle.status);
+  const statusBg = getStatusBgColor(cycle.status);
+
+  return (
+    <Box
+      sx={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 2,
+        p: 2,
+        bgcolor: 'background.paper',
+        borderRadius: '16px',
+        border: '1px solid',
+        borderColor: 'divider',
+        transition: 'background-color 0.15s',
+      }}
+    >
+      {/* Timeline dot */}
+      <Box
+        sx={{
+          width: 36,
+          height: 36,
+          borderRadius: '12px',
+          bgcolor: statusBg,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexShrink: 0,
+        }}
+      >
+        <CalendarTodayIcon sx={{ fontSize: 18, color: statusColor }} />
+      </Box>
+
+      {/* Details */}
+      <Box sx={{ flex: 1, minWidth: 0 }}>
+        <Typography variant="body1" sx={{ fontWeight: 600, fontSize: '14px', color: 'text.primary' }}>
+          {cycle.name}
+        </Typography>
+        <Typography variant="body2" sx={{ fontSize: '11px', color: 'text.secondary', mt: 0.25 }}>
+          {formatDate(cycle.startDate)}{cycle.endDate ? ` — ${formatDate(cycle.endDate)}` : ''}
+        </Typography>
+      </Box>
+
+      {/* Status chip */}
+      <Chip
+        label={cycle.status.toUpperCase()}
+        size="small"
+        sx={{
+          fontWeight: 700,
+          fontSize: '10px',
+          height: 24,
+          borderRadius: '6px',
+          bgcolor: statusBg,
+          color: statusColor,
+          border: 'none',
+          letterSpacing: '0.03em',
+        }}
+      />
+    </Box>
   );
 }

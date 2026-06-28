@@ -23,6 +23,7 @@ import {
 } from '../../hooks/useFinance';
 import { Reconciliation as ReconModel } from '../../domain/financeTypes';
 import { useAppContext } from '../../hooks/useAppContext';
+import { PageHeader } from '../shared/PageHeader';
 
 type AdjustmentReason = 'forgotten expense' | 'bank fee' | 'exchange difference' | 'cash counting correction' | 'unknown difference';
 
@@ -159,14 +160,10 @@ export function Reconciliation() {
   return (
     <Container maxWidth="xs" sx={{ py: 1, px: 2 }}>
       <Stack spacing={3}>
-        <Box sx={{ mt: 1 }}>
-          <Typography variant="h2" sx={{ fontSize: '24px', fontWeight: 700, color: 'text.primary' }}>
-            Reconciliation
-          </Typography>
-          <Typography variant="body1" sx={{ color: 'text.secondary', fontSize: '13px', mt: 0.5 }}>
-            Audit your account balances manually to keep records perfectly aligned.
-          </Typography>
-        </Box>
+        <PageHeader
+          title="Reconciliation"
+          subtitle="Audit your account balances manually to keep records perfectly aligned."
+        />
 
         {success && <Alert severity="success" sx={{ borderRadius: '16px' }}>{success}</Alert>}
         {error && <Alert severity="error" sx={{ borderRadius: '16px' }}>{error}</Alert>}
