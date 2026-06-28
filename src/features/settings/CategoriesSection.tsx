@@ -16,7 +16,7 @@ import {
   Chip
 } from '@mui/material';
 import { ledgerService } from '../../services/ledgerService';
-import { Category, CategoryPriority } from '../../domain/financeTypes';
+import { Category } from '../../domain/financeTypes';
 
 interface CategoriesSectionProps {
   householdId: string;
@@ -31,7 +31,6 @@ export function CategoriesSection({
 }: CategoriesSectionProps) {
   const [newCatName, setNewCatName] = useState('');
   const [newCatType, setNewCatType] = useState<'income' | 'expense'>('expense');
-  const [newCatPriority, setNewCatPriority] = useState<CategoryPriority>('flexible');
 
   const handleCreateCategory = async () => {
     if (!newCatName.trim()) return;
@@ -39,7 +38,6 @@ export function CategoriesSection({
     await ledgerService.createCategory(householdId, {
       name: newCatName,
       type: newCatType,
-      priority: newCatPriority,
       isActive: true
     });
 
@@ -84,9 +82,8 @@ export function CategoriesSection({
             {categories.filter(c => c.type === 'expense').map(cat => (
               <Chip 
                 key={cat.id} 
-                label={`${cat.name} (${cat.priority})`} 
+                label={cat.name} 
                 variant="outlined"
-                color={cat.priority === 'essential' ? 'primary' : 'default'}
                 sx={{ borderRadius: '8px', fontWeight: 500 }}
               />
             ))}
@@ -124,23 +121,6 @@ export function CategoriesSection({
                   <MenuItem value="income">Income</MenuItem>
                 </Select>
               </FormControl>
-              {newCatType === 'expense' && (
-                <FormControl fullWidth size="small">
-                  <InputLabel id="cat-priority-label">Priority</InputLabel>
-                  <Select
-                    labelId="cat-priority-label"
-                    value={newCatPriority}
-                    label="Priority"
-                    onChange={e => setNewCatPriority(e.target.value as CategoryPriority)}
-                    sx={{ borderRadius: '12px' }}
-                  >
-                    <MenuItem value="essential">Essential (Needs)</MenuItem>
-                    <MenuItem value="flexible">Flexible (Wants)</MenuItem>
-                    <MenuItem value="saving">Saving / Investing</MenuItem>
-                    <MenuItem value="debt">Debt Payment</MenuItem>
-                  </Select>
-                </FormControl>
-              )}
               <Button
                 fullWidth
                 variant="contained"

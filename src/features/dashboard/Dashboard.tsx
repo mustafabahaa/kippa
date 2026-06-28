@@ -19,7 +19,19 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Paper
+  Paper,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Radio,
+  RadioGroup,
+  FormControlLabel,
+  Checkbox,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import CheckIcon from '@mui/icons-material/Check';
@@ -30,7 +42,8 @@ import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import WorkIcon from '@mui/icons-material/Work';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { DashboardData } from '../../services/selectors';
-import { Account, BudgetCycle, FinanceTransaction, Category, LedgerLine } from '../../domain/financeTypes';
+import { Account, BudgetCycle, FinanceTransaction, Category, LedgerLine, CurrencyCode } from '../../domain/financeTypes';
+import { transactionService } from '../../services/transactionService';
 
 interface DashboardProps {
   isLoading?: boolean;
@@ -44,6 +57,7 @@ interface DashboardProps {
   onUpdateDisplayRate: (rate: number) => void;
   onVoidTransaction: (txId: string) => void;
   onNavigateToFastEntry: () => void;
+  onNavigateToActivity: () => void;
 }
 
 export function Dashboard({
@@ -57,10 +71,67 @@ export function Dashboard({
   displayUsdToEgpRate,
   onUpdateDisplayRate,
   onVoidTransaction,
-  onNavigateToFastEntry
+  onNavigateToFastEntry,
+  onNavigateToActivity
 }: DashboardProps) {
   const [editingRate, setEditingRate] = useState(false);
   const [rateInput, setRateInput] = useState(displayUsdToEgpRate.toString());
+
+  // Edit Transaction Modal State
+  const [editingTx, setEditingTx] = useState<FinanceTransaction | null>(null);
+  const [editDesc, setEditDesc] = useState('');
+  const [editDate, setEditDate] = useState('');
+  const [editCatId, setEditCatId] = useState('');
+  const [editAccId, setEditAccId] = useState('');
+  const [editAmount, setEditAmount] = useState('0');
+  const [editType, setEditType] = useState<'income' | 'expense'>('expense');
+
+  const handleOpenEdit = (tx: FinanceTransaction) => {
+    setEditingTx(tx);
+    setEditDesc(tx.description || '');
+    setEditDate(tx.date);
+    setEditCatId(tx.categoryId || '');
+    setEditType((tx.type === 'income' ? 'income' : 'expense') as 'income' | 'expense');
+
+    const txLines = ledgerLines.filter(l => l.transactionId === tx.id);
+    const firstLine = txLines.find(l => l.signedAmount !== 0) || txLines[0];
+    setEditAccId(firstLine ? firstLine.accountId : '');
+    setEditAmount(firstLine ? Math.abs(firstLine.signedAmount).toString() : '0');
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingTx) return;
+
+    const amount = parseFloat(editAmount);
+    if (isNaN(amount) || amount <= 0) {
+      alert('Please enter a valid amount.');
+      return;
+    }
+
+    const signedAmount = editType === 'income' ? amount : -amount;
+    const txLines = ledgerLines.filter(l => l.transactionId === editingTx.id);
+    const firstLine = txLines.find(l => l.signedAmount !== 0) || txLines[0];
+    const currency = firstLine ? firstLine.currency : 'EGP';
+
+    await transactionService.updateTransaction(
+      "household-finance",
+      editingTx.id,
+      {
+        description: editDesc,
+        date: editDate,
+        categoryId: editCatId || undefined,
+        type: editType
+      },
+      {
+        accountId: editAccId,
+        signedAmount: signedAmount,
+        currency: currency as CurrencyCode
+      }
+    );
+
+    setEditingTx(null);
+    onUpdateDisplayRate(displayUsdToEgpRate); // simple callback ping to reload parent state!
+  };
 
   const handleSaveRate = () => {
     const parsed = parseFloat(rateInput);
@@ -515,9 +586,18 @@ export function Dashboard({
 
         {/* Recent Activity */}
         <Stack spacing={1.5}>
-          <Typography variant="h3" sx={{ fontSize: '18px', fontWeight: 700, color: 'text.primary' }}>
-            Recent Activity
-          </Typography>
+          <Box display="flex" justifyContent="space-between" alignItems="center">
+            <Typography variant="h3" sx={{ fontSize: '18px', fontWeight: 700, color: 'text.primary' }}>
+              Recent Activity
+            </Typography>
+            <Typography 
+              variant="body2" 
+              onClick={onNavigateToActivity}
+              sx={{ color: 'primary.main', fontWeight: 'bold', cursor: 'pointer' }}
+            >
+              View All
+            </Typography>
+          </Box>
 
           <Card sx={{ borderRadius: '20px', border: '1px solid', borderColor: 'divider' }}>
             {transactions.length === 0 ? (
@@ -528,13 +608,13 @@ export function Dashboard({
               <Stack divider={<Divider />}>
                 {transactions.slice(0, 5).map(tx => {
                   const cat = categories.find(c => c.id === tx.categoryId);
-                  const isIncome = tx.type === 'income';
                   
                   // Find amount from ledgerLines
                   const txLines = ledgerLines.filter(l => l.transactionId === tx.id);
                   const firstLine = txLines.find(l => l.signedAmount !== 0) || txLines[0];
                   const amount = firstLine ? Math.abs(firstLine.signedAmount) : 0;
                   const currency = firstLine ? firstLine.currency : 'EGP';
+                  const isIncome = tx.type === 'income' || (tx.type === 'adjustment' && (firstLine?.signedAmount || 0) >= 0);
 
                   return (
                     <Box 
@@ -557,7 +637,7 @@ export function Dashboard({
                             {tx.description || cat?.name || 'General'}
                           </Typography>
                           <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '11px' }}>
-                            {tx.date} • {cat?.name || 'Uncategorized'}
+                            {tx.date} • {tx.type === 'adjustment' ? 'System' : (cat?.name || 'Uncategorized')}
                           </Typography>
                         </Box>
                       </Box>
@@ -567,6 +647,14 @@ export function Dashboard({
                           {isIncome ? '+' : '-'}{amount.toLocaleString()} {currency}
                         </Typography>
                         
+                        <IconButton 
+                          size="small" 
+                          onClick={() => handleOpenEdit(tx)}
+                          disabled={tx.status === 'voided'}
+                          sx={{ p: 0.5, width: 28, height: 28 }}
+                        >
+                          <EditIcon sx={{ fontSize: '16px' }} />
+                        </IconButton>
                         <IconButton 
                           size="small" 
                           color="error" 
@@ -585,6 +673,105 @@ export function Dashboard({
           </Card>
         </Stack>
       </Stack>
+
+      {/* Edit Transaction Dialog */}
+      <Dialog open={Boolean(editingTx)} onClose={() => setEditingTx(null)}>
+        <DialogTitle sx={{ fontWeight: 'bold' }}>Edit Transaction</DialogTitle>
+        <DialogContent sx={{ minWidth: 300, pt: 1 }}>
+          <Stack spacing={2} sx={{ mt: 1 }}>
+            <RadioGroup
+              row
+              value={editType}
+              onChange={e => setEditType(e.target.value as 'income' | 'expense')}
+            >
+              <FormControlLabel value="expense" control={<Radio size="small" />} label="Expense" />
+              <FormControlLabel value="income" control={<Radio size="small" />} label="Income" />
+            </RadioGroup>
+
+            <TextField
+              type="date"
+              size="small"
+              label="Date"
+              InputLabelProps={{ shrink: true }}
+              value={editDate}
+              onChange={e => setEditDate(e.target.value)}
+              sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+            />
+
+            <TextField
+              size="small"
+              label="Description"
+              value={editDesc}
+              onChange={e => setEditDesc(e.target.value)}
+              sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+            />
+
+            <TextField
+              type="number"
+              size="small"
+              label="Amount"
+              value={editAmount}
+              onChange={e => setEditAmount(e.target.value)}
+              sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+            />
+
+            <FormControl size="small" fullWidth>
+              <InputLabel id="edit-tx-acc-label">Account</InputLabel>
+              <Select
+                labelId="edit-tx-acc-label"
+                value={editAccId}
+                label="Account"
+                onChange={e => setEditAccId(e.target.value)}
+                sx={{ borderRadius: '12px' }}
+              >
+                {accounts.map(a => (
+                  <MenuItem key={a.id} value={a.id}>{a.name}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            {editType === 'expense' ? (
+              <FormControl size="small" fullWidth>
+                <InputLabel id="edit-tx-cat-label">Category</InputLabel>
+                <Select
+                  labelId="edit-tx-cat-label"
+                  value={editCatId}
+                  label="Category"
+                  onChange={e => setEditCatId(e.target.value)}
+                  sx={{ borderRadius: '12px' }}
+                >
+                  {categories.filter(c => c.type === 'expense').map(c => (
+                    <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            ) : (
+              <FormControl size="small" fullWidth>
+                <InputLabel id="edit-tx-cat-income-label">Income Category</InputLabel>
+                <Select
+                  labelId="edit-tx-cat-income-label"
+                  value={editCatId}
+                  label="Income Category"
+                  onChange={e => setEditCatId(e.target.value)}
+                  sx={{ borderRadius: '12px' }}
+                >
+                  {categories.filter(c => c.type === 'income').map(c => (
+                    <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            )}
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2.5 }}>
+          <Button onClick={() => setEditingTx(null)} color="inherit">
+            Cancel
+          </Button>
+          <Button onClick={handleSaveEdit} variant="contained" sx={{ borderRadius: '12px', boxShadow: 'none' }}>
+            Save Changes
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 }

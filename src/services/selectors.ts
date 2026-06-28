@@ -146,8 +146,7 @@ export function computeDashboard(
     const ratio = alloc.plannedAmount > 0 ? spent / alloc.plannedAmount : 0;
     const progRatio = cycleProgress ? cycleProgress.ratio : 0.5;
 
-    // Tolerance values
-    const tolerance = cat?.priority === 'essential' ? 0.05 : 0.10;
+    const tolerance = 0.10;
     let status: 'on-track' | 'warning' | 'over' = 'on-track';
 
     if (ratio > progRatio + tolerance) {
@@ -195,11 +194,12 @@ export function computeDashboard(
     }, 0);
 
   // 9. Saving goals
-  // Default target saving (e.g. 20% of income or allocations to priority = 'saving')
+  // Default target saving (e.g. 20% of income or allocations to category named 'saving' or 'invest')
   const savingAllocation = allocations
     .filter(alloc => {
       const cat = categories.find(c => c.id === alloc.categoryId);
-      return cat?.priority === 'saving';
+      const nameLower = cat?.name.toLowerCase() || '';
+      return nameLower.includes('saving') || nameLower.includes('invest');
     })
     .reduce((acc, curr) => acc + curr.plannedAmount, 0);
 
@@ -220,10 +220,17 @@ export function computeDashboard(
   const daysDivider = Math.max(1, remDays);
 
   // Stricter Version: (available EGP cash & bank - essential remaining bills - saving target) / remaining days
+  const isEssentialCategory = (name: string) => {
+    const nameLower = name.toLowerCase();
+    const essentialKeywords = ['kahraba', '3\'az', 'rent', 'utility', 'utilities', 'net', 'bill', 'loan', 'telephone', 'mobile', 'credit card', 'syana'];
+    return essentialKeywords.some(kw => nameLower.includes(kw));
+  };
+
   // Let's compute remaining flexible budget
   const flexibleAllocations = allocations.filter(alloc => {
     const cat = categories.find(c => c.id === alloc.categoryId);
-    return cat?.priority === 'flexible' || cat?.priority === 'other';
+    if (!cat) return false;
+    return !isEssentialCategory(cat.name) && !cat.name.toLowerCase().includes('saving') && !cat.name.toLowerCase().includes('invest');
   });
   
   const flexiblePlanned = flexibleAllocations.reduce((acc, curr) => acc + curr.plannedAmount, 0);
@@ -244,7 +251,8 @@ export function computeDashboard(
 
   const essentialAllocations = allocations.filter(alloc => {
     const cat = categories.find(c => c.id === alloc.categoryId);
-    return cat?.priority === 'essential' || cat?.priority === 'debt';
+    if (!cat) return false;
+    return isEssentialCategory(cat.name);
   });
   const essentialPlanned = essentialAllocations.reduce((acc, curr) => acc + curr.plannedAmount, 0);
   const essentialSpent = essentialAllocations.reduce((acc, curr) => {

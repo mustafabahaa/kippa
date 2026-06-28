@@ -6,8 +6,6 @@ export type TransactionType = 'income' | 'expense' | 'transfer' | 'conversion' |
 
 export type BudgetCycleStatus = 'planned' | 'open' | 'closed';
 
-export type CategoryPriority = 'essential' | 'flexible' | 'saving' | 'debt' | 'other';
-
 export type UserRole = 'owner' | 'member';
 
 export type UserProfile = {
@@ -91,7 +89,6 @@ export type Category = {
   householdId: string;
   name: string;
   type: 'income' | 'expense';
-  priority: CategoryPriority;
   isActive: boolean;
   parentCategoryId?: string;
   createdAt: string;

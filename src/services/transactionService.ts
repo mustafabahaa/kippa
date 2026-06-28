@@ -1,5 +1,5 @@
 import { dbService } from './dbService';
-import { FinanceTransaction, LedgerLine, ConversionDetails } from '../domain/financeTypes';
+import { FinanceTransaction, LedgerLine, ConversionDetails, CurrencyCode } from '../domain/financeTypes';
 
 export const transactionService = {
   async createTransaction(
@@ -73,5 +73,52 @@ export const transactionService = {
     // Keep the ledger lines but mark the transaction status as voided
     // When querying balances or cycle spend, selectors must check the transaction status
     await dbService.setDoc(householdId, 'transactions', transactionId, updatedTransaction);
+  },
+
+  async updateTransaction(
+    householdId: string,
+    transactionId: string,
+    transactionUpdates: Partial<FinanceTransaction>,
+    lineUpdates: { accountId: string; signedAmount: number; currency: CurrencyCode }
+  ): Promise<void> {
+    const transaction = await dbService.getDoc(householdId, 'transactions', transactionId) as FinanceTransaction | null;
+    if (!transaction) throw new Error('Transaction not found');
+
+    const updatedTransaction: FinanceTransaction = {
+      ...transaction,
+      ...transactionUpdates,
+      updatedAt: new Date().toISOString()
+    };
+
+    // Get current ledger lines for this transaction
+    const allLines = await dbService.getDocs(householdId, 'ledgerLines') as LedgerLine[];
+    const txLines = allLines.filter(l => l.transactionId === transactionId);
+
+    const operations: { type: 'set' | 'delete'; collectionName: string; docId: string; data?: any }[] = [
+      {
+        type: 'set',
+        collectionName: 'transactions',
+        docId: transactionId,
+        data: updatedTransaction
+      }
+    ];
+
+    if (txLines.length > 0) {
+      const firstLine = txLines[0];
+      const updatedLine: LedgerLine = {
+        ...firstLine,
+        accountId: lineUpdates.accountId,
+        signedAmount: lineUpdates.signedAmount,
+        currency: lineUpdates.currency
+      };
+      operations.push({
+        type: 'set',
+        collectionName: 'ledgerLines',
+        docId: firstLine.id,
+        data: updatedLine
+      });
+    }
+
+    await dbService.executeBatch(householdId, operations);
   }
 };

@@ -53,21 +53,21 @@ export const ledgerService = {
   async seedDefaultCategories(householdId: string): Promise<void> {
     const defaultCategories: Omit<Category, 'id' | 'householdId' | 'createdAt'>[] = [
       // Income
-      { name: 'Salary', type: 'income', priority: 'essential', isActive: true },
-      { name: 'Other Income', type: 'income', priority: 'flexible', isActive: true },
+      { name: 'Salary', type: 'income', isActive: true },
+      { name: 'Other Income', type: 'income', isActive: true },
       // Expense - Essential
-      { name: 'Rent', type: 'expense', priority: 'essential', isActive: true },
-      { name: 'Utilities', type: 'expense', priority: 'essential', isActive: true },
-      { name: 'Groceries', type: 'expense', priority: 'essential', isActive: true },
-      { name: 'Medical & Health', type: 'expense', priority: 'essential', isActive: true },
-      { name: 'Debt Repayment', type: 'expense', priority: 'debt', isActive: true },
+      { name: 'Rent', type: 'expense', isActive: true },
+      { name: 'Utilities', type: 'expense', isActive: true },
+      { name: 'Groceries', type: 'expense', isActive: true },
+      { name: 'Medical & Health', type: 'expense', isActive: true },
+      { name: 'Debt Repayment', type: 'expense', isActive: true },
       // Expense - Flexible
-      { name: 'Dining Out', type: 'expense', priority: 'flexible', isActive: true },
-      { name: 'Shopping', type: 'expense', priority: 'flexible', isActive: true },
-      { name: 'Entertainment', type: 'expense', priority: 'flexible', isActive: true },
-      { name: 'Transport & Fuel', type: 'expense', priority: 'flexible', isActive: true },
+      { name: 'Dining Out', type: 'expense', isActive: true },
+      { name: 'Shopping', type: 'expense', isActive: true },
+      { name: 'Entertainment', type: 'expense', isActive: true },
+      { name: 'Transport & Fuel', type: 'expense', isActive: true },
       // Saving
-      { name: 'General Saving', type: 'expense', priority: 'saving', isActive: true },
+      { name: 'General Saving', type: 'expense', isActive: true },
     ];
 
     for (const cat of defaultCategories) {

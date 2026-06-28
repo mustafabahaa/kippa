@@ -43,6 +43,7 @@ import { AccountsSection } from './features/settings/AccountsSection';
 import { HouseholdSection } from './features/settings/HouseholdSection';
 import { CategoriesSection } from './features/settings/CategoriesSection';
 import { NotificationsSection } from './features/settings/NotificationsSection';
+import { Activity } from './features/transactions/Activity';
 
 import { authService } from './services/authService';
 import { ledgerService } from './services/ledgerService';
@@ -397,6 +398,7 @@ export default function App() {
               onUpdateDisplayRate={(rate) => setDisplayRate(rate)}
               onVoidTransaction={handleVoidTransaction}
               onNavigateToFastEntry={() => setActiveTab('entry')}
+              onNavigateToActivity={() => setActiveTab('activity')}
             />
           )}
 
@@ -429,6 +431,16 @@ export default function App() {
               balances={dashboardData.accountBalances}
               activeCycle={activeCycle}
               onReconciled={loadLedgerData}
+            />
+          )}
+          {activeTab === 'activity' && (
+            <Activity
+              householdId={userProfile.householdId}
+              transactions={transactions}
+              ledgerLines={ledgerLines}
+              categories={categories}
+              accounts={accounts}
+              onDataUpdated={loadLedgerData}
             />
           )}
 

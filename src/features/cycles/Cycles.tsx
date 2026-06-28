@@ -224,7 +224,7 @@ export function Cycles({
                   <Table size="small" aria-label="configure budgets table">
                     <TableHead sx={{ bgcolor: 'action.hover' }}>
                       <TableRow>
-                        <TableCell sx={{ fontWeight: 'bold', fontSize: '13px', py: 1.5 }}>Category (Priority)</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold', fontSize: '13px', py: 1.5 }}>Category</TableCell>
                         <TableCell sx={{ fontWeight: 'bold', fontSize: '13px', py: 1.5, width: '180px' }}>Budget (EGP)</TableCell>
                         <TableCell align="center" sx={{ fontWeight: 'bold', fontSize: '13px', py: 1.5, width: '180px' }}>Carry Leftovers</TableCell>
                       </TableRow>
@@ -233,7 +233,7 @@ export function Cycles({
                       {categories.filter(c => c.type === 'expense').map(cat => (
                         <TableRow key={cat.id} hover>
                           <TableCell sx={{ fontSize: '14px', py: 1 }}>
-                            {cat.name} <span style={{ fontSize: '11px', color: 'var(--mui-palette-text-secondary, #3e4947)' }}>({cat.priority})</span>
+                            {cat.name}
                           </TableCell>
                           <TableCell sx={{ py: 1 }}>
                             <TextField
