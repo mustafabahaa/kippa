@@ -95,6 +95,7 @@ export default function App() {
   const [ledgerLines, setLedgerLines] = useState<any[]>([]);
   const [allocations, setAllocations] = useState<any[]>([]);
   const [expectedIncomes, setExpectedIncomes] = useState<any[]>([]);
+  const [householdName, setHouseholdName] = useState<string>('My Household');
 
   // Listen to Auth
   useEffect(() => {
@@ -112,6 +113,10 @@ export default function App() {
     setIsDataLoading(true);
 
     try {
+      // 0. Load household name
+      const hhName = await ledgerService.getHouseholdName(hhId);
+      setHouseholdName(hhName);
+
       // 1. Load accounts & categories
       let accs = await ledgerService.getAccounts(hhId);
       let cats = await ledgerService.getCategories(hhId);
@@ -401,6 +406,7 @@ export default function App() {
               transactions={transactions}
               ledgerLines={ledgerLines}
               displayUsdToEgpRate={displayRate}
+              householdName={householdName}
               onVoidTransaction={handleVoidTransaction}
               onNavigateToActivity={() => setActiveTab('activity')}
             />
@@ -459,6 +465,7 @@ export default function App() {
           {activeTab === 'household' && (
             <HouseholdSection
               householdId={userProfile.householdId}
+              householdName={householdName}
             />
           )}
 

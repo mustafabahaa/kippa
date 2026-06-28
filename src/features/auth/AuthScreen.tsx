@@ -130,7 +130,7 @@ export function AuthScreen({ userProfile, onProfileUpdated }: AuthScreenProps) {
                       <TextField
                         fullWidth
                         label="Household Name"
-                        placeholder="e.g. Smith Household"
+                        placeholder="e.g. Bahaa Household"
                         size="small"
                         value={householdName}
                         onChange={e => setHouseholdName(e.target.value)}

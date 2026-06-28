@@ -54,6 +54,7 @@ interface DashboardProps {
   transactions: FinanceTransaction[];
   ledgerLines: LedgerLine[];
   displayUsdToEgpRate: number;
+  householdName: string;
   onVoidTransaction: (txId: string) => void;
   onNavigateToActivity: () => void;
 }
@@ -67,6 +68,7 @@ export function Dashboard({
   transactions,
   ledgerLines,
   displayUsdToEgpRate,
+  householdName,
   onVoidTransaction,
   onNavigateToActivity
 }: DashboardProps) {
@@ -279,7 +281,7 @@ export function Dashboard({
             Household Dashboard
           </Typography>
           <Typography variant="body1" sx={{ color: 'text.secondary', fontSize: '13px', mt: 0.5 }}>
-            Smith Household • Cycle: {activeCycle ? activeCycle.name : 'No active cycle'}
+            {householdName} • Cycle: {activeCycle ? activeCycle.name : 'No active cycle'}
           </Typography>
         </Box>
 

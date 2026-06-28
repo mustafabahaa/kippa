@@ -15,9 +15,10 @@ import HomeIcon from '@mui/icons-material/Home';
 
 interface HouseholdSectionProps {
   householdId: string;
+  householdName: string;
 }
 
-export function HouseholdSection({ householdId }: HouseholdSectionProps) {
+export function HouseholdSection({ householdId, householdName }: HouseholdSectionProps) {
   const [copySuccess, setCopySuccess] = useState(false);
 
   const handleCopyHouseholdId = () => {
@@ -46,7 +47,7 @@ export function HouseholdSection({ householdId }: HouseholdSectionProps) {
                   <HomeIcon sx={{ color: 'primary.main' }} />
                 </Box>
                 <Box>
-                  <Typography variant="body1" sx={{ fontWeight: 'bold', color: 'text.primary' }}>Mustafa Household</Typography>
+                  <Typography variant="body1" sx={{ fontWeight: 'bold', color: 'text.primary' }}>{householdName}</Typography>
                   <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '11px' }}>EGP (Base Currency)</Typography>
                 </Box>
               </Box>

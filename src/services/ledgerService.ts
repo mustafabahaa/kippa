@@ -1,5 +1,7 @@
 import { dbService } from './dbService';
-import { Account, Category, FinanceTransaction, ConversionDetails } from '../domain/financeTypes';
+import { Account, Category, FinanceTransaction, ConversionDetails, Household } from '../domain/financeTypes';
+import { db } from '../config/firebase';
+import { doc, getDoc } from 'firebase/firestore';
 
 export const ledgerService = {
   // Accounts
@@ -87,5 +89,18 @@ export const ledgerService = {
 
   async getConversionDetails(householdId: string): Promise<ConversionDetails[]> {
     return dbService.getDocs(householdId, 'conversionDetails');
+  },
+
+  async getHouseholdName(householdId: string): Promise<string> {
+    try {
+      if (!db) return 'My Household';
+      const docRef = doc(db, 'households', householdId);
+      const snapshot = await getDoc(docRef);
+      if (snapshot.exists()) {
+        const data = snapshot.data() as Household;
+        return data.name || 'My Household';
+      }
+    } catch {}
+    return 'My Household';
   }
 };
