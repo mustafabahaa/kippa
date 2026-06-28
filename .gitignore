@@ -21,3 +21,4 @@ ui-debug.log
 .idea/
 .vscode/
 
+.agents/*

@@ -1,5 +1,8 @@
 import { dbLib } from './db';
+import { auditLogLib } from './auditLog';
 import { Account, Category, FinanceTransaction, ConversionDetails, Household, Reconciliation, NotificationSettings } from '../domain/financeTypes';
+
+type AuditUser = { uid: string; displayName: string; photoURL?: string };
 
 export const ledgerLib = {
   // Accounts
@@ -8,7 +11,11 @@ export const ledgerLib = {
     return (list as Account[]).sort((a, b) => a.sortOrder - b.sortOrder);
   },
 
-  async createAccount(householdId: string, account: Omit<Account, 'id' | 'householdId' | 'createdAt'>): Promise<string> {
+  async createAccount(
+    householdId: string,
+    account: Omit<Account, 'id' | 'householdId' | 'createdAt'>,
+    auditUser?: AuditUser
+  ): Promise<string> {
     const id = crypto.randomUUID();
     const newAccount: Account = {
       ...account,
@@ -17,6 +24,17 @@ export const ledgerLib = {
       createdAt: new Date().toISOString(),
     };
     await dbLib.setDoc(householdId, 'accounts', id, newAccount);
+
+    // Audit log (fire-and-forget)
+    if (auditUser) {
+      auditLogLib.logAction(
+        householdId,
+        auditUser,
+        'account_created',
+        `${auditUser.displayName} added account: ${newAccount.name} (${newAccount.currency})`,
+        { accountId: id, name: newAccount.name, type: newAccount.type, currency: newAccount.currency }
+      );
+    }
     return id;
   },
 
@@ -38,7 +56,11 @@ export const ledgerLib = {
     return (list as Category[]).filter(c => c.isActive);
   },
 
-  async createCategory(householdId: string, category: Omit<Category, 'id' | 'householdId' | 'createdAt'>): Promise<string> {
+  async createCategory(
+    householdId: string,
+    category: Omit<Category, 'id' | 'householdId' | 'createdAt'>,
+    auditUser?: AuditUser
+  ): Promise<string> {
     const id = crypto.randomUUID();
     const newCategory: Category = {
       ...category,
@@ -47,15 +69,43 @@ export const ledgerLib = {
       createdAt: new Date().toISOString(),
     };
     await dbLib.setDoc(householdId, 'categories', id, newCategory);
+
+    // Audit log (fire-and-forget)
+    if (auditUser) {
+      auditLogLib.logAction(
+        householdId,
+        auditUser,
+        'category_created',
+        `${auditUser.displayName} created category: ${newCategory.name} (${newCategory.type})`,
+        { categoryId: id, name: newCategory.name, type: newCategory.type }
+      );
+    }
     return id;
   },
 
-  async updateCategory(householdId: string, categoryId: string, updates: Partial<Pick<Category, 'name' | 'isActive'>>): Promise<void> {
+  async updateCategory(
+    householdId: string,
+    categoryId: string,
+    updates: Partial<Pick<Category, 'name' | 'isActive'>>,
+    auditUser?: AuditUser
+  ): Promise<void> {
     const list = await dbLib.getDocs(householdId, 'categories');
     const existing = (list as Category[]).find(c => c.id === categoryId);
     if (!existing) throw new Error('Category not found');
     const updated = { ...existing, ...updates };
     await dbLib.setDoc(householdId, 'categories', categoryId, updated);
+
+    // Audit log (fire-and-forget)
+    if (auditUser) {
+      const action = updates.isActive === false ? 'deactivated' : 'updated';
+      auditLogLib.logAction(
+        householdId,
+        auditUser,
+        'category_updated',
+        `${auditUser.displayName} ${action} category: ${updated.name}`,
+        { categoryId, name: updated.name, ...updates }
+      );
+    }
   },
 
   async seedDefaultCategories(householdId: string): Promise<void> {
@@ -90,7 +140,8 @@ export const ledgerLib = {
 
   async getTransactions(householdId: string): Promise<FinanceTransaction[]> {
     const list = await dbLib.getDocs(householdId, 'transactions');
-    return (list as FinanceTransaction[]).sort((a, b) => b.date.localeCompare(a.date));
+    return (list as FinanceTransaction[])
+      .sort((a, b) => b.date.localeCompare(a.date) || (b.createdAt || '').localeCompare(a.createdAt || ''));
   },
 
   async getConversionDetails(householdId: string): Promise<ConversionDetails[]> {
@@ -140,8 +191,24 @@ export const ledgerLib = {
   },
 
   // Accounts CRUD support
-  async updateAccount(householdId: string, accountId: string, updated: Account): Promise<void> {
+  async updateAccount(
+    householdId: string,
+    accountId: string,
+    updated: Account,
+    auditUser?: AuditUser
+  ): Promise<void> {
     await dbLib.setDoc(householdId, 'accounts', accountId, updated);
+
+    // Audit log (fire-and-forget)
+    if (auditUser) {
+      auditLogLib.logAction(
+        householdId,
+        auditUser,
+        'account_updated',
+        `${auditUser.displayName} updated account: ${updated.name}`,
+        { accountId, name: updated.name, type: updated.type, currency: updated.currency }
+      );
+    }
   },
 
   // Reconciliations
@@ -150,8 +217,26 @@ export const ledgerLib = {
     return list as Reconciliation[];
   },
 
-  async createReconciliation(householdId: string, reconId: string, reconLog: Reconciliation): Promise<void> {
+  async createReconciliation(
+    householdId: string,
+    reconId: string,
+    reconLog: Reconciliation,
+    auditUser?: AuditUser
+  ): Promise<void> {
     await dbLib.setDoc(householdId, 'reconciliations', reconId, reconLog);
+
+    // Audit log (fire-and-forget)
+    if (auditUser) {
+      const diff = Math.abs(reconLog.difference);
+      const verdict = reconLog.difference === 0 ? 'matched' : `had a ${reconLog.difference > 0 ? 'surplus' : 'shortfall'} of ${diff} ${reconLog.currency}`;
+      auditLogLib.logAction(
+        householdId,
+        auditUser,
+        'reconciliation_created',
+        `${auditUser.displayName} reconciled an account (${verdict})`,
+        { reconciliationId: reconId, accountId: reconLog.accountId, difference: reconLog.difference, currency: reconLog.currency }
+      );
+    }
   },
 
   // Notification Settings
@@ -160,7 +245,23 @@ export const ledgerLib = {
     return data as NotificationSettings | null;
   },
 
-  async updateNotificationSettings(householdId: string, userId: string, settings: NotificationSettings): Promise<void> {
+  async updateNotificationSettings(
+    householdId: string,
+    userId: string,
+    settings: NotificationSettings,
+    auditUser?: AuditUser
+  ): Promise<void> {
     await dbLib.setDoc(householdId, 'notificationSettings', userId, settings);
+
+    // Audit log (fire-and-forget)
+    if (auditUser) {
+      auditLogLib.logAction(
+        householdId,
+        auditUser,
+        'notification_settings_updated',
+        `${auditUser.displayName} updated reminder & alert settings`,
+        { userId }
+      );
+    }
   }
 };

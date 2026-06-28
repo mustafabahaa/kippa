@@ -29,6 +29,7 @@ import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import HomeIcon from '@mui/icons-material/Home';
 import NotificationsActiveIcon from '@mui/icons-material/NotificationsActive';
+import HistoryIcon from '@mui/icons-material/History';
 
 import { appTheme } from './theme';
 import { AuthScreen } from './features/auth/AuthScreen';
@@ -41,6 +42,8 @@ import { Household } from './features/household/Household';
 import { Categories } from './features/categories/Categories';
 import { Notifications } from './features/notifications/Notifications';
 import { Activity } from './features/transactions/Activity';
+import { AuditLog } from './features/activity/AuditLog';
+import { ActivityBell } from './features/activity/ActivityBell';
 import { useAppContext } from './hooks/useAppContext';
 
 export default function App() {
@@ -140,13 +143,8 @@ export default function App() {
               </Typography>
             </Stack>
 
-            {/* Right: Search Action */}
-            <IconButton 
-              aria-label="search"
-              sx={{ width: 40, height: 40 }}
-            >
-              <span className="material-symbols-outlined" style={{ color: 'var(--mui-palette-primary-main, #005c55)' }}>search</span>
-            </IconButton>
+            {/* Right: Activity Bell (household audit feed) */}
+            <ActivityBell onClick={() => setActiveTab('auditLog')} />
 
             {/* Profile Dropdown Menu */}
             <Menu
@@ -305,6 +303,13 @@ export default function App() {
                 </ListItemIcon>
                 <ListItemText primary="Reminders & Alerts" />
               </MenuItem>
+
+              <MenuItem onClick={() => { handleCloseProfileMenu(); setActiveTab('auditLog'); }}>
+                <ListItemIcon>
+                  <HistoryIcon fontSize="small" />
+                </ListItemIcon>
+                <ListItemText primary="Activity Log" />
+              </MenuItem>
               
               <MenuItem onClick={() => { handleCloseProfileMenu(); handleLogout(); }} sx={{ color: 'error.main' }}>
                 <ListItemIcon>
@@ -337,6 +342,9 @@ export default function App() {
           )}
           {activeTab === 'activity' && (
             <Activity />
+          )}
+          {activeTab === 'auditLog' && (
+            <AuditLog />
           )}
 
           {activeTab === 'accounts' && (

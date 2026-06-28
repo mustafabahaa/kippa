@@ -1,12 +1,16 @@
 import { dbLib } from './db';
+import { auditLogLib } from './auditLog';
 import { FinanceTransaction, LedgerLine, ConversionDetails, CurrencyCode } from '../domain/financeTypes';
+
+type AuditUser = { uid: string; displayName: string; photoURL?: string };
 
 export const transactionsLib = {
   async createTransaction(
     householdId: string,
     transaction: Omit<FinanceTransaction, 'id' | 'householdId' | 'createdAt' | 'updatedAt' | 'status'>,
     lines: Omit<LedgerLine, 'id' | 'householdId' | 'transactionId' | 'createdAt'>[],
-    conversionDetails?: Omit<ConversionDetails, 'transactionId'>
+    conversionDetails?: Omit<ConversionDetails, 'transactionId'>,
+    auditUser?: AuditUser
   ): Promise<string> {
     const transactionId = crypto.randomUUID();
     const nowStr = new Date().toISOString();
@@ -57,10 +61,25 @@ export const transactionsLib = {
     }
 
     await dbLib.executeBatch(householdId, operations);
+
+    // Audit log (fire-and-forget)
+    if (auditUser) {
+      const amount = Math.abs(newLines[0]?.signedAmount || 0);
+      const currency = newLines[0]?.currency || '';
+      const desc = transaction.description || transaction.type;
+      auditLogLib.logAction(
+        householdId,
+        auditUser,
+        'transaction_created',
+        `${auditUser.displayName} logged ${transaction.type}: ${amount} ${currency}${desc ? ` — ${desc}` : ''}`,
+        { transactionId, type: transaction.type, amount, currency }
+      );
+    }
+
     return transactionId;
   },
 
-  async voidTransaction(householdId: string, transactionId: string): Promise<void> {
+  async voidTransaction(householdId: string, transactionId: string, auditUser?: AuditUser): Promise<void> {
     const transaction = await dbLib.getDoc(householdId, 'transactions', transactionId) as FinanceTransaction | null;
     if (!transaction) throw new Error('Transaction not found');
 
@@ -73,13 +92,26 @@ export const transactionsLib = {
     // Keep the ledger lines but mark the transaction status as voided
     // When querying balances or cycle spend, selectors must check the transaction status
     await dbLib.setDoc(householdId, 'transactions', transactionId, updatedTransaction);
+
+    // Audit log (fire-and-forget)
+    if (auditUser) {
+      const desc = transaction.description || transaction.type;
+      auditLogLib.logAction(
+        householdId,
+        auditUser,
+        'transaction_voided',
+        `${auditUser.displayName} voided transaction: ${desc}`,
+        { transactionId, type: transaction.type }
+      );
+    }
   },
 
   async updateTransaction(
     householdId: string,
     transactionId: string,
     transactionUpdates: Partial<FinanceTransaction>,
-    lineUpdates: { accountId: string; signedAmount: number; currency: CurrencyCode }
+    lineUpdates: { accountId: string; signedAmount: number; currency: CurrencyCode },
+    auditUser?: AuditUser
   ): Promise<void> {
     const transaction = await dbLib.getDoc(householdId, 'transactions', transactionId) as FinanceTransaction | null;
     if (!transaction) throw new Error('Transaction not found');
@@ -120,5 +152,17 @@ export const transactionsLib = {
     }
 
     await dbLib.executeBatch(householdId, operations);
+
+    // Audit log (fire-and-forget)
+    if (auditUser) {
+      const desc = updatedTransaction.description || updatedTransaction.type;
+      auditLogLib.logAction(
+        householdId,
+        auditUser,
+        'transaction_updated',
+        `${auditUser.displayName} updated transaction: ${desc}`,
+        { transactionId, type: updatedTransaction.type }
+      );
+    }
   }
 };

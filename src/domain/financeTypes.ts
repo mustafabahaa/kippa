@@ -156,3 +156,33 @@ export type NotificationSettings = {
   savingWarningEnabled: boolean;
   cycleCloseReminderEnabled: boolean;
 };
+
+export type AuditAction =
+  | 'transaction_created'
+  | 'transaction_voided'
+  | 'transaction_updated'
+  | 'account_created'
+  | 'account_updated'
+  | 'category_created'
+  | 'category_updated'
+  | 'cycle_created'
+  | 'cycle_status_changed'
+  | 'allocation_saved'
+  | 'allocations_batch_saved'
+  | 'expected_income_saved'
+  | 'reconciliation_created'
+  | 'notification_settings_updated'
+  | 'household_joined'
+  | 'household_left';
+
+export type AuditLogEntry = {
+  id: string;
+  householdId: string;
+  userId: string;
+  userDisplayName: string;
+  userPhotoURL?: string;
+  action: AuditAction;
+  summary: string;
+  details?: Record<string, any>;
+  createdAt: string;
+};

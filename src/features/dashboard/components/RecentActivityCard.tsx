@@ -36,6 +36,18 @@ import {
 import { FinanceTransaction, CurrencyCode } from '../../../domain/financeTypes';
 import { useAppContext } from '../../../hooks/useAppContext';
 
+/** Format an ISO timestamp as a short time, e.g. "3:45 PM". */
+function formatTime(iso: string): string {
+  try {
+    return new Date(iso).toLocaleTimeString(undefined, {
+      hour: 'numeric',
+      minute: '2-digit',
+    });
+  } catch {
+    return '';
+  }
+}
+
 interface RecentActivityCardProps {
   onNavigateToActivity: () => void;
 }
@@ -191,7 +203,7 @@ export function RecentActivityCard({ onNavigateToActivity }: RecentActivityCardP
                         {tx.description || cat?.name || 'General'}
                       </Typography>
                       <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '11px' }}>
-                        {tx.date} • {tx.type === 'adjustment' ? 'System' : (cat?.name || 'Uncategorized')}
+                        {tx.date} • {formatTime(tx.createdAt)} • {tx.type === 'adjustment' ? 'System' : (cat?.name || 'Uncategorized')}
                       </Typography>
                     </Box>
                   </Box>

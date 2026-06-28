@@ -47,6 +47,18 @@ import {
 import { FinanceTransaction, CurrencyCode } from '../../domain/financeTypes';
 import { useAppContext } from '../../hooks/useAppContext';
 
+/** Format an ISO timestamp as a short time, e.g. "3:45 PM". */
+function formatTime(iso: string): string {
+  try {
+    return new Date(iso).toLocaleTimeString(undefined, {
+      hour: 'numeric',
+      minute: '2-digit',
+    });
+  } catch {
+    return '';
+  }
+}
+
 export function Activity() {
   const { householdId } = useAppContext();
   // Filter States
@@ -280,6 +292,7 @@ export function Activity() {
               <TableRow>
                 <TableCell width="60px"></TableCell>
                 <TableCell>Date / Description</TableCell>
+                <TableCell>Time</TableCell>
                 <TableCell>Details</TableCell>
                 <TableCell align="right">Amount</TableCell>
                 <TableCell align="center" width="100px">Actions</TableCell>
@@ -288,7 +301,7 @@ export function Activity() {
             <TableBody>
               {filteredTxs.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} align="center" sx={{ py: 6, color: 'text.secondary', fontStyle: 'italic' }}>
+                  <TableCell colSpan={6} align="center" sx={{ py: 6, color: 'text.secondary', fontStyle: 'italic' }}>
                     No matching activities found.
                   </TableCell>
                 </TableRow>
@@ -328,6 +341,11 @@ export function Activity() {
                         </Typography>
                         <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '11px' }}>
                           {tx.date} {tx.status === 'voided' && '(VOIDED)'}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '12px' }}>
+                          {formatTime(tx.createdAt)}
                         </Typography>
                       </TableCell>
                       <TableCell>
