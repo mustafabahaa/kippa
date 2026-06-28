@@ -93,14 +93,41 @@ export const ledgerService = {
 
   async getHouseholdName(householdId: string): Promise<string> {
     try {
-      if (!db) return 'My Household';
-      const docRef = doc(db, 'households', householdId);
-      const snapshot = await getDoc(docRef);
-      if (snapshot.exists()) {
-        const data = snapshot.data() as Household;
-        return data.name || 'My Household';
+      const data = await dbService.getDoc(householdId, 'householdInfo', 'info');
+      if (data) {
+        return (data as Household).name || 'My Household';
       }
     } catch {}
     return 'My Household';
+  },
+
+  async getHouseholdInfo(householdId: string): Promise<Household | null> {
+    try {
+      const data = await dbService.getDoc(householdId, 'householdInfo', 'info');
+      return data as Household | null;
+    } catch {
+      return null;
+    }
+  },
+
+  async ensureHouseholdExists(householdId: string, userId: string, name: string = 'My Household'): Promise<string> {
+    try {
+      const data = await dbService.getDoc(householdId, 'householdInfo', 'info');
+      if (!data) {
+        const now = new Date().toISOString();
+        const household: Household = {
+          id: householdId,
+          name,
+          baseCurrency: 'EGP',
+          createdAt: now,
+          createdBy: userId,
+        };
+        await dbService.setDoc(householdId, 'householdInfo', 'info', household);
+        return name;
+      }
+      return (data as Household).name || name;
+    } catch {
+      return name;
+    }
   }
 };

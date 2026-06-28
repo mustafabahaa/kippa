@@ -96,6 +96,29 @@ export default function App() {
   const [allocations, setAllocations] = useState<any[]>([]);
   const [expectedIncomes, setExpectedIncomes] = useState<any[]>([]);
   const [householdName, setHouseholdName] = useState<string>('My Household');
+  const [userHouseholds, setUserHouseholds] = useState<{ id: string; name: string }[]>([]);
+
+  // Fetch all user households names whenever userProfile.householdIds changes
+  useEffect(() => {
+    const fetchUserHouseholds = async () => {
+      if (!userProfile?.householdIds) {
+        setUserHouseholds([]);
+        return;
+      }
+      try {
+        const list = await Promise.all(
+          userProfile.householdIds.map(async (id) => {
+            const name = await ledgerService.getHouseholdName(id);
+            return { id, name };
+          })
+        );
+        setUserHouseholds(list);
+      } catch (err) {
+        console.error('Error fetching user households:', err);
+      }
+    };
+    fetchUserHouseholds();
+  }, [userProfile?.householdIds, householdName]);
 
   // Listen to Auth
   useEffect(() => {
@@ -113,8 +136,8 @@ export default function App() {
     setIsDataLoading(true);
 
     try {
-      // 0. Load household name
-      const hhName = await ledgerService.getHouseholdName(hhId);
+      // 0. Ensure household document exists and load its name
+      const hhName = await ledgerService.ensureHouseholdExists(hhId, userProfile.uid, 'My Household');
       setHouseholdName(hhName);
 
       // 1. Load accounts & categories
@@ -355,6 +378,46 @@ export default function App() {
 
               <Divider />
 
+              {/* Quick Switch Households */}
+              {userHouseholds.length > 1 && (
+                <>
+                  <Box sx={{ px: 2.5, py: 1 }}>
+                    <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.secondary', textTransform: 'uppercase', fontSize: '0.675rem', letterSpacing: '0.05em' }}>
+                      Switch Household
+                    </Typography>
+                    {userHouseholds.map(hh => {
+                      if (hh.id === userProfile?.householdId) return null;
+                      return (
+                        <MenuItem 
+                          key={hh.id} 
+                          onClick={async () => {
+                            handleCloseProfileMenu();
+                            try {
+                              const updatedProfile = await authService.switchHousehold(userProfile.uid, hh.id);
+                              setUserProfile(updatedProfile);
+                            } catch (err) {
+                              console.error('Failed to switch household:', err);
+                            }
+                          }}
+                          sx={{ px: 1, py: 0.75, borderRadius: '8px', mt: 0.5 }}
+                        >
+                          <ListItemIcon>
+                            <HomeIcon fontSize="small" />
+                          </ListItemIcon>
+                          <ListItemText 
+                            primary={hh.name} 
+                            secondary={`${hh.id.slice(0, 8)}...`}
+                            primaryTypographyProps={{ fontSize: '0.875rem', fontWeight: 500 }}
+                            secondaryTypographyProps={{ fontSize: '0.75rem' }}
+                          />
+                        </MenuItem>
+                      );
+                    })}
+                  </Box>
+                  <Divider />
+                </>
+              )}
+
               {/* Shortcuts */}
               <MenuItem onClick={() => { handleCloseProfileMenu(); setActiveTab('accounts'); }}>
                 <ListItemIcon>
@@ -407,6 +470,7 @@ export default function App() {
               ledgerLines={ledgerLines}
               displayUsdToEgpRate={displayRate}
               householdName={householdName}
+              householdId={userProfile.householdId}
               onVoidTransaction={handleVoidTransaction}
               onNavigateToActivity={() => setActiveTab('activity')}
             />
@@ -464,6 +528,8 @@ export default function App() {
 
           {activeTab === 'household' && (
             <HouseholdSection
+              userProfile={userProfile}
+              onProfileUpdated={(p) => setUserProfile(p)}
               householdId={userProfile.householdId}
               householdName={householdName}
             />

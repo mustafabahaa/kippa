@@ -55,6 +55,7 @@ interface DashboardProps {
   ledgerLines: LedgerLine[];
   displayUsdToEgpRate: number;
   householdName: string;
+  householdId: string;
   onVoidTransaction: (txId: string) => void;
   onNavigateToActivity: () => void;
 }
@@ -69,6 +70,7 @@ export function Dashboard({
   ledgerLines,
   displayUsdToEgpRate,
   householdName,
+  householdId,
   onVoidTransaction,
   onNavigateToActivity
 }: DashboardProps) {
@@ -109,7 +111,7 @@ export function Dashboard({
     const currency = firstLine ? firstLine.currency : 'EGP';
 
     await transactionService.updateTransaction(
-      "household-finance",
+      householdId,
       editingTx.id,
       {
         description: editDesc,
