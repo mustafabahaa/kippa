@@ -12,7 +12,14 @@ import {
   TextField,
   Chip,
   IconButton,
-  Skeleton
+  Skeleton,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import CheckIcon from '@mui/icons-material/Check';
@@ -155,6 +162,33 @@ export function Dashboard({
               <Skeleton key={i} variant="rectangular" width={110} height={36} sx={{ borderRadius: '18px', flexShrink: 0 }} animation="wave" />
             ))}
           </Stack>
+
+          {/* Skeleton Budget Breakdown Table */}
+          <Box>
+            <Skeleton variant="text" width="40%" height={24} animation="wave" sx={{ mb: 1.5 }} />
+            <TableContainer component={Paper} sx={{ borderRadius: '20px', border: '1px solid', borderColor: 'divider', boxShadow: 'none', overflow: 'hidden' }}>
+              <Table size="small">
+                <TableHead sx={{ bgcolor: 'action.hover' }}>
+                  <TableRow>
+                    <TableCell sx={{ py: 1.5 }}><Skeleton variant="text" width={60} height={16} /></TableCell>
+                    <TableCell align="right" sx={{ py: 1.5 }}><Skeleton variant="text" width={40} height={16} /></TableCell>
+                    <TableCell align="right" sx={{ py: 1.5 }}><Skeleton variant="text" width={40} height={16} /></TableCell>
+                    <TableCell align="right" sx={{ py: 1.5 }}><Skeleton variant="text" width={50} height={16} /></TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {[1, 2, 3].map(i => (
+                    <TableRow key={i}>
+                      <TableCell sx={{ py: 1.2 }}><Skeleton variant="text" width="60%" height={18} /></TableCell>
+                      <TableCell align="right" sx={{ py: 1.2 }}><Skeleton variant="text" width="40%" height={18} /></TableCell>
+                      <TableCell align="right" sx={{ py: 1.2 }}><Skeleton variant="text" width="30%" height={18} /></TableCell>
+                      <TableCell align="right" sx={{ py: 1.2 }}><Skeleton variant="text" width="45%" height={18} /></TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </Box>
 
           {/* Skeleton Accounts */}
           <Box>
@@ -306,6 +340,63 @@ export function Dashboard({
             </Typography>
           </CardContent>
         </Card>
+
+        {/* Budget Breakdown Table */}
+        <Stack spacing={1.5}>
+          <Typography variant="h3" sx={{ fontSize: '18px', fontWeight: 700, color: 'text.primary' }}>
+            Budget Breakdown
+          </Typography>
+          <TableContainer component={Paper} sx={{ borderRadius: '20px', border: '1px solid', borderColor: 'divider', boxShadow: 'none', overflow: 'hidden' }}>
+            <Table size="small" aria-label="budget breakdown table">
+              <TableHead sx={{ bgcolor: 'action.hover' }}>
+                <TableRow>
+                  <TableCell sx={{ fontWeight: 'bold', fontSize: '12px', py: 1.5 }}>Category</TableCell>
+                  <TableCell align="right" sx={{ fontWeight: 'bold', fontSize: '12px', py: 1.5 }}>Planned</TableCell>
+                  <TableCell align="right" sx={{ fontWeight: 'bold', fontSize: '12px', py: 1.5 }}>Spent</TableCell>
+                  <TableCell align="right" sx={{ fontWeight: 'bold', fontSize: '12px', py: 1.5 }}>Remaining</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {data.categoryStatus.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={4} align="center" sx={{ py: 3, color: 'text.secondary', fontSize: '13px' }}>
+                      No budget allocations found for this cycle.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  data.categoryStatus.map(cat => {
+                    const remaining = cat.planned - cat.spent;
+                    const isOver = remaining < 0;
+                    return (
+                      <TableRow key={cat.categoryId} hover sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
+                        <TableCell component="th" scope="row" sx={{ fontSize: '13px', fontWeight: 500, py: 1.2 }}>
+                          {cat.categoryName}
+                        </TableCell>
+                        <TableCell align="right" sx={{ fontSize: '13px', py: 1.2 }}>
+                          {cat.planned.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                        </TableCell>
+                        <TableCell align="right" sx={{ fontSize: '13px', py: 1.2, color: cat.spent > 0 ? 'text.primary' : 'text.disabled' }}>
+                          {cat.spent > 0 ? cat.spent.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 }) : '-'}
+                        </TableCell>
+                        <TableCell 
+                          align="right" 
+                          sx={{ 
+                            fontSize: '13px', 
+                            fontWeight: 'bold', 
+                            py: 1.2, 
+                            color: isOver ? 'error.main' : remaining > 0 ? 'success.main' : 'text.secondary' 
+                          }}
+                        >
+                          {isOver ? '' : '+'}{remaining.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </Stack>
 
         {/* Quick Actions Row */}
         <Stack direction="row" spacing={1.5} sx={{ overflowX: 'auto', py: 0.5, '&::-webkit-scrollbar': { display: 'none' }, msOverflowStyle: 'none', scrollbarWidth: 'none' }}>
