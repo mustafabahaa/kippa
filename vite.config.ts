@@ -7,7 +7,15 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['icons/icon.svg', 'icons/apple-touch-icon.png'],
+      includeAssets: [
+        'icons/icon.svg',
+        'icons/apple-touch-icon.png',
+        'icons/icon-192.png',
+        'icons/icon-512.png',
+        'icons/maskable-192.png',
+        'icons/maskable-512.png',
+        'icons/maskable.svg'
+      ],
       manifest: false,
     }),
   ],
