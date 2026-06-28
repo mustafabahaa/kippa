@@ -130,7 +130,7 @@ export function Settings({
         </Box>
 
         {/* Sharing Container */}
-        <Card sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 4, boxShadow: 'none' }}>
+        <Card sx={{ border: '1px solid', borderColor: 'divider', borderRadius: '20px', boxShadow: 'none' }}>
           <CardContent sx={{ p: 3 }}>
             <Typography variant="h3" sx={{ mb: 1.5 }}>Household Sharing</Typography>
             <Typography variant="body1" color="text.secondary" sx={{ mb: 2.5 }}>
@@ -157,7 +157,7 @@ export function Settings({
         </Card>
 
         {/* Notifications Preferences */}
-        <Card sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 4, boxShadow: 'none' }}>
+        <Card sx={{ border: '1px solid', borderColor: 'divider', borderRadius: '20px', boxShadow: 'none' }}>
           <CardContent sx={{ p: 3 }}>
             <Box display="flex" alignItems="center" gap={1.5} sx={{ mb: 2.5 }}>
               <NotificationsActiveIcon color="primary" />
@@ -239,7 +239,7 @@ export function Settings({
         </Card>
 
         {/* Category Setup */}
-        <Card sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 4, boxShadow: 'none' }}>
+        <Card sx={{ border: '1px solid', borderColor: 'divider', borderRadius: '20px', boxShadow: 'none' }}>
           <CardContent sx={{ p: 3 }}>
             <Typography variant="h3" sx={{ mb: 2.5 }}>Manage Categories</Typography>
             
@@ -302,7 +302,7 @@ export function Settings({
         </Card>
 
         {/* Account Setup */}
-        <Card sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 4, boxShadow: 'none' }}>
+        <Card sx={{ border: '1px solid', borderColor: 'divider', borderRadius: '20px', boxShadow: 'none' }}>
           <CardContent sx={{ p: 3 }}>
             <Typography variant="h3" sx={{ mb: 2.5 }}>Manage Accounts</Typography>
 

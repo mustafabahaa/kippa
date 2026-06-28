@@ -15,6 +15,13 @@ const LOCAL_HOUSEHOLD_KEY = 'ledger_local_household';
 export const authService = {
   // Callback when auth state change
   onAuthStateChanged(callback: (user: UserProfile | null) => void): () => void {
+    // If a mock or bypassed user exists in localStorage, use it immediately
+    const stored = localStorage.getItem(LOCAL_USER_KEY);
+    if (stored) {
+      callback(JSON.parse(stored));
+      return () => {};
+    }
+
     if (!isFirebaseConfigured || !auth) {
       // Local storage mock auth listener
       const checkLocalUser = () => {
@@ -33,6 +40,7 @@ export const authService = {
         window.removeEventListener('storage', checkLocalUser);
       };
     }
+
 
     return onAuthStateChanged(auth, async (fbUser: FirebaseUser | null) => {
       if (fbUser) {
@@ -93,14 +101,28 @@ export const authService = {
     await dbService.setDoc('system', 'users', fbUser.uid, newProfile);
     return newProfile;
   },
+  async bypassLogin(): Promise<UserProfile> {
+    const demoProfile: UserProfile = {
+      uid: 'demo-uid-123',
+      displayName: 'Demo User',
+      email: 'demo@example.com',
+      householdId: 'demo-household-id',
+      role: 'owner',
+      createdAt: new Date().toISOString(),
+    };
+    localStorage.setItem(LOCAL_USER_KEY, JSON.stringify(demoProfile));
+    localStorage.setItem(LOCAL_HOUSEHOLD_KEY, 'demo-household-id');
+    window.dispatchEvent(new Event('storage'));
+    return demoProfile;
+  },
 
   async logout(): Promise<void> {
-    if (!isFirebaseConfigured || !auth) {
-      localStorage.removeItem(LOCAL_USER_KEY);
-      window.dispatchEvent(new Event('storage'));
-      return;
+    localStorage.removeItem(LOCAL_USER_KEY);
+    localStorage.removeItem(LOCAL_HOUSEHOLD_KEY);
+    window.dispatchEvent(new Event('storage'));
+    if (isFirebaseConfigured && auth) {
+      await firebaseSignOut(auth);
     }
-    await firebaseSignOut(auth);
   },
 
   async createHousehold(userId: string, name: string): Promise<Household> {

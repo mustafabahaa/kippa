@@ -1,4 +1,11 @@
-# Design System Inspired by Google Workspace
+# Design System — Workspace Productivity System
+
+> **Canonical Source:** Google Stitch Design System, asset ID `d778924a54e1410caa5f4bc7d35e5bca` (project `5833365205671877695`).
+> All design tokens (colors, typography, spacing, elevation) are derived from this Stitch asset. Do not add ad-hoc values.
+
+---
+
+*Inspired by Google Workspace*
 
 ## 1. Visual Theme & Atmosphere
 
@@ -44,9 +51,9 @@ Google Workspace's design system embodies clean, minimalist collaboration with a
 ## 3. Typography Rules
 
 ### Font Family
-- **Primary Font:** Google Sans (https://fonts.googleapis.com/), with fallback `system-ui, -apple-system, sans-serif`
-- **Secondary Font:** Google Sans Text (https://fonts.googleapis.com/), with fallback `system-ui, -apple-system, sans-serif`
-- **UI Font:** Arial, with fallback `sans-serif`
+- **Primary Font:** Plus Jakarta Sans (https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700), with fallback `system-ui, -apple-system, sans-serif`
+- **Secondary Font:** Plus Jakarta Sans (same family, body weight 400), with fallback `system-ui, -apple-system, sans-serif`
+- **UI Font:** Plus Jakarta Sans (medium weight 500), with fallback `sans-serif`
 
 ### Hierarchy
 

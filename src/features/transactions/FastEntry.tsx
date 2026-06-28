@@ -9,12 +9,15 @@ import {
   Typography, 
   Chip, 
   TextField, 
-  ToggleButton, 
-  ToggleButtonGroup,
   Alert,
-  Grid
+  Grid,
+  IconButton
 } from '@mui/material';
 import BackspaceIcon from '@mui/icons-material/Backspace';
+import NotesIcon from '@mui/icons-material/Notes';
+import AddIcon from '@mui/icons-material/Add';
+import RemoveIcon from '@mui/icons-material/Remove';
+import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import { Account, Category, BudgetCycle, UserProfile } from '../../domain/financeTypes';
 import { transactionService } from '../../services/transactionService';
 
@@ -42,29 +45,33 @@ export function FastEntry({
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
   const [description, setDescription] = useState('');
+  const [showNoteField, setShowNoteField] = useState(false);
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   // Conversion / Transfer Specific States
   const [toAccount, setToAccount] = useState<Account | null>(null);
   const [toAmountStr, setToAmountStr] = useState('0');
-  const rateSource = 'manual';
+  const [isKeypadForDest, setIsKeypadForDest] = useState(false); // Controls which amount input the keypad controls
 
   // Keypad controls
   const handleKeypadPress = (val: string) => {
     setError(null);
     setSuccess(null);
-    if (val === 'C') {
-      setAmountStr('0');
-    } else if (val === 'back') {
-      setAmountStr(prev => prev.length > 1 ? prev.slice(0, -1) : '0');
+    
+    const activeSetter = isKeypadForDest ? setToAmountStr : setAmountStr;
+    const activeVal = isKeypadForDest ? toAmountStr : amountStr;
+
+    if (val === 'back') {
+      activeSetter(prev => prev.length > 1 ? prev.slice(0, -1) : '0');
     } else if (val === '.') {
-      if (!amountStr.includes('.')) {
-        setAmountStr(prev => prev + '.');
+      if (!activeVal.includes('.')) {
+        activeSetter(prev => prev + '.');
       }
     } else {
-      setAmountStr(prev => prev === '0' ? val : prev + val);
+      activeSetter(prev => prev === '0' ? val : prev + val);
     }
   };
 
@@ -74,6 +81,9 @@ export function FastEntry({
       const lastUsedId = localStorage.getItem('ledger_last_used_account');
       const found = accounts.find(a => a.id === lastUsedId);
       setSelectedAccount(found || accounts[0]);
+      if (accounts.length > 1) {
+        setToAccount(accounts[1]);
+      }
     }
     
     const expenseCats = categories.filter(c => c.type === 'expense');
@@ -88,7 +98,7 @@ export function FastEntry({
     const amount = parseFloat(amountStr);
 
     if (isNaN(amount) || amount <= 0) {
-      setError('Please enter a valid amount greater than 0');
+      setError('Please enter a valid amount');
       return;
     }
 
@@ -101,6 +111,8 @@ export function FastEntry({
       setError('Please select an account');
       return;
     }
+
+    setIsSaving(true);
 
     try {
       if (mode === 'expense') {
@@ -123,9 +135,11 @@ export function FastEntry({
           ]
         );
         localStorage.setItem('ledger_last_used_account', selectedAccount.id);
-        setSuccess(`Logged expense of ${amount} ${selectedAccount.currency}!`);
+        setSuccess(`Saved! Logged expense of ${amount} ${selectedAccount.currency}`);
         setAmountStr('0');
         setDescription('');
+        setShowNoteField(false);
+        onTransactionSaved();
       } 
       else if (mode === 'income') {
         await transactionService.createTransaction(
@@ -133,7 +147,7 @@ export function FastEntry({
           {
             type: 'income',
             date,
-            description: description || 'Salary',
+            description: description || 'Income',
             categoryId: selectedCategory?.id,
             budgetCycleId: activeCycle?.id || undefined,
             createdBy: userProfile.uid,
@@ -146,18 +160,19 @@ export function FastEntry({
             }
           ]
         );
-        setSuccess(`Logged income of ${amount} ${selectedAccount.currency}!`);
+        setSuccess(`Saved! Logged income of ${amount} ${selectedAccount.currency}`);
         setAmountStr('0');
         setDescription('');
+        setShowNoteField(false);
+        onTransactionSaved();
       } 
       else if (mode === 'conversion') {
         const toAmount = parseFloat(toAmountStr);
         if (!toAccount || isNaN(toAmount) || toAmount <= 0) {
-          setError('Please select a destination account and valid destination amount');
+          setError('Please select destination details');
+          setIsSaving(false);
           return;
         }
-
-        const effectiveRate = toAmount / amount;
 
         await transactionService.createTransaction(
           householdId,
@@ -179,24 +194,19 @@ export function FastEntry({
               signedAmount: toAmount,
               currency: toAccount.currency,
             }
-          ],
-          {
-            fromCurrency: selectedAccount.currency,
-            toCurrency: toAccount.currency,
-            fromAmount: amount,
-            toAmount,
-            effectiveRate,
-            rateSource,
-          }
+          ]
         );
-        setSuccess(`Converted ${amount} ${selectedAccount.currency} to ${toAmount} ${toAccount.currency} (Rate: ${effectiveRate.toFixed(2)})`);
+        setSuccess(`Saved conversion!`);
         setAmountStr('0');
         setToAmountStr('0');
         setDescription('');
-      } 
+        setShowNoteField(false);
+        onTransactionSaved();
+      }
       else if (mode === 'transfer') {
         if (!toAccount) {
-          setError('Please select a destination account');
+          setError('Please select destination account');
+          setIsSaving(false);
           return;
         }
 
@@ -205,7 +215,7 @@ export function FastEntry({
           {
             type: 'transfer',
             date,
-            description: description || `Transfer to ${toAccount.name}`,
+            description: description || `Transfer`,
             budgetCycleId: activeCycle?.id || undefined,
             createdBy: userProfile.uid,
           },
@@ -222,231 +232,366 @@ export function FastEntry({
             }
           ]
         );
-        setSuccess(`Transferred ${amount} ${selectedAccount.currency} from ${selectedAccount.name} to ${toAccount.name}`);
+        setSuccess(`Saved transfer!`);
         setAmountStr('0');
         setDescription('');
+        setShowNoteField(false);
+        onTransactionSaved();
       }
-
-      onTransactionSaved();
     } catch (err: any) {
-      setError(err.message || 'Failed to record transaction');
+      setError(err?.message || 'Error occurred saving transaction');
+    } finally {
+      setIsSaving(false);
     }
   };
 
-  const handleModeChange = (newMode: EntryMode) => {
-    setMode(newMode);
-    setError(null);
-    setSuccess(null);
-    setAmountStr('0');
-    setToAmountStr('0');
-    if (newMode === 'income') {
-      const incCats = categories.filter(c => c.type === 'income');
-      setSelectedCategory(incCats[0] || null);
-    } else {
-      const expCats = categories.filter(c => c.type === 'expense');
-      setSelectedCategory(expCats[0] || null);
-    }
-  };
+  const currentCurrencySymbol = selectedAccount?.currency === 'USD' ? '$' : 'EGP';
 
   return (
-    <Container maxWidth="sm" sx={{ py: { xs: 2, sm: 4 } }}>
-      <Stack spacing={3}>
-        <ToggleButtonGroup
-          color="primary"
-          value={mode}
-          exclusive
-          onChange={(_, v) => v && handleModeChange(v)}
-          fullWidth
-          size="small"
+    <Container maxWidth="xs" sx={{ py: 1, px: 2 }}>
+      <Stack spacing={2.5}>
+        
+        {/* Mode Selector */}
+        <Stack direction="row" spacing={1} sx={{ mt: 1 }}>
+          {(['expense', 'income', 'conversion', 'transfer'] as EntryMode[]).map(m => (
+            <Button
+              key={m}
+              onClick={() => {
+                setMode(m);
+                setError(null);
+                setSuccess(null);
+              }}
+              variant={mode === m ? 'contained' : 'outlined'}
+              sx={{ 
+                flex: 1, 
+                fontSize: '11px', 
+                height: 36, 
+                minHeight: 36, 
+                borderRadius: '8px',
+                px: 1,
+                bgcolor: mode === m ? 'primary.main' : 'background.paper',
+                color: mode === m ? 'primary.contrastText' : 'text.primary',
+                border: '1px solid',
+                borderColor: mode === m ? 'primary.main' : 'divider'
+              }}
+            >
+              {m.toUpperCase()}
+            </Button>
+          ))}
+        </Stack>
+
+        {/* Amount Display Area */}
+        <Box 
+          sx={{ 
+            display: 'flex', 
+            flexDirection: 'column', 
+            alignItems: 'center', 
+            justifyContent: 'center', 
+            py: 3, 
+            bgcolor: 'background.paper', 
+            borderRadius: '20px', 
+            border: '1px solid', 
+            borderColor: 'divider',
+            cursor: 'pointer'
+          }}
+          onClick={() => setIsKeypadForDest(false)}
         >
-          <ToggleButton value="expense">Expense</ToggleButton>
-          <ToggleButton value="income">Income</ToggleButton>
-          <ToggleButton value="conversion">Convert</ToggleButton>
-          <ToggleButton value="transfer">Transfer</ToggleButton>
-        </ToggleButtonGroup>
+          <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '12px', fontWeight: 500, mb: 1 }}>
+            {mode === 'conversion' ? 'Source Amount' : 'Amount to Log'}
+          </Typography>
+          <Box display="flex" alignItems="baseline" sx={{ color: isKeypadForDest ? 'text.secondary' : 'primary.main' }}>
+            <Typography variant="h2" sx={{ fontSize: '28px', mr: 0.5, fontWeight: 500 }}>
+              {currentCurrencySymbol}
+            </Typography>
+            <Typography variant="h1" sx={{ fontSize: '44px', fontWeight: 700 }}>
+              {amountStr}
+            </Typography>
+          </Box>
+        </Box>
 
-        {error && <Alert severity="error">{error}</Alert>}
-        {success && <Alert severity="success">{success}</Alert>}
+        {/* Secondary Amount Display for Conversions */}
+        {mode === 'conversion' && (
+          <Box 
+            sx={{ 
+              display: 'flex', 
+              flexDirection: 'column', 
+              alignItems: 'center', 
+              justifyContent: 'center', 
+              py: 2.5, 
+              bgcolor: 'background.paper', 
+              borderRadius: '20px', 
+              border: '1px solid', 
+              borderColor: isKeypadForDest ? 'primary.main' : 'divider',
+              cursor: 'pointer'
+            }}
+            onClick={() => setIsKeypadForDest(true)}
+          >
+            <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '12px', fontWeight: 500, mb: 0.5 }}>
+              Destination Amount
+            </Typography>
+            <Box display="flex" alignItems="baseline" sx={{ color: isKeypadForDest ? 'primary.main' : 'text.secondary' }}>
+              <Typography variant="h2" sx={{ fontSize: '24px', mr: 0.5, fontWeight: 500 }}>
+                {toAccount?.currency === 'USD' ? '$' : 'EGP'}
+              </Typography>
+              <Typography variant="h1" sx={{ fontSize: '36px', fontWeight: 700 }}>
+                {toAmountStr}
+              </Typography>
+            </Box>
+          </Box>
+        )}
 
-        <Card sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 4, boxShadow: 'none' }}>
-          <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
-            <Stack spacing={3.5}>
-              {!activeCycle && (
-                <Alert severity="warning">
-                  No active budget cycle! Logged transactions won't be linked to a budget cycle.
-                </Alert>
-              )}
+        {/* Error / Success alerts */}
+        {error && <Alert severity="error" sx={{ borderRadius: '12px' }}>{error}</Alert>}
+        {success && <Alert severity="success" sx={{ borderRadius: '12px' }}>{success}</Alert>}
 
-              <Box textAlign="center">
-                <Typography variant="body2" color="text.secondary">
-                  {mode === 'conversion' ? 'FROM AMOUNT' : 'AMOUNT'}
-                </Typography>
-                <Typography variant="h1" sx={{ fontSize: '3rem', mt: 1, fontWeight: 700 }}>
-                  {amountStr} <span style={{ fontSize: '1.5rem', color: '#5f6368' }}>{selectedAccount?.currency}</span>
-                </Typography>
-              </Box>
-
-              {mode === 'conversion' && (
-                <Box sx={{ p: 2, bgcolor: 'info.light', borderRadius: 3 }}>
-                  <Typography variant="body2" color="text.secondary" align="center">
-                    TO AMOUNT
-                  </Typography>
-                  <Stack direction="row" spacing={1} sx={{ mt: 1, justifyContent: 'center', alignItems: 'center' }}>
-                    <TextField
-                      variant="standard"
-                      value={toAmountStr}
-                      onChange={e => setToAmountStr(e.target.value)}
-                      placeholder="0"
-                      inputProps={{ style: { textAlign: 'center', fontSize: '1.75rem', fontWeight: 600 } }}
-                      sx={{ width: 120 }}
-                    />
-                    <Typography variant="h3">{toAccount?.currency || 'EGP'}</Typography>
-                  </Stack>
-                  {parseFloat(amountStr) > 0 && parseFloat(toAmountStr) > 0 && (
-                    <Typography variant="body2" align="center" color="primary" sx={{ mt: 1 }}>
-                      Effective Rate: 1 {selectedAccount?.currency} = {(parseFloat(toAmountStr) / parseFloat(amountStr)).toFixed(2)} {toAccount?.currency}
-                    </Typography>
-                  )}
-                </Box>
-              )}
-
-              <Box>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                  {mode === 'conversion' || mode === 'transfer' ? 'FROM ACCOUNT' : 'ACCOUNT'}
-                </Typography>
-                <Box display="flex" flexWrap="wrap" gap={1}>
-                  {accounts.map(acc => (
-                    <Chip
-                      key={acc.id}
-                      label={`${acc.name} (${acc.currency})`}
-                      onClick={() => {
-                        setSelectedAccount(acc);
-                        if (toAccount && toAccount.id === acc.id) {
-                          setToAccount(null);
-                        }
-                      }}
-                      color={selectedAccount?.id === acc.id ? 'primary' : 'default'}
-                      variant={selectedAccount?.id === acc.id ? 'filled' : 'outlined'}
-                    />
-                  ))}
-                </Box>
-              </Box>
-
-              {(mode === 'conversion' || mode === 'transfer') && (
-                <Box>
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                    TO ACCOUNT
-                  </Typography>
-                  <Box display="flex" flexWrap="wrap" gap={1}>
-                    {accounts
-                      .filter(acc => {
-                        if (mode === 'conversion') {
-                          return acc.currency !== selectedAccount?.currency;
-                        }
-                        return acc.currency === selectedAccount?.currency && acc.id !== selectedAccount?.id;
-                      })
-                      .map(acc => (
-                        <Chip
-                          key={acc.id}
-                          label={`${acc.name} (${acc.currency})`}
-                          onClick={() => setToAccount(acc)}
-                          color={toAccount?.id === acc.id ? 'primary' : 'default'}
-                          variant={toAccount?.id === acc.id ? 'filled' : 'outlined'}
-                        />
-                      ))}
-                  </Box>
-                </Box>
-              )}
-
-              {(mode === 'expense' || mode === 'income') && (
-                <Box>
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                    CATEGORY
-                  </Typography>
-                  <Box display="flex" flexWrap="wrap" gap={1} sx={{ maxHeight: 110, overflowY: 'auto', p: 0.5 }}>
-                    {categories
-                      .filter(c => c.type === (mode === 'expense' ? 'expense' : 'income'))
-                      .map(cat => (
-                        <Chip
-                          key={cat.id}
-                          label={cat.name}
-                          onClick={() => setSelectedCategory(cat)}
-                          color={selectedCategory?.id === cat.id ? 'success' : 'default'}
-                          variant={selectedCategory?.id === cat.id ? 'filled' : 'outlined'}
-                          size="small"
-                        />
-                      ))}
-                  </Box>
-                </Box>
-              )}
-
-              {/* Numeric Keypad */}
-              <Box>
-                <Grid container spacing={1}>
-                  {['1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '0', 'back'].map(val => (
-                    <Grid size={{ xs: 4 }} key={val}>
-                      <Button
-                        fullWidth
-                        variant="outlined"
-                        onClick={() => handleKeypadPress(val)}
-                        sx={{
-                          height: 52,
-                          fontSize: '1.25rem',
-                          borderRadius: 3,
-                          borderColor: 'divider',
-                          color: 'text.primary',
-                          bgcolor: 'background.paper',
-                          '&:hover': {
-                            bgcolor: 'info.light'
-                          }
-                        }}
-                      >
-                        {val === 'back' ? <BackspaceIcon /> : val}
-                      </Button>
-                    </Grid>
-                  ))}
-                </Grid>
-              </Box>
-
-              <Stack direction="row" spacing={2}>
-                <TextField
-                  fullWidth
-                  label="Description / Note (Optional)"
-                  size="small"
-                  value={description}
-                  onChange={e => setDescription(e.target.value)}
-                />
-                <TextField
-                  type="date"
-                  label="Date"
-                  size="small"
-                  InputLabelProps={{ shrink: true }}
-                  value={date}
-                  onChange={e => setDate(e.target.value)}
-                  sx={{ width: 160 }}
-                />
-              </Stack>
-
-              <Button
-                variant="contained"
-                onClick={handleSave}
-                fullWidth
-                sx={{
-                  py: 1.8,
-                  fontSize: '1rem',
-                  fontWeight: 600,
-                  borderRadius: 4,
-                  bgcolor: mode === 'expense' ? 'error.main' : mode === 'income' ? 'success.main' : 'primary.main',
-                  '&:hover': {
-                    bgcolor: mode === 'expense' ? 'error.dark' : mode === 'income' ? 'success.dark' : 'primary.dark'
-                  }
-                }}
-              >
-                Save {mode.toUpperCase()}
-              </Button>
+        {/* Category Selection (Only for expense/income) */}
+        {(mode === 'expense' || mode === 'income') && (
+          <Box>
+            <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
+              <Typography variant="body1" sx={{ fontWeight: 'bold', color: 'text.primary', fontSize: '14px' }}>
+                Category
+              </Typography>
+              <Typography variant="body2" sx={{ color: 'primary.main', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer' }}>
+                See All
+              </Typography>
+            </Box>
+            <Stack 
+              direction="row" 
+              spacing={1} 
+              sx={{ 
+                overflowX: 'auto', 
+                pb: 1, 
+                '&::-webkit-scrollbar': { display: 'none' }, 
+                msOverflowStyle: 'none', 
+                scrollbarWidth: 'none' 
+              }}
+            >
+              {categories.filter(c => c.type === mode).map(cat => {
+                const isSelected = selectedCategory?.id === cat.id;
+                return (
+                  <Chip
+                    key={cat.id}
+                    label={cat.name}
+                    onClick={() => setSelectedCategory(cat)}
+                    variant={isSelected ? 'filled' : 'outlined'}
+                    sx={{
+                      fontSize: '13px',
+                      height: 36,
+                      borderRadius: '999px',
+                      bgcolor: isSelected ? 'primary.main' : 'background.paper',
+                      color: isSelected ? 'primary.contrastText' : 'text.secondary',
+                      borderColor: isSelected ? 'primary.main' : 'divider',
+                      fontWeight: isSelected ? 'bold' : 'normal',
+                      '&:hover': { bgcolor: isSelected ? 'primary.main' : 'action.hover' }
+                    }}
+                  />
+                );
+              })}
             </Stack>
-          </CardContent>
-        </Card>
+          </Box>
+        )}
+
+        {/* Account Selection */}
+        <Box sx={{ width: '100%' }}>
+          <Typography variant="body1" sx={{ fontWeight: 'bold', color: 'text.primary', fontSize: '14px', mb: 1 }}>
+            {mode === 'transfer' || mode === 'conversion' ? 'Source Account' : 'From Account'}
+          </Typography>
+          <Stack direction="row" spacing={1.5}>
+            {accounts.map(acc => {
+              const isSelected = selectedAccount?.id === acc.id;
+              return (
+                <Box
+                  key={acc.id}
+                  onClick={() => setSelectedAccount(acc)}
+                  sx={{
+                    flex: 1,
+                    p: 1.5,
+                    borderRadius: '16px',
+                    border: '1px solid',
+                    borderColor: isSelected ? 'primary.main' : 'divider',
+                    bgcolor: isSelected ? 'info.light' : 'background.paper',
+                    color: isSelected ? 'primary.main' : 'text.secondary',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'flex-start'
+                  }}
+                >
+                  <Typography variant="body2" sx={{ opacity: 0.7, fontSize: '11px' }}>
+                    {acc.type}
+                  </Typography>
+                  <Typography variant="body1" sx={{ fontWeight: 'bold', fontSize: '13.5px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', width: '100%' }}>
+                    {acc.name}
+                  </Typography>
+                </Box>
+              );
+            })}
+          </Stack>
+        </Box>
+
+        {/* Target Account Selection (Only for transfer/conversion) */}
+        {(mode === 'transfer' || mode === 'conversion') && (
+          <Box sx={{ width: '100%' }}>
+            <Typography variant="body1" sx={{ fontWeight: 'bold', color: 'text.primary', fontSize: '14px', mb: 1 }}>
+              Destination Account
+            </Typography>
+            <Stack direction="row" spacing={1.5}>
+              {accounts.map(acc => {
+                const isSelected = toAccount?.id === acc.id;
+                return (
+                  <Box
+                    key={acc.id}
+                    onClick={() => setToAccount(acc)}
+                    sx={{
+                      flex: 1,
+                      p: 1.5,
+                      borderRadius: '16px',
+                      border: '1px solid',
+                      borderColor: isSelected ? 'primary.main' : 'divider',
+                      bgcolor: isSelected ? 'info.light' : 'background.paper',
+                      color: isSelected ? 'primary.main' : 'text.secondary',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'flex-start'
+                    }}
+                  >
+                    <Typography variant="body2" sx={{ opacity: 0.7, fontSize: '11px' }}>
+                      {acc.type}
+                    </Typography>
+                    <Typography variant="body1" sx={{ fontWeight: 'bold', fontSize: '13.5px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', width: '100%' }}>
+                      {acc.name}
+                    </Typography>
+                  </Box>
+                );
+              })}
+            </Stack>
+          </Box>
+        )}
+
+        {/* Note / Date Area */}
+        <Stack direction="row" spacing={2} sx={{ width: '100%' }}>
+          <Box flex={1}>
+            <Button
+              onClick={() => setShowNoteField(!showNoteField)}
+              fullWidth
+              variant="outlined"
+              sx={{
+                justifyContent: 'space-between',
+                px: 2,
+                py: 1.5,
+                borderRadius: '16px',
+                border: '1px solid',
+                borderColor: 'divider',
+                bgcolor: 'background.paper',
+                color: 'text.secondary',
+                fontSize: '13.5px',
+                height: 48,
+                '&:hover': { bgcolor: 'action.hover', borderColor: 'divider' }
+              }}
+            >
+              <Box display="flex" alignItems="center" gap={1}>
+                <NotesIcon sx={{ fontSize: '20px' }} />
+                Note
+              </Box>
+              {showNoteField ? <RemoveIcon sx={{ fontSize: '18px' }} /> : <AddIcon sx={{ fontSize: '18px' }} />}
+            </Button>
+          </Box>
+          <Box sx={{ width: '120px' }}>
+            <Box 
+              sx={{ 
+                height: 48, 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center', 
+                border: '1px solid', 
+                borderColor: 'divider', 
+                borderRadius: '16px', 
+                bgcolor: 'background.paper',
+                color: 'text.secondary',
+                fontSize: '13.5px',
+                gap: 0.5
+              }}
+            >
+              <CalendarTodayIcon sx={{ fontSize: '16px' }} />
+              Today
+            </Box>
+          </Box>
+        </Stack>
+
+        {showNoteField && (
+          <TextField
+            multiline
+            rows={2}
+            fullWidth
+            placeholder="Add details..."
+            value={description}
+            onChange={e => setDescription(e.target.value)}
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                borderRadius: '16px',
+              }
+            }}
+          />
+        )}
+
+        {/* Custom Numeric Keypad */}
+        <Box sx={{ mt: 1 }}>
+          <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1 }}>
+            {['1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '0', 'back'].map(k => {
+              const isBack = k === 'back';
+              return (
+                <Button
+                  key={k}
+                  onClick={() => handleKeypadPress(k)}
+                  fullWidth
+                  sx={{
+                    height: 60,
+                    borderRadius: '12px',
+                    border: '1px solid',
+                    borderColor: 'divider',
+                    bgcolor: isBack ? 'surfaceOffWhite' : 'background.paper',
+                    color: 'text.primary',
+                    fontSize: '20px',
+                    fontWeight: 'bold',
+                    boxShadow: 'none',
+                    '&:hover': { bgcolor: 'action.hover' },
+                    '&:active': { transform: 'scale(0.95)', bgcolor: 'info.light' }
+                  }}
+                >
+                  {isBack ? <BackspaceIcon /> : k}
+                </Button>
+              );
+            })}
+          </Box>
+
+          {/* Submit Action Button */}
+          <Button
+            onClick={handleSave}
+            disabled={isSaving}
+            fullWidth
+            variant="contained"
+            sx={{
+              mt: 2.5,
+              height: 56,
+              borderRadius: '16px',
+              bgcolor: 'primary.dark',
+              fontSize: '16px',
+              fontWeight: 'bold',
+              textTransform: 'none',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 1
+            }}
+          >
+            <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
+            {isSaving ? 'Saving...' : mode === 'expense' ? 'Save Expense' : mode === 'income' ? 'Save Income' : 'Save Transaction'}
+          </Button>
+        </Box>
+
       </Stack>
     </Container>
   );

@@ -179,7 +179,7 @@ export function Cycles({
 
         {/* Current Active Cycle Status */}
         {activeCycle ? (
-          <Card sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 4, boxShadow: 'none' }}>
+          <Card sx={{ border: '1px solid', borderColor: 'divider', borderRadius: '20px', boxShadow: 'none' }}>
             <CardContent sx={{ p: 3 }}>
               <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
                 <Box>
@@ -216,7 +216,7 @@ export function Cycles({
                 <Grid container spacing={2}>
                   {categories.filter(c => c.type === 'expense').map(cat => (
                     <Grid size={{ xs: 12, sm: 6, md: 4 }} key={cat.id}>
-                      <Box sx={{ p: 2, border: '1px solid', borderColor: 'divider', borderRadius: 3 }}>
+                      <Box sx={{ p: 2, border: '1px solid', borderColor: 'divider', borderRadius: '8px' }}>
                         <Typography variant="body1" sx={{ fontWeight: 600, mb: 1.5 }}>
                           {cat.name} ({cat.priority})
                         </Typography>
@@ -261,7 +261,7 @@ export function Cycles({
         )}
 
         {/* History List of Cycles */}
-        <Card sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 4, boxShadow: 'none' }}>
+        <Card sx={{ border: '1px solid', borderColor: 'divider', borderRadius: '20px', boxShadow: 'none' }}>
           <CardContent sx={{ p: 3 }}>
             <Typography variant="h3" sx={{ mb: 2 }}>Cycle History</Typography>
             <Stack spacing={2} divider={<Divider />}>

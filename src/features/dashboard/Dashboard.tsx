@@ -9,18 +9,20 @@ import {
   LinearProgress, 
   Button, 
   Divider,
-  Alert,
   TextField,
   Chip,
-  IconButton,
-  Grid
+  IconButton
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import CheckIcon from '@mui/icons-material/Check';
-import AccountBalanceWalletOutlinedIcon from '@mui/icons-material/AccountBalanceWalletOutlined';
+import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
+import SavingsIcon from '@mui/icons-material/Savings';
+import PaymentsIcon from '@mui/icons-material/Payments';
+import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
+import WorkIcon from '@mui/icons-material/Work';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { DashboardData } from '../../services/selectors';
-import { Account, BudgetCycle, FinanceTransaction, Category } from '../../domain/financeTypes';
+import { Account, BudgetCycle, FinanceTransaction, Category, LedgerLine } from '../../domain/financeTypes';
 
 interface DashboardProps {
   data: DashboardData;
@@ -28,6 +30,7 @@ interface DashboardProps {
   categories: Category[];
   activeCycle: BudgetCycle | null;
   transactions: FinanceTransaction[];
+  ledgerLines: LedgerLine[];
   displayUsdToEgpRate: number;
   onUpdateDisplayRate: (rate: number) => void;
   onVoidTransaction: (txId: string) => void;
@@ -40,6 +43,7 @@ export function Dashboard({
   categories,
   activeCycle,
   transactions,
+  ledgerLines,
   displayUsdToEgpRate,
   onUpdateDisplayRate,
   onVoidTransaction,
@@ -57,271 +61,360 @@ export function Dashboard({
   };
 
   const getStatusColor = (status: DashboardData['saving']['status']) => {
-    if (status === 'on-track') return 'success.main';
-    if (status === 'warning') return 'warning.main';
-    return 'error.main';
+    if (status === 'on-track') return '#1E8E3E';
+    if (status === 'warning') return '#F9AB00';
+    return '#ba1a1a';
+  };
+
+  const getStatusBgColor = (status: DashboardData['saving']['status']) => {
+    if (status === 'on-track') return 'rgba(30, 142, 62, 0.1)';
+    if (status === 'warning') return 'rgba(249, 171, 0, 0.1)';
+    return 'rgba(186, 26, 26, 0.1)';
   };
 
   const getStatusLabel = (status: DashboardData['saving']['status']) => {
-    if (status === 'on-track') return 'On Track';
-    if (status === 'warning') return 'Pace Warning';
-    return 'Over Budgeting';
+    if (status === 'on-track') return 'ON TRACK';
+    if (status === 'warning') return 'PACE WARNING';
+    return 'OVER BUDGETING';
+  };
+
+  const getAccountIcon = (type: string) => {
+    if (type.toLowerCase() === 'savings' || type.toLowerCase() === 'savings bank') {
+      return <SavingsIcon sx={{ color: 'text.secondary' }} />;
+    }
+    if (type.toLowerCase() === 'cash' || type.toLowerCase() === 'wallet') {
+      return <PaymentsIcon sx={{ color: 'text.secondary' }} />;
+    }
+    return <AccountBalanceIcon sx={{ color: 'primary.main' }} />;
+  };
+
+  const getAccountBgColor = (type: string) => {
+    if (type.toLowerCase() === 'savings' || type.toLowerCase() === 'savings bank') {
+      return 'action.hover';
+    }
+    if (type.toLowerCase() === 'cash' || type.toLowerCase() === 'wallet') {
+      return 'action.hover';
+    }
+    return 'info.light';
+  };
+
+  const getTxIcon = (type: string) => {
+    if (type.toLowerCase() === 'income') {
+      return <WorkIcon sx={{ color: '#1E8E3E' }} />;
+    }
+    return <ShoppingCartIcon sx={{ color: 'text.secondary' }} />;
+  };
+
+  const getTxIconBg = (type: string) => {
+    if (type.toLowerCase() === 'income') {
+      return 'rgba(30, 142, 62, 0.1)';
+    }
+    return 'action.hover';
   };
 
   return (
-    <Container maxWidth="lg" sx={{ py: { xs: 3, md: 6 } }}>
-      <Stack spacing={4}>
-        {/* Top Summary Banner */}
-        <Box display="flex" flexDirection={{ xs: 'column', md: 'row' }} justifyContent="space-between" alignItems={{ xs: 'flex-start', md: 'center' }} gap={2}>
-          <Box>
-            <Typography variant="h1">Finance Dashboard</Typography>
-            {activeCycle ? (
-              <Typography variant="body1" color="text.secondary" sx={{ mt: 0.5 }}>
-                Active Cycle: <strong>{activeCycle.name}</strong> ({activeCycle.startDate} to {activeCycle.endDate || 'next salary'})
-              </Typography>
-            ) : (
-              <Typography variant="body1" color="error" sx={{ mt: 0.5 }}>
-                No active budget cycle configured. Go to 'Cycles' to start one.
-              </Typography>
-            )}
-          </Box>
-
-          <Button 
-            variant="contained" 
-            startIcon={<AccountBalanceWalletOutlinedIcon />} 
-            onClick={onNavigateToFastEntry}
-            sx={{ px: 3, py: 1.2 }}
-          >
-            Add Transaction
-          </Button>
+    <Container maxWidth="xs" sx={{ py: 1, px: 2 }}>
+      <Stack spacing={3}>
+        {/* Header Section */}
+        <Box sx={{ mt: 1 }}>
+          <Typography variant="h2" sx={{ fontSize: '24px', fontWeight: 700, color: 'text.primary' }}>
+            Household Dashboard
+          </Typography>
+          <Typography variant="body1" sx={{ color: 'text.secondary', fontSize: '13px', mt: 0.5 }}>
+            Smith Household • Cycle: {activeCycle ? activeCycle.name : 'No active cycle'}
+          </Typography>
         </Box>
 
-        {/* Financial Health Indicator */}
-        <Card sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 4, boxShadow: 'none' }}>
-          <CardContent sx={{ p: 3 }}>
-            <Grid container spacing={3} alignItems="center">
-              <Grid size={{ xs: 12, md: 4 }} sx={{ borderRight: { md: '1px solid' }, borderColor: 'divider', pr: { md: 3 } }}>
-                <Typography variant="body2" color="text.secondary" gutterBottom>
-                  SAVING PACING
-                </Typography>
-                <Typography variant="h2" sx={{ fontWeight: 600, color: getStatusColor(data.saving.status) }}>
-                  {getStatusLabel(data.saving.status)}
-                </Typography>
-                <Typography variant="body1" color="text.secondary" sx={{ mt: 1 }}>
-                  Current progress predicts EGP <strong>{data.saving.projected.toFixed(0)}</strong> saving, target is EGP <strong>{data.saving.target.toFixed(0)}</strong>.
-                </Typography>
-              </Grid>
+        {/* Total Balance Hero (Total EGP Equivalent) */}
+        <Box 
+          sx={{ 
+            bgcolor: 'primary.dark', 
+            p: 2.5, 
+            borderRadius: '24px', 
+            boxShadow: '0px 4px 12px rgba(0,0,0,0.08)', 
+            display: 'flex', 
+            flexDirection: 'column', 
+            justifyContent: 'space-between', 
+            minHeight: '180px', 
+            position: 'relative', 
+            overflow: 'hidden' 
+          }}
+        >
+          <Box 
+            sx={{ 
+              position: 'absolute', 
+              top: -48, 
+              right: -48, 
+              width: 192, 
+              height: 192, 
+              bgcolor: 'rgba(255, 255, 255, 0.08)', 
+              borderRadius: '50%', 
+              filter: 'blur(40px)',
+              pointerEvents: 'none'
+            }} 
+          />
+          <Box>
+            <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)', fontSize: '11px', fontWeight: 'bold', letterSpacing: '1px', textTransform: 'uppercase' }}>
+              Total EGP Equivalent
+            </Typography>
+            <Typography variant="h1" sx={{ color: 'primary.contrastText', fontSize: '32px', fontWeight: 800, mt: 0.5 }}>
+              EGP {data.totalEgpEquivalent.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+            </Typography>
+            
+            <Stack direction="row" spacing={2} sx={{ mt: 1 }}>
+              {accounts.map(acc => {
+                const balanceObj = data.accountBalances.find(b => b.accountId === acc.id);
+                const bal = balanceObj ? balanceObj.balance : 0;
+                return (
+                  <Typography key={acc.id} variant="body2" sx={{ color: 'rgba(255,255,255,0.85)', fontSize: '12px', fontWeight: 500 }}>
+                    {acc.currency === 'USD' ? '$' : ''}{bal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {acc.currency !== 'USD' ? acc.currency : ''}
+                  </Typography>
+                );
+              })}
+            </Stack>
+          </Box>
 
-              <Grid size={{ xs: 6, md: 4 }} sx={{ borderRight: { md: '1px solid' }, borderColor: 'divider', px: { md: 3 } }}>
-                <Typography variant="body2" color="text.secondary" gutterBottom>
-                  BUDGET-SAFE DAILY SPEND
-                </Typography>
-                <Typography variant="h2" color="primary" sx={{ fontWeight: 600 }}>
-                  EGP {data.safeDailySpend.budgetSafe.toFixed(0)}
-                </Typography>
-                <Typography variant="body1" color="text.secondary" sx={{ mt: 0.5 }}>
-                  Based on remaining flexible budget.
-                </Typography>
-              </Grid>
+          <Stack direction="row" spacing={1.5} sx={{ mt: 3 }}>
+            <Box sx={{ bgcolor: 'rgba(255,255,255,0.18)', px: 1.5, py: 0.5, borderRadius: '8px', display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <span className="material-symbols-outlined" style={{ fontSize: '16px', color: '#fff' }}>schedule</span>
+              <Typography variant="body2" sx={{ color: '#fff', fontSize: '12px', fontWeight: 500 }}>
+                {data.cycleProgress ? `${data.cycleProgress.remainingDays} days remaining` : '0 days left'}
+              </Typography>
+            </Box>
+            <Box sx={{ bgcolor: 'rgba(255,255,255,0.18)', px: 1.5, py: 0.5, borderRadius: '8px', display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <span className="material-symbols-outlined" style={{ fontSize: '16px', color: '#fff' }}>payments</span>
+              <Typography variant="body2" sx={{ color: '#fff', fontSize: '12px', fontWeight: 500 }}>
+                Safe Daily: EGP {data.safeDailySpend.budgetSafe.toFixed(0)}
+              </Typography>
+            </Box>
+          </Stack>
+        </Box>
 
-              <Grid size={{ xs: 6, md: 4 }} sx={{ pl: { md: 3 } }}>
-                <Typography variant="body2" color="text.secondary" gutterBottom>
-                  CASH-SAFE DAILY SPEND
-                </Typography>
-                <Typography variant="h2" color="success.main" sx={{ fontWeight: 600 }}>
-                  EGP {data.safeDailySpend.cashSafe.toFixed(0)}
-                </Typography>
-                <Typography variant="body1" color="text.secondary" sx={{ mt: 0.5 }}>
-                  Based on current liquid cash reserves.
-                </Typography>
-              </Grid>
-            </Grid>
+        {/* Budget Pulse */}
+        <Card sx={{ borderRadius: '20px', border: '1px solid', borderColor: 'divider' }}>
+          <CardContent sx={{ p: 2.5 }}>
+            <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 1.5 }}>
+              <Typography variant="body1" sx={{ fontWeight: 'bold', color: 'text.primary' }}>
+                Budget Pulse
+              </Typography>
+              <Box sx={{ bgcolor: getStatusBgColor(data.saving.status), color: getStatusColor(data.saving.status), px: 1.2, py: 0.4, borderRadius: '999px', fontSize: '11px', fontWeight: 'bold' }}>
+                {getStatusLabel(data.saving.status)}
+              </Box>
+            </Box>
+
+            <Box display="flex" alignItems="center" gap={2}>
+              <Box flex={1}>
+                <LinearProgress 
+                  variant="determinate" 
+                  value={Math.min(100, data.spending.plannedBudget > 0 ? (data.spending.actual / data.spending.plannedBudget) * 100 : 0)} 
+                  sx={{ 
+                    height: 8, 
+                    borderRadius: 4, 
+                    bgcolor: 'action.hover',
+                    '& .MuiLinearProgress-bar': {
+                      bgcolor: getStatusColor(data.saving.status)
+                    }
+                  }} 
+                />
+                <Box display="flex" justifyContent="space-between" sx={{ mt: 1 }}>
+                  <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                    Spending ratio: {Math.round(data.spending.plannedBudget > 0 ? (data.spending.actual / data.spending.plannedBudget) * 100 : 0)}%
+                  </Typography>
+                  <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                    Cycle progress: {data.cycleProgress ? Math.round(data.cycleProgress.ratio * 100) : 0}%
+                  </Typography>
+                </Box>
+              </Box>
+              <Box sx={{ width: 44, height: 44, borderRadius: '50%', bgcolor: getStatusBgColor(data.saving.status), display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <span className="material-symbols-outlined" style={{ color: getStatusColor(data.saving.status), fontSize: '24px', margin: 'auto' }}>
+                  {data.saving.status === 'on-track' ? 'trending_down' : 'trending_up'}
+                </span>
+              </Box>
+            </Box>
+
+            <Typography variant="body2" sx={{ mt: 1.5, color: 'text.secondary', fontStyle: 'italic', fontSize: '13px' }}>
+              Projected cycle spending: EGP <strong>{data.spending.projected.toFixed(0)}</strong> (Target: EGP {data.spending.plannedBudget.toFixed(0)})
+            </Typography>
           </CardContent>
         </Card>
 
-        {/* Main Stats Grid */}
-        <Grid container spacing={3}>
-          {/* Account Balances List */}
-          <Grid size={{ xs: 12, md: 6 }}>
-            <Card sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 4, boxShadow: 'none', height: '100%' }}>
-              <CardContent sx={{ p: 3 }}>
-                <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 3 }}>
-                  <Typography variant="h3">Accounts & Cash</Typography>
-                  <Box display="flex" alignItems="center" gap={1}>
-                    {editingRate ? (
-                      <Stack direction="row" spacing={1} alignItems="center">
-                        <TextField
-                          size="small"
-                          label="USD/EGP Rate"
-                          value={rateInput}
-                          onChange={e => setRateInput(e.target.value)}
-                          sx={{ width: 100 }}
-                        />
-                        <IconButton size="small" onClick={handleSaveRate} color="success">
-                          <CheckIcon fontSize="small" />
-                        </IconButton>
-                      </Stack>
-                    ) : (
-                      <Stack direction="row" spacing={1} alignItems="center">
-                        <Typography variant="body2" color="text.secondary">
-                          Display USD Rate: <strong>{displayUsdToEgpRate}</strong>
-                        </Typography>
-                        <IconButton size="small" onClick={() => setEditingRate(true)}>
-                          <EditIcon fontSize="small" />
-                        </IconButton>
-                      </Stack>
-                    )}
-                  </Box>
-                </Box>
+        {/* Quick Actions Row */}
+        <Stack direction="row" spacing={1.5} sx={{ overflowX: 'auto', py: 0.5, '&::-webkit-scrollbar': { display: 'none' }, msOverflowStyle: 'none', scrollbarWidth: 'none' }}>
+          <Button 
+            onClick={onNavigateToFastEntry}
+            sx={{ 
+              flexShrink: 0, 
+              bgcolor: 'background.paper', 
+              color: 'text.primary', 
+              border: '1px solid', 
+              borderColor: 'divider', 
+              borderRadius: '999px', 
+              px: 3, 
+              py: 1, 
+              height: 48,
+              boxShadow: 'none',
+              '&:hover': { bgcolor: 'action.hover', borderColor: 'divider' } 
+            }}
+          >
+            <span className="material-symbols-outlined" style={{ color: 'var(--mui-palette-primary-main, #005c55)', marginRight: '6px' }}>bolt</span>
+            <Typography variant="body2" sx={{ fontWeight: 'bold' }}>Fast Entry</Typography>
+          </Button>
 
-                <Stack spacing={2}>
-                  {accounts.map(acc => {
-                    const balanceObj = data.accountBalances.find(b => b.accountId === acc.id);
-                    const bal = balanceObj ? balanceObj.balance : 0;
-                    return (
-                      <Box key={acc.id} display="flex" justifyContent="space-between" alignItems="center" sx={{ py: 1 }}>
-                        <Box>
-                          <Typography variant="body1" sx={{ fontWeight: 600 }}>{acc.name}</Typography>
-                          <Typography variant="body2" color="text.secondary">
-                            {acc.type.toUpperCase()} • {acc.currency}
-                          </Typography>
-                        </Box>
-                        <Typography variant="h3" sx={{ fontWeight: 600 }}>
-                          {bal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {acc.currency}
-                        </Typography>
-                      </Box>
-                    );
-                  })}
-                  <Divider />
-                  <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ pt: 1 }}>
-                    <Typography variant="body1" sx={{ fontWeight: 600 }}>Total Net Worth (EGP)</Typography>
-                    <Typography variant="h3" color="primary" sx={{ fontWeight: 700 }}>
-                      EGP {data.totalEgpEquivalent.toLocaleString(undefined, { maximumFractionDigits: 0 })}
-                    </Typography>
-                  </Box>
-                </Stack>
-              </CardContent>
-            </Card>
-          </Grid>
+          <Button 
+            sx={{ 
+              flexShrink: 0, 
+              bgcolor: 'background.paper', 
+              color: 'text.primary', 
+              border: '1px solid', 
+              borderColor: 'divider', 
+              borderRadius: '999px', 
+              px: 3, 
+              py: 1, 
+              height: 48,
+              boxShadow: 'none',
+              '&:hover': { bgcolor: 'action.hover', borderColor: 'divider' } 
+            }}
+          >
+            <span className="material-symbols-outlined" style={{ color: 'var(--mui-palette-primary-main, #005c55)', marginRight: '6px' }}>account_balance_wallet</span>
+            <Typography variant="body2" sx={{ fontWeight: 'bold' }}>Reconcile</Typography>
+          </Button>
 
-          {/* Cycle & Budget Status */}
-          <Grid size={{ xs: 12, md: 6 }}>
-            <Card sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 4, boxShadow: 'none', height: '100%' }}>
-              <CardContent sx={{ p: 3 }}>
-                <Typography variant="h3" sx={{ mb: 3 }}>Cycle Progress & Spending</Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', ml: 'auto' }}>
+            {editingRate ? (
+              <Stack direction="row" spacing={1} alignItems="center">
+                <TextField
+                  size="small"
+                  label="USD/EGP Rate"
+                  value={rateInput}
+                  onChange={e => setRateInput(e.target.value)}
+                  sx={{ width: 90 }}
+                />
+                <IconButton size="small" onClick={handleSaveRate} color="success">
+                  <CheckIcon fontSize="small" />
+                </IconButton>
+              </Stack>
+            ) : (
+              <Stack direction="row" spacing={0.5} alignItems="center">
+                <Typography variant="body2" sx={{ fontSize: '11px', color: 'text.secondary' }}>
+                  USD/EGP: <strong>{displayUsdToEgpRate}</strong>
+                </Typography>
+                <IconButton size="small" onClick={() => setEditingRate(true)} sx={{ p: 0.5, width: 24, height: 24 }}>
+                  <EditIcon sx={{ fontSize: '12px' }} />
+                </IconButton>
+              </Stack>
+            )}
+          </Box>
+        </Stack>
 
-                <Stack spacing={3.5}>
-                  {data.cycleProgress ? (
+        {/* My Accounts */}
+        <Stack spacing={1.5}>
+          <Box display="flex" justifyContent="space-between" alignItems="center">
+            <Typography variant="h3" sx={{ fontSize: '18px', fontWeight: 700, color: 'text.primary' }}>
+              My Accounts
+            </Typography>
+            <Typography variant="body2" sx={{ color: 'primary.main', fontWeight: 'bold', cursor: 'pointer' }}>
+              View All
+            </Typography>
+          </Box>
+
+          <Stack spacing={1}>
+            {accounts.map(acc => {
+              const balanceObj = data.accountBalances.find(b => b.accountId === acc.id);
+              const bal = balanceObj ? balanceObj.balance : 0;
+              return (
+                <Box 
+                  key={acc.id} 
+                  sx={{ 
+                    p: 2, 
+                    border: '1px solid', 
+                    borderColor: 'divider', 
+                    borderRadius: '20px', 
+                    bgcolor: 'background.paper', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'space-between' 
+                  }}
+                >
+                  <Box display="flex" alignItems="center" gap={2}>
+                    <Box sx={{ width: 44, height: 44, borderRadius: '12px', bgcolor: getAccountBgColor(acc.type), display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      {getAccountIcon(acc.type)}
+                    </Box>
                     <Box>
-                      <Box display="flex" justifyContent="space-between" sx={{ mb: 1 }}>
-                        <Typography variant="body1">Cycle Timeline Progress</Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          Day {data.cycleProgress.elapsedDays} of {data.cycleProgress.totalDays} ({data.cycleProgress.remainingDays} left)
-                        </Typography>
-                      </Box>
-                      <LinearProgress 
-                        variant="determinate" 
-                        value={data.cycleProgress.ratio * 100} 
-                        sx={{ height: 8, borderRadius: 4 }} 
-                      />
+                      <Typography variant="body1" sx={{ fontWeight: 'bold', color: 'text.primary' }}>{acc.name}</Typography>
+                      <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '11px' }}>{acc.type}</Typography>
                     </Box>
-                  ) : (
-                    <Alert severity="warning">Timeline tracking requires an active open cycle.</Alert>
-                  )}
-
-                  <Box>
-                    <Box display="flex" justifyContent="space-between" sx={{ mb: 1 }}>
-                      <Typography variant="body1">Cycle Budget Spent</Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        EGP {data.spending.actual.toFixed(0)} of EGP {data.spending.plannedBudget.toFixed(0)}
-                      </Typography>
-                    </Box>
-                    <LinearProgress 
-                      variant="determinate" 
-                      color={data.spending.actual > data.spending.plannedBudget ? 'error' : 'primary'}
-                      value={Math.min(100, data.spending.plannedBudget > 0 ? (data.spending.actual / data.spending.plannedBudget) * 100 : 0)} 
-                      sx={{ height: 8, borderRadius: 4 }} 
-                    />
-                    {data.spending.actual > 0 && (
-                      <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                        Projected cycle spending: EGP <strong>{data.spending.projected.toFixed(0)}</strong> (Burn pace)
-                      </Typography>
-                    )}
                   </Box>
-                </Stack>
-              </CardContent>
-            </Card>
-          </Grid>
-        </Grid>
+                  <Typography variant="body1" sx={{ fontWeight: 'bold', color: acc.currency === 'USD' ? 'primary.main' : 'text.primary' }}>
+                    {acc.currency === 'USD' ? '$' : ''}{bal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {acc.currency !== 'USD' ? acc.currency : ''}
+                  </Typography>
+                </Box>
+              );
+            })}
+          </Stack>
+        </Stack>
 
-        {/* Category Warnings & Status */}
-        {data.categoryStatus.length > 0 && (
-          <Card sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 4, boxShadow: 'none' }}>
-            <CardContent sx={{ p: 3 }}>
-              <Typography variant="h3" sx={{ mb: 3 }}>Category Budget Allocations</Typography>
-              <Grid container spacing={3}>
-                {data.categoryStatus.map(cat => (
-                  <Grid size={{ xs: 12, sm: 6, md: 4 }} key={cat.categoryId}>
-                    <Box sx={{ p: 2, border: '1px solid', borderColor: 'divider', borderRadius: 3 }}>
-                      <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
-                        <Typography variant="body1" sx={{ fontWeight: 600 }}>{cat.categoryName}</Typography>
-                        <Chip 
-                          label={cat.status.toUpperCase()} 
-                          size="small" 
-                          color={cat.status === 'over' ? 'error' : cat.status === 'warning' ? 'warning' : 'success'} 
-                        />
-                      </Box>
-                      <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                        EGP {cat.spent.toFixed(0)} / EGP {cat.planned.toFixed(0)} ({Math.round(cat.ratio * 100)}%)
-                      </Typography>
-                      <LinearProgress
-                        variant="determinate"
-                        value={Math.min(100, cat.ratio * 100)}
-                        color={cat.status === 'over' ? 'error' : cat.status === 'warning' ? 'warning' : 'success'}
-                        sx={{ height: 6, borderRadius: 3 }}
-                      />
-                    </Box>
-                  </Grid>
-                ))}
-              </Grid>
-            </CardContent>
-          </Card>
-        )}
+        {/* Recent Activity */}
+        <Stack spacing={1.5}>
+          <Typography variant="h3" sx={{ fontSize: '18px', fontWeight: 700, color: 'text.primary' }}>
+            Recent Activity
+          </Typography>
 
-        {/* Recent Transactions List */}
-        <Card sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 4, boxShadow: 'none' }}>
-          <CardContent sx={{ p: 3 }}>
-            <Typography variant="h3" sx={{ mb: 3 }}>Recent Transactions</Typography>
+          <Card sx={{ borderRadius: '20px', border: '1px solid', borderColor: 'divider' }}>
             {transactions.length === 0 ? (
-              <Typography variant="body1" color="text.secondary" align="center" sx={{ py: 4 }}>
-                No transactions recorded yet. Add some to populate the list!
+              <Typography variant="body2" color="text.secondary" align="center" sx={{ py: 4 }}>
+                No recent activity recorded.
               </Typography>
             ) : (
-              <Stack spacing={1.5} divider={<Divider />}>
-                {transactions.slice(0, 8).map(tx => {
+              <Stack divider={<Divider />}>
+                {transactions.slice(0, 5).map(tx => {
                   const cat = categories.find(c => c.id === tx.categoryId);
+                  const isIncome = tx.type === 'income';
+                  
+                  // Find amount from ledgerLines
+                  const txLines = ledgerLines.filter(l => l.transactionId === tx.id);
+                  const firstLine = txLines.find(l => l.signedAmount !== 0) || txLines[0];
+                  const amount = firstLine ? Math.abs(firstLine.signedAmount) : 0;
+                  const currency = firstLine ? firstLine.currency : 'EGP';
+
                   return (
-                    <Box key={tx.id} display="flex" justifyContent="space-between" alignItems="center">
-                      <Box>
-                        <Stack direction="row" spacing={1} alignItems="center">
-                          <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                            {tx.type.toUpperCase()} • {tx.description || cat?.name || 'General'}
+                    <Box 
+                      key={tx.id} 
+                      sx={{ 
+                        p: 2, 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'space-between',
+                        bgcolor: 'background.paper',
+                        '&:hover': { bgcolor: 'action.hover' }
+                      }}
+                    >
+                      <Box display="flex" alignItems="center" gap={2}>
+                        <Box sx={{ width: 40, height: 40, borderRadius: '50%', bgcolor: getTxIconBg(tx.type), display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          {getTxIcon(tx.type)}
+                        </Box>
+                        <Box>
+                          <Typography variant="body1" sx={{ fontWeight: 'bold', color: 'text.primary', fontSize: '13.5px' }}>
+                            {tx.description || cat?.name || 'General'}
                           </Typography>
-                          {tx.status === 'voided' && <Chip label="VOIDED" size="small" color="error" />}
-                        </Stack>
-                        <Typography variant="body2" color="text.secondary">
-                          {tx.date} • Created by {tx.createdBy === 'mock-uid-123' ? 'You' : 'Partner'}
-                        </Typography>
+                          <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '11px' }}>
+                            {tx.date} • {cat?.name || 'Uncategorized'}
+                          </Typography>
+                        </Box>
                       </Box>
 
-                      <Stack direction="row" spacing={2} alignItems="center">
+                      <Stack direction="row" spacing={1.5} alignItems="center">
+                        <Typography variant="body1" sx={{ fontWeight: 'bold', color: isIncome ? '#1E8E3E' : 'text.primary' }}>
+                          {isIncome ? '+' : '-'}{amount.toLocaleString()} {currency}
+                        </Typography>
+                        
                         <IconButton 
                           size="small" 
                           color="error" 
                           onClick={() => onVoidTransaction(tx.id)}
                           disabled={tx.status === 'voided'}
+                          sx={{ p: 0.5, width: 28, height: 28 }}
                         >
-                          <DeleteIcon fontSize="small" />
+                          <DeleteIcon sx={{ fontSize: '16px' }} />
                         </IconButton>
                       </Stack>
                     </Box>
@@ -329,8 +422,8 @@ export function Dashboard({
                 })}
               </Stack>
             )}
-          </CardContent>
-        </Card>
+          </Card>
+        </Stack>
       </Stack>
     </Container>
   );
