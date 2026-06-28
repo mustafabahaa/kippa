@@ -63,6 +63,7 @@ export default function App() {
 
   const { modePref, resolvedMode, setModePref } = useThemeMode();
   const theme = useMemo(() => createAppTheme(resolvedMode), [resolvedMode]);
+  const logoSrc = resolvedMode === 'dark' ? '/icons/icon-dark.svg' : '/icons/icon.svg';
 
   const [activeTab, setActiveTab] = useState<string>(() => {
     return localStorage.getItem('finance_active_tab') || 'dashboard';
@@ -93,9 +94,9 @@ export default function App() {
       <ThemeProvider theme={theme}>
         <CssBaseline />
         <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', bgcolor: 'background.paper', gap: 2 }}>
-          <img src="/icons/icon.svg" alt="Household Ledger Logo" style={{ width: 64, height: 64, animation: 'pulse 1.5s infinite ease-in-out' }} />
+          <img src={logoSrc} alt="Kippa Logo" style={{ width: 64, height: 64, animation: 'pulse 1.5s infinite ease-in-out' }} />
           <Typography variant="h3" sx={{ fontWeight: 'bold', fontSize: '20px', color: 'primary.main' }}>
-            Household Ledger
+            Kippa
           </Typography>
           <style>{`
             @keyframes pulse {
@@ -127,9 +128,9 @@ export default function App() {
           <Toolbar sx={{ justifyContent: 'space-between', px: { xs: 2, sm: 3 } }}>
             {/* Left: Logo & Brand Name */}
             <Stack direction="row" spacing={1} alignItems="center">
-              <img src="/icons/icon.svg" alt="Household Ledger Logo" style={{ height: 28, width: 'auto' }} />
+              <img src={logoSrc} alt="Kippa Logo" style={{ height: 28, width: 'auto' }} />
               <Typography variant="h3" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
-                Household Ledger
+                Kippa
               </Typography>
             </Stack>
 

@@ -1,7 +1,7 @@
 {
-  "name": "Household Finance Ledger",
-  "short_name": "Finance Ledger",
-  "description": "Private household finance ledger for USD salary, EGP spending, balances, and budget cycles.",
+  "name": "Kippa",
+  "short_name": "Kippa",
+  "description": "Private Kippa household finance ledger for USD salary, EGP spending, balances, and budget cycles.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#FFFFFF",

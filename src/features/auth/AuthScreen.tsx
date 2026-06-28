@@ -9,12 +9,15 @@ import {
   Stack,
   TextField,
   Typography,
-  Alert
+  Alert,
+  useTheme
 } from '@mui/material';
 import { isFirebaseReady } from '../../libs/auth';
 import { useAppContext } from '../../hooks/useAppContext';
 
 export function AuthScreen() {
+  const theme = useTheme();
+  const logoSrc = theme.palette.mode === 'dark' ? '/icons/icon-dark.svg' : '/icons/icon.svg';
   const { enqueueSnackbar } = useSnackbar();
   const {
     userProfile,
@@ -200,10 +203,10 @@ export function AuthScreen() {
           {/* Brand Identity Section */}
           <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1.5, mb: 1 }}>
             <Box sx={{ width: 64, height: 64, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <img src="/icons/icon.svg" alt="Household Ledger Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+              <img src={logoSrc} alt="Kippa Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
             </Box>
             <Typography variant="h3" sx={{ fontWeight: 'bold', color: 'text.primary', fontSize: '20px', tracking: '-0.5px' }}>
-              Household Ledger
+              Kippa
             </Typography>
           </Box>
 
@@ -213,7 +216,7 @@ export function AuthScreen() {
               Sign in
             </Typography>
             <Typography variant="body1" sx={{ color: 'text.secondary', mt: 0.5, fontSize: '14px' }}>
-              to continue to Household Ledger
+              to continue to Kippa
             </Typography>
           </Box>
 
@@ -254,7 +257,7 @@ export function AuthScreen() {
           {/* Contextual Information */}
           <Box sx={{ width: '100%', pt: 2, borderTop: '1px solid', borderColor: 'divider', mt: 1 }}>
             <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '12px', lineHeight: 1.5 }}>
-              To continue, Google will share your name, email address, language preference, and profile picture with Household Ledger.
+              To continue, Google will share your name, email address, language preference, and profile picture with Kippa.
             </Typography>
             <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
               <Typography variant="body2" sx={{ color: 'primary.main', fontWeight: 'bold', cursor: 'pointer', fontSize: '12px' }}>
