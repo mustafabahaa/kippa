@@ -1,20 +1,25 @@
 import { useState } from 'react';
-import { 
-  Box, 
-  Button, 
+import { useSnackbar } from 'notistack';
+import {
+  Box,
+  Button,
   Container,
-  Stack, 
-  Typography, 
-  Chip, 
-  TextField, 
+  Stack,
+  Typography,
+  Chip,
+  TextField,
   Alert,
   Skeleton
 } from '@mui/material';
+import { MobileDatePicker } from '@mui/x-date-pickers/MobileDatePicker';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import BackspaceIcon from '@mui/icons-material/Backspace';
 import NotesIcon from '@mui/icons-material/Notes';
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
+import { isToday, format } from 'date-fns';
 import { 
   useAccounts, 
   useCategories, 
@@ -27,6 +32,7 @@ import { PageHeader } from '../shared/PageHeader';
 type EntryMode = 'expense' | 'income' | 'conversion' | 'transfer';
 
 export function FastEntry() {
+  const { enqueueSnackbar } = useSnackbar();
   const { householdId, userProfile } = useAppContext();
   const [mode, setMode] = useState<EntryMode>('expense');
   const [amountStr, setAmountStr] = useState('0');
@@ -49,7 +55,11 @@ export function FastEntry() {
   const createTxMutation = useCreateTransactionMutation();
 
   const activeCycle = cycles.find(c => c.status === 'open') || null;
-  const date = new Date().toISOString().split('T')[0];
+  const [entryDate, setEntryDate] = useState<Date>(new Date());
+  const [datePickerOpen, setDatePickerOpen] = useState(false);
+  // YYYY-MM-DD string submitted to the backend
+  const date = format(entryDate, 'yyyy-MM-dd');
+  const dateLabel = isToday(entryDate) ? 'Today' : format(entryDate, 'MMM d');
 
   // Sort accounts so EGP comes first, then cash accounts, then everything else (e.g. USD).
   // Priority: EGP currency (0) -> cash type (1) -> other (2). Stable within each tier.
@@ -72,9 +82,7 @@ export function FastEntry() {
     || sortedAccounts.find(a => a.id !== selectedAccount?.id)
     || null;
 
-  const modeCats = categories.filter(c => c.type === mode);
   const selectedCategory = (selectedCategoryId && categories.find(c => c.id === selectedCategoryId && c.type === mode))
-    || modeCats[0]
     || null;
 
   // Keypad controls
@@ -106,8 +114,8 @@ export function FastEntry() {
       return;
     }
 
-    if (mode === 'expense' && !selectedCategory) {
-      setError('Please select a category');
+    if ((mode === 'expense' || mode === 'income') && !selectedCategory) {
+      enqueueSnackbar('Please select a category before continuing', { variant: 'warning' });
       return;
     }
 
@@ -140,6 +148,7 @@ export function FastEntry() {
         setSuccess(`Saved! Logged expense of ${amount} ${selectedAccount.currency}`);
         setAmountStr('0');
         setDescription('');
+        setSelectedCategoryId(null);
         setShowNoteField(false);
       } 
       else if (mode === 'income') {
@@ -164,6 +173,7 @@ export function FastEntry() {
         setSuccess(`Saved! Logged income of ${amount} ${selectedAccount.currency}`);
         setAmountStr('0');
         setDescription('');
+        setSelectedCategoryId(null);
         setShowNoteField(false);
       } 
       else if (mode === 'conversion') {
@@ -268,6 +278,7 @@ export function FastEntry() {
               key={m}
               onClick={() => {
                 setMode(m);
+                setSelectedCategoryId(null);
                 setError(null);
                 setSuccess(null);
               }}
@@ -502,26 +513,21 @@ export function FastEntry() {
               {showNoteField ? <RemoveIcon sx={{ fontSize: '18px' }} /> : <AddIcon sx={{ fontSize: '18px' }} />}
             </Button>
           </Box>
-          <Box sx={{ width: '120px' }}>
-            <Box 
-              sx={{ 
-                height: 48, 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'center', 
-                border: '1px solid', 
-                borderColor: 'divider', 
-                borderRadius: '16px', 
-                bgcolor: 'background.paper',
-                color: 'text.secondary',
-                fontSize: '13.5px',
-                gap: 0.5
+          <LocalizationProvider dateAdapter={AdapterDateFns}>
+            <MobileDatePicker
+              value={entryDate}
+              onChange={(newValue) => newValue && setEntryDate(newValue)}
+              maxDate={new Date()}
+              closeOnSelect
+              open={datePickerOpen}
+              onOpen={() => setDatePickerOpen(true)}
+              onClose={() => setDatePickerOpen(false)}
+              slots={{ field: DateButtonField }}
+              slotProps={{
+                field: { dateLabel, setOpen: setDatePickerOpen } as any,
               }}
-            >
-              <CalendarTodayIcon sx={{ fontSize: '16px' }} />
-              Today
-            </Box>
-          </Box>
+            />
+          </LocalizationProvider>
         </Stack>
 
         {showNoteField && (
@@ -597,5 +603,38 @@ export function FastEntry() {
 
       </Stack>
     </Container>
+  );
+}
+
+/**
+ * Custom field slot for MobileDatePicker — renders as a compact pill matching the
+ * Note button style, instead of the default editable input. Tapping it opens the
+ * calendar dialog via the `setOpen` prop passed through `slotProps.field`.
+ */
+function DateButtonField({ dateLabel, setOpen }: { dateLabel?: string; setOpen?: (open: boolean) => void }) {
+  return (
+    <Box
+      onClick={() => setOpen?.(true)}
+      sx={{
+        width: '120px',
+        height: 48,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        border: '1px solid',
+        borderColor: 'divider',
+        borderRadius: '16px',
+        bgcolor: 'background.paper',
+        color: 'text.secondary',
+        fontSize: '13.5px',
+        gap: 0.5,
+        cursor: 'pointer',
+        userSelect: 'none',
+        '&:hover': { bgcolor: 'action.hover' },
+      }}
+    >
+      <CalendarTodayIcon sx={{ fontSize: '16px' }} />
+      {dateLabel}
+    </Box>
   );
 }
