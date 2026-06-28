@@ -292,7 +292,6 @@ export function Activity() {
               <TableRow>
                 <TableCell width="60px"></TableCell>
                 <TableCell>Date / Description</TableCell>
-                <TableCell>Time</TableCell>
                 <TableCell>Details</TableCell>
                 <TableCell align="right">Amount</TableCell>
                 <TableCell align="center" width="100px">Actions</TableCell>
@@ -301,7 +300,7 @@ export function Activity() {
             <TableBody>
               {filteredTxs.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} align="center" sx={{ py: 6, color: 'text.secondary', fontStyle: 'italic' }}>
+                  <TableCell colSpan={5} align="center" sx={{ py: 6, color: 'text.secondary', fontStyle: 'italic' }}>
                     No matching activities found.
                   </TableCell>
                 </TableRow>
@@ -340,12 +339,7 @@ export function Activity() {
                           {tx.description || cat?.name || 'General Entry'}
                         </Typography>
                         <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '11px' }}>
-                          {tx.date} {tx.status === 'voided' && '(VOIDED)'}
-                        </Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '12px' }}>
-                          {formatTime(tx.createdAt)}
+                          {tx.date} • {formatTime(tx.createdAt)} {tx.status === 'voided' && '• (VOIDED)'}
                         </Typography>
                       </TableCell>
                       <TableCell>

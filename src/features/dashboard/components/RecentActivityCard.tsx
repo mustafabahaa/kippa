@@ -183,47 +183,47 @@ export function RecentActivityCard({ onNavigateToActivity }: RecentActivityCardP
               const isIncome = tx.type === 'income' || (tx.type === 'adjustment' && (firstLine?.signedAmount || 0) >= 0);
 
               return (
-                <Box 
-                  key={tx.id} 
-                  sx={{ 
-                    p: 2, 
-                    display: 'flex', 
-                    alignItems: 'center', 
+                <Box
+                  key={tx.id}
+                  sx={{
+                    p: 2,
+                    display: 'flex',
+                    alignItems: 'center',
                     justifyContent: 'space-between',
+                    gap: 1.5,
                     bgcolor: 'background.paper',
                     '&:hover': { bgcolor: 'action.hover' }
                   }}
                 >
-                  <Box display="flex" alignItems="center" gap={2}>
-                    <Box sx={{ width: 40, height: 40, borderRadius: '50%', bgcolor: getTxIconBg(tx.type), display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Box display="flex" alignItems="center" gap={2} sx={{ minWidth: 0, flex: 1 }}>
+                    <Box sx={{ width: 40, height: 40, borderRadius: '50%', bgcolor: getTxIconBg(tx.type), display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                       {getTxIcon(tx.type)}
                     </Box>
-                    <Box>
-                      <Typography variant="body1" sx={{ fontWeight: 'bold', color: 'text.primary', fontSize: '13.5px' }}>
+                    <Box sx={{ minWidth: 0 }}>
+                      <Typography variant="body1" sx={{ fontWeight: 'bold', color: 'text.primary', fontSize: '13.5px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {tx.description || cat?.name || 'General'}
                       </Typography>
-                      <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '11px' }}>
+                      <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '11px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {tx.date} • {formatTime(tx.createdAt)} • {tx.type === 'adjustment' ? 'System' : (cat?.name || 'Uncategorized')}
+                      </Typography>
+                      <Typography variant="body1" sx={{ fontWeight: 'bold', color: isIncome ? '#1E8E3E' : 'text.primary', fontSize: '13.5px', whiteSpace: 'nowrap', mt: 0.25 }}>
+                        {isIncome ? '+' : '-'}{amount.toLocaleString()} {currency}
                       </Typography>
                     </Box>
                   </Box>
 
-                  <Stack direction="row" spacing={1.5} alignItems="center">
-                    <Typography variant="body1" sx={{ fontWeight: 'bold', color: isIncome ? '#1E8E3E' : 'text.primary' }}>
-                      {isIncome ? '+' : '-'}{amount.toLocaleString()} {currency}
-                    </Typography>
-                    
-                    <IconButton 
-                      size="small" 
+                  <Stack direction="row" spacing={0.5} alignItems="center" sx={{ flexShrink: 0, alignSelf: 'center' }}>
+                    <IconButton
+                      size="small"
                       onClick={() => handleOpenEdit(tx)}
                       disabled={tx.status === 'voided'}
                       sx={{ p: 0.5, width: 28, height: 28 }}
                     >
                       <EditIcon sx={{ fontSize: '16px' }} />
                     </IconButton>
-                    <IconButton 
-                      size="small" 
-                      color="error" 
+                    <IconButton
+                      size="small"
+                      color="error"
                       onClick={() => handleVoidTransaction(tx.id)}
                       disabled={tx.status === 'voided'}
                       sx={{ p: 0.5, width: 28, height: 28 }}
