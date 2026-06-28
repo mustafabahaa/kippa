@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { 
   Box, 
   Card, 
@@ -9,58 +9,81 @@ import {
   Button, 
   TextField, 
   Chip, 
-  Divider, 
   Alert,
-  Grid
+  Skeleton
 } from '@mui/material';
-import { dbService } from '../../services/dbService';
-import { transactionService } from '../../services/transactionService';
-import { Account, Reconciliation as ReconModel, UserProfile, BudgetCycle } from '../../domain/financeTypes';
-
-interface ReconciliationProps {
-  householdId: string;
-  userProfile: UserProfile;
-  accounts: Account[];
-  balances: { accountId: string; balance: number }[];
-  activeCycle: BudgetCycle | null;
-  onReconciled: () => void;
-}
+import { 
+  useAccounts, 
+  useTransactions, 
+  useLedgerLines, 
+  useCycles, 
+  useReconciliationHistory,
+  useCreateTransactionMutation,
+  useSaveReconciliationMutation
+} from '../../hooks/useFinance';
+import { Reconciliation as ReconModel } from '../../domain/financeTypes';
+import { useAppContext } from '../../hooks/useAppContext';
 
 type AdjustmentReason = 'forgotten expense' | 'bank fee' | 'exchange difference' | 'cash counting correction' | 'unknown difference';
 
-export function Reconciliation({
-  householdId,
-  userProfile,
-  accounts,
-  balances,
-  activeCycle,
-  onReconciled
-}: ReconciliationProps) {
-  const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
+export function Reconciliation() {
+  const { householdId, userProfile } = useAppContext();
+  // Queries
+  const { data: accounts = [], isLoading: accountsLoading } = useAccounts(householdId);
+  const { data: transactions = [], isLoading: txsLoading } = useTransactions(householdId);
+  const { data: ledgerLines = [], isLoading: linesLoading } = useLedgerLines(householdId);
+  const { data: cycles = [] } = useCycles(householdId);
+  const { data: history = [], isLoading: historyLoading } = useReconciliationHistory(householdId);
+
+  // Mutations
+  const createTxMutation = useCreateTransactionMutation();
+  const saveReconMutation = useSaveReconciliationMutation();
+
+  const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null);
+  const selectedAccount = accounts.find(a => a.id === selectedAccountId) || accounts[0] || null;
   const [actualBalanceInput, setActualBalanceInput] = useState('');
   const [reason, setReason] = useState<AdjustmentReason>('forgotten expense');
   const [note, setNote] = useState('');
-  const [history, setHistory] = useState<ReconModel[]>([]);
   const [success, setSuccess] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  useEffect(() => {
-    if (accounts.length > 0) {
-      setSelectedAccount(accounts[0]);
-    }
-    loadReconHistory();
-  }, [accounts]);
+  const activeCycle = cycles.find(c => c.status === 'open') || null;
 
-  const loadReconHistory = async () => {
-    const list = await dbService.getDocs(householdId, 'reconciliations');
-    setHistory((list as ReconModel[]).sort((a, b) => b.createdAt.localeCompare(a.createdAt)));
-  };
+
+
+  const isLoading = accountsLoading || txsLoading || linesLoading || historyLoading;
+
+  if (isLoading) {
+    return (
+      <Container maxWidth="xs" sx={{ py: 1, px: 2 }}>
+        <Stack spacing={3}>
+          <Box sx={{ mt: 1 }}>
+            <Skeleton variant="text" width="60%" height={32} />
+            <Skeleton variant="text" width="40%" height={20} />
+          </Box>
+          <Skeleton variant="rectangular" width="100%" height={200} sx={{ borderRadius: '20px' }} />
+        </Stack>
+      </Container>
+    );
+  }
+
+  // Calculate balances map on the fly
+  const activeTxIds = new Set(transactions.filter(t => t.status === 'posted').map(t => t.id));
+  const activeLines = ledgerLines.filter(line => activeTxIds.has(line.transactionId));
+  const balancesMap: Record<string, number> = {};
+  accounts.forEach(acc => {
+    balancesMap[acc.id] = 0;
+  });
+  activeLines.forEach(line => {
+    if (balancesMap[line.accountId] !== undefined) {
+      balancesMap[line.accountId] += line.signedAmount;
+    }
+  });
 
   const getCalculatedBalance = (): number => {
     if (!selectedAccount) return 0;
-    const match = balances.find(b => b.accountId === selectedAccount.id);
-    return match ? match.balance : 0;
+    return balancesMap[selectedAccount.id] || 0;
   };
 
   const calculatedBalance = getCalculatedBalance();
@@ -78,23 +101,23 @@ export function Reconciliation({
 
       // 1. If difference is non-zero, write an adjustment transaction
       if (Math.abs(difference) > 0.001) {
-        adjustmentTransactionId = await transactionService.createTransaction(
+        adjustmentTransactionId = await createTxMutation.mutateAsync({
           householdId,
-          {
+          transaction: {
             type: 'adjustment',
             date: new Date().toISOString().split('T')[0],
             description: `Balance Correction (${reason}): ${note || 'Manual Reconciliation adjustment'}`,
             budgetCycleId: activeCycle?.id || undefined,
-            createdBy: userProfile.uid,
+            createdBy: userProfile!.uid,
           },
-          [
+          lines: [
             {
               accountId: selectedAccount.id,
               signedAmount: difference,
               currency: selectedAccount.currency,
             }
           ]
-        );
+        });
       }
 
       // 2. Log Reconciliation event
@@ -108,25 +131,30 @@ export function Reconciliation({
         actualBalance,
         difference,
         currency: selectedAccount.currency,
-        createdBy: userProfile.uid,
+        createdBy: userProfile!.uid,
         createdAt: new Date().toISOString(),
         adjustmentTransactionId,
         note: note || undefined,
       };
 
-      await dbService.setDoc(householdId, 'reconciliations', reconId, reconLog);
+      await saveReconMutation.mutateAsync({
+        householdId,
+        reconId,
+        reconLog
+      });
 
       setSuccess(`Reconciliation saved successfully! Difference of ${difference.toFixed(2)} ${selectedAccount.currency} corrected.`);
       setActualBalanceInput('');
       setNote('');
-      loadReconHistory();
-      onReconciled();
     } catch (err: any) {
       setError(err.message || 'Failed to process reconciliation');
     } finally {
       setIsProcessing(false);
     }
   };
+
+  // Sort history locally
+  const sortedHistory = [...history].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 
   return (
     <Container maxWidth="xs" sx={{ py: 1, px: 2 }}>
@@ -170,7 +198,7 @@ export function Reconciliation({
                         key={acc.id}
                         label={`${acc.name} (${acc.currency})`}
                         onClick={() => {
-                          setSelectedAccount(acc);
+                          setSelectedAccountId(acc.id);
                           setActualBalanceInput('');
                           setError(null);
                           setSuccess(null);
@@ -294,12 +322,12 @@ export function Reconciliation({
             Audit History
           </Typography>
           <Stack spacing={1}>
-            {history.length === 0 ? (
+            {sortedHistory.length === 0 ? (
               <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic', pl: 1 }}>
                 No past reconciliation logs found.
               </Typography>
             ) : (
-              history.map(item => {
+              sortedHistory.map(item => {
                 const acc = accounts.find(a => a.id === item.accountId);
                 return (
                   <Box 

@@ -1,60 +1,69 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { 
   Box, 
   Button, 
-  Card, 
-  CardContent, 
   Container,
   Stack, 
   Typography, 
   Chip, 
   TextField, 
   Alert,
-  Grid,
-  IconButton
+  Skeleton
 } from '@mui/material';
 import BackspaceIcon from '@mui/icons-material/Backspace';
 import NotesIcon from '@mui/icons-material/Notes';
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
-import { Account, Category, BudgetCycle, UserProfile } from '../../domain/financeTypes';
-import { transactionService } from '../../services/transactionService';
-
-interface FastEntryProps {
-  householdId: string;
-  userProfile: UserProfile;
-  accounts: Account[];
-  categories: Category[];
-  activeCycle: BudgetCycle | null;
-  onTransactionSaved: () => void;
-}
+import { 
+  useAccounts, 
+  useCategories, 
+  useCycles, 
+  useCreateTransactionMutation 
+} from '../../hooks/useFinance';
+import { useAppContext } from '../../hooks/useAppContext';
 
 type EntryMode = 'expense' | 'income' | 'conversion' | 'transfer';
 
-export function FastEntry({ 
-  householdId, 
-  userProfile, 
-  accounts, 
-  categories, 
-  activeCycle, 
-  onTransactionSaved 
-}: FastEntryProps) {
+export function FastEntry() {
+  const { householdId, userProfile } = useAppContext();
   const [mode, setMode] = useState<EntryMode>('expense');
   const [amountStr, setAmountStr] = useState('0');
-  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
-  const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
+  const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null);
   const [description, setDescription] = useState('');
   const [showNoteField, setShowNoteField] = useState(false);
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [isSaving, setIsSaving] = useState(false);
 
   // Conversion / Transfer Specific States
-  const [toAccount, setToAccount] = useState<Account | null>(null);
+  const [toAccountId, setToAccountId] = useState<string | null>(null);
   const [toAmountStr, setToAmountStr] = useState('0');
   const [isKeypadForDest, setIsKeypadForDest] = useState(false); // Controls which amount input the keypad controls
+
+  // Queries & Mutations
+  const { data: accounts = [], isLoading: accountsLoading } = useAccounts(householdId);
+  const { data: categories = [], isLoading: categoriesLoading } = useCategories(householdId);
+  const { data: cycles = [] } = useCycles(householdId);
+  const createTxMutation = useCreateTransactionMutation();
+
+  const activeCycle = cycles.find(c => c.status === 'open') || null;
+  const date = new Date().toISOString().split('T')[0];
+
+  // Derive selected items
+  const selectedAccount = accounts.find(a => a.id === selectedAccountId) 
+    || accounts.find(a => a.id === localStorage.getItem('ledger_last_used_account'))
+    || accounts[0] 
+    || null;
+
+  const toAccount = accounts.find(a => a.id === toAccountId)
+    || accounts.find(a => a.id !== selectedAccount?.id)
+    || null;
+
+  const modeCats = categories.filter(c => c.type === mode);
+  const selectedCategory = (selectedCategoryId && categories.find(c => c.id === selectedCategoryId && c.type === mode))
+    || modeCats[0]
+    || null;
 
   // Keypad controls
   const handleKeypadPress = (val: string) => {
@@ -74,23 +83,6 @@ export function FastEntry({
       activeSetter(prev => prev === '0' ? val : prev + val);
     }
   };
-
-  // Set defaults
-  useEffect(() => {
-    if (accounts.length > 0) {
-      const lastUsedId = localStorage.getItem('ledger_last_used_account');
-      const found = accounts.find(a => a.id === lastUsedId);
-      setSelectedAccount(found || accounts[0]);
-      if (accounts.length > 1) {
-        setToAccount(accounts[1]);
-      }
-    }
-    
-    const expenseCats = categories.filter(c => c.type === 'expense');
-    if (expenseCats.length > 0) {
-      setSelectedCategory(expenseCats[0]);
-    }
-  }, [accounts, categories]);
 
   const handleSave = async () => {
     setError(null);
@@ -112,78 +104,73 @@ export function FastEntry({
       return;
     }
 
-    setIsSaving(true);
-
     try {
       if (mode === 'expense') {
-        await transactionService.createTransaction(
+        await createTxMutation.mutateAsync({
           householdId,
-          {
+          transaction: {
             type: 'expense',
             date,
             description: description || undefined,
             categoryId: selectedCategory?.id,
             budgetCycleId: activeCycle?.id || undefined,
-            createdBy: userProfile.uid,
+            createdBy: userProfile!.uid,
           },
-          [
+          lines: [
             {
               accountId: selectedAccount.id,
               signedAmount: -amount,
               currency: selectedAccount.currency,
             }
           ]
-        );
+        });
         localStorage.setItem('ledger_last_used_account', selectedAccount.id);
         setSuccess(`Saved! Logged expense of ${amount} ${selectedAccount.currency}`);
         setAmountStr('0');
         setDescription('');
         setShowNoteField(false);
-        onTransactionSaved();
       } 
       else if (mode === 'income') {
-        await transactionService.createTransaction(
+        await createTxMutation.mutateAsync({
           householdId,
-          {
+          transaction: {
             type: 'income',
             date,
             description: description || 'Income',
             categoryId: selectedCategory?.id,
             budgetCycleId: activeCycle?.id || undefined,
-            createdBy: userProfile.uid,
+            createdBy: userProfile!.uid,
           },
-          [
+          lines: [
             {
               accountId: selectedAccount.id,
               signedAmount: amount,
               currency: selectedAccount.currency,
             }
           ]
-        );
+        });
         setSuccess(`Saved! Logged income of ${amount} ${selectedAccount.currency}`);
         setAmountStr('0');
         setDescription('');
         setShowNoteField(false);
-        onTransactionSaved();
       } 
       else if (mode === 'conversion') {
         const toAmount = parseFloat(toAmountStr);
         if (!toAccount || isNaN(toAmount) || toAmount <= 0) {
           setError('Please select destination details');
-          setIsSaving(false);
           return;
         }
 
-        await transactionService.createTransaction(
+        await createTxMutation.mutateAsync({
           householdId,
-          {
+          transaction: {
             type: 'conversion',
             date,
             description: description || `USD to EGP Conversion`,
             budgetCycleId: activeCycle?.id || undefined,
-            createdBy: userProfile.uid,
+            createdBy: userProfile!.uid,
           },
-          [
+          lines: [
             {
               accountId: selectedAccount.id,
               signedAmount: -amount,
@@ -195,31 +182,29 @@ export function FastEntry({
               currency: toAccount.currency,
             }
           ]
-        );
+        });
         setSuccess(`Saved conversion!`);
         setAmountStr('0');
         setToAmountStr('0');
         setDescription('');
         setShowNoteField(false);
-        onTransactionSaved();
       }
       else if (mode === 'transfer') {
         if (!toAccount) {
           setError('Please select destination account');
-          setIsSaving(false);
           return;
         }
 
-        await transactionService.createTransaction(
+        await createTxMutation.mutateAsync({
           householdId,
-          {
+          transaction: {
             type: 'transfer',
             date,
             description: description || `Transfer`,
             budgetCycleId: activeCycle?.id || undefined,
-            createdBy: userProfile.uid,
+            createdBy: userProfile!.uid,
           },
-          [
+          lines: [
             {
               accountId: selectedAccount.id,
               signedAmount: -amount,
@@ -231,21 +216,31 @@ export function FastEntry({
               currency: toAccount.currency,
             }
           ]
-        );
+        });
         setSuccess(`Saved transfer!`);
         setAmountStr('0');
         setDescription('');
         setShowNoteField(false);
-        onTransactionSaved();
       }
     } catch (err: any) {
       setError(err?.message || 'Error occurred saving transaction');
-    } finally {
-      setIsSaving(false);
     }
   };
 
   const currentCurrencySymbol = selectedAccount?.currency === 'USD' ? '$' : 'EGP';
+  const isSaving = createTxMutation.isPending;
+
+  if (accountsLoading || categoriesLoading) {
+    return (
+      <Container maxWidth="xs" sx={{ py: 1, px: 2 }}>
+        <Stack spacing={3}>
+          <Skeleton variant="text" width="60%" height={32} />
+          <Skeleton variant="rectangular" width="100%" height={100} sx={{ borderRadius: '20px' }} />
+          <Skeleton variant="rectangular" width="100%" height={250} sx={{ borderRadius: '20px' }} />
+        </Stack>
+      </Container>
+    );
+  }
 
   return (
     <Container maxWidth="xs" sx={{ py: 1, px: 2 }}>
@@ -351,9 +346,6 @@ export function FastEntry({
               <Typography variant="body1" sx={{ fontWeight: 'bold', color: 'text.primary', fontSize: '14px' }}>
                 Category
               </Typography>
-              <Typography variant="body2" sx={{ color: 'primary.main', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer' }}>
-                See All
-              </Typography>
             </Box>
             <Stack 
               direction="row" 
@@ -372,7 +364,7 @@ export function FastEntry({
                   <Chip
                     key={cat.id}
                     label={cat.name}
-                    onClick={() => setSelectedCategory(cat)}
+                    onClick={() => setSelectedCategoryId(cat.id)}
                     variant={isSelected ? 'filled' : 'outlined'}
                     sx={{
                       fontSize: '13px',
@@ -402,7 +394,7 @@ export function FastEntry({
               return (
                 <Box
                   key={acc.id}
-                  onClick={() => setSelectedAccount(acc)}
+                  onClick={() => setSelectedAccountId(acc.id)}
                   sx={{
                     flex: 1,
                     p: 1.5,
@@ -442,7 +434,7 @@ export function FastEntry({
                 return (
                   <Box
                     key={acc.id}
-                    onClick={() => setToAccount(acc)}
+                    onClick={() => setToAccountId(acc.id)}
                     sx={{
                       flex: 1,
                       p: 1.5,

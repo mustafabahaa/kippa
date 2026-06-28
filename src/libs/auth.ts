@@ -7,7 +7,7 @@ import {
   Auth
 } from 'firebase/auth';
 import { auth, isFirebaseConfigured, isFirebaseReady } from '../config/firebase';
-import { dbService } from './dbService';
+import { dbLib } from './db';
 import { UserProfile, Household } from '../domain/financeTypes';
 
 const FIREBASE_REQUIRED_MSG =
@@ -20,7 +20,7 @@ function requireAuth(): Auth {
   return auth;
 }
 
-export const authService = {
+export const authLib = {
   onAuthStateChanged(callback: (user: UserProfile | null) => void): () => void {
     if (!isFirebaseReady || !auth) {
       callback(null);
@@ -29,7 +29,7 @@ export const authService = {
 
     return onAuthStateChanged(auth, async (fbUser: FirebaseUser | null) => {
       if (fbUser) {
-        const profile = await dbService.getDoc('system', 'users', fbUser.uid) as UserProfile | null;
+        const profile = await dbLib.getDoc('system', 'users', fbUser.uid) as UserProfile | null;
         if (profile) {
           // Migrate old profiles to support multiple households
           let householdIds = profile.householdIds || [];
@@ -47,7 +47,7 @@ export const authService = {
               householdIds, 
               photoURL: fbUser.photoURL || profile.photoURL 
             };
-            await dbService.setDoc('system', 'users', fbUser.uid, updatedProfile);
+            await dbLib.setDoc('system', 'users', fbUser.uid, updatedProfile);
             callback(updatedProfile);
           } else {
             callback(profile);
@@ -77,7 +77,7 @@ export const authService = {
     const credentials = await signInWithPopup(firebaseAuth, provider);
     const fbUser = credentials.user;
 
-    const profile = await dbService.getDoc('system', 'users', fbUser.uid) as UserProfile | null;
+    const profile = await dbLib.getDoc('system', 'users', fbUser.uid) as UserProfile | null;
     if (profile) {
       // Migrate here too just in case
       let householdIds = profile.householdIds || [];
@@ -95,7 +95,7 @@ export const authService = {
           householdIds, 
           photoURL: fbUser.photoURL || profile.photoURL 
         };
-        await dbService.setDoc('system', 'users', fbUser.uid, updatedProfile);
+        await dbLib.setDoc('system', 'users', fbUser.uid, updatedProfile);
         return updatedProfile;
       }
       return profile;
@@ -111,7 +111,7 @@ export const authService = {
       createdAt: new Date().toISOString(),
       photoURL: fbUser.photoURL || undefined,
     };
-    await dbService.setDoc('system', 'users', fbUser.uid, newProfile);
+    await dbLib.setDoc('system', 'users', fbUser.uid, newProfile);
     return newProfile;
   },
 
@@ -133,15 +133,15 @@ export const authService = {
       createdBy: userId,
     };
 
-    await dbService.setDoc(householdId, 'householdInfo', 'info', household);
+    await dbLib.setDoc(householdId, 'householdInfo', 'info', household);
 
-    const profile = await dbService.getDoc('system', 'users', userId) as UserProfile | null;
+    const profile = await dbLib.getDoc('system', 'users', userId) as UserProfile | null;
     if (profile) {
       const householdIds = profile.householdIds || [];
       if (!householdIds.includes(householdId)) {
         householdIds.push(householdId);
       }
-      await dbService.setDoc('system', 'users', userId, {
+      await dbLib.setDoc('system', 'users', userId, {
         ...profile,
         householdId,
         householdIds,
@@ -154,12 +154,12 @@ export const authService = {
 
   async joinHousehold(userId: string, householdId: string): Promise<void> {
     requireAuth();
-    const household = await dbService.getDoc(householdId, 'householdInfo', 'info');
+    const household = await dbLib.getDoc(householdId, 'householdInfo', 'info');
     if (!household) {
       throw new Error('Household ID not found.');
     }
 
-    const profile = await dbService.getDoc('system', 'users', userId) as UserProfile | null;
+    const profile = await dbLib.getDoc('system', 'users', userId) as UserProfile | null;
     if (profile) {
       let householdIds = profile.householdIds || [];
       if (profile.householdId && !householdIds.includes(profile.householdId)) {
@@ -168,7 +168,7 @@ export const authService = {
       if (!householdIds.includes(householdId)) {
         householdIds = [...householdIds, householdId];
       }
-      await dbService.setDoc('system', 'users', userId, {
+      await dbLib.setDoc('system', 'users', userId, {
         ...profile,
         householdId,
         householdIds,
@@ -179,7 +179,7 @@ export const authService = {
 
   async switchHousehold(userId: string, householdId: string): Promise<UserProfile> {
     requireAuth();
-    const profile = await dbService.getDoc('system', 'users', userId) as UserProfile | null;
+    const profile = await dbLib.getDoc('system', 'users', userId) as UserProfile | null;
     if (!profile) throw new Error('User profile not found');
 
     const householdIds = profile.householdIds || [];
@@ -187,7 +187,7 @@ export const authService = {
       throw new Error('You are not a member of this household');
     }
 
-    const hh = await dbService.getDoc(householdId, 'householdInfo', 'info');
+    const hh = await dbLib.getDoc(householdId, 'householdInfo', 'info');
     if (!hh) throw new Error('Household not found');
 
     const role = hh.createdBy === userId ? 'owner' : 'member';
@@ -197,13 +197,13 @@ export const authService = {
       householdId,
       role,
     };
-    await dbService.setDoc('system', 'users', userId, updatedProfile);
+    await dbLib.setDoc('system', 'users', userId, updatedProfile);
     return updatedProfile;
   },
 
   async leaveHousehold(userId: string, householdId: string): Promise<UserProfile> {
     requireAuth();
-    const profile = await dbService.getDoc('system', 'users', userId) as UserProfile | null;
+    const profile = await dbLib.getDoc('system', 'users', userId) as UserProfile | null;
     if (!profile) throw new Error('User profile not found');
 
     const householdIds = (profile.householdIds || []).filter(id => id !== householdId);
@@ -219,7 +219,7 @@ export const authService = {
     };
 
     if (nextActiveId) {
-      const hh = await dbService.getDoc(nextActiveId, 'householdInfo', 'info');
+      const hh = await dbLib.getDoc(nextActiveId, 'householdInfo', 'info');
       if (hh) {
         updatedProfile.role = hh.createdBy === userId ? 'owner' : 'member';
       }
@@ -227,8 +227,13 @@ export const authService = {
       updatedProfile.role = 'owner';
     }
 
-    await dbService.setDoc('system', 'users', userId, updatedProfile);
+    await dbLib.setDoc('system', 'users', userId, updatedProfile);
     return updatedProfile;
+  },
+
+  async getUserProfile(userId: string): Promise<UserProfile | null> {
+    const data = await dbLib.getDoc('system', 'users', userId);
+    return data as UserProfile | null;
   }
 };
 

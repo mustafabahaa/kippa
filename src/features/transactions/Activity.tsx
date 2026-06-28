@@ -11,23 +11,23 @@ import {
   Select, 
   MenuItem, 
   FormControl, 
-  InputLabel,
-  Divider,
+  InputLabel, 
+  FormControlLabel, 
+  Radio, 
+  RadioGroup, 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableContainer, 
+  TableHead, 
+  TableRow, 
+  Paper,
+  Skeleton,
   IconButton,
   Dialog,
   DialogTitle,
   DialogContent,
-  DialogActions,
-  FormControlLabel,
-  Radio,
-  RadioGroup,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper
+  DialogActions
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import EditIcon from '@mui/icons-material/Edit';
@@ -35,28 +35,20 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import WorkIcon from '@mui/icons-material/Work';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
-import FilterListIcon from '@mui/icons-material/FilterList';
 
-import { Account, Category, FinanceTransaction, LedgerLine, CurrencyCode } from '../../domain/financeTypes';
-import { transactionService } from '../../services/transactionService';
+import { 
+  useAccounts, 
+  useCategories, 
+  useTransactions, 
+  useLedgerLines,
+  useVoidTransactionMutation,
+  useUpdateTransactionMutation 
+} from '../../hooks/useFinance';
+import { FinanceTransaction, CurrencyCode } from '../../domain/financeTypes';
+import { useAppContext } from '../../hooks/useAppContext';
 
-interface ActivityProps {
-  householdId: string;
-  transactions: FinanceTransaction[];
-  ledgerLines: LedgerLine[];
-  categories: Category[];
-  accounts: Account[];
-  onDataUpdated: () => void;
-}
-
-export function Activity({
-  householdId,
-  transactions,
-  ledgerLines,
-  categories,
-  accounts,
-  onDataUpdated
-}: ActivityProps) {
+export function Activity() {
+  const { householdId } = useAppContext();
   // Filter States
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -71,6 +63,15 @@ export function Activity({
   const [editAccId, setEditAccId] = useState('');
   const [editAmount, setEditAmount] = useState('0');
   const [editType, setEditType] = useState<'income' | 'expense'>('expense');
+
+  // Queries & Mutations
+  const { data: accounts = [], isLoading: accountsLoading } = useAccounts(householdId);
+  const { data: categories = [], isLoading: categoriesLoading } = useCategories(householdId);
+  const { data: transactions = [], isLoading: txsLoading } = useTransactions(householdId);
+  const { data: ledgerLines = [], isLoading: linesLoading } = useLedgerLines(householdId);
+
+  const voidTxMutation = useVoidTransactionMutation();
+  const updateTxMutation = useUpdateTransactionMutation();
 
   const getTxIcon = (type: string) => {
     if (type.toLowerCase() === 'income') {
@@ -121,31 +122,29 @@ export function Activity({
     const firstLine = txLines.find(l => l.signedAmount !== 0) || txLines[0];
     const currency = firstLine ? firstLine.currency : 'EGP';
 
-    await transactionService.updateTransaction(
+    await updateTxMutation.mutateAsync({
       householdId,
-      editingTx.id,
-      {
+      transactionId: editingTx.id,
+      transactionUpdates: {
         description: editDesc,
         date: editDate,
         categoryId: editCatId || undefined,
         type: editType
       },
-      {
+      lineUpdates: {
         accountId: editAccId,
         signedAmount: signedAmount,
         currency: currency as CurrencyCode
       }
-    );
+    });
 
     setEditingTx(null);
-    onDataUpdated();
   };
 
   // Void Transaction
   const handleVoid = async (txId: string) => {
     if (window.confirm('Are you sure you want to void this transaction?')) {
-      await transactionService.voidTransaction(householdId, txId);
-      onDataUpdated();
+      await voidTxMutation.mutateAsync({ householdId, transactionId: txId });
     }
   };
 
@@ -170,6 +169,23 @@ export function Activity({
 
     return searchMatch && catMatch && accMatch && typeMatch;
   });
+
+  const isLoading = accountsLoading || categoriesLoading || txsLoading || linesLoading;
+
+  if (isLoading) {
+    return (
+      <Container maxWidth="md" sx={{ py: 2 }}>
+        <Stack spacing={3}>
+          <Box>
+            <Skeleton variant="text" width="40%" height={32} />
+            <Skeleton variant="text" width="20%" height={20} />
+          </Box>
+          <Skeleton variant="rectangular" width="100%" height={100} sx={{ borderRadius: '20px' }} />
+          <Skeleton variant="rectangular" width="100%" height={300} sx={{ borderRadius: '20px' }} />
+        </Stack>
+      </Container>
+    );
+  }
 
   return (
     <Container maxWidth="md" sx={{ py: 2 }}>
@@ -202,6 +218,7 @@ export function Activity({
               />
 
               <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
+                {/* Category selector */}
                 <FormControl size="small" fullWidth>
                   <InputLabel id="filter-cat-label">Category</InputLabel>
                   <Select
@@ -218,6 +235,7 @@ export function Activity({
                   </Select>
                 </FormControl>
 
+                {/* Account selector */}
                 <FormControl size="small" fullWidth>
                   <InputLabel id="filter-acc-label">Account</InputLabel>
                   <Select
@@ -234,6 +252,7 @@ export function Activity({
                   </Select>
                 </FormControl>
 
+                {/* Type selector */}
                 <FormControl size="small" fullWidth>
                   <InputLabel id="filter-type-label">Type</InputLabel>
                   <Select
@@ -244,9 +263,9 @@ export function Activity({
                     sx={{ borderRadius: '12px' }}
                   >
                     <MenuItem value="all">All Types</MenuItem>
-                    <MenuItem value="income">Incomes</MenuItem>
-                    <MenuItem value="expense">Expenses</MenuItem>
-                    <MenuItem value="transfer">Transfers</MenuItem>
+                    <MenuItem value="expense">Expense</MenuItem>
+                    <MenuItem value="income">Income</MenuItem>
+                    <MenuItem value="transfer">Transfers & Exchanges</MenuItem>
                   </Select>
                 </FormControl>
               </Stack>
@@ -254,74 +273,89 @@ export function Activity({
           </CardContent>
         </Card>
 
-        {/* Transactions Table/List */}
+        {/* Transactions Table */}
         <TableContainer component={Paper} sx={{ borderRadius: '20px', border: '1px solid', borderColor: 'divider', boxShadow: 'none', overflow: 'hidden' }}>
-          <Table size="small">
+          <Table aria-label="transactions activity table">
             <TableHead sx={{ bgcolor: 'action.hover' }}>
               <TableRow>
-                <TableCell sx={{ fontWeight: 'bold', fontSize: '13px', py: 1.5 }}>Date & Details</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', fontSize: '13px', py: 1.5 }}>Category</TableCell>
-                <TableCell align="right" sx={{ fontWeight: 'bold', fontSize: '13px', py: 1.5 }}>Amount</TableCell>
-                <TableCell align="center" sx={{ fontWeight: 'bold', fontSize: '13px', py: 1.5, width: '100px' }}>Actions</TableCell>
+                <TableCell width="60px"></TableCell>
+                <TableCell>Date / Description</TableCell>
+                <TableCell>Details</TableCell>
+                <TableCell align="right">Amount</TableCell>
+                <TableCell align="center" width="100px">Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {filteredTxs.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={4} align="center" sx={{ py: 4, color: 'text.secondary' }}>
+                  <TableCell colSpan={5} align="center" sx={{ py: 6, color: 'text.secondary', fontStyle: 'italic' }}>
                     No matching activities found.
                   </TableCell>
                 </TableRow>
               ) : (
                 filteredTxs.map(tx => {
                   const cat = categories.find(c => c.id === tx.categoryId);
-                  const isIncome = tx.type === 'income' || (tx.type === 'adjustment' && (ledgerLines.find(l => l.transactionId === tx.id)?.signedAmount || 0) >= 0);
                   const txLines = ledgerLines.filter(l => l.transactionId === tx.id);
                   const firstLine = txLines.find(l => l.signedAmount !== 0) || txLines[0];
+                  
+                  const isIncome = tx.type === 'income' || (tx.type === 'adjustment' && (firstLine?.signedAmount || 0) >= 0);
                   const amount = firstLine ? Math.abs(firstLine.signedAmount) : 0;
                   const currency = firstLine ? firstLine.currency : 'EGP';
 
+                  // Build details string
+                  let detailsText: string;
+                  if (tx.type === 'transfer' || tx.type === 'conversion') {
+                    const fromL = txLines.find(l => l.signedAmount < 0);
+                    const toL = txLines.find(l => l.signedAmount > 0);
+                    const fromAcc = accounts.find(a => a.id === fromL?.accountId);
+                    const toAcc = accounts.find(a => a.id === toL?.accountId);
+                    detailsText = `${fromAcc?.name || 'Wallet'} ➔ ${toAcc?.name || 'Bank'}`;
+                  } else {
+                    const acc = accounts.find(a => a.id === firstLine?.accountId);
+                    detailsText = `${acc?.name || 'Account'} • ${cat?.name || 'General'}`;
+                  }
+
                   return (
                     <TableRow key={tx.id} hover sx={{ opacity: tx.status === 'voided' ? 0.5 : 1 }}>
-                      <TableCell sx={{ py: 1 }}>
-                        <Stack direction="row" spacing={1.5} alignItems="center">
-                          <Box sx={{ width: 36, height: 36, borderRadius: '50%', bgcolor: getTxIconBg(tx.type), display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                            {getTxIcon(tx.type)}
-                          </Box>
-                          <Box>
-                            <Typography variant="body2" sx={{ fontWeight: 'bold', fontSize: '13px' }}>
-                              {tx.description || cat?.name || 'General Adjustment'}
-                            </Typography>
-                            <Typography variant="caption" color="text.secondary" sx={{ fontSize: '10px' }}>
-                              {tx.date} • {firstLine ? accounts.find(a => a.id === firstLine.accountId)?.name : 'System'}
-                            </Typography>
-                          </Box>
-                        </Stack>
+                      <TableCell align="center">
+                        <Box sx={{ width: 36, height: 36, borderRadius: '50%', bgcolor: getTxIconBg(tx.type), display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          {getTxIcon(tx.type)}
+                        </Box>
                       </TableCell>
-                      <TableCell sx={{ py: 1, fontSize: '13px' }}>
-                        {tx.type === 'adjustment' ? 'System' : (cat?.name || 'Uncategorized')}
+                      <TableCell>
+                        <Typography variant="body1" sx={{ fontWeight: 'bold', fontSize: '13.5px' }}>
+                          {tx.description || cat?.name || 'General Entry'}
+                        </Typography>
+                        <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '11px' }}>
+                          {tx.date} {tx.status === 'voided' && '(VOIDED)'}
+                        </Typography>
                       </TableCell>
-                      <TableCell align="right" sx={{ py: 1, fontWeight: 'bold', fontSize: '13px', color: tx.status === 'voided' ? 'text.disabled' : isIncome ? '#1E8E3E' : 'text.primary' }}>
-                        {tx.status === 'voided' ? '[VOIDED] ' : isIncome ? '+' : '-'}{amount.toLocaleString()} {currency}
+                      <TableCell>
+                        <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '12px' }}>
+                          {detailsText}
+                        </Typography>
                       </TableCell>
-                      <TableCell align="center" sx={{ py: 1 }}>
+                      <TableCell align="right">
+                        <Typography variant="body1" sx={{ fontWeight: 'bold', color: tx.status === 'voided' ? 'text.secondary' : isIncome ? '#1E8E3E' : 'text.primary' }}>
+                          {isIncome ? '+' : '-'}{amount.toLocaleString()} {currency}
+                        </Typography>
+                      </TableCell>
+                      <TableCell align="center">
                         <Stack direction="row" spacing={0.5} justifyContent="center">
                           <IconButton 
                             size="small" 
                             onClick={() => handleOpenEdit(tx)}
                             disabled={tx.status === 'voided'}
-                            sx={{ p: 0.5 }}
                           >
-                            <EditIcon sx={{ fontSize: '16px' }} />
+                            <EditIcon sx={{ fontSize: '18px' }} />
                           </IconButton>
                           <IconButton 
                             size="small" 
                             color="error" 
                             onClick={() => handleVoid(tx.id)}
                             disabled={tx.status === 'voided'}
-                            sx={{ p: 0.5 }}
                           >
-                            <DeleteIcon sx={{ fontSize: '16px' }} />
+                            <DeleteIcon sx={{ fontSize: '18px' }} />
                           </IconButton>
                         </Stack>
                       </TableCell>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { 
   Box, 
   Card, 
@@ -33,21 +33,20 @@ import AddHomeIcon from '@mui/icons-material/AddHome';
 import GroupAddIcon from '@mui/icons-material/GroupAdd';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 
-import { authService } from '../../services/authService';
-import { ledgerService } from '../../services/ledgerService';
-import { dbService } from '../../services/dbService';
-import { UserProfile, Household } from '../../domain/financeTypes';
+import { Household } from '../../domain/financeTypes';
+import { useAppContext } from '../../hooks/useAppContext';
 
-interface HouseholdSectionProps {
-  userProfile: UserProfile;
-  onProfileUpdated: (profile: UserProfile) => void;
-  householdId: string;
-  householdName: string;
-}
-
-export function HouseholdSection({ userProfile, onProfileUpdated, householdId, householdName }: HouseholdSectionProps) {
-  const [householdsList, setHouseholdsList] = useState<Household[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+export function HouseholdSection() {
+  const { 
+    userProfile, 
+    householdId, 
+    userHouseholds: householdsList, 
+    isLoadingHouseholds: householdsLoading,
+    switchHousehold,
+    createHousehold,
+    joinHousehold,
+    leaveHousehold
+  } = useAppContext();
 
   // Toast Snackbar State
   const [toast, setToast] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({
@@ -73,55 +72,20 @@ export function HouseholdSection({ userProfile, onProfileUpdated, householdId, h
   const [householdIdToJoin, setHouseholdIdToJoin] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
 
-  const fetchHouseholdsInfo = async () => {
-    const ids = userProfile.householdIds || [];
-    if (ids.length === 0) {
-      setHouseholdsList([]);
-      return;
-    }
-    setIsLoading(true);
-    try {
-      const list = await Promise.all(
-        ids.map(async (id) => {
-          const info = await ledgerService.getHouseholdInfo(id);
-          if (info) return info;
-          // Fallback if info is null but they have the ID
-          return {
-            id,
-            name: id === householdId ? householdName : 'Shared Household',
-            baseCurrency: 'EGP' as const,
-            createdAt: new Date().toISOString(),
-            createdBy: '',
-          };
-        })
-      );
-      setHouseholdsList(list);
-    } catch (err) {
-      console.error('Failed to fetch households list:', err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchHouseholdsInfo();
-  }, [userProfile.householdIds]);
-
   const handleCopyHouseholdId = (id: string) => {
     navigator.clipboard.writeText(id);
     showToast('Invite ID copied to clipboard!', 'success');
   };
 
   const handleSwitchHousehold = async (id: string) => {
-    setIsLoading(true);
+    setActionLoading(true);
     try {
-      const updatedProfile = await authService.switchHousehold(userProfile.uid, id);
-      onProfileUpdated(updatedProfile);
+      await switchHousehold(id);
       showToast(`Switched to household successfully!`, 'success');
     } catch (err: any) {
       showToast(err.message || 'Failed to switch household.', 'error');
     } finally {
-      setIsLoading(false);
+      setActionLoading(false);
     }
   };
 
@@ -132,9 +96,7 @@ export function HouseholdSection({ userProfile, onProfileUpdated, householdId, h
     }
     setActionLoading(true);
     try {
-      const newHh = await authService.createHousehold(userProfile.uid, newHouseholdName.trim());
-      const updatedProfile = await dbService.getDoc('system', 'users', userProfile.uid) as UserProfile;
-      onProfileUpdated(updatedProfile);
+      const newHh = await createHousehold(newHouseholdName.trim());
       setNewHouseholdName('');
       showToast(`Household "${newHh.name}" created and set as active!`, 'success');
     } catch (err: any) {
@@ -151,9 +113,7 @@ export function HouseholdSection({ userProfile, onProfileUpdated, householdId, h
     }
     setActionLoading(true);
     try {
-      await authService.joinHousehold(userProfile.uid, householdIdToJoin.trim());
-      const updatedProfile = await dbService.getDoc('system', 'users', userProfile.uid) as UserProfile;
-      onProfileUpdated(updatedProfile);
+      await joinHousehold(householdIdToJoin.trim());
       setHouseholdIdToJoin('');
       showToast('Joined new household successfully!', 'success');
     } catch (err: any) {
@@ -175,16 +135,15 @@ export function HouseholdSection({ userProfile, onProfileUpdated, householdId, h
 
   const handleLeaveHousehold = async () => {
     if (!householdToLeave) return;
-    setIsLoading(true);
+    setActionLoading(true);
     try {
-      const updatedProfile = await authService.leaveHousehold(userProfile.uid, householdToLeave.id);
-      onProfileUpdated(updatedProfile);
+      await leaveHousehold(householdToLeave.id);
       showToast(`Successfully left household "${householdToLeave.name}"`, 'success');
       handleCloseLeaveConfirm();
     } catch (err: any) {
       showToast(err.message || 'Failed to leave household.', 'error');
     } finally {
-      setIsLoading(false);
+      setActionLoading(false);
     }
   };
 
@@ -226,7 +185,7 @@ export function HouseholdSection({ userProfile, onProfileUpdated, householdId, h
                         {activeHh.name}
                       </Typography>
                       <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '11px' }}>
-                        {activeHh.baseCurrency} (Base Currency) • {userProfile.role === 'owner' ? 'Owner' : 'Member'}
+                        {activeHh.baseCurrency} (Base Currency) • {userProfile!.role === 'owner' ? 'Owner' : 'Member'}
                       </Typography>
                     </Box>
                   </Box>
@@ -275,7 +234,7 @@ export function HouseholdSection({ userProfile, onProfileUpdated, householdId, h
             Your Households ({householdsList.length})
           </Typography>
           <Card sx={{ border: '1px solid', borderColor: 'divider', borderRadius: '20px', boxShadow: 'none' }}>
-            {isLoading ? (
+            {(householdsLoading || actionLoading) ? (
               <Box display="flex" justifyContent="center" alignItems="center" p={4}>
                 <CircularProgress size={30} />
               </Box>

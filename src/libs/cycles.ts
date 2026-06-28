@@ -1,9 +1,9 @@
-import { dbService } from './dbService';
+import { dbLib } from './db';
 import { BudgetCycle, BudgetAllocation, ExpectedIncome } from '../domain/financeTypes';
 
-export const cycleService = {
+export const cyclesLib = {
   async getCycles(householdId: string): Promise<BudgetCycle[]> {
-    const list = await dbService.getDocs(householdId, 'budgetCycles');
+    const list = await dbLib.getDocs(householdId, 'budgetCycles');
     return (list as BudgetCycle[]).sort((a, b) => b.startDate.localeCompare(a.startDate));
   },
 
@@ -22,7 +22,7 @@ export const cycleService = {
       id,
       householdId,
     };
-    await dbService.setDoc(householdId, 'budgetCycles', id, newCycle);
+    await dbLib.setDoc(householdId, 'budgetCycles', id, newCycle);
     return id;
   },
 
@@ -32,7 +32,7 @@ export const cycleService = {
     status: 'planned' | 'open' | 'closed',
     extra: Partial<BudgetCycle> = {}
   ): Promise<void> {
-    const cycle = await dbService.getDoc(householdId, 'budgetCycles', cycleId) as BudgetCycle | null;
+    const cycle = await dbLib.getDoc(householdId, 'budgetCycles', cycleId) as BudgetCycle | null;
     if (!cycle) throw new Error('Budget cycle not found');
 
     const updated: BudgetCycle = {
@@ -40,12 +40,12 @@ export const cycleService = {
       ...extra,
       status,
     };
-    await dbService.setDoc(householdId, 'budgetCycles', cycleId, updated);
+    await dbLib.setDoc(householdId, 'budgetCycles', cycleId, updated);
   },
 
   // Allocations
   async getBudgetAllocations(householdId: string, cycleId: string): Promise<BudgetAllocation[]> {
-    const allAllocations = await dbService.getDocs(householdId, 'budgetAllocations');
+    const allAllocations = await dbLib.getDocs(householdId, 'budgetAllocations');
     return (allAllocations as BudgetAllocation[]).filter(a => a.budgetCycleId === cycleId);
   },
 
@@ -59,7 +59,7 @@ export const cycleService = {
       id,
       householdId,
     };
-    await dbService.setDoc(householdId, 'budgetAllocations', id, newAlloc);
+    await dbLib.setDoc(householdId, 'budgetAllocations', id, newAlloc);
     return id;
   },
 
@@ -80,12 +80,12 @@ export const cycleService = {
         },
       };
     });
-    await dbService.executeBatch(householdId, ops);
+    await dbLib.executeBatch(householdId, ops);
   },
 
   // Expected Income
   async getExpectedIncomes(householdId: string, cycleId: string): Promise<ExpectedIncome[]> {
-    const list = await dbService.getDocs(householdId, 'expectedIncome');
+    const list = await dbLib.getDocs(householdId, 'expectedIncome');
     return (list as ExpectedIncome[]).filter(i => i.budgetCycleId === cycleId);
   },
 
@@ -99,7 +99,7 @@ export const cycleService = {
       id,
       householdId,
     };
-    await dbService.setDoc(householdId, 'expectedIncome', id, newInc);
+    await dbLib.setDoc(householdId, 'expectedIncome', id, newInc);
     return id;
   }
 };

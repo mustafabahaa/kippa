@@ -1,12 +1,12 @@
 /**
- * currencyService.ts
+ * currency.ts
  * Fetches live exchange rates from the Frankfurter API (free, no API key needed).
  */
 
 const CACHE_KEY = 'finance_usd_egp_rate';
 const CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
 
-export const currencyService = {
+export const currencyLib = {
   /**
    * Get the live USD → EGP rate.
    * Falls back to a cached value or a safe default if the API is unreachable.

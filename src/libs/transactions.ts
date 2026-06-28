@@ -1,7 +1,7 @@
-import { dbService } from './dbService';
+import { dbLib } from './db';
 import { FinanceTransaction, LedgerLine, ConversionDetails, CurrencyCode } from '../domain/financeTypes';
 
-export const transactionService = {
+export const transactionsLib = {
   async createTransaction(
     householdId: string,
     transaction: Omit<FinanceTransaction, 'id' | 'householdId' | 'createdAt' | 'updatedAt' | 'status'>,
@@ -56,12 +56,12 @@ export const transactionService = {
       });
     }
 
-    await dbService.executeBatch(householdId, operations);
+    await dbLib.executeBatch(householdId, operations);
     return transactionId;
   },
 
   async voidTransaction(householdId: string, transactionId: string): Promise<void> {
-    const transaction = await dbService.getDoc(householdId, 'transactions', transactionId) as FinanceTransaction | null;
+    const transaction = await dbLib.getDoc(householdId, 'transactions', transactionId) as FinanceTransaction | null;
     if (!transaction) throw new Error('Transaction not found');
 
     const updatedTransaction: FinanceTransaction = {
@@ -72,7 +72,7 @@ export const transactionService = {
 
     // Keep the ledger lines but mark the transaction status as voided
     // When querying balances or cycle spend, selectors must check the transaction status
-    await dbService.setDoc(householdId, 'transactions', transactionId, updatedTransaction);
+    await dbLib.setDoc(householdId, 'transactions', transactionId, updatedTransaction);
   },
 
   async updateTransaction(
@@ -81,7 +81,7 @@ export const transactionService = {
     transactionUpdates: Partial<FinanceTransaction>,
     lineUpdates: { accountId: string; signedAmount: number; currency: CurrencyCode }
   ): Promise<void> {
-    const transaction = await dbService.getDoc(householdId, 'transactions', transactionId) as FinanceTransaction | null;
+    const transaction = await dbLib.getDoc(householdId, 'transactions', transactionId) as FinanceTransaction | null;
     if (!transaction) throw new Error('Transaction not found');
 
     const updatedTransaction: FinanceTransaction = {
@@ -91,7 +91,7 @@ export const transactionService = {
     };
 
     // Get current ledger lines for this transaction
-    const allLines = await dbService.getDocs(householdId, 'ledgerLines') as LedgerLine[];
+    const allLines = await dbLib.getDocs(householdId, 'ledgerLines') as LedgerLine[];
     const txLines = allLines.filter(l => l.transactionId === transactionId);
 
     const operations: { type: 'set' | 'delete'; collectionName: string; docId: string; data?: any }[] = [
@@ -119,6 +119,6 @@ export const transactionService = {
       });
     }
 
-    await dbService.executeBatch(householdId, operations);
+    await dbLib.executeBatch(householdId, operations);
   }
 };

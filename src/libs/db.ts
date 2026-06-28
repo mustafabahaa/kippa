@@ -21,7 +21,7 @@ function requireFirestore(): Firestore {
   return db;
 }
 
-export const dbService = {
+export const dbLib = {
   async getDoc(householdId: string, collectionName: string, docId: string): Promise<any | null> {
     const firestore = requireFirestore();
     const path = householdId === 'system' 

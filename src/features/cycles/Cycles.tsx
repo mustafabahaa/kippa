@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { 
   Box, 
   Card, 
@@ -9,50 +9,40 @@ import {
   Button, 
   TextField, 
   Divider, 
-  Alert,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  FormControlLabel,
-  Checkbox,
-  Grid,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper
+  Dialog, 
+  DialogTitle, 
+  DialogContent, 
+  DialogActions, 
+  FormControlLabel, 
+  Checkbox, 
+  Grid, 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableContainer, 
+  TableHead, 
+  TableRow, 
+  Paper,
+  Skeleton,
+  Chip
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
-import ContentCopyIcon from '@mui/icons-material/ContentCopy';
-import { cycleService } from '../../services/cycleService';
-import { BudgetCycle, BudgetAllocation, Category } from '../../domain/financeTypes';
+import { 
+  useCategories, 
+  useCycles, 
+  useBudgetAllocations,
+  useCreateCycleMutation,
+  useUpdateCycleStatusMutation
+} from '../../hooks/useFinance';
+import { BudgetAllocationsConfig } from './BudgetAllocationsConfig';
+import { useAppContext } from '../../hooks/useAppContext';
 
-interface CyclesProps {
-  householdId: string;
-  categories: Category[];
-  cycles: BudgetCycle[];
-  activeCycle: BudgetCycle | null;
-  onCyclesUpdated: () => void;
-}
-
-export function Cycles({
-  householdId,
-  categories,
-  cycles,
-  activeCycle,
-  onCyclesUpdated
-}: CyclesProps) {
-  const [, setAllocations] = useState<BudgetAllocation[]>([]);
-  const [plannedAmounts, setPlannedAmounts] = useState<Record<string, string>>({});
-  const [carryLeftovers, setCarryLeftovers] = useState<Record<string, boolean>>({});
-
+export function Cycles() {
+  const { householdId } = useAppContext();
   // Cycle Creation State
   const [openCreateDialog, setOpenCreateDialog] = useState(false);
-  const [newCycleName, setNewCycleName] = useState('');
+  const [newCycleNameState, setNewCycleNameState] = useState('');
   const [newCycleStart, setNewCycleStart] = useState(new Date().toISOString().split('T')[0]);
   const [newCycleEnd, setNewCycleEnd] = useState('');
   const [newCycleStatus, setNewCycleStatus] = useState<'open' | 'planned'>('open');
@@ -63,111 +53,81 @@ export function Cycles({
   const [check2, setCheck2] = useState(false);
   const [check3, setCheck3] = useState(false);
 
-  // Fetch allocations for active cycle
-  useEffect(() => {
-    if (activeCycle) {
-      loadAllocations(activeCycle.id);
-    }
-  }, [activeCycle]);
+  // Queries
+  const { data: categories = [], isLoading: categoriesLoading } = useCategories(householdId);
+  const { data: cycles = [], isLoading: cyclesLoading } = useCycles(householdId);
+  
+  const activeCycle = cycles.find(c => c.status === 'open') || null;
 
-  const loadAllocations = async (cycleId: string) => {
-    const list = await cycleService.getBudgetAllocations(householdId, cycleId);
-    setAllocations(list);
+  const { data: dbAllocations = [], isLoading: allocsLoading } = useBudgetAllocations(householdId, activeCycle?.id);
 
-    const amounts: Record<string, string> = {};
-    const leftovers: Record<string, boolean> = {};
-
-    categories.filter(c => c.type === 'expense').forEach(cat => {
-      const match = list.find(a => a.categoryId === cat.id);
-      amounts[cat.id] = match ? match.plannedAmount.toString() : '0';
-      leftovers[cat.id] = match ? match.carryLeftover : false;
-    });
-
-    setPlannedAmounts(amounts);
-    setCarryLeftovers(leftovers);
-  };
+  // Mutations
+  const createCycleMutation = useCreateCycleMutation();
+  const updateCycleStatusMutation = useUpdateCycleStatusMutation();
 
   const handleCreateCycle = async () => {
-    if (!newCycleName.trim()) return;
+    if (!newCycleNameState.trim()) return;
 
     if (newCycleStatus === 'open' && activeCycle) {
-      await cycleService.updateCycleStatus(householdId, activeCycle.id, 'closed', {
-        endDate: new Date().toISOString().split('T')[0]
+      await updateCycleStatusMutation.mutateAsync({
+        householdId,
+        cycleId: activeCycle.id,
+        status: 'closed',
+        extra: {
+          endDate: new Date().toISOString().split('T')[0]
+        }
       });
     }
 
-    await cycleService.createCycle(householdId, {
-      name: newCycleName,
-      startDate: newCycleStart,
-      endDate: newCycleEnd || undefined,
-      status: newCycleStatus,
+    await createCycleMutation.mutateAsync({
+      householdId,
+      cycle: {
+        name: newCycleNameState,
+        startDate: newCycleStart,
+        endDate: newCycleEnd || undefined,
+        status: newCycleStatus,
+      }
     });
 
     setOpenCreateDialog(false);
-    setNewCycleName('');
-    onCyclesUpdated();
+    setNewCycleNameState('');
   };
 
   const handleCloseCycle = async () => {
     if (!activeCycle) return;
     if (!check1 || !check2 || !check3) return;
 
-    await cycleService.updateCycleStatus(householdId, activeCycle.id, 'closed', {
-      endDate: new Date().toISOString().split('T')[0],
-      closedAt: new Date().toISOString(),
+    await updateCycleStatusMutation.mutateAsync({
+      householdId,
+      cycleId: activeCycle.id,
+      status: 'closed',
+      extra: {
+        endDate: new Date().toISOString().split('T')[0],
+        closedAt: new Date().toISOString(),
+      }
     });
 
     setOpenCloseDialog(false);
     setCheck1(false);
     setCheck2(false);
     setCheck3(false);
-    onCyclesUpdated();
   };
 
-  const handleSaveAllocations = async () => {
-    if (!activeCycle) return;
+  const isLoading = categoriesLoading || cyclesLoading;
 
-    const payload: Omit<BudgetAllocation, 'id' | 'householdId'>[] = categories
-      .filter(c => c.type === 'expense')
-      .map(cat => ({
-        budgetCycleId: activeCycle.id,
-        categoryId: cat.id,
-        plannedAmount: parseFloat(plannedAmounts[cat.id]) || 0,
-        currency: 'EGP',
-        carryLeftover: !!carryLeftovers[cat.id],
-      }));
-
-    await cycleService.saveBudgetAllocationsBatch(householdId, payload);
-    loadAllocations(activeCycle.id);
-    alert('Allocations saved successfully!');
-  };
-
-  const handleCopyPreviousAllocations = async () => {
-    if (!activeCycle) return;
-    const closedCycle = cycles.find(c => c.status === 'closed');
-    if (!closedCycle) {
-      alert('No previous cycle allocations found to copy.');
-      return;
-    }
-
-    const prevAllocations = await cycleService.getBudgetAllocations(householdId, closedCycle.id);
-    if (prevAllocations.length === 0) {
-      alert('Previous cycle had no allocations configured.');
-      return;
-    }
-
-    const amounts: Record<string, string> = {};
-    const leftovers: Record<string, boolean> = {};
-
-    categories.filter(c => c.type === 'expense').forEach(cat => {
-      const match = prevAllocations.find(a => a.categoryId === cat.id);
-      amounts[cat.id] = match ? match.plannedAmount.toString() : '0';
-      leftovers[cat.id] = match ? match.carryLeftover : false;
-    });
-
-    setPlannedAmounts(amounts);
-    setCarryLeftovers(leftovers);
-  };
+  if (isLoading) {
+    return (
+      <Container maxWidth="lg" sx={{ py: 4 }}>
+        <Stack spacing={4}>
+          <Box display="flex" justifyContent="space-between" alignItems="center">
+            <Skeleton variant="text" width="40%" height={40} />
+            <Skeleton variant="rectangular" width={120} height={36} sx={{ borderRadius: '8px' }} />
+          </Box>
+          <Skeleton variant="rectangular" width="100%" height={250} sx={{ borderRadius: '20px' }} />
+        </Stack>
+      </Container>
+    );
+  }
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
@@ -208,189 +168,151 @@ export function Cycles({
               <Divider sx={{ my: 3 }} />
 
               {/* Category Budget Allocations */}
-              <Box>
-                <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
-                  <Typography variant="h3">Configure Category Budgets (EGP)</Typography>
-                  <Button 
-                    variant="text" 
-                    startIcon={<ContentCopyIcon />}
-                    onClick={handleCopyPreviousAllocations}
-                  >
-                    Copy from previous
-                  </Button>
-                </Box>
-
-                <TableContainer component={Paper} sx={{ borderRadius: '16px', border: '1px solid', borderColor: 'divider', boxShadow: 'none', overflow: 'hidden' }}>
-                  <Table size="small" aria-label="configure budgets table">
-                    <TableHead sx={{ bgcolor: 'action.hover' }}>
-                      <TableRow>
-                        <TableCell sx={{ fontWeight: 'bold', fontSize: '13px', py: 1.5 }}>Category</TableCell>
-                        <TableCell sx={{ fontWeight: 'bold', fontSize: '13px', py: 1.5, width: '180px' }}>Budget (EGP)</TableCell>
-                        <TableCell align="center" sx={{ fontWeight: 'bold', fontSize: '13px', py: 1.5, width: '180px' }}>Carry Leftovers</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {categories.filter(c => c.type === 'expense').map(cat => (
-                        <TableRow key={cat.id} hover>
-                          <TableCell sx={{ fontSize: '14px', py: 1 }}>
-                            {cat.name}
-                          </TableCell>
-                          <TableCell sx={{ py: 1 }}>
-                            <TextField
-                              size="small"
-                              type="number"
-                              value={plannedAmounts[cat.id] || '0'}
-                              onChange={e => setPlannedAmounts({ ...plannedAmounts, [cat.id]: e.target.value })}
-                              sx={{
-                                '& .MuiOutlinedInput-root': {
-                                  borderRadius: '8px'
-                                },
-                                width: '140px'
-                              }}
-                            />
-                          </TableCell>
-                          <TableCell align="center" sx={{ py: 1 }}>
-                            <Checkbox 
-                              size="small"
-                              checked={!!carryLeftovers[cat.id]} 
-                              onChange={e => setCarryLeftovers({ ...carryLeftovers, [cat.id]: e.target.checked })} 
-                            />
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-
-                <Button 
-                  variant="contained" 
-                  onClick={handleSaveAllocations} 
-                  sx={{ mt: 3, px: 4 }}
-                >
-                  Save Budget Allocations
-                </Button>
-              </Box>
+              {allocsLoading ? (
+                <Skeleton variant="rectangular" width="100%" height={200} />
+              ) : (
+                <BudgetAllocationsConfig 
+                  key={`${activeCycle.id}-${dbAllocations.length}`}
+                  householdId={householdId}
+                  activeCycle={activeCycle}
+                  categories={categories}
+                  dbAllocations={dbAllocations}
+                  cycles={cycles}
+                />
+              )}
             </CardContent>
           </Card>
         ) : (
-          <Alert severity="warning">
-            No active budget cycle. Please create a new cycle to define budgets.
-          </Alert>
+          <Card sx={{ p: 4, textAlign: 'center', border: '1px solid', borderColor: 'divider', borderRadius: '20px', boxShadow: 'none' }}>
+            <Typography variant="body1" color="text.secondary">
+              No active budget cycle. Create a new cycle to get started.
+            </Typography>
+          </Card>
         )}
 
-        {/* History List of Cycles */}
-        <Card sx={{ border: '1px solid', borderColor: 'divider', borderRadius: '20px', boxShadow: 'none' }}>
-          <CardContent sx={{ p: 3 }}>
-            <Typography variant="h3" sx={{ mb: 2 }}>Cycle History</Typography>
-            <Stack spacing={2} divider={<Divider />}>
-              {cycles.map(c => (
-                <Box key={c.id} display="flex" justifyContent="space-between" alignItems="center">
-                  <Box>
-                    <Typography variant="body1" sx={{ fontWeight: 600 }}>{c.name}</Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {c.startDate} {c.endDate ? `to ${c.endDate}` : 'onwards'}
-                    </Typography>
-                  </Box>
-                  <Typography variant="body2" sx={{ 
-                    fontWeight: 600, 
-                    color: c.status === 'open' ? 'success.main' : c.status === 'planned' ? 'warning.main' : 'text.secondary' 
-                  }}>
-                    {c.status.toUpperCase()}
-                  </Typography>
-                </Box>
-              ))}
-            </Stack>
-          </CardContent>
-        </Card>
-
-        {/* Create Cycle Dialog */}
-        <Dialog open={openCreateDialog} onClose={() => setOpenCreateDialog(false)}>
-          <DialogTitle>Create Budget Cycle</DialogTitle>
-          <DialogContent sx={{ minWidth: 320 }}>
-            <Stack spacing={2} sx={{ mt: 1 }}>
-              <TextField
-                required
-                label="Cycle Name"
-                placeholder="e.g. July 2026 Salary"
-                value={newCycleName}
-                onChange={e => setNewCycleName(e.target.value)}
-              />
-              <TextField
-                type="date"
-                label="Start Date"
-                InputLabelProps={{ shrink: true }}
-                value={newCycleStart}
-                onChange={e => setNewCycleStart(e.target.value)}
-              />
-              <TextField
-                type="date"
-                label="Expected End Date (Optional)"
-                InputLabelProps={{ shrink: true }}
-                value={newCycleEnd}
-                onChange={e => setNewCycleEnd(e.target.value)}
-              />
-              <Box>
-                <Typography variant="body2" sx={{ mb: 0.5 }}>Status</Typography>
-                <Stack direction="row" spacing={1}>
-                  <Button 
-                    variant={newCycleStatus === 'open' ? 'contained' : 'outlined'} 
-                    onClick={() => setNewCycleStatus('open')}
-                    size="small"
-                  >
-                    Open Immediately
-                  </Button>
-                  <Button 
-                    variant={newCycleStatus === 'planned' ? 'contained' : 'outlined'} 
-                    onClick={() => setNewCycleStatus('planned')}
-                    size="small"
-                  >
-                    Keep as Planned
-                  </Button>
-                </Stack>
-              </Box>
-            </Stack>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setOpenCreateDialog(false)}>Cancel</Button>
-            <Button onClick={handleCreateCycle} variant="contained">Create</Button>
-          </DialogActions>
-        </Dialog>
-
-        {/* Close Cycle Dialog */}
-        <Dialog open={openCloseDialog} onClose={() => setOpenCloseDialog(false)}>
-          <DialogTitle>Close Cycle Checklist</DialogTitle>
-          <DialogContent>
-            <Typography variant="body1" sx={{ mb: 2 }}>
-              Before closing the budget cycle, verify that all financial records are up to date.
-            </Typography>
-            <Stack spacing={1}>
-              <FormControlLabel
-                control={<Checkbox checked={check1} onChange={e => setCheck1(e.target.checked)} />}
-                label="Are all bank accounts reconciled with actual balances?"
-              />
-              <FormControlLabel
-                control={<Checkbox checked={check2} onChange={e => setCheck2(e.target.checked)} />}
-                label="Have all cash withdrawals and currency conversions been logged?"
-              />
-              <FormControlLabel
-                control={<Checkbox checked={check3} onChange={e => setCheck3(e.target.checked)} />}
-                label="Are all outstanding credit card charges recorded?"
-              />
-            </Stack>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setOpenCloseDialog(false)}>Cancel</Button>
-            <Button 
-              onClick={handleCloseCycle} 
-              variant="contained" 
-              color="error"
-              disabled={!check1 || !check2 || !check3}
-            >
-              Verify & Close Cycle
-            </Button>
-          </DialogActions>
-        </Dialog>
+        {/* Cycles History */}
+        <Stack spacing={2}>
+          <Typography variant="h2">Cycle History</Typography>
+          <TableContainer component={Paper} sx={{ borderRadius: '16px', border: '1px solid', borderColor: 'divider', boxShadow: 'none' }}>
+            <Table>
+              <TableHead sx={{ bgcolor: 'action.hover' }}>
+                <TableRow>
+                  <TableCell sx={{ fontWeight: 'bold' }}>Name</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }}>Start Date</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }}>End Date</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {cycles.map(c => (
+                  <TableRow key={c.id}>
+                    <TableCell sx={{ fontWeight: 500 }}>{c.name}</TableCell>
+                    <TableCell>{c.startDate}</TableCell>
+                    <TableCell>{c.endDate || '-'}</TableCell>
+                    <TableCell>
+                      <Chip 
+                        label={c.status.toUpperCase()} 
+                        size="small" 
+                        color={c.status === 'open' ? 'success' : c.status === 'planned' ? 'info' : 'default'}
+                        sx={{ fontWeight: 'bold', borderRadius: '6px' }}
+                      />
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </Stack>
       </Stack>
+
+      {/* Create Cycle Dialog */}
+      <Dialog open={openCreateDialog} onClose={() => setOpenCreateDialog(false)}>
+        <DialogTitle sx={{ fontWeight: 'bold' }}>Create Budget Cycle</DialogTitle>
+        <DialogContent sx={{ minWidth: 320, pt: 1 }}>
+          <Stack spacing={2} sx={{ mt: 1 }}>
+            <TextField 
+              fullWidth
+              label="Cycle Name"
+              placeholder="e.g. July 2026"
+              value={newCycleNameState}
+              onChange={e => setNewCycleNameState(e.target.value)}
+              sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+            />
+            <Grid container spacing={2}>
+              <Grid size={{ xs: 6 }}>
+                <TextField 
+                  fullWidth
+                  type="date"
+                  label="Start Date"
+                  value={newCycleStart}
+                  onChange={e => setNewCycleStart(e.target.value)}
+                  InputLabelProps={{ shrink: true }}
+                  sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+                />
+              </Grid>
+              <Grid size={{ xs: 6 }}>
+                <TextField 
+                  fullWidth
+                  type="date"
+                  label="Target End Date"
+                  value={newCycleEnd}
+                  onChange={e => setNewCycleEnd(e.target.value)}
+                  InputLabelProps={{ shrink: true }}
+                  sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+                />
+              </Grid>
+            </Grid>
+            <FormControlLabel 
+              control={
+                <Checkbox 
+                  checked={newCycleStatus === 'open'}
+                  onChange={e => setNewCycleStatus(e.target.checked ? 'open' : 'planned')}
+                />
+              }
+              label="Set as active immediately (will close current active cycle)"
+            />
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2.5 }}>
+          <Button onClick={() => setOpenCreateDialog(false)} color="inherit">Cancel</Button>
+          <Button onClick={handleCreateCycle} variant="contained">Create</Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Close Cycle Confirmation */}
+      <Dialog open={openCloseDialog} onClose={() => setOpenCloseDialog(false)}>
+        <DialogTitle sx={{ fontWeight: 'bold', color: 'error.main' }}>Close Budget Cycle</DialogTitle>
+        <DialogContent sx={{ pt: 1 }}>
+          <Typography variant="body2" sx={{ mb: 3 }}>
+            Closing the active cycle compiles balances, carries forward leftovers and locks edits. Confirm items below:
+          </Typography>
+          <Stack spacing={2.5}>
+            <FormControlLabel 
+              control={<Checkbox checked={check1} onChange={e => setCheck1(e.target.checked)} />}
+              label="I have reconciled and verified all bank balances for this month."
+            />
+            <FormControlLabel 
+              control={<Checkbox checked={check2} onChange={e => setCheck2(e.target.checked)} />}
+              label="All USD transactions and exchanges have been logged."
+            />
+            <FormControlLabel 
+              control={<Checkbox checked={check3} onChange={e => setCheck3(e.target.checked)} />}
+              label="I understand this locks the cycle and moves leftovers forward."
+            />
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2.5 }}>
+          <Button onClick={() => setOpenCloseDialog(false)} color="inherit">Cancel</Button>
+          <Button 
+            onClick={handleCloseCycle} 
+            disabled={!check1 || !check2 || !check3}
+            variant="contained" 
+            color="error"
+          >
+            Confirm & Close
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 }

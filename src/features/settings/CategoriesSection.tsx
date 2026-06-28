@@ -13,36 +13,38 @@ import {
   FormControl, 
   InputLabel,
   Divider,
-  Chip
+  Chip,
+  Skeleton
 } from '@mui/material';
-import { ledgerService } from '../../services/ledgerService';
-import { Category } from '../../domain/financeTypes';
+import { 
+  useCategories, 
+  useCreateCategoryMutation 
+} from '../../hooks/useFinance';
 
-interface CategoriesSectionProps {
-  householdId: string;
-  categories: Category[];
-  onDataUpdated: () => void;
-}
+import { useAppContext } from '../../hooks/useAppContext';
 
-export function CategoriesSection({
-  householdId,
-  categories,
-  onDataUpdated
-}: CategoriesSectionProps) {
+export function CategoriesSection() {
+  const { householdId } = useAppContext();
   const [newCatName, setNewCatName] = useState('');
   const [newCatType, setNewCatType] = useState<'income' | 'expense'>('expense');
+
+  // Queries & Mutations
+  const { data: categories = [], isLoading } = useCategories(householdId);
+  const createCategoryMutation = useCreateCategoryMutation();
 
   const handleCreateCategory = async () => {
     if (!newCatName.trim()) return;
 
-    await ledgerService.createCategory(householdId, {
-      name: newCatName,
-      type: newCatType,
-      isActive: true
+    await createCategoryMutation.mutateAsync({
+      householdId,
+      category: {
+        name: newCatName,
+        type: newCatType,
+        isActive: true
+      }
     });
 
     setNewCatName('');
-    onDataUpdated();
   };
 
   return (
@@ -63,14 +65,20 @@ export function CategoriesSection({
             Income Categories
           </Typography>
           <Box display="flex" flexWrap="wrap" gap={1}>
-            {categories.filter(c => c.type === 'income').map(cat => (
-              <Chip 
-                key={cat.id} 
-                label={cat.name} 
-                variant="outlined"
-                sx={{ borderRadius: '8px', fontWeight: 500 }}
-              />
-            ))}
+            {isLoading ? (
+              [1, 2].map(i => (
+                <Skeleton key={i} variant="rectangular" width={80} height={32} sx={{ borderRadius: '8px' }} />
+              ))
+            ) : (
+              categories.filter(c => c.type === 'income').map(cat => (
+                <Chip 
+                  key={cat.id} 
+                  label={cat.name} 
+                  variant="outlined"
+                  sx={{ borderRadius: '8px', fontWeight: 500 }}
+                />
+              ))
+            )}
           </Box>
         </Box>
 
@@ -79,14 +87,20 @@ export function CategoriesSection({
             Expense Categories
           </Typography>
           <Box display="flex" flexWrap="wrap" gap={1}>
-            {categories.filter(c => c.type === 'expense').map(cat => (
-              <Chip 
-                key={cat.id} 
-                label={cat.name} 
-                variant="outlined"
-                sx={{ borderRadius: '8px', fontWeight: 500 }}
-              />
-            ))}
+            {isLoading ? (
+              [1, 2, 3, 4].map(i => (
+                <Skeleton key={i} variant="rectangular" width={80} height={32} sx={{ borderRadius: '8px' }} />
+              ))
+            ) : (
+              categories.filter(c => c.type === 'expense').map(cat => (
+                <Chip 
+                  key={cat.id} 
+                  label={cat.name} 
+                  variant="outlined"
+                  sx={{ borderRadius: '8px', fontWeight: 500 }}
+                />
+              ))
+            )}
           </Box>
         </Box>
 
@@ -125,6 +139,7 @@ export function CategoriesSection({
                 fullWidth
                 variant="contained"
                 onClick={handleCreateCategory}
+                disabled={createCategoryMutation.isPending}
                 sx={{
                   py: 1.2,
                   borderRadius: '12px',

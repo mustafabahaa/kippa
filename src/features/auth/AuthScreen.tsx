@@ -10,15 +10,18 @@ import {
   Typography, 
   Alert
 } from '@mui/material';
-import { authService, isFirebaseReady } from '../../services/authService';
-import { UserProfile } from '../../domain/financeTypes';
+import { isFirebaseReady } from '../../libs/auth';
+import { useAppContext } from '../../hooks/useAppContext';
 
-interface AuthScreenProps {
-  userProfile: UserProfile | null;
-  onProfileUpdated: (profile: UserProfile) => void;
-}
+export function AuthScreen() {
+  const { 
+    userProfile, 
+    loginWithGoogle, 
+    logout, 
+    createHousehold, 
+    joinHousehold 
+  } = useAppContext();
 
-export function AuthScreen({ userProfile, onProfileUpdated }: AuthScreenProps) {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -30,8 +33,7 @@ export function AuthScreen({ userProfile, onProfileUpdated }: AuthScreenProps) {
     setError(null);
     setLoading(true);
     try {
-      const profile = await authService.signInWithGoogle();
-      onProfileUpdated(profile);
+      await loginWithGoogle();
     } catch (err: any) {
       setError(err.message || 'Google Authentication failed');
     } finally {
@@ -48,8 +50,7 @@ export function AuthScreen({ userProfile, onProfileUpdated }: AuthScreenProps) {
     setError(null);
     setLoading(true);
     try {
-      const hh = await authService.createHousehold(userProfile.uid, householdName);
-      onProfileUpdated({ ...userProfile, householdId: hh.id });
+      await createHousehold(householdName.trim());
     } catch (err: any) {
       setError(err.message || 'Failed to create household');
     } finally {
@@ -66,8 +67,7 @@ export function AuthScreen({ userProfile, onProfileUpdated }: AuthScreenProps) {
     setError(null);
     setLoading(true);
     try {
-      await authService.joinHousehold(userProfile.uid, householdIdToJoin);
-      onProfileUpdated({ ...userProfile, householdId: householdIdToJoin, role: 'member' });
+      await joinHousehold(householdIdToJoin.trim());
     } catch (err: any) {
       setError(err.message || 'Failed to join household. Make sure the ID is correct.');
     } finally {
@@ -76,7 +76,7 @@ export function AuthScreen({ userProfile, onProfileUpdated }: AuthScreenProps) {
   };
 
   const handleLogout = async () => {
-    await authService.logout();
+    await logout();
   };
 
   if (!isFirebaseReady) {

@@ -19,27 +19,23 @@ import {
   DialogActions,
   IconButton,
   FormControlLabel,
-  Checkbox
+  Checkbox,
+  Skeleton
 } from '@mui/material';
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
 import SavingsIcon from '@mui/icons-material/Savings';
 import PaymentsIcon from '@mui/icons-material/Payments';
 import EditIcon from '@mui/icons-material/Edit';
-import { ledgerService } from '../../services/ledgerService';
-import { dbService } from '../../services/dbService';
+import { 
+  useAccounts, 
+  useCreateAccountMutation, 
+  useUpdateAccountMutation 
+} from '../../hooks/useFinance';
 import { Account, AccountType, CurrencyCode } from '../../domain/financeTypes';
+import { useAppContext } from '../../hooks/useAppContext';
 
-interface AccountsSectionProps {
-  householdId: string;
-  accounts: Account[];
-  onDataUpdated: () => void;
-}
-
-export function AccountsSection({
-  householdId,
-  accounts,
-  onDataUpdated
-}: AccountsSectionProps) {
+export function AccountsSection() {
+  const { householdId } = useAppContext();
   const [newAccName, setNewAccName] = useState('');
   const [newAccType, setNewAccType] = useState<AccountType>('bank');
   const [newAccCurrency, setNewAccCurrency] = useState<CurrencyCode>('EGP');
@@ -50,6 +46,11 @@ export function AccountsSection({
   const [editAccType, setEditAccType] = useState<AccountType>('bank');
   const [editAccCurrency, setEditAccCurrency] = useState<CurrencyCode>('EGP');
   const [editAccIsActive, setEditAccIsActive] = useState(true);
+
+  // Queries & Mutations
+  const { data: accounts = [], isLoading } = useAccounts(householdId);
+  const createAccountMutation = useCreateAccountMutation();
+  const updateAccountMutation = useUpdateAccountMutation();
 
   const handleOpenEdit = (acc: Account) => {
     setEditingAccount(acc);
@@ -70,9 +71,12 @@ export function AccountsSection({
       isActive: editAccIsActive
     };
 
-    await dbService.setDoc(householdId, 'accounts', editingAccount.id, updated);
+    await updateAccountMutation.mutateAsync({
+      householdId,
+      accountId: editingAccount.id,
+      updated
+    });
     setEditingAccount(null);
-    onDataUpdated();
   };
 
   const handleCreateAccount = async () => {
@@ -80,16 +84,18 @@ export function AccountsSection({
 
     const nextOrder = accounts.length > 0 ? Math.max(...accounts.map(a => a.sortOrder)) + 1 : 1;
 
-    await ledgerService.createAccount(householdId, {
-      name: newAccName,
-      type: newAccType,
-      currency: newAccCurrency,
-      isActive: true,
-      sortOrder: nextOrder
+    await createAccountMutation.mutateAsync({
+      householdId,
+      account: {
+        name: newAccName,
+        type: newAccType,
+        currency: newAccCurrency,
+        isActive: true,
+        sortOrder: nextOrder
+      }
     });
 
     setNewAccName('');
-    onDataUpdated();
   };
 
   const getAccountIcon = (type: string) => {
@@ -126,41 +132,54 @@ export function AccountsSection({
 
         {/* Current Accounts List */}
         <Stack spacing={1}>
-          {accounts.map(acc => (
-            <Box 
-              key={acc.id} 
-              sx={{ 
-                p: 2, 
-                border: '1px solid', 
-                borderColor: 'divider', 
-                borderRadius: '20px', 
-                bgcolor: 'background.paper', 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'space-between' 
-              }}
-            >
-              <Box display="flex" alignItems="center" gap={2}>
-                <Box sx={{ width: 44, height: 44, borderRadius: '12px', bgcolor: getAccountBgColor(acc.type), display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  {getAccountIcon(acc.type)}
+          {isLoading ? (
+            [1, 2].map(i => (
+              <Skeleton 
+                key={i} 
+                variant="rectangular" 
+                width="100%" 
+                height={76} 
+                sx={{ borderRadius: '20px' }} 
+                animation="wave" 
+              />
+            ))
+          ) : (
+            accounts.map(acc => (
+              <Box 
+                key={acc.id} 
+                sx={{ 
+                  p: 2, 
+                  border: '1px solid', 
+                  borderColor: 'divider', 
+                  borderRadius: '20px', 
+                  bgcolor: 'background.paper', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'space-between' 
+                }}
+              >
+                <Box display="flex" alignItems="center" gap={2}>
+                  <Box sx={{ width: 44, height: 44, borderRadius: '12px', bgcolor: getAccountBgColor(acc.type), display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    {getAccountIcon(acc.type)}
+                  </Box>
+                  <Box>
+                    <Typography variant="body1" sx={{ fontWeight: 'bold', color: 'text.primary' }}>{acc.name}</Typography>
+                    <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '11px' }}>
+                      {acc.type.toUpperCase()} • {acc.currency}
+                    </Typography>
+                  </Box>
                 </Box>
-                <Box>
-                  <Typography variant="body1" sx={{ fontWeight: 'bold', color: 'text.primary' }}>{acc.name}</Typography>
-                  <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '11px' }}>
-                    {acc.type.toUpperCase()} • {acc.currency}
+                <Stack direction="row" spacing={1} alignItems="center">
+                  <Typography variant="body2" sx={{ fontWeight: 'bold', color: acc.isActive ? 'success.main' : 'text.disabled' }}>
+                    {acc.isActive ? 'Active' : 'Inactive'}
                   </Typography>
-                </Box>
+                  <IconButton size="small" onClick={() => handleOpenEdit(acc)}>
+                    <EditIcon sx={{ fontSize: '18px' }} />
+                  </IconButton>
+                </Stack>
               </Box>
-              <Stack direction="row" spacing={1} alignItems="center">
-                <Typography variant="body2" sx={{ fontWeight: 'bold', color: acc.isActive ? 'success.main' : 'text.disabled' }}>
-                  {acc.isActive ? 'Active' : 'Inactive'}
-                </Typography>
-                <IconButton size="small" onClick={() => handleOpenEdit(acc)}>
-                  <EditIcon sx={{ fontSize: '18px' }} />
-                </IconButton>
-              </Stack>
-            </Box>
-          ))}
+            ))
+          )}
         </Stack>
 
         <Divider />

@@ -85,7 +85,6 @@ export function computeDashboard(
 
   // 4. Cycle progress
   let cycleProgress: DashboardData['cycleProgress'] = null;
-  let remainingDays = 30; // default backup
   if (activeCycle) {
     const start = new Date(activeCycle.startDate);
     const end = activeCycle.endDate ? new Date(activeCycle.endDate) : new Date(start.getTime() + 30 * 24 * 60 * 60 * 1000);
@@ -98,7 +97,7 @@ export function computeDashboard(
 
     const totalDays = Math.max(1, Math.round((end.getTime() - start.getTime()) / (24 * 60 * 60 * 1000)) + 1);
     const elapsedDays = Math.max(1, Math.min(totalDays, Math.round((today.getTime() - start.getTime()) / (24 * 60 * 60 * 1000)) + 1));
-    remainingDays = Math.max(0, totalDays - elapsedDays);
+    const remainingDays = Math.max(0, totalDays - elapsedDays);
     const ratio = elapsedDays / totalDays;
 
     cycleProgress = {
