@@ -49,8 +49,14 @@ import { UserProfile, Account, Category, BudgetCycle, FinanceTransaction } from 
 
 export default function App() {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
-  const [activeTab, setActiveTab] = useState<string>('dashboard');
+  const [activeTab, setActiveTab] = useState<string>(() => {
+    return localStorage.getItem('finance_active_tab') || 'dashboard';
+  });
   const [displayRate, setDisplayRate] = useState<number>(50.0); // Default USD/EGP display exchange rate
+
+  useEffect(() => {
+    localStorage.setItem('finance_active_tab', activeTab);
+  }, [activeTab]);
   
   // Loader states
   const [isAuthLoading, setIsAuthLoading] = useState<boolean>(true);

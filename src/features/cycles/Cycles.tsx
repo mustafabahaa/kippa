@@ -16,7 +16,14 @@ import {
   DialogActions,
   FormControlLabel,
   Checkbox,
-  Grid
+  Grid,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
@@ -213,36 +220,47 @@ export function Cycles({
                   </Button>
                 </Box>
 
-                <Grid container spacing={2}>
-                  {categories.filter(c => c.type === 'expense').map(cat => (
-                    <Grid size={{ xs: 12, sm: 6, md: 4 }} key={cat.id}>
-                      <Box sx={{ p: 2, border: '1px solid', borderColor: 'divider', borderRadius: '8px' }}>
-                        <Typography variant="body1" sx={{ fontWeight: 600, mb: 1.5 }}>
-                          {cat.name} ({cat.priority})
-                        </Typography>
-                        <Stack spacing={1}>
-                          <TextField
-                            size="small"
-                            label="Budget (EGP)"
-                            type="number"
-                            value={plannedAmounts[cat.id] || '0'}
-                            onChange={e => setPlannedAmounts({ ...plannedAmounts, [cat.id]: e.target.value })}
-                          />
-                          <FormControlLabel
-                            control={
-                              <Checkbox 
-                                size="small"
-                                checked={!!carryLeftovers[cat.id]} 
-                                onChange={e => setCarryLeftovers({ ...carryLeftovers, [cat.id]: e.target.checked })} 
-                              />
-                            }
-                            label="Carry Leftovers to Next Cycle"
-                          />
-                        </Stack>
-                      </Box>
-                    </Grid>
-                  ))}
-                </Grid>
+                <TableContainer component={Paper} sx={{ borderRadius: '16px', border: '1px solid', borderColor: 'divider', boxShadow: 'none', overflow: 'hidden' }}>
+                  <Table size="small" aria-label="configure budgets table">
+                    <TableHead sx={{ bgcolor: 'action.hover' }}>
+                      <TableRow>
+                        <TableCell sx={{ fontWeight: 'bold', fontSize: '13px', py: 1.5 }}>Category (Priority)</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold', fontSize: '13px', py: 1.5, width: '180px' }}>Budget (EGP)</TableCell>
+                        <TableCell align="center" sx={{ fontWeight: 'bold', fontSize: '13px', py: 1.5, width: '180px' }}>Carry Leftovers</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {categories.filter(c => c.type === 'expense').map(cat => (
+                        <TableRow key={cat.id} hover>
+                          <TableCell sx={{ fontSize: '14px', py: 1 }}>
+                            {cat.name} <span style={{ fontSize: '11px', color: 'var(--mui-palette-text-secondary, #3e4947)' }}>({cat.priority})</span>
+                          </TableCell>
+                          <TableCell sx={{ py: 1 }}>
+                            <TextField
+                              size="small"
+                              type="number"
+                              value={plannedAmounts[cat.id] || '0'}
+                              onChange={e => setPlannedAmounts({ ...plannedAmounts, [cat.id]: e.target.value })}
+                              sx={{
+                                '& .MuiOutlinedInput-root': {
+                                  borderRadius: '8px'
+                                },
+                                width: '140px'
+                              }}
+                            />
+                          </TableCell>
+                          <TableCell align="center" sx={{ py: 1 }}>
+                            <Checkbox 
+                              size="small"
+                              checked={!!carryLeftovers[cat.id]} 
+                              onChange={e => setCarryLeftovers({ ...carryLeftovers, [cat.id]: e.target.checked })} 
+                            />
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
 
                 <Button 
                   variant="contained" 
