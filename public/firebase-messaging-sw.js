@@ -20,8 +20,8 @@ messaging.onBackgroundMessage((payload) => {
 
   const notificationOptions = {
     body: body ?? '',
-    icon: '/icon-192.png',
-    badge: '/icon-192.png',
+    icon: '/icons/icon-192.png',
+    badge: '/icons/icon-192.png',
     data: { deepLink: deepLink ?? '/', type: type ?? '' },
   };
 
