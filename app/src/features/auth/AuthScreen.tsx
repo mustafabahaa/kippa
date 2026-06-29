@@ -11,8 +11,7 @@ import {
   Typography,
   Alert,
   useTheme,
-  InputAdornment,
-  CircularProgress
+  InputAdornment
 } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import HomeIcon from '@mui/icons-material/Home';
@@ -214,10 +213,9 @@ export function AuthScreen() {
                       fullWidth
                       variant="contained" 
                       onClick={handleCreateHousehold}
-                      disabled={loading}
-                      startIcon={loading ? <CircularProgress size={18} color="inherit" /> : null}
+                      loading={loading}
                     >
-                      {loading ? 'Creating...' : 'Create Household'}
+                      Create Household
                     </Button>
                   </Stack>
                 </CardContent>
@@ -287,10 +285,9 @@ export function AuthScreen() {
                       fullWidth
                       variant="outlined" 
                       onClick={handleJoinHousehold}
-                      disabled={loading}
-                      startIcon={loading ? <CircularProgress size={18} color="inherit" /> : null}
+                      loading={loading}
                     >
-                      {loading ? 'Joining...' : 'Join Household'}
+                      Join Household
                     </Button>
                   </Stack>
                 </CardContent>
@@ -361,7 +358,7 @@ export function AuthScreen() {
               fullWidth
               variant="outlined"
               onClick={handleGoogleSignIn}
-              disabled={loading}
+              loading={loading}
               sx={{
                 py: 1.5,
                 borderRadius: '8px',
@@ -383,7 +380,7 @@ export function AuthScreen() {
                   <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"></path>
                 </svg>
                 <Typography variant="body1" sx={{ fontWeight: 'bold', color: 'text.primary', fontSize: '14px' }}>
-                  {loading ? 'Signing in...' : 'Sign in with Google'}
+                  Sign in with Google
                 </Typography>
               </Stack>
             </Button>

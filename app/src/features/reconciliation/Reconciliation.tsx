@@ -322,7 +322,7 @@ export function Reconciliation() {
 
             <Button
               onClick={handleResolve}
-              disabled={isProcessing}
+              loading={isProcessing}
               fullWidth
               variant="contained"
               sx={{
@@ -332,7 +332,7 @@ export function Reconciliation() {
                 fontWeight: 'bold'
               }}
             >
-              {isProcessing ? 'Processing...' : 'Apply Correction & Reconcile'}
+              Apply Correction & Reconcile
             </Button>
           </Stack>
         )}

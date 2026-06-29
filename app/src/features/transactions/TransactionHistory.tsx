@@ -503,7 +503,7 @@ export function TransactionHistory() {
           <Button onClick={() => setEditingTx(null)} color="inherit">
             Cancel
           </Button>
-          <Button onClick={handleSaveEdit} variant="contained" sx={{ borderRadius: '12px', boxShadow: 'none' }}>
+          <Button onClick={handleSaveEdit} variant="contained" loading={updateTxMutation.isPending} sx={{ borderRadius: '12px', boxShadow: 'none' }}>
             Save Changes
           </Button>
         </DialogActions>

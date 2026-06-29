@@ -34,22 +34,34 @@ export function NotificationSettingsForm({
   const [notifSettings, setNotifSettings] = useState<NotificationSettings>(dbSettings);
   const { status: notifStatus, requestPermission, disable } = useNotifications(householdId);
 
+  const [permissionActionLoading, setPermissionActionLoading] = useState(false);
+
   const handleSaveNotifications = async () => {
     await onSave(notifSettings);
     enqueueSnackbar('Notification settings updated!', { variant: 'success' });
   };
 
   const handleEnableNotifications = async () => {
-    // MUST be a user gesture (button click) — iOS Safari requires this.
-    await requestPermission();
-    if (Notification.permission === 'granted') {
-      enqueueSnackbar('Notifications enabled!', { variant: 'success' });
+    setPermissionActionLoading(true);
+    try {
+      // MUST be a user gesture (button click) — iOS Safari requires this.
+      await requestPermission();
+      if (Notification.permission === 'granted') {
+        enqueueSnackbar('Notifications enabled!', { variant: 'success' });
+      }
+    } finally {
+      setPermissionActionLoading(false);
     }
   };
 
   const handleDisableNotifications = async () => {
-    await disable();
-    enqueueSnackbar('Notifications disabled', { variant: 'info' });
+    setPermissionActionLoading(true);
+    try {
+      await disable();
+      enqueueSnackbar('Notifications disabled', { variant: 'info' });
+    } finally {
+      setPermissionActionLoading(false);
+    }
   };
 
   return (
@@ -103,11 +115,12 @@ export function NotificationSettingsForm({
                     Get reminded to log expenses and notified of household activity.
                   </Typography>
                 </Box>
-                {notifStatus === 'enabled' ? (
+                 {notifStatus === 'enabled' ? (
                   <Button
                     variant="outlined"
                     color="error"
                     onClick={handleDisableNotifications}
+                    loading={permissionActionLoading}
                     sx={{
                       ml: 'auto',
                       borderRadius: '12px',
@@ -122,6 +135,7 @@ export function NotificationSettingsForm({
                   <Button
                     variant="contained"
                     onClick={handleEnableNotifications}
+                    loading={permissionActionLoading}
                     sx={{
                       ml: 'auto',
                       borderRadius: '12px',
@@ -199,7 +213,7 @@ export function NotificationSettingsForm({
               <Button
                 variant="contained"
                 onClick={handleSaveNotifications}
-                disabled={isSaving}
+                loading={isSaving}
                 sx={{
                   mt: 1,
                   py: 1.2,

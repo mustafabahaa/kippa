@@ -313,7 +313,7 @@ export function Household() {
                 fullWidth
                 variant="contained"
                 onClick={handleCreateHousehold}
-                disabled={actionLoading}
+                loading={actionLoading}
                 sx={{ textTransform: 'none', fontWeight: 'bold', borderRadius: '12px', py: 1, boxShadow: 'none' }}
               >
                 Create
@@ -350,7 +350,7 @@ export function Household() {
                 fullWidth
                 variant="outlined"
                 onClick={handleJoinHousehold}
-                disabled={actionLoading}
+                loading={actionLoading}
                 sx={{ textTransform: 'none', fontWeight: 'bold', borderRadius: '12px', py: 1 }}
               >
                 Join
@@ -382,7 +382,7 @@ export function Household() {
           <Button onClick={handleCloseLeaveConfirm} variant="outlined" sx={{ borderRadius: '8px', textTransform: 'none' }}>
             Cancel
           </Button>
-          <Button onClick={handleLeaveHousehold} color="error" variant="contained" sx={{ borderRadius: '8px', textTransform: 'none', boxShadow: 'none' }} autoFocus>
+          <Button onClick={handleLeaveHousehold} color="error" variant="contained" loading={actionLoading} sx={{ borderRadius: '8px', textTransform: 'none', boxShadow: 'none' }} autoFocus>
             Leave Household
           </Button>
         </DialogActions>

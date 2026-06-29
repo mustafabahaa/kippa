@@ -317,9 +317,9 @@ export function BudgetAllocationsConfig({
           <Button 
             variant="contained" 
             onClick={handleSaveAllocations}
-            disabled={saveAllocationsBatchMutation.isPending}
+            loading={saveAllocationsBatchMutation.isPending}
           >
-            {saveAllocationsBatchMutation.isPending ? 'Saving...' : 'Save'}
+            Save
           </Button>
         )}
       </Box>
@@ -342,7 +342,8 @@ export function BudgetAllocationsConfig({
           <Button
             onClick={handleSaveRename}
             variant="contained"
-            disabled={updateCategoryMutation.isPending || !renameValue.trim()}
+            disabled={!renameValue.trim()}
+            loading={updateCategoryMutation.isPending}
           >
             Save
           </Button>
@@ -368,7 +369,8 @@ export function BudgetAllocationsConfig({
           <Button
             onClick={handleCreateNewCategory}
             variant="contained"
-            disabled={createCategoryMutation.isPending || !newCategoryName.trim()}
+            disabled={!newCategoryName.trim()}
+            loading={createCategoryMutation.isPending}
           >
             Create & Add
           </Button>
