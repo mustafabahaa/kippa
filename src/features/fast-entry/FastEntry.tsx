@@ -18,6 +18,9 @@ import NotesIcon from '@mui/icons-material/Notes';
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
+import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
+import SavingsIcon from '@mui/icons-material/Savings';
+import PaymentsIcon from '@mui/icons-material/Payments';
 import { isToday, format } from 'date-fns';
 import { 
   useAccounts, 
@@ -33,6 +36,17 @@ type EntryMode = 'expense' | 'income' | 'conversion' | 'transfer';
 export function FastEntry() {
   const { enqueueSnackbar } = useSnackbar();
   const { householdId, userProfile } = useAppContext();
+
+  const getAccountIcon = (type: string) => {
+    const iconStyle = { fontSize: '14px', color: 'inherit' };
+    if (type.toLowerCase() === 'savings' || type.toLowerCase() === 'savings bank') {
+      return <SavingsIcon sx={iconStyle} />;
+    }
+    if (type.toLowerCase() === 'cash' || type.toLowerCase() === 'wallet') {
+      return <PaymentsIcon sx={iconStyle} />;
+    }
+    return <AccountBalanceIcon sx={iconStyle} />;
+  };
   const [mode, setMode] = useState<EntryMode>('expense');
   const [amountStr, setAmountStr] = useState('0');
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
@@ -278,7 +292,7 @@ export function FastEntry() {
                 fontSize: '11px', 
                 height: 36, 
                 minHeight: 36, 
-                borderRadius: '8px',
+                borderRadius: '16px',
                 px: 1,
                 bgcolor: mode === m ? 'primary.main' : 'background.paper',
                 color: mode === m ? 'primary.contrastText' : 'text.primary',
@@ -317,7 +331,7 @@ export function FastEntry() {
                     sx={{
                       fontSize: '13px',
                       height: 36,
-                      borderRadius: '999px',
+                      borderRadius: '12px',
                       bgcolor: isSelected ? 'primary.main' : 'background.paper',
                       color: isSelected ? 'primary.contrastText' : 'text.secondary',
                       borderColor: isSelected ? 'primary.main' : 'divider',
@@ -365,10 +379,25 @@ export function FastEntry() {
                     alignItems: 'flex-start'
                   }}
                 >
-                  <Typography variant="body2" sx={{ opacity: 0.7, fontSize: '11px' }}>
-                    {acc.type}
-                  </Typography>
-                  <Typography variant="body1" sx={{ fontWeight: 'bold', fontSize: '13.5px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', width: '100%' }}>
+                  <Box display="flex" alignItems="center" gap={1} sx={{ width: '100%', mb: 0.5 }}>
+                    <Box sx={{ 
+                      width: 24, 
+                      height: 24, 
+                      borderRadius: '8px', 
+                      bgcolor: isSelected ? 'primary.main' : 'action.hover', 
+                      color: isSelected ? 'primary.contrastText' : 'text.secondary', 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center',
+                      flexShrink: 0
+                    }}>
+                      {getAccountIcon(acc.type)}
+                    </Box>
+                    <Typography variant="body2" sx={{ opacity: 0.7, fontSize: '11px', textTransform: 'capitalize' }}>
+                      {acc.type}
+                    </Typography>
+                  </Box>
+                  <Typography variant="body1" sx={{ fontWeight: 'bold', fontSize: '13.5px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', width: '100%', color: isSelected ? 'primary.main' : 'text.primary' }}>
                     {acc.name}
                   </Typography>
                 </Box>
@@ -412,10 +441,25 @@ export function FastEntry() {
                       alignItems: 'flex-start'
                     }}
                   >
-                    <Typography variant="body2" sx={{ opacity: 0.7, fontSize: '11px' }}>
-                      {acc.type}
-                    </Typography>
-                    <Typography variant="body1" sx={{ fontWeight: 'bold', fontSize: '13.5px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', width: '100%' }}>
+                    <Box display="flex" alignItems="center" gap={1} sx={{ width: '100%', mb: 0.5 }}>
+                      <Box sx={{ 
+                        width: 24, 
+                        height: 24, 
+                        borderRadius: '8px', 
+                        bgcolor: isSelected ? 'primary.main' : 'action.hover', 
+                        color: isSelected ? 'primary.contrastText' : 'text.secondary', 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center',
+                        flexShrink: 0
+                      }}>
+                        {getAccountIcon(acc.type)}
+                      </Box>
+                      <Typography variant="body2" sx={{ opacity: 0.7, fontSize: '11px', textTransform: 'capitalize' }}>
+                        {acc.type}
+                      </Typography>
+                    </Box>
+                    <Typography variant="body1" sx={{ fontWeight: 'bold', fontSize: '13.5px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', width: '100%', color: isSelected ? 'primary.main' : 'text.primary' }}>
                       {acc.name}
                     </Typography>
                   </Box>
@@ -499,21 +543,24 @@ export function FastEntry() {
               justifyContent: 'center',
               py: 2,
               mb: 1.5,
-              bgcolor: 'background.paper',
-              borderRadius: '16px',
+              bgcolor: (!isKeypadForDest || mode !== 'conversion') ? 'primary.dark' : 'background.paper',
+              color: (!isKeypadForDest || mode !== 'conversion') ? 'primary.contrastText' : 'text.secondary',
+              borderRadius: '24px',
               border: '1px solid',
-              borderColor: isKeypadForDest && mode === 'conversion' ? 'divider' : 'primary.main',
+              borderColor: (!isKeypadForDest || mode !== 'conversion') ? 'transparent' : 'divider',
+              boxShadow: (!isKeypadForDest || mode !== 'conversion') ? '0px 4px 12px rgba(0,0,0,0.08)' : 'none',
               cursor: mode === 'conversion' ? 'pointer' : 'default',
+              transition: 'all 0.2s',
             }}
           >
-            <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '12px', fontWeight: 500, mb: 0.5 }}>
+            <Typography variant="body2" sx={{ color: (!isKeypadForDest || mode !== 'conversion') ? 'rgba(255,255,255,0.7)' : 'text.secondary', fontSize: '12px', fontWeight: 500, mb: 0.5 }}>
               {mode === 'conversion' ? 'Source Amount' : 'Amount to Log'}
             </Typography>
-            <Box display="flex" alignItems="baseline" gap={0.5} sx={{ color: isKeypadForDest ? 'text.secondary' : 'primary.main' }}>
-              <Typography sx={{ fontSize: '20px', fontWeight: 600 }}>
+            <Box display="flex" alignItems="baseline" gap={0.5} sx={{ color: (!isKeypadForDest || mode !== 'conversion') ? 'primary.contrastText' : 'text.secondary' }}>
+              <Typography color="inherit" sx={{ fontSize: '20px', fontWeight: 600 }}>
                 {currentCurrencySymbol}
               </Typography>
-              <Typography sx={{ fontSize: '32px', fontWeight: 700 }}>
+              <Typography color="inherit" sx={{ fontSize: '32px', fontWeight: 700 }}>
                 {amountStr}
               </Typography>
             </Box>
@@ -530,21 +577,24 @@ export function FastEntry() {
                 justifyContent: 'center',
                 py: 1.5,
                 mb: 1.5,
-                bgcolor: 'background.paper',
-                borderRadius: '16px',
+                bgcolor: isKeypadForDest ? 'primary.dark' : 'background.paper',
+                color: isKeypadForDest ? 'primary.contrastText' : 'text.secondary',
+                borderRadius: '24px',
                 border: '1px solid',
-                borderColor: isKeypadForDest ? 'primary.main' : 'divider',
+                borderColor: isKeypadForDest ? 'transparent' : 'divider',
+                boxShadow: isKeypadForDest ? '0px 4px 12px rgba(0,0,0,0.08)' : 'none',
                 cursor: 'pointer',
+                transition: 'all 0.2s',
               }}
             >
-              <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '12px', fontWeight: 500, mb: 0.5 }}>
+              <Typography variant="body2" sx={{ color: isKeypadForDest ? 'rgba(255,255,255,0.7)' : 'text.secondary', fontSize: '12px', fontWeight: 500, mb: 0.5 }}>
                 Destination Amount
               </Typography>
-              <Box display="flex" alignItems="baseline" gap={0.5} sx={{ color: isKeypadForDest ? 'primary.main' : 'text.secondary' }}>
-                <Typography sx={{ fontSize: '18px', fontWeight: 600 }}>
+              <Box display="flex" alignItems="baseline" gap={0.5} sx={{ color: isKeypadForDest ? 'primary.contrastText' : 'text.secondary' }}>
+                <Typography color="inherit" sx={{ fontSize: '18px', fontWeight: 600 }}>
                   {toAccount?.currency === 'USD' ? '$' : 'EGP'}
                 </Typography>
-                <Typography sx={{ fontSize: '28px', fontWeight: 700 }}>
+                <Typography color="inherit" sx={{ fontSize: '28px', fontWeight: 700 }}>
                   {toAmountStr}
                 </Typography>
               </Box>
@@ -560,7 +610,7 @@ export function FastEntry() {
                   fullWidth
                   sx={{
                     height: 60,
-                    borderRadius: '12px',
+                    borderRadius: '16px',
                     border: '1px solid',
                     borderColor: 'divider',
                     bgcolor: isBack ? 'surfaceOffWhite' : 'background.paper',
