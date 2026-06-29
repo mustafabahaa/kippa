@@ -52,11 +52,11 @@ export function BudgetBreakdownCard() {
       <Typography variant="h3" sx={{ fontSize: '18px', fontWeight: 700, color: 'text.primary' }}>
         Budget Breakdown
       </Typography>
-      <TableContainer component={Paper} sx={{ borderRadius: '20px', border: '1px solid', borderColor: 'divider', boxShadow: 'none', overflow: 'hidden' }}>
-        <Table size="small" aria-label="budget breakdown table">
+      <TableContainer component={Paper} sx={{ borderRadius: '20px', border: '1px solid', borderColor: 'divider', boxShadow: 'none', overflowX: 'auto' }}>
+        <Table size="small" aria-label="budget breakdown table" sx={{ '& .MuiTableCell-root': { px: 1 } }}>
           <TableHead sx={{ bgcolor: 'action.hover' }}>
             <TableRow>
-              <TableCell sx={{ fontWeight: 'bold', fontSize: '12px', py: 1.5 }}>Category</TableCell>
+              <TableCell sx={{ fontWeight: 'bold', fontSize: '12px', py: 1.5, width: '100%' }}>Category</TableCell>
               <TableCell align="right" sx={{ fontWeight: 'bold', fontSize: '12px', py: 1.5 }}>
                 <InfoTooltip label="Planned" text={metricExplanations.budgetBreakdownPlanned} />
               </TableCell>

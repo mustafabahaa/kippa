@@ -34,7 +34,7 @@ export function NotificationSettingsForm({
   };
 
   return (
-    <Container maxWidth="xs" sx={{ py: 1, px: 2 }}>
+    <Container maxWidth="md" sx={{ py: 1, px: { xs: 2, sm: 3 } }}>
       <Stack spacing={3}>
         <Box sx={{ mt: 1 }}>
           <Typography variant="h2" sx={{ fontSize: '24px', fontWeight: 700, color: 'text.primary' }}>

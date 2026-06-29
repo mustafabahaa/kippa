@@ -22,3 +22,6 @@ ui-debug.log
 .vscode/
 
 .agents/*
+
+# Brainstorming visual companion
+.superpowers/

@@ -56,7 +56,7 @@ export function Reconciliation() {
 
   if (isLoading) {
     return (
-      <Container maxWidth="xs" sx={{ py: 1, px: 2 }}>
+      <Container maxWidth="md" sx={{ py: 1, px: { xs: 2, sm: 3 } }}>
         <Stack spacing={3}>
           <Box sx={{ mt: 1 }}>
             <Skeleton variant="text" width="60%" height={32} />
@@ -155,7 +155,7 @@ export function Reconciliation() {
   const sortedHistory = [...history].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 
   return (
-    <Container maxWidth="xs" sx={{ py: 1, px: 2 }}>
+    <Container maxWidth="md" sx={{ py: 1, px: { xs: 2, sm: 3 } }}>
       <Stack spacing={3}>
         <PageHeader
           title="Reconciliation"

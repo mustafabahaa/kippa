@@ -189,7 +189,7 @@ export function BudgetCycles() {
 
   if (isLoading) {
     return (
-      <Container maxWidth="xs" sx={{ py: 1, px: 2 }}>
+      <Container maxWidth="md" sx={{ py: 1, px: { xs: 2, sm: 3 } }}>
         <Stack spacing={3}>
           <Box sx={{ mt: 1 }}>
             <Skeleton variant="text" width="60%" height={32} />
@@ -205,7 +205,7 @@ export function BudgetCycles() {
   const activeDaysInfo = activeCycle ? getDaysInfo(activeCycle.startDate, activeCycle.endDate) : null;
 
   return (
-    <Container maxWidth="xs" sx={{ py: 1, px: 2 }}>
+    <Container maxWidth="md" sx={{ py: 1, px: { xs: 2, sm: 3 } }}>
       <Stack spacing={3}>
         {/* Page Header */}
         <PageHeader

@@ -246,7 +246,7 @@ export function FastEntry() {
 
   if (accountsLoading || categoriesLoading) {
     return (
-      <Container maxWidth="xs" sx={{ py: 1, px: 2 }}>
+      <Container maxWidth="md" sx={{ py: 1, px: { xs: 2, sm: 3 } }}>
         <Stack spacing={3}>
           <PageHeader title="Fast Entry" subtitle="Log expenses, income, conversions & transfers" />
           <Skeleton variant="rectangular" width="100%" height={100} sx={{ borderRadius: '20px' }} />
@@ -257,7 +257,7 @@ export function FastEntry() {
   }
 
   return (
-    <Container maxWidth="xs" sx={{ py: 1, px: 2 }}>
+    <Container maxWidth="md" sx={{ py: 1, px: { xs: 2, sm: 3 } }}>
       <Stack spacing={2.5}>
         
         {/* Page Header */}
