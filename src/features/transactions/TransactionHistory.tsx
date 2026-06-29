@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useSnackbar } from 'notistack';
 import {
   Box,
@@ -41,7 +41,9 @@ import {
   useTransactions, 
   useLedgerLines,
   useVoidTransactionMutation,
-  useUpdateTransactionMutation 
+  useUpdateTransactionMutation,
+  useCycles,
+  useActiveCycle
 } from '../../hooks/useFinance';
 import { FinanceTransaction, CurrencyCode } from '../../domain/financeTypes';
 import { useAppContext } from '../../hooks/useAppContext';
@@ -66,6 +68,7 @@ export function TransactionHistory() {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedAccount, setSelectedAccount] = useState('all');
   const [selectedType, setSelectedType] = useState('all');
+  const [selectedCycleId, setSelectedCycleId] = useState('active');
 
   // Edit Transaction Modal State
   const [editingTx, setEditingTx] = useState<FinanceTransaction | null>(null);
@@ -79,8 +82,17 @@ export function TransactionHistory() {
   // Queries & Mutations
   const { data: accounts = [], isLoading: accountsLoading } = useAccounts(householdId);
   const { data: categories = [], isLoading: categoriesLoading } = useCategories(householdId);
-  const { data: transactions = [], isLoading: txsLoading } = useTransactions(householdId);
-  const { data: ledgerLines = [], isLoading: linesLoading } = useLedgerLines(householdId);
+  const { data: cycles = [] } = useCycles(householdId);
+  const { data: activeCycle } = useActiveCycle(householdId);
+
+  const queryCycleId = useMemo(() => {
+    if (selectedCycleId === 'all') return undefined;
+    if (selectedCycleId === 'active') return activeCycle?.id || cycles[0]?.id;
+    return selectedCycleId;
+  }, [selectedCycleId, activeCycle, cycles]);
+
+  const { data: transactions = [], isLoading: txsLoading } = useTransactions(householdId, queryCycleId);
+  const { data: ledgerLines = [], isLoading: linesLoading } = useLedgerLines(householdId, queryCycleId);
 
   const voidTxMutation = useVoidTransactionMutation();
   const updateTxMutation = useUpdateTransactionMutation();
@@ -214,19 +226,39 @@ export function TransactionHistory() {
         {/* Filter Toolbar Card */}
       
             <Stack spacing={2}>
-              <TextField
-                fullWidth
-                
-                placeholder="Search description, notes..."
-                value={searchTerm}
-                onChange={e => setSearchTerm(e.target.value)}
-                slotProps={{
-                  input: {
-                    startAdornment: <SearchIcon sx={{ color: 'text.secondary', mr: 1, fontSize: '20px' }} />
-                  }
-                }}
-                sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
-              />
+              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
+                <TextField
+                  fullWidth
+                  placeholder="Search description, notes..."
+                  value={searchTerm}
+                  onChange={e => setSearchTerm(e.target.value)}
+                  slotProps={{
+                    input: {
+                      startAdornment: <SearchIcon sx={{ color: 'text.secondary', mr: 1, fontSize: '20px' }} />
+                    }
+                  }}
+                  sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+                />
+
+                <FormControl sx={{ minWidth: { xs: '100%', sm: '200px' } }}>
+                  <InputLabel id="filter-cycle-label">Budget Cycle</InputLabel>
+                  <Select
+                    labelId="filter-cycle-label"
+                    value={selectedCycleId}
+                    label="Budget Cycle"
+                    onChange={e => setSelectedCycleId(e.target.value)}
+                    sx={{ borderRadius: '12px' }}
+                  >
+                    <MenuItem value="active">Active Cycle</MenuItem>
+                    <MenuItem value="all">All Cycles</MenuItem>
+                    {cycles.map(c => (
+                      <MenuItem key={c.id} value={c.id}>
+                        {c.name} {c.status === 'open' ? '(Active)' : ''}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Stack>
 
               <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
                 {/* Category selector */}
@@ -322,7 +354,7 @@ export function TransactionHistory() {
                     detailsText = `${fromAcc?.name || 'Wallet'} ➔ ${toAcc?.name || 'Bank'}`;
                   } else {
                     const acc = accounts.find(a => a.id === firstLine?.accountId);
-                    detailsText = `${acc?.name || 'Account'} • ${cat?.name || 'General'}`;
+                    detailsText = acc?.name || 'Account';
                   }
 
                   return (
@@ -334,10 +366,10 @@ export function TransactionHistory() {
                       </TableCell>
                       <TableCell>
                         <Typography variant="body1" sx={{ fontWeight: 'bold', fontSize: '13.5px' }}>
-                          {tx.description || cat?.name || 'General Entry'}
+                          {tx.type === 'transfer' ? 'Transfer' : tx.type === 'conversion' ? 'Currency Exchange' : (cat?.name || 'General')}
                         </Typography>
                         <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '11px' }}>
-                          {tx.date} • {formatTime(tx.createdAt)} {tx.status === 'voided' && '• (VOIDED)'}
+                          {[tx.description, `${tx.date} • ${formatTime(tx.createdAt)}`].filter(Boolean).join(' • ')} {tx.status === 'voided' && '• (VOIDED)'}
                         </Typography>
                       </TableCell>
                       <TableCell>

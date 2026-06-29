@@ -201,10 +201,10 @@ export function RecentActivityCard() {
                     </Box>
                     <Box sx={{ minWidth: 0 }}>
                       <Typography variant="body1" sx={{ fontWeight: 'bold', color: 'text.primary', fontSize: '13.5px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        {tx.description || cat?.name || 'General'}
+                        {tx.type === 'transfer' ? 'Transfer' : tx.type === 'conversion' ? 'Currency Exchange' : (cat?.name || 'General')}
                       </Typography>
                       <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '11px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        {tx.date} • {formatTime(tx.createdAt)} • {tx.type === 'adjustment' ? 'System' : (cat?.name || 'Uncategorized')}
+                        {[tx.description, `${tx.date} • ${formatTime(tx.createdAt)}`].filter(Boolean).join(' • ')}
                       </Typography>
                       <Typography variant="body1" sx={{ fontWeight: 'bold', color: isIncome ? '#1E8E3E' : 'text.primary', fontSize: '13.5px', whiteSpace: 'nowrap', mt: 0.25 }}>
                         {isIncome ? '+' : '-'}{amount.toLocaleString()} {currency}

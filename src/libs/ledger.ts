@@ -134,12 +134,14 @@ export const ledgerLib = {
   },
 
   // Raw Lines & Transactions Fetchers
-  async getLedgerLines(householdId: string): Promise<any[]> {
-    return dbLib.getDocs(householdId, 'ledgerLines');
+  async getLedgerLines(householdId: string, cycleId?: string): Promise<any[]> {
+    const filters = cycleId ? [{ field: 'budgetCycleId', op: '==' as const, value: cycleId }] : undefined;
+    return dbLib.getDocs(householdId, 'ledgerLines', filters);
   },
 
-  async getTransactions(householdId: string): Promise<FinanceTransaction[]> {
-    const list = await dbLib.getDocs(householdId, 'transactions');
+  async getTransactions(householdId: string, cycleId?: string): Promise<FinanceTransaction[]> {
+    const filters = cycleId ? [{ field: 'budgetCycleId', op: '==' as const, value: cycleId }] : undefined;
+    const list = await dbLib.getDocs(householdId, 'transactions', filters);
     return (list as FinanceTransaction[])
       .sort((a, b) => b.date.localeCompare(a.date) || (b.createdAt || '').localeCompare(a.createdAt || ''));
   },
