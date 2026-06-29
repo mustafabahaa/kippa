@@ -5,7 +5,6 @@ import {
   GoogleAuthProvider,
   signInWithPopup,
   signInWithRedirect,
-  getRedirectResult,
   Auth
 } from 'firebase/auth';
 import { auth, isFirebaseConfigured, isFirebaseReady } from '../config/firebase';
