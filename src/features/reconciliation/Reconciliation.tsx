@@ -23,7 +23,7 @@ import {
 } from '../../hooks/useFinance';
 import { Reconciliation as ReconModel } from '../../domain/financeTypes';
 import { useAppContext } from '../../hooks/useAppContext';
-import { PageHeader } from '../shared/PageHeader';
+import { PageHeader } from '../shared/components/PageHeader';
 
 type AdjustmentReason = 'forgotten expense' | 'bank fee' | 'exchange difference' | 'cash counting correction' | 'unknown difference';
 

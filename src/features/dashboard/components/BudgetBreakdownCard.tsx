@@ -9,8 +9,8 @@ import {
 } from '../../../hooks/useFinance';
 import { computeDashboard } from '../../../libs/selectors';
 import { useAppContext } from '../../../hooks/useAppContext';
-import { InfoTooltip } from '../../shared/InfoTooltip';
-import { metricExplanations } from '../../shared/metricExplanations';
+import { InfoTooltip } from '../../shared/components/InfoTooltip';
+import { metricExplanations } from '../../shared/constants/metricExplanations';
 
 export function BudgetBreakdownCard() {
   const { householdId } = useAppContext();

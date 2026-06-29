@@ -39,9 +39,6 @@ export const metricExplanations: Record<string, ReactNode> = {
     'The combined balance of all your accounts, converted to EGP at today\'s ' +
     'display rate so you can see everything in one currency.',
 
-  daysRemaining:
-    'How many days are left in the current budget cycle before it closes.',
-
   savingStatus: {
     onTrack:
       'On Track — your projected savings for this cycle meet or exceed your target.',

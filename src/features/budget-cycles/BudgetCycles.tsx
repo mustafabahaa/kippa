@@ -36,7 +36,7 @@ import {
 } from '../../hooks/useFinance';
 import { BudgetAllocationsConfig } from './BudgetAllocationsConfig';
 import { useAppContext } from '../../hooks/useAppContext';
-import { PageHeader } from '../shared/PageHeader';
+import { PageHeader } from '../shared/components/PageHeader';
 import { BudgetCycle } from '../../domain/financeTypes';
 
 // ── Helpers ──────────────────────────────────────────────────────────────
@@ -509,13 +509,7 @@ function ActiveCycleCard({ cycle, daysInfo, onCloseCycle, isEditingBudget, onTog
         {/* Progress section */}
         {daysInfo.progress !== null && (
           <Box sx={{ mt: 2.5 }}>
-            <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
-              <Box display="flex" alignItems="center" gap={0.75}>
-                <TimerIcon sx={{ fontSize: 16, color: 'primary.main' }} />
-                <Typography variant="body2" sx={{ fontSize: '12px', fontWeight: 600, color: 'text.primary' }}>
-                  {daysInfo.remaining} days remaining
-                </Typography>
-              </Box>
+            <Box display="flex" justifyContent="flex-end" alignItems="center" sx={{ mb: 1 }}>
               <Typography variant="body2" sx={{ fontSize: '12px', color: 'text.secondary' }}>
                 {daysInfo.progress}%
               </Typography>

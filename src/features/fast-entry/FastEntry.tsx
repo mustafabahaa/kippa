@@ -26,7 +26,7 @@ import {
   useCreateTransactionMutation 
 } from '../../hooks/useFinance';
 import { useAppContext } from '../../hooks/useAppContext';
-import { PageHeader } from '../shared/PageHeader';
+import { PageHeader } from '../shared/components/PageHeader';
 
 type EntryMode = 'expense' | 'income' | 'conversion' | 'transfer';
 

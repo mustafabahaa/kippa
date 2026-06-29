@@ -11,8 +11,8 @@ import {
 } from '../../../hooks/useFinance';
 import { computeDashboard, DashboardData } from '../../../libs/selectors';
 import { useAppContext } from '../../../hooks/useAppContext';
-import { InfoTooltip } from '../../shared/InfoTooltip';
-import { metricExplanations } from '../../shared/metricExplanations';
+import { InfoTooltip } from '../../shared/components/InfoTooltip';
+import { metricExplanations } from '../../shared/constants/metricExplanations';
 
 export function BudgetPulseCard() {
   const { householdId } = useAppContext();

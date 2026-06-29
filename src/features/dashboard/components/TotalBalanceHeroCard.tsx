@@ -11,8 +11,8 @@ import {
 } from '../../../hooks/useFinance';
 import { computeDashboard } from '../../../libs/selectors';
 import { useAppContext } from '../../../hooks/useAppContext';
-import { InfoTooltip } from '../../shared/InfoTooltip';
-import { metricExplanations } from '../../shared/metricExplanations';
+import { InfoTooltip } from '../../shared/components/InfoTooltip';
+import { metricExplanations } from '../../shared/constants/metricExplanations';
 
 export function TotalBalanceHeroCard() {
   const { householdId } = useAppContext();
@@ -110,15 +110,6 @@ export function TotalBalanceHeroCard() {
       </Box>
 
       <Stack direction="row" spacing={1.5} sx={{ mt: 3 }}>
-        <Box sx={{ bgcolor: 'rgba(255,255,255,0.18)', px: 1.5, py: 0.5, borderRadius: '8px', display: 'flex', alignItems: 'center', gap: 0.5 }}>
-          <span className="material-symbols-outlined" style={{ fontSize: '16px', color: '#fff' }}>schedule</span>
-          <Typography variant="body2" sx={{ color: '#fff', fontSize: '12px', fontWeight: 500 }}>
-            <InfoTooltip
-              label={<span style={{ color: '#fff' }}>{data.cycleProgress ? `${data.cycleProgress.remainingDays} days remaining` : '0 days left'}</span>}
-              text={metricExplanations.daysRemaining}
-            />
-          </Typography>
-        </Box>
         <Box sx={{ bgcolor: 'rgba(255,255,255,0.18)', px: 1.5, py: 0.5, borderRadius: '8px', display: 'flex', alignItems: 'center', gap: 0.5 }}>
           <span className="material-symbols-outlined" style={{ fontSize: '16px', color: '#fff' }}>payments</span>
           <Typography variant="body2" sx={{ color: '#fff', fontSize: '12px', fontWeight: 500 }}>

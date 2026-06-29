@@ -50,6 +50,7 @@ import { Activity } from './features/transactions/Activity';
 import { AuditLog } from './features/activity/AuditLog';
 import { ActivityBell } from './features/activity/ActivityBell';
 import { useAppContext } from './hooks/useAppContext';
+import DotGridBackground from './features/shared/components/DotGridBackground';
 
 export default function App() {
   const {
@@ -93,7 +94,8 @@ export default function App() {
     return (
       <ThemeProvider theme={theme}>
         <CssBaseline />
-        <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', bgcolor: 'background.paper', gap: 2 }}>
+        <DotGridBackground />
+        <Box sx={{ position: 'relative', zIndex: 1, minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', bgcolor: 'transparent', gap: 2 }}>
           <img src={logoSrc} alt="Kippa Logo" style={{ width: 64, height: 64, animation: 'pulse 1.5s infinite ease-in-out' }} />
           <Typography variant="h3" sx={{ fontWeight: 'bold', fontSize: '20px', color: 'primary.main' }}>
             Kippa
@@ -114,7 +116,10 @@ export default function App() {
     return (
       <ThemeProvider theme={theme}>
         <CssBaseline />
-        <AuthScreen />
+        <DotGridBackground />
+        <Box sx={{ position: 'relative', zIndex: 1 }}>
+          <AuthScreen />
+        </Box>
       </ThemeProvider>
     );
   }
@@ -122,9 +127,10 @@ export default function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <Box sx={{ minHeight: '100vh', pb: { xs: 10, md: 12 }, bgcolor: 'background.default' }}>
+      <DotGridBackground />
+      <Box sx={{ position: 'relative', zIndex: 1, minHeight: '100vh', pb: { xs: 10, md: 12 }, bgcolor: 'transparent' }}>
         {/* Top Navbar */}
-        <AppBar position="sticky" color="transparent" elevation={0} sx={{ py: 1, backdropFilter: 'blur(8px)' }}>
+        <AppBar position="sticky" color="transparent" elevation={0} sx={{ py: 1 }}>
           <Toolbar sx={{ justifyContent: 'space-between', px: { xs: 2, sm: 3 } }}>
             {/* Left: Logo & Brand Name */}
             <Stack direction="row" spacing={1} alignItems="center">
