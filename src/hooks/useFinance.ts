@@ -78,18 +78,18 @@ export function useCycles(householdId: string) {
   });
 }
 
-export function useTransactions(householdId: string) {
+export function useTransactions(householdId: string, cycleId?: string) {
   return useQuery({
-    queryKey: ['transactions', householdId],
-    queryFn: () => ledgerLib.getTransactions(householdId),
+    queryKey: ['transactions', householdId, cycleId],
+    queryFn: () => ledgerLib.getTransactions(householdId, cycleId),
     enabled: !!householdId,
   });
 }
 
-export function useLedgerLines(householdId: string) {
+export function useLedgerLines(householdId: string, cycleId?: string) {
   return useQuery({
-    queryKey: ['ledgerLines', householdId],
-    queryFn: () => ledgerLib.getLedgerLines(householdId),
+    queryKey: ['ledgerLines', householdId, cycleId],
+    queryFn: () => ledgerLib.getLedgerLines(householdId, cycleId),
     enabled: !!householdId,
   });
 }
