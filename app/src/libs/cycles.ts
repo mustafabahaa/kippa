@@ -1,6 +1,6 @@
-import { dbLib } from './db';
-import { auditLogLib } from './auditLog';
-import { BudgetCycle, BudgetAllocation, ExpectedIncome } from '../domain/financeTypes';
+import { dbLib } from '@/libs/db';
+import { auditLogLib } from '@/libs/auditLog';
+import { BudgetCycle, BudgetAllocation, ExpectedIncome } from '@/domain/financeTypes';
 
 type AuditUser = { uid: string; displayName: string; photoURL?: string };
 

@@ -30,9 +30,9 @@ import {
   useAccounts, 
   useCreateAccountMutation, 
   useUpdateAccountMutation 
-} from '../../hooks/useFinance';
-import { Account, AccountType, CurrencyCode } from '../../domain/financeTypes';
-import { useAppContext } from '../../hooks/useAppContext';
+} from '@/hooks/useFinance';
+import { Account, AccountType, CurrencyCode } from '@/domain/financeTypes';
+import { useAppContext } from '@/hooks/useAppContext';
 
 export function Accounts() {
   const { householdId } = useAppContext();

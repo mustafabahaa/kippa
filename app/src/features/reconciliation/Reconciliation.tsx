@@ -21,11 +21,11 @@ import {
   useReconciliationHistory,
   useCreateTransactionMutation,
   useSaveReconciliationMutation
-} from '../../hooks/useFinance';
-import { Reconciliation as ReconModel } from '../../domain/financeTypes';
-import { useAppContext } from '../../hooks/useAppContext';
-import { PageHeader } from '../shared/components/PageHeader';
-import { EmptyLayout } from '../shared/components/EmptyLayout';
+} from '@/hooks/useFinance';
+import { Reconciliation as ReconModel } from '@/domain/financeTypes';
+import { useAppContext } from '@/hooks/useAppContext';
+import { PageHeader } from '@/features/shared/components/PageHeader';
+import { EmptyLayout } from '@/features/shared/components/EmptyLayout';
 
 type AdjustmentReason = 'forgotten expense' | 'bank fee' | 'exchange difference' | 'cash counting correction' | 'unknown difference';
 

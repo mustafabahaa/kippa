@@ -1,5 +1,5 @@
 import { createContext } from 'react';
-import { UserProfile, Household } from '../domain/financeTypes';
+import { UserProfile, Household } from '@/domain/financeTypes';
 
 export interface AppContextType {
   userProfile: UserProfile | null;

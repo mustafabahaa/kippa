@@ -1,6 +1,6 @@
-import { dbLib } from './db';
-import { auditLogLib } from './auditLog';
-import { Account, Category, FinanceTransaction, ConversionDetails, Household, Reconciliation, NotificationSettings } from '../domain/financeTypes';
+import { dbLib } from '@/libs/db';
+import { auditLogLib } from '@/libs/auditLog';
+import { Account, Category, FinanceTransaction, ConversionDetails, Household, Reconciliation, NotificationSettings } from '@/domain/financeTypes';
 
 type AuditUser = { uid: string; displayName: string; photoURL?: string };
 

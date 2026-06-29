@@ -7,10 +7,10 @@ import {
 import { 
   useNotificationSettings, 
   useUpdateNotificationSettingsMutation 
-} from '../../hooks/useFinance';
-import { NotificationSettings } from '../../domain/financeTypes';
-import { NotificationSettingsForm } from './NotificationSettingsForm';
-import { useAppContext } from '../../hooks/useAppContext';
+} from '@/hooks/useFinance';
+import { NotificationSettings } from '@/domain/financeTypes';
+import { NotificationSettingsForm } from '@/features/notifications/NotificationSettingsForm';
+import { useAppContext } from '@/hooks/useAppContext';
 
 export function Notifications() {
   const { householdId, userProfile } = useAppContext();

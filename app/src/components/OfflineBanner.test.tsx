@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { OfflineBanner } from './OfflineBanner';
+import { OfflineBanner } from '@/components/OfflineBanner';
 
 describe('OfflineBanner', () => {
   it('renders nothing when online', () => {

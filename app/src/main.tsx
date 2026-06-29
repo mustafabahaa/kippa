@@ -2,10 +2,10 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { SnackbarProvider } from 'notistack';
-import App from './App';
+import App from '@/App';
 
-import { AppProvider } from './contexts/AppContext';
-import { ThemeModeProvider } from './hooks/useThemeMode';
+import { AppProvider } from '@/contexts/AppContext';
+import { ThemeModeProvider } from '@/hooks/useThemeMode';
 
 const queryClient = new QueryClient({
   defaultOptions: {

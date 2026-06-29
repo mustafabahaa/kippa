@@ -9,7 +9,7 @@ import {
   where,
   Firestore
 } from 'firebase/firestore';
-import { db, isFirebaseConfigured } from '../config/firebase';
+import { db, isFirebaseConfigured } from '@/config/firebase';
 
 const FIREBASE_REQUIRED_MSG =
   'Firebase is not configured. Copy .env.example to .env and set VITE_FIREBASE_* credentials.';

@@ -8,12 +8,12 @@ import {
   useUsdRate, 
   useBudgetAllocations, 
   useExpectedIncomes 
-} from '../../../hooks/useFinance';
-import { computeDashboard } from '../../../libs/selectors';
-import { useAppContext } from '../../../hooks/useAppContext';
-import { InfoTooltip } from '../../shared/components/InfoTooltip';
-import { metricExplanations } from '../../shared/constants/metricExplanations';
-import { PixelBlast } from '../../shared/components/PixelBlast';
+} from '@/hooks/useFinance';
+import { computeDashboard } from '@/libs/selectors';
+import { useAppContext } from '@/hooks/useAppContext';
+import { InfoTooltip } from '@/features/shared/components/InfoTooltip';
+import { metricExplanations } from '@/features/shared/constants/metricExplanations';
+import { PixelBlast } from '@/features/shared/components/PixelBlast';
 
 export function TotalBalanceHeroCard() {
   const { householdId } = useAppContext();

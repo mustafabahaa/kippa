@@ -23,8 +23,8 @@ import DarkModeIcon from '@mui/icons-material/DarkMode';
 import SettingsBrightnessIcon from '@mui/icons-material/SettingsBrightness';
 import CheckIcon from '@mui/icons-material/Check';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
-import type { ThemeModePref } from '../../hooks/useThemeMode';
-import type { UserProfile, Household } from '../../domain/financeTypes';
+import type { ThemeModePref } from '@/hooks/useThemeMode';
+import type { UserProfile, Household } from '@/domain/financeTypes';
 
 interface ProfileMenuProps {
   anchorEl: HTMLElement | null;

@@ -1,6 +1,6 @@
-import { dbLib } from './db';
-import { auditLogLib } from './auditLog';
-import { FinanceTransaction, LedgerLine, ConversionDetails, CurrencyCode } from '../domain/financeTypes';
+import { dbLib } from '@/libs/db';
+import { auditLogLib } from '@/libs/auditLog';
+import { FinanceTransaction, LedgerLine, ConversionDetails, CurrencyCode } from '@/domain/financeTypes';
 
 type AuditUser = { uid: string; displayName: string; photoURL?: string };
 

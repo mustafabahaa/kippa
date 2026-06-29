@@ -8,9 +8,9 @@ import {
   useCycles, 
   useUsdRate, 
   useBudgetAllocations 
-} from '../../../hooks/useFinance';
-import { computeDashboard } from '../../../libs/selectors';
-import { useAppContext } from '../../../hooks/useAppContext';
+} from '@/hooks/useFinance';
+import { computeDashboard } from '@/libs/selectors';
+import { useAppContext } from '@/hooks/useAppContext';
 
 export function BudgetBreakdownCard() {
   const { householdId } = useAppContext();

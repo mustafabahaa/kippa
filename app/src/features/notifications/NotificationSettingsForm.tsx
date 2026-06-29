@@ -12,9 +12,9 @@ import {
   FormControlLabel,
   Checkbox
 } from '@mui/material';
-import { NotificationSettings } from '../../domain/financeTypes';
-import { useNotifications } from '../../notifications/useNotifications';
-import { IosInstallBanner } from '../../notifications/IosInstallBanner';
+import { NotificationSettings } from '@/domain/financeTypes';
+import { useNotifications } from '@/notifications/useNotifications';
+import { IosInstallBanner } from '@/notifications/IosInstallBanner';
 
 interface NotificationSettingsFormProps {
   dbSettings: NotificationSettings;
