@@ -45,11 +45,8 @@ export function Notifications() {
     userId,
     householdId,
     dailyReminderEnabled: true,
-    dailyReminderTime: '21:00',
-    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
     categoryWarningEnabled: true,
-    savingWarningEnabled: true,
-    cycleCloseReminderEnabled: true
+    auditReminderEnabled: true,
   };
 
   return (
