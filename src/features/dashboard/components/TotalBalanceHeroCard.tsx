@@ -13,6 +13,7 @@ import { computeDashboard } from '../../../libs/selectors';
 import { useAppContext } from '../../../hooks/useAppContext';
 import { InfoTooltip } from '../../shared/components/InfoTooltip';
 import { metricExplanations } from '../../shared/constants/metricExplanations';
+import { PixelBlast } from '../../shared/components/PixelBlast';
 
 export function TotalBalanceHeroCard() {
   const { householdId } = useAppContext();
@@ -75,51 +76,75 @@ export function TotalBalanceHeroCard() {
       <Box 
         sx={{ 
           position: 'absolute', 
-          top: -48, 
-          right: -48, 
-          width: 192, 
-          height: 192, 
-          bgcolor: 'rgba(255, 255, 255, 0.08)', 
-          borderRadius: '50%', 
-          filter: 'blur(40px)',
-          pointerEvents: 'none'
-        }} 
-      />
-      <Box>
-        <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)', fontSize: '11px', fontWeight: 'bold', letterSpacing: '1px', textTransform: 'uppercase' }}>
-          <InfoTooltip
-            label={<span style={{ color: 'rgba(255,255,255,0.7)' }}>Total EGP Equivalent</span>}
-            text={metricExplanations.totalEgpEquivalent}
-          />
-        </Typography>
-        <Typography variant="h1" sx={{ color: 'primary.contrastText', fontSize: '32px', fontWeight: 800, mt: 0.5 }}>
-          EGP {data.totalEgpEquivalent.toLocaleString(undefined, { maximumFractionDigits: 0 })}
-        </Typography>
-        
-        <Stack direction="row" spacing={2} sx={{ mt: 1 }}>
-          {accounts.map(acc => {
-            const balanceObj = data.accountBalances.find(b => b.accountId === acc.id);
-            const bal = balanceObj ? balanceObj.balance : 0;
-            return (
-              <Typography key={acc.id} variant="body2" sx={{ color: 'rgba(255,255,255,0.85)', fontSize: '12px', fontWeight: 500 }}>
-                {acc.currency === 'USD' ? '$' : ''}{bal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {acc.currency !== 'USD' ? acc.currency : ''}
-              </Typography>
-            );
-          })}
-        </Stack>
+          top: 0, 
+          left: 0, 
+          right: 0, 
+          bottom: 0, 
+          zIndex: 0,
+          pointerEvents: 'auto',
+          opacity: 0.2
+        }}
+      >
+        <PixelBlast
+          variant="square"
+          pixelSize={4}
+          color="#9cf2e8"
+          patternScale={2}
+          patternDensity={1.2}
+          pixelSizeJitter={0.1}
+          enableRipples
+          rippleSpeed={0.4}
+          rippleThickness={0.12}
+          rippleIntensityScale={1.5}
+          liquid={false}
+          liquidStrength={0.12}
+          liquidRadius={1.2}
+          liquidWobbleSpeed={5}
+          speed={0.3}
+          edgeFade={0.3}
+          transparent
+        />
       </Box>
 
-      <Stack direction="row" spacing={1.5} sx={{ mt: 3 }}>
-        <Box sx={{ bgcolor: 'rgba(255,255,255,0.18)', px: 1.5, py: 0.5, borderRadius: '8px', display: 'flex', alignItems: 'center', gap: 0.5 }}>
-          <span className="material-symbols-outlined" style={{ fontSize: '16px', color: '#fff' }}>payments</span>
-          <Typography variant="body2" sx={{ color: '#fff', fontSize: '12px', fontWeight: 500 }}>
-            <InfoTooltip
-              label={<span style={{ color: '#fff' }}>Safe Daily: EGP {data.safeDailySpend.budgetSafe.toFixed(0)}</span>}
-              text={metricExplanations.safeDailyBudget}
-            />
+      <Box sx={{ zIndex: 1, position: 'relative', pointerEvents: 'none', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', flex: 1, minHeight: '130px' }}>
+        <Box>
+          <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)', fontSize: '11px', fontWeight: 'bold', letterSpacing: '1px', textTransform: 'uppercase' }}>
+            <Box component="span" sx={{ pointerEvents: 'auto' }}>
+              <InfoTooltip
+                label={<span style={{ color: 'rgba(255,255,255,0.7)' }}>Total EGP Equivalent</span>}
+                text={metricExplanations.totalEgpEquivalent}
+              />
+            </Box>
           </Typography>
+          <Typography variant="h1" sx={{ color: 'primary.contrastText', fontSize: '32px', fontWeight: 800, mt: 0.5 }}>
+            EGP {data.totalEgpEquivalent.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+          </Typography>
+          
+          <Stack direction="row" spacing={2} sx={{ mt: 1 }}>
+            {accounts.map(acc => {
+              const balanceObj = data.accountBalances.find(b => b.accountId === acc.id);
+              const bal = balanceObj ? balanceObj.balance : 0;
+              return (
+                <Typography key={acc.id} variant="body2" sx={{ color: 'rgba(255,255,255,0.85)', fontSize: '12px', fontWeight: 500 }}>
+                  {acc.currency === 'USD' ? '$' : ''}{bal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {acc.currency !== 'USD' ? acc.currency : ''}
+                </Typography>
+              );
+            })}
+          </Stack>
         </Box>
-      </Stack>
+
+        <Stack direction="row" spacing={1.5} sx={{ mt: 3 }}>
+          <Box sx={{ bgcolor: 'rgba(255,255,255,0.18)', px: 1.5, py: 0.5, borderRadius: '8px', display: 'flex', alignItems: 'center', gap: 0.5, pointerEvents: 'auto' }}>
+            <span className="material-symbols-outlined" style={{ fontSize: '16px', color: '#fff' }}>payments</span>
+            <Typography variant="body2" sx={{ color: '#fff', fontSize: '12px', fontWeight: 500 }}>
+              <InfoTooltip
+                label={<span style={{ color: '#fff' }}>Safe Daily: EGP {data.safeDailySpend.budgetSafe.toFixed(0)}</span>}
+                text={metricExplanations.safeDailyBudget}
+              />
+            </Typography>
+          </Box>
+        </Stack>
+      </Box>
     </Box>
   );
 }

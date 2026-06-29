@@ -60,7 +60,7 @@ function formatTime(iso: string): string {
   }
 }
 
-export function Activity() {
+export function TransactionHistory() {
   const { enqueueSnackbar } = useSnackbar();
   const { householdId } = useAppContext();
   // Filter States
@@ -206,7 +206,7 @@ export function Activity() {
       <Stack spacing={3}>
         <Box>
           <Typography variant="h2" sx={{ fontSize: '24px', fontWeight: 700, color: 'text.primary' }}>
-            All Activity
+            Transaction History
           </Typography>
           <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '13px', mt: 0.5 }}>
             View and manage all transaction histories and entries

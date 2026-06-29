@@ -50,10 +50,10 @@ function formatTime(iso: string): string {
 }
 
 interface RecentActivityCardProps {
-  onNavigateToActivity: () => void;
+  onNavigateToTransactions: () => void;
 }
 
-export function RecentActivityCard({ onNavigateToActivity }: RecentActivityCardProps) {
+export function RecentActivityCard({ onNavigateToTransactions }: RecentActivityCardProps) {
   const { enqueueSnackbar } = useSnackbar();
   const { householdId } = useAppContext();
   const { data: accounts = [] } = useAccounts(householdId);
@@ -160,7 +160,7 @@ export function RecentActivityCard({ onNavigateToActivity }: RecentActivityCardP
         </Typography>
         <Typography 
           variant="body2" 
-          onClick={onNavigateToActivity}
+          onClick={onNavigateToTransactions}
           sx={{ color: 'primary.main', fontWeight: 'bold', cursor: 'pointer' }}
         >
           View All

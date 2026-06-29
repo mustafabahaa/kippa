@@ -7,10 +7,10 @@ import { MyAccountsCard } from './components/MyAccountsCard';
 import { RecentActivityCard } from './components/RecentActivityCard';
 
 interface DashboardProps {
-  onNavigateToActivity: () => void;
+  onNavigateToTransactions: () => void;
 }
 
-export function Dashboard({ onNavigateToActivity }: DashboardProps) {
+export function Dashboard({ onNavigateToTransactions }: DashboardProps) {
   return (
     <Container maxWidth="lg" sx={{ py: 1, px: { xs: 2, sm: 3 } }}>
       <Stack spacing={3}>
@@ -33,7 +33,7 @@ export function Dashboard({ onNavigateToActivity }: DashboardProps) {
           <Grid size={{ xs: 12, md: 4 }}>
             <Stack spacing={3}>
               <BudgetBreakdownCard />
-              <RecentActivityCard onNavigateToActivity={onNavigateToActivity} />
+              <RecentActivityCard onNavigateToTransactions={onNavigateToTransactions} />
             </Stack>
           </Grid>
         </Grid>

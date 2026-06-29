@@ -46,11 +46,11 @@ import { Accounts } from './features/accounts/Accounts';
 import { Household } from './features/household/Household';
 import { Categories } from './features/categories/Categories';
 import { Notifications } from './features/notifications/Notifications';
-import { Activity } from './features/transactions/Activity';
+import { TransactionHistory } from './features/transactions/TransactionHistory';
 import { AuditLog } from './features/activity/AuditLog';
 import { ActivityBell } from './features/activity/ActivityBell';
 import { useAppContext } from './hooks/useAppContext';
-import DotGridBackground from './features/shared/components/DotGridBackground';
+import { DotGridBackground } from './features/shared/components/DotGrid';
 
 export default function App() {
   const {
@@ -371,7 +371,7 @@ export default function App() {
         <Box sx={{ py: { xs: 2, sm: 4 } }}>
           {activeTab === 'dashboard' && (
             <Dashboard
-              onNavigateToActivity={() => setActiveTab('activity')}
+              onNavigateToTransactions={() => setActiveTab('transactions')}
             />
           )}
 
@@ -386,8 +386,8 @@ export default function App() {
           {activeTab === 'reconciliation' && (
             <Reconciliation />
           )}
-          {activeTab === 'activity' && (
-            <Activity />
+          {activeTab === 'transactions' && (
+            <TransactionHistory />
           )}
           {activeTab === 'auditLog' && (
             <AuditLog />
