@@ -95,16 +95,44 @@ export default function App() {
       <ThemeProvider theme={theme}>
         <CssBaseline />
         <DotGridBackground />
-        <Box sx={{ position: 'relative', zIndex: 1, minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', bgcolor: 'transparent', gap: 2 }}>
-          <img src={logoSrc} alt="Kippa Logo" style={{ width: 64, height: 64, animation: 'pulse 1.5s infinite ease-in-out' }} />
-          <Typography variant="h3" sx={{ fontWeight: 'bold', fontSize: '20px', color: 'primary.main' }}>
-            Kippa
-          </Typography>
+        <Box 
+          sx={{ 
+            position: 'relative', 
+            zIndex: 1, 
+            minHeight: '100vh', 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center', 
+            bgcolor: 'transparent'
+          }}
+        >
+          {/* Logo container with float & pulse animation */}
+          <Box 
+            sx={{ 
+              width: 80,
+              height: 80,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              animation: 'logoPulseFloat 2.5s infinite ease-in-out',
+            }}
+          >
+            <img 
+              src={logoSrc} 
+              alt="Kippa Logo" 
+              style={{ 
+                width: '100%', 
+                height: '100%', 
+                objectFit: 'contain'
+              }} 
+            />
+          </Box>
+
           <style>{`
-            @keyframes pulse {
-              0% { transform: scale(0.95); opacity: 0.8; }
-              50% { transform: scale(1.05); opacity: 1; }
-              100% { transform: scale(0.95); opacity: 0.8; }
+            @keyframes logoPulseFloat {
+              0% { transform: scale(0.92) translateY(0px); opacity: 0.85; }
+              50% { transform: scale(1.08) translateY(-6px); opacity: 1; }
+              100% { transform: scale(0.92) translateY(0px); opacity: 0.85; }
             }
           `}</style>
         </Box>
