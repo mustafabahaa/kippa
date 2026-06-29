@@ -25,9 +25,9 @@ import {
   useSaveAllocationsBatchMutation,
   useCreateCategoryMutation,
   useUpdateCategoryMutation
-} from '../../hooks/useFinance';
-import { cyclesLib } from '../../libs/cycles';
-import { BudgetCycle, BudgetAllocation, Category } from '../../domain/financeTypes';
+} from '@/hooks/useFinance';
+import { cyclesLib } from '@/libs/cycles';
+import { BudgetCycle, BudgetAllocation, Category } from '@/domain/financeTypes';
 
 interface BudgetAllocationsConfigProps {
   householdId: string;

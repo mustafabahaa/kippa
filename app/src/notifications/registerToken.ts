@@ -1,6 +1,6 @@
 import { doc, setDoc, deleteDoc, getFirestore } from 'firebase/firestore';
 import { getToken as getFcmToken, deleteToken as deleteFcmToken } from 'firebase/messaging';
-import { getMessagingAsync } from '../config/firebase';
+import { getMessagingAsync } from '@/config/firebase';
 
 export type DeviceType = 'ios' | 'android' | 'web';
 

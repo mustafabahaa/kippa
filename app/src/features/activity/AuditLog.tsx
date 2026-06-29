@@ -26,10 +26,10 @@ import NotificationsActiveIcon from '@mui/icons-material/NotificationsActive';
 import HomeIcon from '@mui/icons-material/Home';
 import HistoryIcon from '@mui/icons-material/History';
 
-import { PageHeader } from '../shared/components/PageHeader';
-import { useAuditLog, useUnreadActivityCount } from '../../hooks/useFinance';
-import { useAppContext } from '../../hooks/useAppContext';
-import { AuditAction, AuditLogEntry } from '../../domain/financeTypes';
+import { PageHeader } from '@/features/shared/components/PageHeader';
+import { useAuditLog, useUnreadActivityCount } from '@/hooks/useFinance';
+import { useAppContext } from '@/hooks/useAppContext';
+import { AuditAction, AuditLogEntry } from '@/domain/financeTypes';
 
 interface ActionVisual {
   Icon: React.ComponentType<{ sx?: object }>;

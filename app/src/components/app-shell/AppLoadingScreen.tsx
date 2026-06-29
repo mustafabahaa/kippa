@@ -1,7 +1,7 @@
 import { Box } from '@mui/material';
 import { Theme } from '@mui/material/styles';
 import { ThemeProvider, CssBaseline } from '@mui/material';
-import { DotGridBackground } from '../../features/shared/components/DotGrid';
+import { DotGridBackground } from '@/features/shared/components/DotGrid';
 
 interface AppLoadingScreenProps {
   theme: Theme;

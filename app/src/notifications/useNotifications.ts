@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
-import { auth, vapidKey } from '../config/firebase';
-import { registerFcmToken, unregisterFcmToken, touchFcmToken, disableNotifications } from './registerToken';
+import { auth, vapidKey } from '@/config/firebase';
+import { registerFcmToken, unregisterFcmToken, touchFcmToken, disableNotifications } from '@/notifications/registerToken';
 
 export type NotificationStatus =
   | 'unsupported'       // browser doesn't support service workers / push

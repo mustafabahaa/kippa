@@ -32,8 +32,8 @@ import AddHomeIcon from '@mui/icons-material/AddHome';
 import GroupAddIcon from '@mui/icons-material/GroupAdd';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 
-import type { Household } from '../../domain/financeTypes';
-import { useAppContext } from '../../hooks/useAppContext';
+import type { Household } from '@/domain/financeTypes';
+import { useAppContext } from '@/hooks/useAppContext';
 
 export function Household() {
   const { enqueueSnackbar } = useSnackbar();

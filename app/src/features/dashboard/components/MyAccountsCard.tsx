@@ -6,8 +6,8 @@ import {
   useAccounts, 
   useTransactions, 
   useLedgerLines 
-} from '../../../hooks/useFinance';
-import { useAppContext } from '../../../hooks/useAppContext';
+} from '@/hooks/useFinance';
+import { useAppContext } from '@/hooks/useAppContext';
 
 export function MyAccountsCard() {
   const { householdId } = useAppContext();

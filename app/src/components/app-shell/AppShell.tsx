@@ -1,12 +1,12 @@
 import { Box } from '@mui/material';
 import { Outlet, useLocation } from 'react-router-dom';
-import { OfflineBanner } from '../OfflineBanner';
-import { TopBar } from './TopBar';
-import { FloatingActionButton } from './FloatingActionButton';
-import { BottomNav } from './BottomNav';
-import { useAppContext } from '../../hooks/useAppContext';
-import { useOnlineStatus } from '../../hooks/useOnlineStatus';
-import { useThemeMode } from '../../hooks/useThemeMode';
+import { OfflineBanner } from '@/components/OfflineBanner';
+import { TopBar } from '@/components/app-shell/TopBar';
+import { FloatingActionButton } from '@/components/app-shell/FloatingActionButton';
+import { BottomNav } from '@/components/app-shell/BottomNav';
+import { useAppContext } from '@/hooks/useAppContext';
+import { useOnlineStatus } from '@/hooks/useOnlineStatus';
+import { useThemeMode } from '@/hooks/useThemeMode';
 
 const PAGE_TITLES: Record<string, string> = {
   '/': 'Dashboard',

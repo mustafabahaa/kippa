@@ -1,8 +1,8 @@
 import React, { createContext, useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { authLib } from '../libs/auth';
-import { ledgerLib } from '../libs/ledger';
-import { UserProfile, Household } from '../domain/financeTypes';
+import { authLib } from '@/libs/auth';
+import { ledgerLib } from '@/libs/ledger';
+import { UserProfile, Household } from '@/domain/financeTypes';
 
 interface AppContextType {
   userProfile: UserProfile | null;

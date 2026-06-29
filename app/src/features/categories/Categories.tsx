@@ -19,9 +19,9 @@ import {
 import { 
   useCategories, 
   useCreateCategoryMutation 
-} from '../../hooks/useFinance';
+} from '@/hooks/useFinance';
 
-import { useAppContext } from '../../hooks/useAppContext';
+import { useAppContext } from '@/hooks/useAppContext';
 
 export function Categories() {
   const { householdId } = useAppContext();

@@ -1,10 +1,10 @@
 import { Box, Container, Grid, Stack, Typography } from '@mui/material';
-import { HeaderSection } from './components/HeaderSection';
-import { TotalBalanceHeroCard } from './components/TotalBalanceHeroCard';
-import { BudgetPulseCard } from './components/BudgetPulseCard';
-import { BudgetBreakdownCard } from './components/BudgetBreakdownCard';
-import { MyAccountsCard } from './components/MyAccountsCard';
-import { RecentActivityCard } from './components/RecentActivityCard';
+import { HeaderSection } from '@/features/dashboard/components/HeaderSection';
+import { TotalBalanceHeroCard } from '@/features/dashboard/components/TotalBalanceHeroCard';
+import { BudgetPulseCard } from '@/features/dashboard/components/BudgetPulseCard';
+import { BudgetBreakdownCard } from '@/features/dashboard/components/BudgetBreakdownCard';
+import { MyAccountsCard } from '@/features/dashboard/components/MyAccountsCard';
+import { RecentActivityCard } from '@/features/dashboard/components/RecentActivityCard';
 
 export function Dashboard() {
   return (

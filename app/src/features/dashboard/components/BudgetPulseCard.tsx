@@ -8,11 +8,11 @@ import {
   useUsdRate,
   useBudgetAllocations,
   useExpectedIncomes
-} from '../../../hooks/useFinance';
-import { computeDashboard, DashboardData } from '../../../libs/selectors';
-import { useAppContext } from '../../../hooks/useAppContext';
-import { InfoTooltip } from '../../shared/components/InfoTooltip';
-import { metricExplanations } from '../../shared/constants/metricExplanations';
+} from '@/hooks/useFinance';
+import { computeDashboard, DashboardData } from '@/libs/selectors';
+import { useAppContext } from '@/hooks/useAppContext';
+import { InfoTooltip } from '@/features/shared/components/InfoTooltip';
+import { metricExplanations } from '@/features/shared/constants/metricExplanations';
 
 export function BudgetPulseCard() {
   const { householdId } = useAppContext();

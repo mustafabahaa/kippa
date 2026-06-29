@@ -20,8 +20,8 @@ import AddHomeIcon from '@mui/icons-material/AddHome';
 import LogoutIcon from '@mui/icons-material/Logout';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import KeyIcon from '@mui/icons-material/Key';
-import { isFirebaseReady } from '../../libs/auth';
-import { useAppContext } from '../../hooks/useAppContext';
+import { isFirebaseReady } from '@/libs/auth';
+import { useAppContext } from '@/hooks/useAppContext';
 
 export function AuthScreen() {
   const theme = useTheme();

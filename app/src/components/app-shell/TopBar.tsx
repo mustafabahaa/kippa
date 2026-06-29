@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { AppBar, Toolbar, Stack, Typography, IconButton, Tooltip, Avatar } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import { ActivityBell } from '../../features/activity/ActivityBell';
-import { ProfileMenu } from './ProfileMenu';
-import type { ThemeModePref } from '../../hooks/useThemeMode';
-import type { UserProfile, Household } from '../../domain/financeTypes';
+import { ActivityBell } from '@/features/activity/ActivityBell';
+import { ProfileMenu } from '@/components/app-shell/ProfileMenu';
+import type { ThemeModePref } from '@/hooks/useThemeMode';
+import type { UserProfile, Household } from '@/domain/financeTypes';
 
 interface TopBarProps {
   logoSrc: string;

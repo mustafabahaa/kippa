@@ -1,4 +1,4 @@
-import { dbLib } from './db';
+import { dbLib } from '@/libs/db';
 import { 
   collection, 
   query, 
@@ -7,8 +7,8 @@ import {
   onSnapshot,
   Unsubscribe
 } from 'firebase/firestore';
-import { db, isFirebaseConfigured } from '../config/firebase';
-import { AuditLogEntry, AuditAction } from '../domain/financeTypes';
+import { db, isFirebaseConfigured } from '@/config/firebase';
+import { AuditLogEntry, AuditAction } from '@/domain/financeTypes';
 
 export const auditLogLib = {
   /**

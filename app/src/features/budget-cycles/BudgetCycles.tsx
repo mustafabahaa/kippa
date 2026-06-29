@@ -18,7 +18,7 @@ import {
   IconButton,
   LinearProgress
 } from '@mui/material';
-import { EmptyLayout } from '../shared/components/EmptyLayout';
+import { EmptyLayout } from '@/features/shared/components/EmptyLayout';
 import AddIcon from '@mui/icons-material/Add';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
@@ -33,12 +33,12 @@ import {
   useBudgetAllocations,
   useCreateCycleMutation,
   useUpdateCycleStatusMutation
-} from '../../hooks/useFinance';
-import { BudgetAllocationsConfig } from './BudgetAllocationsConfig';
-import { CycleAnalytics } from './CycleAnalytics';
-import { useAppContext } from '../../hooks/useAppContext';
-import { PageHeader } from '../shared/components/PageHeader';
-import { BudgetCycle } from '../../domain/financeTypes';
+} from '@/hooks/useFinance';
+import { BudgetAllocationsConfig } from '@/features/budget-cycles/BudgetAllocationsConfig';
+import { CycleAnalytics } from '@/features/budget-cycles/CycleAnalytics';
+import { useAppContext } from '@/hooks/useAppContext';
+import { PageHeader } from '@/features/shared/components/PageHeader';
+import { BudgetCycle } from '@/domain/financeTypes';
 
 // ── Helpers ──────────────────────────────────────────────────────────────
 

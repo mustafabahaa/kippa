@@ -1,8 +1,8 @@
 import { IconButton, Badge, Tooltip } from '@mui/material';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 
-import { useUnreadActivityCount } from '../../hooks/useFinance';
-import { useAppContext } from '../../hooks/useAppContext';
+import { useUnreadActivityCount } from '@/hooks/useFinance';
+import { useAppContext } from '@/hooks/useAppContext';
 
 interface ActivityBellProps {
   onClick: () => void;

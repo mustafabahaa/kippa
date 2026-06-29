@@ -1,15 +1,15 @@
 import { useCallback, useEffect, useState, useSyncExternalStore } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { ledgerLib } from '../libs/ledger';
-import { cyclesLib } from '../libs/cycles';
-import { transactionsLib } from '../libs/transactions';
-import { auditLogLib } from '../libs/auditLog';
-import { authLib } from '../libs/auth';
-import { currencyLib } from '../libs/currency';
-import { useAppContext } from './useAppContext';
+import { ledgerLib } from '@/libs/ledger';
+import { cyclesLib } from '@/libs/cycles';
+import { transactionsLib } from '@/libs/transactions';
+import { auditLogLib } from '@/libs/auditLog';
+import { authLib } from '@/libs/auth';
+import { currencyLib } from '@/libs/currency';
+import { useAppContext } from '@/hooks/useAppContext';
 import { useSnackbar } from 'notistack';
-import { useOnlineStatus } from './useOnlineStatus';
-import { notifyOfflineAwareSuccess } from '../lib/offlineToast';
+import { useOnlineStatus } from '@/hooks/useOnlineStatus';
+import { notifyOfflineAwareSuccess } from '@/lib/offlineToast';
 import { 
   Account, 
   Category, 
@@ -24,7 +24,7 @@ import {
   CurrencyCode,
   ConversionDetails,
   AuditLogEntry
-} from '../domain/financeTypes';
+} from '@/domain/financeTypes';
 
 /**
  * Builds the audit user context (who performed the action) from the

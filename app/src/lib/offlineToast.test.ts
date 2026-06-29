@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { shouldShowOfflineToast, notifyOfflineAwareSuccess } from './offlineToast';
+import { shouldShowOfflineToast, notifyOfflineAwareSuccess } from '@/lib/offlineToast';
 
 describe('shouldShowOfflineToast', () => {
   it('returns false when online', () => {

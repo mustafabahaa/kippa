@@ -1,6 +1,6 @@
 import { Box } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-import DotGrid from './DotGrid';
+import DotGrid from '@/features/shared/components/DotGrid/DotGrid';
 
 /**
  * Full-viewport, fixed-position DotGrid backdrop.

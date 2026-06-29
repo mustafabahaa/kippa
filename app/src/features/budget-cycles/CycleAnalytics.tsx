@@ -25,8 +25,8 @@ import {
   useUsdRate,
   useAllBudgetAllocations,
   useAllExpectedIncomes
-} from '../../hooks/useFinance';
-import { useAppContext } from '../../hooks/useAppContext';
+} from '@/hooks/useFinance';
+import { useAppContext } from '@/hooks/useAppContext';
 
 export function CycleAnalytics() {
   const { householdId } = useAppContext();

@@ -44,9 +44,9 @@ import {
   useUpdateTransactionMutation,
   useCycles,
   useActiveCycle
-} from '../../hooks/useFinance';
-import { FinanceTransaction, CurrencyCode } from '../../domain/financeTypes';
-import { useAppContext } from '../../hooks/useAppContext';
+} from '@/hooks/useFinance';
+import { FinanceTransaction, CurrencyCode } from '@/domain/financeTypes';
+import { useAppContext } from '@/hooks/useAppContext';
 
 /** Format an ISO timestamp as a short time, e.g. "3:45 PM". */
 function formatTime(iso: string): string {

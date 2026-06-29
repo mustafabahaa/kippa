@@ -1,4 +1,4 @@
-import { Account, FinanceTransaction, LedgerLine, BudgetCycle, BudgetAllocation, ExpectedIncome, Category } from '../domain/financeTypes';
+import { Account, FinanceTransaction, LedgerLine, BudgetCycle, BudgetAllocation, ExpectedIncome, Category } from '@/domain/financeTypes';
 
 export interface DashboardData {
   accountBalances: { accountId: string; balance: number }[];

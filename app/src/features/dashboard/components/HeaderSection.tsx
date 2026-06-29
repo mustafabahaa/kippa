@@ -1,6 +1,6 @@
-import { useCycles, useHouseholdName } from '../../../hooks/useFinance';
-import { useAppContext } from '../../../hooks/useAppContext';
-import { PageHeader } from '../../shared/components/PageHeader';
+import { useCycles, useHouseholdName } from '@/hooks/useFinance';
+import { useAppContext } from '@/hooks/useAppContext';
+import { PageHeader } from '@/features/shared/components/PageHeader';
 
 export function HeaderSection() {
   const { householdId } = useAppContext();

@@ -6,9 +6,9 @@ import {
   signInWithPopup,
   Auth
 } from 'firebase/auth';
-import { auth, isFirebaseConfigured, isFirebaseReady } from '../config/firebase';
-import { dbLib } from './db';
-import { UserProfile, Household } from '../domain/financeTypes';
+import { auth, isFirebaseConfigured, isFirebaseReady } from '@/config/firebase';
+import { dbLib } from '@/libs/db';
+import { UserProfile, Household } from '@/domain/financeTypes';
 
 const FIREBASE_REQUIRED_MSG =
   'Firebase is not configured. Copy .env.example to .env and set VITE_FIREBASE_* credentials.';
