@@ -1,5 +1,5 @@
 
-import { Box, Paper, Skeleton, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, useTheme } from '@mui/material';
+import { Box, Card, Skeleton, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, useTheme } from '@mui/material';
 import { PieChart } from '@mui/x-charts/PieChart';
 import { 
   useTransactions, 
@@ -75,17 +75,12 @@ export function BudgetBreakdownCard() {
       </Typography>
 
       {pieData.length > 0 && (
-        <Paper 
+        <Card 
           sx={{ 
-            borderRadius: '20px', 
-            border: '1px solid', 
-            borderColor: 'divider', 
-            boxShadow: 'none', 
             p: 2, 
             display: 'flex', 
             justifyContent: 'center', 
             alignItems: 'center',
-            bgcolor: 'background.paper',
             height: 180,
             overflow: 'hidden'
           }}
@@ -104,16 +99,12 @@ export function BudgetBreakdownCard() {
             height={160}
             slotProps={{ legend: { hidden: true } as any }}
           />
-        </Paper>
+        </Card>
       )}
 
       <TableContainer 
-        component={Paper} 
+        component={Card} 
         sx={{ 
-          borderRadius: '20px', 
-          border: '1px solid', 
-          borderColor: 'divider', 
-          boxShadow: 'none', 
           overflowX: 'auto',
           maxHeight: 380,
           overflowY: 'auto'
