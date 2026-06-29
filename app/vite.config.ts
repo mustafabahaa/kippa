@@ -26,6 +26,7 @@ export default defineConfig({
       manifest: false,
       workbox: {
         maximumFileSizeToCacheInBytes: 5000000,
+        importScripts: ['/firebase-messaging-sw.js']
       }
     }),
   ],
