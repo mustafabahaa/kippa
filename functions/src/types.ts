@@ -50,6 +50,7 @@ export interface NotificationSettings {
   dailyReminderTime: string; // "HH:MM"
   timezone: string; // IANA tz, e.g. "Africa/Cairo"
   categoryWarningEnabled: boolean;
+  auditReminderEnabled: boolean;
 }
 
 export interface FcmToken {
@@ -62,6 +63,7 @@ export interface FcmToken {
 
 export interface NotificationState {
   lastReminderSentDate?: string; // YYYY-MM-DD in user's tz
+  lastAuditReminderSentDate?: string; // YYYY-MM-DD UTC
   lastWarningFor?: Record<string, string>; // `${categoryId}_${cycleId}` -> YYYY-MM-DD
 }
 
