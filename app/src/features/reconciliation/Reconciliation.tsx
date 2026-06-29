@@ -119,7 +119,7 @@ export function Reconciliation() {
     setIsProcessing(true);
 
     try {
-      let adjustmentTransactionId: string | undefined = undefined;
+      let adjustmentTransactionId: string | null = null;
 
       // 1. If difference is non-zero, write an adjustment transaction
       if (Math.abs(difference) > 0.001) {
@@ -129,8 +129,8 @@ export function Reconciliation() {
             type: 'adjustment',
             date: new Date().toISOString().split('T')[0],
             description: `Balance Correction (${reason}): ${note || 'Manual Reconciliation adjustment'}`,
-            budgetCycleId: activeCycle?.id || undefined,
             createdBy: userProfile!.uid,
+            budgetCycleId: activeCycle?.id || null,
           },
           lines: [
             {
@@ -156,7 +156,7 @@ export function Reconciliation() {
         createdBy: userProfile!.uid,
         createdAt: new Date().toISOString(),
         adjustmentTransactionId,
-        note: note || undefined,
+        note: note.trim() || null,
       };
 
       await saveReconMutation.mutateAsync({

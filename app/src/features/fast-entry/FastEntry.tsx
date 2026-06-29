@@ -182,9 +182,9 @@ export function FastEntry() {
           transaction: {
             type: 'expense',
             date,
-            description: description || undefined,
-            categoryId: selectedCategory?.id,
-            budgetCycleId: activeCycle?.id || undefined,
+            description: description || null,
+            categoryId: selectedCategory?.id || null,
+            budgetCycleId: activeCycle?.id || null,
             createdBy: userProfile!.uid,
           },
           lines: [
@@ -209,8 +209,8 @@ export function FastEntry() {
             type: 'income',
             date,
             description: description || 'Income',
-            categoryId: selectedCategory?.id,
-            budgetCycleId: activeCycle?.id || undefined,
+            categoryId: selectedCategory?.id || null,
+            budgetCycleId: activeCycle?.id || null,
             createdBy: userProfile!.uid,
           },
           lines: [
@@ -252,7 +252,7 @@ export function FastEntry() {
             type: 'conversion',
             date,
             description: description || `${selectedAccount.currency} to ${toAccount.currency} Conversion`,
-            budgetCycleId: activeCycle?.id || undefined,
+            budgetCycleId: activeCycle?.id || null,
             createdBy: userProfile!.uid,
           },
           lines: [
@@ -302,7 +302,7 @@ export function FastEntry() {
             type: 'transfer',
             date,
             description: description || `Transfer`,
-            budgetCycleId: activeCycle?.id || undefined,
+            budgetCycleId: activeCycle?.id || null,
             createdBy: userProfile!.uid,
           },
           lines: [

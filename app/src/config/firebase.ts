@@ -40,6 +40,7 @@ if (isFirebaseConfigured) {
       localCache: persistentLocalCache({
         tabManager: persistentMultipleTabManager(),
       }),
+      ignoreUndefinedProperties: true,
     });
   } catch (error) {
     console.error('Firebase initialization failed:', error);
