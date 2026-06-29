@@ -68,7 +68,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const loginWithGoogle = async () => {
     const profile = await authLib.signInWithGoogle();
-    setUserProfile(profile);
+    // With popup sign-in this returns the profile immediately. With the
+    // redirect fallback the page navigates away and returns null; the profile
+    // is then set via onAuthStateChanged when the page reloads after redirect.
+    if (profile) setUserProfile(profile);
   };
 
   const logout = async () => {
