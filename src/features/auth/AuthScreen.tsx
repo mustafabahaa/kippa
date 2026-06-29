@@ -10,8 +10,17 @@ import {
   TextField,
   Typography,
   Alert,
-  useTheme
+  useTheme,
+  InputAdornment,
+  CircularProgress
 } from '@mui/material';
+import { alpha } from '@mui/material/styles';
+import HomeIcon from '@mui/icons-material/Home';
+import GroupAddIcon from '@mui/icons-material/GroupAdd';
+import AddHomeIcon from '@mui/icons-material/AddHome';
+import LogoutIcon from '@mui/icons-material/Logout';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
+import KeyIcon from '@mui/icons-material/Key';
 import { isFirebaseReady } from '../../libs/auth';
 import { useAppContext } from '../../hooks/useAppContext';
 
@@ -101,86 +110,212 @@ export function AuthScreen() {
         display: 'flex', 
         alignItems: 'center', 
         justifyContent: 'center',
-        background: 'linear-gradient(135deg, #f9f9ff 0%, #ecedf7 100%)',
-        p: 2
+        bgcolor: 'transparent',
+        p: { xs: 2, sm: 4 },
+        position: 'relative',
+        zIndex: 1,
       }}>
-        <Container maxWidth="sm">
-          <Card>
-            <CardContent sx={{ p: { xs: 3, sm: 4 } }}>
-              <Stack spacing={4}>
-                <Box textAlign="center">
-                  <Typography variant="h2" sx={{ fontSize: { xs: '1.5rem', sm: '1.75rem' }, fontWeight: 700 }}>
-                    Setup Household
+        <Container maxWidth="md">
+          <Stack spacing={4} alignItems="center">
+            {/* Header / Intro section */}
+            <Box textAlign="center" sx={{ maxWidth: 600, mb: 1 }}>
+              <Typography 
+                variant="h2" 
+                sx={{ 
+                  fontSize: { xs: '1.75rem', sm: '2.25rem' }, 
+                  fontWeight: 800,
+                  letterSpacing: '-0.02em',
+                  color: 'text.primary',
+                  mb: 1.5
+                }}
+              >
+                Setup Your Workspace
+              </Typography>
+              <Typography 
+                variant="body1" 
+                sx={{ 
+                  color: 'text.secondary', 
+                  fontSize: { xs: '14px', sm: '16px' },
+                  lineHeight: 1.6,
+                  px: 2
+                }}
+              >
+                Welcome back, <strong>{userProfile.displayName}</strong>! To get started, you need to create a new household workspace or join an existing shared one.
+              </Typography>
+            </Box>
+
+            {/* Core Cards: Split Layout */}
+            <Stack 
+              direction={{ xs: 'column', md: 'row' }} 
+              spacing={4} 
+              sx={{ width: '100%', alignItems: 'stretch' }}
+            >
+              {/* Card A: Create Household */}
+              <Card 
+                sx={{ 
+                  flex: 1, 
+                  display: 'flex',
+                  flexDirection: 'column',
+                  '&:hover': {
+                    '& .icon-badge-create': {
+                      transform: 'scale(1.08)',
+                      bgcolor: alpha(theme.palette.primary.main, 0.15)
+                    }
+                  }
+                }}
+              >
+                <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', height: '100%' }}>
+                  {/* Icon Badge */}
+                  <Box 
+                    className="icon-badge-create"
+                    sx={{
+                      width: 56,
+                      height: 56,
+                      borderRadius: '12px',
+                      bgcolor: alpha(theme.palette.primary.main, 0.1),
+                      color: 'primary.main',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      mb: 3,
+                      transition: 'all 0.3s ease'
+                    }}
+                  >
+                    <AddHomeIcon sx={{ fontSize: 28 }} />
+                  </Box>
+
+                  <Typography variant="h3" sx={{ fontSize: '1.25rem', fontWeight: 700, mb: 1.5 }}>
+                    Create a New Household
                   </Typography>
-                  <Typography variant="body1" sx={{ color: 'text.secondary', mt: 1 }}>
-                    Welcome, {userProfile.displayName}! You need to create or join a household container to start.
+                  
+                  <Typography variant="body2" sx={{ color: 'text.secondary', mb: 4, lineHeight: 1.6, flexGrow: 1 }}>
+                    Establish a brand new shared ledger workspace. As the creator, you'll be the household administrator and can invite other members via a shared ID anytime.
                   </Typography>
-                </Box>
 
-                <Stack spacing={3.5}>
-                  <Box>
-                    <Typography variant="h3" sx={{ mb: 1.5, fontSize: '1.1rem' }}>
-                      Option 1: Create a new household
-                    </Typography>
-                    <Stack direction="row" spacing={1}>
-                      <TextField
-                        fullWidth
-                        label="Household Name"
-                        placeholder="e.g. Bahaa Household"
-                        size="small"
-                        value={householdName}
-                        onChange={e => setHouseholdName(e.target.value)}
-                      />
-                      <Button 
-                        variant="contained" 
-                        onClick={handleCreateHousehold}
-                        disabled={loading}
-                        sx={{ whiteSpace: 'nowrap', minHeight: 40 }}
-                      >
-                        Create
-                      </Button>
-                    </Stack>
+                  <Stack spacing={2} sx={{ mt: 'auto' }}>
+                    <TextField
+                      fullWidth
+                      label="Household Name"
+                      placeholder="e.g. My Cozy Home"
+                      value={householdName}
+                      onChange={e => setHouseholdName(e.target.value)}
+                      disabled={loading}
+                      slotProps={{
+                        input: {
+                          startAdornment: (
+                            <InputAdornment position="start">
+                              <HomeIcon sx={{ color: 'text.secondary', fontSize: 20 }} />
+                            </InputAdornment>
+                          ),
+                        }
+                      }}
+                    />
+                    <Button 
+                      fullWidth
+                      variant="contained" 
+                      onClick={handleCreateHousehold}
+                      disabled={loading}
+                      startIcon={loading ? <CircularProgress size={18} color="inherit" /> : null}
+                    >
+                      {loading ? 'Creating...' : 'Create Household'}
+                    </Button>
+                  </Stack>
+                </CardContent>
+              </Card>
+
+              {/* Card B: Join Household */}
+              <Card 
+                sx={{ 
+                  flex: 1, 
+                  display: 'flex',
+                  flexDirection: 'column',
+                  '&:hover': {
+                    '& .icon-badge-join': {
+                      transform: 'scale(1.08)',
+                      bgcolor: alpha(theme.palette.secondary.main, 0.15)
+                    }
+                  }
+                }}
+              >
+                <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', height: '100%' }}>
+                  {/* Icon Badge */}
+                  <Box 
+                    className="icon-badge-join"
+                    sx={{
+                      width: 56,
+                      height: 56,
+                      borderRadius: '12px',
+                      bgcolor: alpha(theme.palette.secondary.main, 0.1),
+                      color: 'secondary.main',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      mb: 3,
+                      transition: 'all 0.3s ease'
+                    }}
+                  >
+                    <GroupAddIcon sx={{ fontSize: 28 }} />
                   </Box>
 
-                  <Box sx={{ my: 1, display: 'flex', alignItems: 'center' }}>
-                    <Box sx={{ flex: 1, height: '1px', bgcolor: 'divider' }} />
-                    <Typography variant="body2" sx={{ mx: 2, color: 'text.disabled', fontWeight: 600 }}>
-                      OR
-                    </Typography>
-                    <Box sx={{ flex: 1, height: '1px', bgcolor: 'divider' }} />
-                  </Box>
+                  <Typography variant="h3" sx={{ fontSize: '1.25rem', fontWeight: 700, mb: 1.5 }}>
+                    Join an Existing Household
+                  </Typography>
+                  
+                  <Typography variant="body2" sx={{ color: 'text.secondary', mb: 4, lineHeight: 1.6, flexGrow: 1 }}>
+                    Connect to an existing workspace created by someone else. You will need their Household ID to instantly sync up and share budget ledger logs.
+                  </Typography>
 
-                  <Box>
-                    <Typography variant="h3" sx={{ mb: 1.5, fontSize: '1.1rem' }}>
-                      Option 2: Join an existing household
-                    </Typography>
-                    <Stack direction="row" spacing={1}>
-                      <TextField
-                        fullWidth
-                        label="Household ID"
-                        placeholder="Paste ID here"
-                        size="small"
-                        value={householdIdToJoin}
-                        onChange={e => setHouseholdIdToJoin(e.target.value)}
-                      />
-                      <Button 
-                        variant="outlined" 
-                        onClick={handleJoinHousehold}
-                        disabled={loading}
-                        sx={{ whiteSpace: 'nowrap', minHeight: 40 }}
-                      >
-                        Join
-                      </Button>
-                    </Stack>
-                  </Box>
-                </Stack>
+                  <Stack spacing={2} sx={{ mt: 'auto' }}>
+                    <TextField
+                      fullWidth
+                      label="Household ID"
+                      placeholder="Paste ID here (e.g. uuid-format)"
+                      value={householdIdToJoin}
+                      onChange={e => setHouseholdIdToJoin(e.target.value)}
+                      disabled={loading}
+                      slotProps={{
+                        input: {
+                          startAdornment: (
+                            <InputAdornment position="start">
+                              <KeyIcon sx={{ color: 'text.secondary', fontSize: 20 }} />
+                            </InputAdornment>
+                          ),
+                        }
+                      }}
+                    />
+                    <Button 
+                      fullWidth
+                      variant="outlined" 
+                      onClick={handleJoinHousehold}
+                      disabled={loading}
+                      startIcon={loading ? <CircularProgress size={18} color="inherit" /> : null}
+                    >
+                      {loading ? 'Joining...' : 'Join Household'}
+                    </Button>
+                  </Stack>
+                </CardContent>
+              </Card>
+            </Stack>
 
-                <Button variant="text" color="error" onClick={handleLogout} sx={{ mt: 2, alignSelf: 'center' }}>
-                  Sign out
-                </Button>
-              </Stack>
-            </CardContent>
-          </Card>
+            {/* Help Alert tip block */}
+            <Alert 
+              severity="info" 
+              icon={<InfoOutlinedIcon fontSize="small" />}
+              sx={{ width: '100%' }}
+            >
+              <strong>Tip:</strong> You can find your Household ID inside the user profile menu at the top-right corner of the application once logged in.
+            </Alert>
+
+            {/* Logout / Switch User */}
+            <Button 
+              variant="text" 
+              color="error" 
+              onClick={handleLogout} 
+              startIcon={<LogoutIcon fontSize="small" />}
+            >
+              Sign out / Change Account
+            </Button>
+          </Stack>
         </Container>
       </Box>
     );
