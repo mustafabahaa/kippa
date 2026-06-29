@@ -7,7 +7,7 @@ import { useEffect, useState } from 'react';
  */
 export function useOnlineStatus(): boolean {
   const [isOnline, setIsOnline] = useState<boolean>(
-    typeof navigator === 'undefined' ? true : navigator.onLine
+    () => (typeof navigator === 'undefined' ? true : navigator.onLine)
   );
 
   useEffect(() => {
@@ -15,8 +15,6 @@ export function useOnlineStatus(): boolean {
     const handleOffline = () => setIsOnline(false);
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
-    // Re-sync in case the initial state drifted from a change before mount.
-    setIsOnline(navigator.onLine);
     return () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);

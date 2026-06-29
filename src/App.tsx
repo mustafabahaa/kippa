@@ -50,6 +50,8 @@ import { TransactionHistory } from './features/transactions/TransactionHistory';
 import { AuditLog } from './features/activity/AuditLog';
 import { ActivityBell } from './features/activity/ActivityBell';
 import { useAppContext } from './hooks/useAppContext';
+import { useOnlineStatus } from './hooks/useOnlineStatus';
+import { OfflineBanner } from './components/OfflineBanner';
 import { DotGridBackground } from './features/shared/components/DotGrid';
 
 export default function App() {
@@ -61,6 +63,8 @@ export default function App() {
     logout,
     switchHousehold
   } = useAppContext();
+
+  const isOnline = useOnlineStatus();
 
   const { modePref, resolvedMode, setModePref } = useThemeMode();
   const theme = useMemo(() => createAppTheme(resolvedMode), [resolvedMode]);
@@ -183,6 +187,7 @@ export default function App() {
       <CssBaseline />
       <DotGridBackground />
       <Box sx={{ position: 'relative', zIndex: 1, minHeight: '100vh', pb: { xs: 10, md: 12 }, bgcolor: 'transparent' }}>
+        <OfflineBanner isOnline={isOnline} />
         {/* Top Navbar */}
         <AppBar position="sticky" color="transparent" elevation={0} sx={{ py: 1 }}>
           <Toolbar sx={{ justifyContent: 'space-between', px: { xs: 2, sm: 3 } }}>

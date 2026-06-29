@@ -2,8 +2,6 @@ import { useState } from 'react';
 import { useSnackbar } from 'notistack';
 import {
   Box,
-  Card,
-  CardContent,
   Container,
   Stack,
   Typography,
@@ -214,12 +212,11 @@ export function TransactionHistory() {
         </Box>
 
         {/* Filter Toolbar Card */}
-        <Card sx={{ border: '1px solid', borderColor: 'divider', borderRadius: '20px', boxShadow: 'none' }}>
-          <CardContent sx={{ p: 2 }}>
+      
             <Stack spacing={2}>
               <TextField
                 fullWidth
-                size="small"
+                
                 placeholder="Search description, notes..."
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value)}
@@ -233,7 +230,7 @@ export function TransactionHistory() {
 
               <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
                 {/* Category selector */}
-                <FormControl size="small" fullWidth>
+                <FormControl fullWidth>
                   <InputLabel id="filter-cat-label">Category</InputLabel>
                   <Select
                     labelId="filter-cat-label"
@@ -250,7 +247,7 @@ export function TransactionHistory() {
                 </FormControl>
 
                 {/* Account selector */}
-                <FormControl size="small" fullWidth>
+                <FormControl fullWidth>
                   <InputLabel id="filter-acc-label">Account</InputLabel>
                   <Select
                     labelId="filter-acc-label"
@@ -267,7 +264,7 @@ export function TransactionHistory() {
                 </FormControl>
 
                 {/* Type selector */}
-                <FormControl size="small" fullWidth>
+                <FormControl fullWidth>
                   <InputLabel id="filter-type-label">Type</InputLabel>
                   <Select
                     labelId="filter-type-label"
@@ -284,8 +281,7 @@ export function TransactionHistory() {
                 </FormControl>
               </Stack>
             </Stack>
-          </CardContent>
-        </Card>
+        
 
         {/* Transactions Table */}
         <TableContainer component={Paper} sx={{ borderRadius: '20px', border: '1px solid', borderColor: 'divider', boxShadow: 'none', overflow: 'hidden' }}>
@@ -357,14 +353,14 @@ export function TransactionHistory() {
                       <TableCell align="center">
                         <Stack direction="row" spacing={0.5} justifyContent="center">
                           <IconButton 
-                            size="small" 
+                            
                             onClick={() => handleOpenEdit(tx)}
                             disabled={tx.status === 'voided'}
                           >
                             <EditIcon sx={{ fontSize: '18px' }} />
                           </IconButton>
                           <IconButton 
-                            size="small" 
+                            
                             color="error" 
                             onClick={() => handleVoid(tx.id)}
                             disabled={tx.status === 'voided'}
@@ -392,13 +388,13 @@ export function TransactionHistory() {
               value={editType}
               onChange={e => setEditType(e.target.value as 'income' | 'expense')}
             >
-              <FormControlLabel value="expense" control={<Radio size="small" />} label="Expense" />
-              <FormControlLabel value="income" control={<Radio size="small" />} label="Income" />
+              <FormControlLabel value="expense" control={<Radio />} label="Expense" />
+              <FormControlLabel value="income" control={<Radio />} label="Income" />
             </RadioGroup>
 
             <TextField
               type="date"
-              size="small"
+              
               label="Date"
               InputLabelProps={{ shrink: true }}
               value={editDate}
@@ -407,7 +403,7 @@ export function TransactionHistory() {
             />
 
             <TextField
-              size="small"
+              
               label="Description"
               value={editDesc}
               onChange={e => setEditDesc(e.target.value)}
@@ -416,14 +412,14 @@ export function TransactionHistory() {
 
             <TextField
               type="number"
-              size="small"
+              
               label="Amount"
               value={editAmount}
               onChange={e => setEditAmount(e.target.value)}
               sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
             />
 
-            <FormControl size="small" fullWidth>
+            <FormControl fullWidth>
               <InputLabel id="edit-tx-acc-label">Account</InputLabel>
               <Select
                 labelId="edit-tx-acc-label"
@@ -439,7 +435,7 @@ export function TransactionHistory() {
             </FormControl>
 
             {editType === 'expense' ? (
-              <FormControl size="small" fullWidth>
+              <FormControl fullWidth>
                 <InputLabel id="edit-tx-cat-label">Category</InputLabel>
                 <Select
                   labelId="edit-tx-cat-label"
@@ -454,7 +450,7 @@ export function TransactionHistory() {
                 </Select>
               </FormControl>
             ) : (
-              <FormControl size="small" fullWidth>
+              <FormControl fullWidth>
                 <InputLabel id="edit-tx-cat-income-label">Income Category</InputLabel>
                 <Select
                   labelId="edit-tx-cat-income-label"

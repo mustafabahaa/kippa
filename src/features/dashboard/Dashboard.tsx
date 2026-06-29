@@ -1,4 +1,4 @@
-import { Container, Grid, Stack } from '@mui/material';
+import { Box, Container, Grid, Stack, Typography } from '@mui/material';
 import { HeaderSection } from './components/HeaderSection';
 import { TotalBalanceHeroCard } from './components/TotalBalanceHeroCard';
 import { BudgetPulseCard } from './components/BudgetPulseCard';
@@ -21,19 +21,24 @@ export function Dashboard({ onNavigateToTransactions }: DashboardProps) {
             • Mobile: single column (all cards stacked)
             • md+ (desktop): two columns —
               left (8/12) = Hero, BudgetPulse, MyAccounts
-              right (4/12) = BudgetBreakdown, RecentActivity */}
+              right (4/12) = RecentActivity, BudgetBreakdown */}
         <Grid container spacing={3}>
           <Grid size={{ xs: 12, md: 7 }}>
             <Stack spacing={3}>
-              <TotalBalanceHeroCard />
+              <Box>
+                <Typography variant="h3" sx={{ fontSize: '18px', fontWeight: 700, color: 'text.primary', mb: 1.5 }}>
+                  Total Balance
+                </Typography>
+                <TotalBalanceHeroCard />
+              </Box>
               <BudgetPulseCard />
               <MyAccountsCard />
             </Stack>
           </Grid>
           <Grid size={{ xs: 12, md: 5 }}>
             <Stack spacing={3}>
-              <BudgetBreakdownCard />
               <RecentActivityCard onNavigateToTransactions={onNavigateToTransactions} />
+              <BudgetBreakdownCard />
             </Stack>
           </Grid>
         </Grid>
