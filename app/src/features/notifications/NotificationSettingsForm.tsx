@@ -8,7 +8,6 @@ import {
   Stack,
   Typography,
   Button,
-  TextField,
   FormControlLabel,
   Checkbox,
   Skeleton
@@ -180,56 +179,35 @@ export function NotificationSettingsForm({
             <Stack spacing={2.5}>
               <FormControlLabel
                 control={
-                  <Checkbox 
-                    checked={notifSettings.dailyReminderEnabled} 
-                    onChange={e => setNotifSettings({ ...notifSettings, dailyReminderEnabled: e.target.checked })} 
+                  <Checkbox
+                    checked={notifSettings.dailyReminderEnabled}
+                    onChange={e => setNotifSettings({ ...notifSettings, dailyReminderEnabled: e.target.checked })}
                   />
                 }
                 label="Daily Logging Reminder"
               />
-              
-              {notifSettings.dailyReminderEnabled && (
-                <TextField
-                  label="Reminder Time"
-                  type="time"
-                  slotProps={{ inputLabel: { shrink: true } }}
-                  value={notifSettings.dailyReminderTime}
-                  onChange={e => setNotifSettings({ ...notifSettings, dailyReminderTime: e.target.value })}
-                  sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' }, width: '150px' }}
-                />
-              )}
 
               <FormControlLabel
-                control={
-                  <Checkbox 
-                    checked={notifSettings.categoryWarningEnabled} 
-                    onChange={e => setNotifSettings({ ...notifSettings, categoryWarningEnabled: e.target.checked })} 
-                  />
-                }
-                label="Budget Warn Alerts (Category warning)"
-              />
-
-              <FormControlLabel
-                disabled
                 control={
                   <Checkbox
-                    checked={notifSettings.savingWarningEnabled}
+                    checked={notifSettings.auditReminderEnabled}
+                    onChange={e => setNotifSettings({ ...notifSettings, auditReminderEnabled: e.target.checked })}
                   />
                 }
-                label="Saving Warning Alerts"
+                label="Daily Audit Reminder"
               />
               <Typography variant="caption" sx={{ color: 'text.secondary', mt: -1.5, ml: 4 }}>
-                Coming soon
+                Gentle daily reminder to check your cash and bank balances.
               </Typography>
 
               <FormControlLabel
                 control={
-                  <Checkbox 
-                    checked={notifSettings.cycleCloseReminderEnabled} 
-                    onChange={e => setNotifSettings({ ...notifSettings, cycleCloseReminderEnabled: e.target.checked })} 
+                  <Checkbox
+                    checked={notifSettings.categoryWarningEnabled}
+                    onChange={e => setNotifSettings({ ...notifSettings, categoryWarningEnabled: e.target.checked })}
                   />
                 }
-                label="Remind me to close active cycle at end of month"
+                label="Budget Warn Alerts (Category warning)"
               />
 
               <Button
