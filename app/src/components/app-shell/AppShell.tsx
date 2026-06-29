@@ -1,4 +1,5 @@
-import { Box } from '@mui/material';
+import { Suspense } from 'react';
+import { Box, CircularProgress } from '@mui/material';
 import { Outlet, useLocation } from 'react-router-dom';
 import { OfflineBanner } from '@/components/OfflineBanner';
 import { TopBar } from '@/components/app-shell/TopBar';
@@ -47,7 +48,22 @@ export function AppShell() {
         />
 
         <Box sx={{ py: { xs: 2, sm: 4 } }}>
-          <Outlet />
+          <Suspense
+            fallback={
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  minHeight: '40vh',
+                }}
+              >
+                <CircularProgress color="primary" size={32} thickness={4} />
+              </Box>
+            }
+          >
+            <Outlet />
+          </Suspense>
         </Box>
 
         <FloatingActionButton />
