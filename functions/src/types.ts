@@ -50,7 +50,6 @@ export interface NotificationSettings {
   dailyReminderTime: string; // "HH:MM"
   timezone: string; // IANA tz, e.g. "Africa/Cairo"
   categoryWarningEnabled: boolean;
-  savingWarningEnabled: boolean;
 }
 
 export interface FcmToken {
