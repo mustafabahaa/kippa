@@ -1,11 +1,25 @@
-import React, { useState, useEffect } from 'react';
+import React, { createContext, useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { authLib } from '../libs/auth';
 import { ledgerLib } from '../libs/ledger';
 import { UserProfile, Household } from '../domain/financeTypes';
-import { AppContext, AppContextType } from './appContextInstance';
 
-export type { AppContextType };
+interface AppContextType {
+  userProfile: UserProfile | null;
+  householdId: string;
+  isAuthLoading: boolean;
+  userHouseholds: Household[];
+  isLoadingHouseholds: boolean;
+  loginWithGoogle: () => Promise<void>;
+  logout: () => Promise<void>;
+  switchHousehold: (id: string) => Promise<void>;
+  createHousehold: (name: string) => Promise<Household>;
+  joinHousehold: (id: string) => Promise<void>;
+  leaveHousehold: (id: string) => Promise<void>;
+  updateUserProfile: (profile: UserProfile) => void;
+}
+
+export const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
@@ -53,10 +67,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const loginWithGoogle = async () => {
     const profile = await authLib.signInWithGoogle();
-    // With popup sign-in this returns the profile immediately. With the
-    // redirect fallback the page navigates away and returns null; the profile
-    // is then set via onAuthStateChanged when the page reloads after redirect.
-    if (profile) setUserProfile(profile);
+    setUserProfile(profile);
   };
 
   const logout = async () => {
