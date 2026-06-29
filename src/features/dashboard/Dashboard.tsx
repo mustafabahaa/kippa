@@ -6,11 +6,7 @@ import { BudgetBreakdownCard } from './components/BudgetBreakdownCard';
 import { MyAccountsCard } from './components/MyAccountsCard';
 import { RecentActivityCard } from './components/RecentActivityCard';
 
-interface DashboardProps {
-  onNavigateToTransactions: () => void;
-}
-
-export function Dashboard({ onNavigateToTransactions }: DashboardProps) {
+export function Dashboard() {
   return (
     <Container maxWidth="lg" sx={{ py: 1, px: { xs: 2, sm: 3 } }}>
       <Stack spacing={3}>
@@ -37,7 +33,7 @@ export function Dashboard({ onNavigateToTransactions }: DashboardProps) {
           </Grid>
           <Grid size={{ xs: 12, md: 5 }}>
             <Stack spacing={3}>
-              <RecentActivityCard onNavigateToTransactions={onNavigateToTransactions} />
+              <RecentActivityCard />
               <BudgetBreakdownCard />
             </Stack>
           </Grid>
