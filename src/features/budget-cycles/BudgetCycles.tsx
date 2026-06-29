@@ -35,6 +35,7 @@ import {
   useUpdateCycleStatusMutation
 } from '../../hooks/useFinance';
 import { BudgetAllocationsConfig } from './BudgetAllocationsConfig';
+import { CycleAnalytics } from './CycleAnalytics';
 import { useAppContext } from '../../hooks/useAppContext';
 import { PageHeader } from '../shared/components/PageHeader';
 import { BudgetCycle } from '../../domain/financeTypes';
@@ -233,6 +234,8 @@ export function BudgetCycles() {
             </IconButton>
           }
         />
+
+        <CycleAnalytics />
 
         {/* ── Active Cycle Hero Card ── */}
         {activeCycle ? (
