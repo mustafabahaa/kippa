@@ -10,7 +10,7 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint src",
     "deploy": "npm run build && firebase deploy",
-    "deploy:firebase": "firebase deploy --project household-ledger-28062026"
+    "deploy:firebase": "firebase deploy --project YOUR_FIREBASE_PROJECT_ID"
   },
   "dependencies": {
     "@date-io/date-fns": "^3.2.1",
