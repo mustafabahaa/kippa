@@ -23,14 +23,14 @@ export function Dashboard({ onNavigateToTransactions }: DashboardProps) {
               left (8/12) = Hero, BudgetPulse, MyAccounts
               right (4/12) = BudgetBreakdown, RecentActivity */}
         <Grid container spacing={3}>
-          <Grid size={{ xs: 12, md: 8 }}>
+          <Grid size={{ xs: 12, md: 7 }}>
             <Stack spacing={3}>
               <TotalBalanceHeroCard />
               <BudgetPulseCard />
               <MyAccountsCard />
             </Stack>
           </Grid>
-          <Grid size={{ xs: 12, md: 4 }}>
+          <Grid size={{ xs: 12, md: 5 }}>
             <Stack spacing={3}>
               <BudgetBreakdownCard />
               <RecentActivityCard onNavigateToTransactions={onNavigateToTransactions} />

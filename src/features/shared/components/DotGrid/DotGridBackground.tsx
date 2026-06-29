@@ -36,8 +36,8 @@ export default function DotGridBackground() {
       }}
     >
       <DotGrid
-        dotSize={5}
-        gap={18}
+        dotSize={4}
+        gap={32}
         baseColor={baseColor}
         activeColor={activeColor}
         proximity={120}

@@ -52,9 +52,28 @@ export function BudgetBreakdownCard() {
       <Typography variant="h3" sx={{ fontSize: '18px', fontWeight: 700, color: 'text.primary' }}>
         Budget Breakdown
       </Typography>
-      <TableContainer component={Paper} sx={{ borderRadius: '20px', border: '1px solid', borderColor: 'divider', boxShadow: 'none', overflowX: 'auto' }}>
-        <Table size="small" aria-label="budget breakdown table" sx={{ '& .MuiTableCell-root': { px: 1 } }}>
-          <TableHead sx={{ bgcolor: 'action.hover' }}>
+      <TableContainer 
+        component={Paper} 
+        sx={{ 
+          borderRadius: '20px', 
+          border: '1px solid', 
+          borderColor: 'divider', 
+          boxShadow: 'none', 
+          overflowX: 'auto',
+          maxHeight: 380,
+          overflowY: 'auto'
+        }}
+      >
+        <Table 
+          size="small" 
+          stickyHeader 
+          aria-label="budget breakdown table" 
+          sx={{ 
+            '& .MuiTableCell-root': { px: 1 },
+            '& .MuiTableCell-head': { bgcolor: 'background.paper' }
+          }}
+        >
+          <TableHead>
             <TableRow>
               <TableCell sx={{ fontWeight: 'bold', fontSize: '12px', py: 1.5, width: '100%' }}>Category</TableCell>
               <TableCell align="right" sx={{ fontWeight: 'bold', fontSize: '12px', py: 1.5 }}>
