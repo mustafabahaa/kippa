@@ -102,7 +102,7 @@ export function BudgetBreakdownCard() {
               },
             ]}
             height={160}
-            slotProps={{ legend: { hidden: true } }}
+            slotProps={{ legend: { hidden: true } as any }}
           />
         </Paper>
       )}

@@ -235,9 +235,9 @@ export function CycleAnalytics() {
               slotProps={{
                 legend: {
                   direction: 'row',
-                  position: { vertical: 'bottom', horizontal: 'middle' },
+                  position: { vertical: 'bottom', horizontal: 'center' },
                   padding: -5
-                }
+                } as any
               }}
               sx={{
                 '& .MuiChartsAxis-line': {
@@ -300,9 +300,9 @@ export function CycleAnalytics() {
                   slotProps={{
                     legend: {
                       direction: 'row',
-                      position: { vertical: 'bottom', horizontal: 'middle' },
+                      position: { vertical: 'bottom', horizontal: 'center' },
                       padding: -5
-                    }
+                    } as any
                   }}
                   sx={{
                     '& .MuiChartsAxis-line': {

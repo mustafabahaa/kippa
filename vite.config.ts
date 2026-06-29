@@ -18,6 +18,9 @@ export default defineConfig({
         'icons/maskable.svg'
       ],
       manifest: false,
+      workbox: {
+        maximumFileSizeToCacheInBytes: 5000000,
+      }
     }),
   ],
 });
