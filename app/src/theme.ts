@@ -273,6 +273,13 @@ export function createAppTheme(mode: 'light' | 'dark'): Theme {
     },
 
     components: {
+      MuiCssBaseline: {
+        styleOverrides: `
+          input, textarea, select {
+            font-size: 16px !important;
+          }
+        `,
+      },
       // ── AppBar ────────────────────────────────────────────────────────
       MuiAppBar: {
         defaultProps: {
@@ -390,6 +397,7 @@ export function createAppTheme(mode: 'light' | 'dark'): Theme {
           root: {
             borderRadius: designTokens.radius.subtle,    // 4px
             backgroundColor: t.surfacePure,
+            fontSize: '16px',
             '& .MuiOutlinedInput-notchedOutline': {
               borderColor: t.borderGray,
               borderWidth: 1,
