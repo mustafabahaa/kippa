@@ -289,8 +289,8 @@ export function TransactionHistory() {
 
         {/* Transactions Table */}
         <TableContainer component={Paper} sx={{ borderRadius: '20px', border: '1px solid', borderColor: 'divider', boxShadow: 'none', overflow: 'hidden' }}>
-          <Table aria-label="transactions activity table">
-            <TableHead sx={{ bgcolor: 'action.hover' }}>
+          <Table aria-label="transactions activity table" sx={{ '& .MuiTableCell-head': { bgcolor: 'action.hover' } }}>
+            <TableHead>
               <TableRow>
                 <TableCell width="60px"></TableCell>
                 <TableCell>Date / Description</TableCell>

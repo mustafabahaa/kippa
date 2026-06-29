@@ -80,7 +80,7 @@ const createTouchTexture = (): TouchTexture => {
   };
   const drawPoint = (p: TouchPoint) => {
     const pos = { x: p.x * size, y: (1 - p.y) * size };
-    let intensity = 1;
+    let intensity: number;
     const easeOutSine = (t: number) => Math.sin((t * Math.PI) / 2);
     const easeOutQuad = (t: number) => -t * (t - 2);
     if (p.age < maxAge * 0.3) intensity = easeOutSine(p.age / (maxAge * 0.3));
@@ -586,7 +586,7 @@ const PixelBlast: React.FC<PixelBlastProps> = ({
       renderer.domElement.addEventListener('pointermove', onPointerMove, {
         passive: true
       });
-      let raf = 0;
+      let raf: number;
       const animate = () => {
         if (autoPauseOffscreen && !visibilityRef.current.visible) {
           raf = requestAnimationFrame(animate);

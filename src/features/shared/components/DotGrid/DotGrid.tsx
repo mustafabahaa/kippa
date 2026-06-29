@@ -7,7 +7,6 @@ import { gsap } from 'gsap';
 // shockwave/inertia tweens simply no-op.
 let inertiaRegistered = false;
 try {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
   const mod = await import('gsap/InertiaPlugin');
   if (mod?.InertiaPlugin) {
     gsap.registerPlugin(mod.InertiaPlugin);
@@ -191,7 +190,7 @@ export default function DotGrid({
     let ro: ResizeObserver | null = null;
     if ('ResizeObserver' in window) {
       ro = new ResizeObserver(buildGrid);
-      wrapperRef.current && ro.observe(wrapperRef.current);
+      if (wrapperRef.current) ro.observe(wrapperRef.current);
     } else {
       (window as Window).addEventListener('resize', buildGrid);
     }

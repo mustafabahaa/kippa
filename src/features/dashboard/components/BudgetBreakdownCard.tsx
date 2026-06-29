@@ -9,8 +9,6 @@ import {
 } from '../../../hooks/useFinance';
 import { computeDashboard } from '../../../libs/selectors';
 import { useAppContext } from '../../../hooks/useAppContext';
-import { InfoTooltip } from '../../shared/components/InfoTooltip';
-import { metricExplanations } from '../../shared/constants/metricExplanations';
 
 export function BudgetBreakdownCard() {
   const { householdId } = useAppContext();
@@ -70,21 +68,15 @@ export function BudgetBreakdownCard() {
           aria-label="budget breakdown table" 
           sx={{ 
             '& .MuiTableCell-root': { px: 1 },
-            '& .MuiTableCell-head': { bgcolor: 'background.paper' }
+            '& .MuiTableCell-head': { bgcolor: 'action.hover' }
           }}
         >
           <TableHead>
             <TableRow>
               <TableCell sx={{ fontWeight: 'bold', fontSize: '12px', py: 1.5, width: '100%' }}>Category</TableCell>
-              <TableCell align="right" sx={{ fontWeight: 'bold', fontSize: '12px', py: 1.5 }}>
-                <InfoTooltip label="Planned" text={metricExplanations.budgetBreakdownPlanned} />
-              </TableCell>
-              <TableCell align="right" sx={{ fontWeight: 'bold', fontSize: '12px', py: 1.5 }}>
-                <InfoTooltip label="Spent" text={metricExplanations.budgetBreakdownSpent} />
-              </TableCell>
-              <TableCell align="right" sx={{ fontWeight: 'bold', fontSize: '12px', py: 1.5 }}>
-                <InfoTooltip label="Remaining" text={metricExplanations.budgetBreakdownRemaining} />
-              </TableCell>
+              <TableCell align="right" sx={{ fontWeight: 'bold', fontSize: '12px', py: 1.5 }}>Planned</TableCell>
+              <TableCell align="right" sx={{ fontWeight: 'bold', fontSize: '12px', py: 1.5 }}>Spent</TableCell>
+              <TableCell align="right" sx={{ fontWeight: 'bold', fontSize: '12px', py: 1.5 }}>Remaining</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>

@@ -22,17 +22,7 @@ export function MyAccountsCard() {
     if (type.toLowerCase() === 'cash' || type.toLowerCase() === 'wallet') {
       return <PaymentsIcon sx={{ color: 'text.secondary' }} />;
     }
-    return <AccountBalanceIcon sx={{ color: 'primary.main' }} />;
-  };
-
-  const getAccountBgColor = (type: string) => {
-    if (type.toLowerCase() === 'savings' || type.toLowerCase() === 'savings bank') {
-      return 'action.hover';
-    }
-    if (type.toLowerCase() === 'cash' || type.toLowerCase() === 'wallet') {
-      return 'action.hover';
-    }
-    return 'info.light';
+    return <AccountBalanceIcon sx={{ color: 'text.secondary' }} />;
   };
 
   const isLoading = accountsLoading || txsLoading || linesLoading;
@@ -100,7 +90,7 @@ export function MyAccountsCard() {
               }}
             >
               <Box display="flex" alignItems="center" gap={2}>
-                <Box sx={{ width: 44, height: 44, borderRadius: '12px', bgcolor: getAccountBgColor(acc.type), display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Box sx={{ width: 44, height: 44, borderRadius: '12px', bgcolor: 'action.hover', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   {getAccountIcon(acc.type)}
                 </Box>
                 <Box>
