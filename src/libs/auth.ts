@@ -84,8 +84,25 @@ export const authLib = {
         // sign-in and the redirect sign-in (which resolves here after the
         // page navigates back). Uses upsertProfile so new users get a
         // persisted profile doc regardless of which sign-in method ran.
-        const profile = await upsertProfile(fbUser);
-        callback(profile);
+        try {
+          const profile = await upsertProfile(fbUser);
+          callback(profile);
+        } catch (e) {
+          // If the Firestore read/write fails, still unblock the UI with a
+          // basic profile derived from the Firebase user — better than an
+          // infinite loading screen.
+          console.error('[auth] upsertProfile failed in onAuthStateChanged:', e);
+          callback({
+            uid: fbUser.uid,
+            displayName: fbUser.displayName || fbUser.email?.split('@')[0] || 'User',
+            email: fbUser.email || '',
+            householdId: null,
+            householdIds: [],
+            role: 'owner',
+            createdAt: new Date().toISOString(),
+            photoURL: fbUser.photoURL || undefined,
+          });
+        }
       } else {
         callback(null);
       }
