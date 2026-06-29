@@ -53,11 +53,12 @@ export function Notifications() {
   };
 
   return (
-    <NotificationSettingsForm 
+    <NotificationSettingsForm
       key={dbSettings ? `${dbSettings.userId}-${dbSettings.householdId}` : 'loading'}
       dbSettings={defaultSettings}
       onSave={handleSave}
       isSaving={updateSettingsMutation.isPending}
+      householdId={householdId}
     />
   );
 }

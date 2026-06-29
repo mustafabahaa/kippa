@@ -24,5 +24,10 @@
         "supportEmail": "mustafa.bahaa123@gmail.com"
       }
     }
+  },
+  "functions": {
+    "source": "functions",
+    "runtime": "nodejs20",
+    "predeploy": "npm --prefix functions run build"
   }
 }
