@@ -44,10 +44,30 @@ export async function registerFcmToken(
     return null;
   }
 
-  // 2. Get token
+  // 2. Get token.
+  // Register the Firebase messaging SW explicitly and pass the registration to
+  // getToken(). vite-plugin-pwa registers /sw.js (Workbox) at scope '/' too;
+  // if we let Firebase auto-register its SW, the two can fight for control of
+  // the scope on iOS Safari and the internal SW handshake silently fails,
+  // yielding an empty token. Owning the registration avoids that race.
   let token: string;
   try {
-    token = await getFcmToken(messaging, { vapidKey });
+    const swReg = await navigator.serviceWorker.register('/firebase-messaging-sw.js', {
+      scope: '/',
+    });
+    // Wait for the SW to be active before asking FCM for a token — on first
+    // registration it starts in 'installing'/'waiting' and getToken() would
+    // race ahead and return empty.
+    if (swReg.active === null) {
+      await new Promise<void>((resolve) => {
+        const sw = swReg.installing ?? swReg.waiting;
+        if (!sw) return resolve();
+        sw.addEventListener('statechange', () => {
+          if (sw.state === 'activated') resolve();
+        });
+      });
+    }
+    token = await getFcmToken(messaging, { vapidKey, serviceWorkerRegistration: swReg });
   } catch (e) {
     console.warn('[notifications] getToken failed:', e);
     return null;
