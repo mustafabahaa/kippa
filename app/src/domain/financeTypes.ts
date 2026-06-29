@@ -43,14 +43,14 @@ export type FinanceTransaction = {
   householdId: string;
   type: TransactionType;
   date: string; // YYYY-MM-DD
-  description?: string;
-  categoryId?: string;
-  budgetCycleId?: string;
+  description?: string | null;
+  categoryId?: string | null;
+  budgetCycleId?: string | null;
   createdBy: string;
   createdAt: string;
   updatedAt: string;
   status: 'draft' | 'posted' | 'voided';
-  revisionOf?: string;
+  revisionOf?: string | null;
 };
 
 export type LedgerLine = {
@@ -78,12 +78,12 @@ export type BudgetCycle = {
   householdId: string;
   name: string;
   startDate: string; // YYYY-MM-DD
-  endDate?: string;  // YYYY-MM-DD
+  endDate?: string | null;  // YYYY-MM-DD
   status: BudgetCycleStatus;
-  salaryTransactionId?: string;
-  closedAt?: string;
-  closedBy?: string;
-  revisedAt?: string;
+  salaryTransactionId?: string | null;
+  closedAt?: string | null;
+  closedBy?: string | null;
+  revisedAt?: string | null;
 };
 
 export type Category = {
@@ -92,7 +92,7 @@ export type Category = {
   name: string;
   type: 'income' | 'expense';
   isActive: boolean;
-  parentCategoryId?: string;
+  parentCategoryId?: string | null;
   createdAt: string;
 };
 
@@ -104,7 +104,7 @@ export type BudgetAllocation = {
   plannedAmount: number;
   currency: CurrencyCode;
   carryLeftover: boolean;
-  notes?: string;
+  notes?: string | null;
 };
 
 export type ExpectedIncome = {
@@ -117,7 +117,7 @@ export type ExpectedIncome = {
   expectedRateToBaseCurrency: number;
   label: string;
   status: 'expected' | 'received' | 'cancelled';
-  receivedTransactionId?: string;
+  receivedTransactionId?: string | null;
 };
 
 export type ExchangeRate = {
@@ -142,8 +142,8 @@ export type Reconciliation = {
   currency: CurrencyCode;
   createdBy: string;
   createdAt: string;
-  adjustmentTransactionId?: string;
-  note?: string;
+  adjustmentTransactionId?: string | null;
+  note?: string | null;
 };
 
 export type NotificationSettings = {

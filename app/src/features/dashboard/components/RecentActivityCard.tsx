@@ -120,7 +120,7 @@ export function RecentActivityCard() {
       transactionUpdates: {
         description: editDesc,
         date: editDate,
-        categoryId: editCatId || undefined,
+        categoryId: editCatId || null,
         type: editType
       },
       lineUpdates: {

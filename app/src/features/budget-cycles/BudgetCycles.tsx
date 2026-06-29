@@ -42,7 +42,7 @@ import { BudgetCycle } from '@/domain/financeTypes';
 
 // ── Helpers ──────────────────────────────────────────────────────────────
 
-function getDaysInfo(startDate: string, endDate?: string) {
+function getDaysInfo(startDate: string, endDate?: string | null) {
   const start = new Date(startDate);
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -156,7 +156,7 @@ export function BudgetCycles() {
       cycle: {
         name: newCycleNameState,
         startDate: newCycleStart,
-        endDate: newCycleEnd || undefined,
+        endDate: newCycleEnd || null,
         status: newCycleStatus,
       }
     });
