@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
 import {
   Box,
@@ -49,11 +50,8 @@ function formatTime(iso: string): string {
   }
 }
 
-interface RecentActivityCardProps {
-  onNavigateToTransactions: () => void;
-}
-
-export function RecentActivityCard({ onNavigateToTransactions }: RecentActivityCardProps) {
+export function RecentActivityCard() {
+  const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
   const { householdId } = useAppContext();
   const { data: accounts = [] } = useAccounts(householdId);
@@ -160,7 +158,7 @@ export function RecentActivityCard({ onNavigateToTransactions }: RecentActivityC
         </Typography>
         <Typography 
           variant="body2" 
-          onClick={onNavigateToTransactions}
+          onClick={() => navigate('/transactions')}
           sx={{ color: 'primary.main', fontWeight: 'bold', cursor: 'pointer' }}
         >
           View All

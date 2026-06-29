@@ -389,54 +389,8 @@ export function AuthScreen() {
             </Button>
           </Box>
 
-          {/* Contextual Information */}
-          <Box sx={{ width: '100%', pt: 2, borderTop: '1px solid', borderColor: 'divider', mt: 1 }}>
-            <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '12px', lineHeight: 1.5 }}>
-              To continue, Google will share your name, email address, language preference, and profile picture with Kippa.
-            </Typography>
-            <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
-              <Typography variant="body2" sx={{ color: 'primary.main', fontWeight: 'bold', cursor: 'pointer', fontSize: '12px' }}>
-                Create account
-              </Typography>
-            </Stack>
-          </Box>
-
         </Stack>
       </Container>
-
-      {/* Google-style Footer Navigation */}
-      <Box 
-        component="footer" 
-        sx={{ 
-          width: '100%', 
-          maxWidth: '1024px', 
-          px: 2, 
-          py: 3, 
-          display: 'flex', 
-          flexDirection: { xs: 'column', sm: 'row' }, 
-          justifyContent: 'space-between', 
-          alignItems: 'center', 
-          gap: 2,
-          mt: 'auto',
-          borderTop: '1px solid',
-          borderColor: 'divider'
-        }}
-      >
-        <Stack direction="row" alignItems="center" spacing={0.5} sx={{ cursor: 'pointer', px: 1, py: 0.5, borderRadius: '4px', '&:hover': { bgcolor: 'action.hover' } }}>
-          <Typography variant="body2" sx={{ fontSize: '12px', color: 'text.secondary' }}>
-            English (United States)
-          </Typography>
-          <span className="material-symbols-outlined" style={{ fontSize: '16px', color: 'var(--mui-palette-text-secondary, #3e4947)' }}>arrow_drop_down</span>
-        </Stack>
-
-        <Stack direction="row" spacing={3}>
-          {['Help', 'Privacy', 'Terms'].map(link => (
-            <Typography key={link} variant="body2" sx={{ fontSize: '12px', color: 'text.secondary', cursor: 'pointer', '&:hover': { color: 'text.primary' } }}>
-              {link}
-            </Typography>
-          ))}
-        </Stack>
-      </Box>
     </Box>
   );
 }
