@@ -58,27 +58,9 @@ export async function registerFcmToken(
   }
 
   // 3. Get token.
-  // Pre-register the Firebase messaging SW and pass it to getToken(). The SW
-  // activation is awaited with a BOUNDED timeout — on iOS, if another SW
-  // (vite-plugin-pwa's Workbox sw.js) controls the page, the messaging SW can
-  // stall in 'waiting' indefinitely, so we must not wait forever.
   let token: string;
   try {
-    const swReg = await navigator.serviceWorker.register('/firebase-messaging-sw.js', {
-      scope: '/',
-    });
-    // Wait up to 3s for the SW to activate; resolve regardless after that.
-    await new Promise<void>((resolve) => {
-      if (swReg.active) return resolve();
-      const sw = swReg.installing ?? swReg.waiting;
-      if (!sw) return resolve();
-      let done = false;
-      const finish = () => { if (!done) { done = true; resolve(); } };
-      sw.addEventListener('statechange', () => {
-        if (sw.state === 'activated' || sw.state === 'redundant') finish();
-      });
-      setTimeout(finish, 3000);
-    });
+    const swReg = await navigator.serviceWorker.ready;
     token = await getFcmToken(messaging, { vapidKey, serviceWorkerRegistration: swReg });
   } catch (e) {
     console.warn('[notifications] getToken failed:', e);
