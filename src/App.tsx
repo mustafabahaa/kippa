@@ -18,11 +18,18 @@ import { DotGridBackground } from './features/shared/components/DotGrid';
 import { useAppContext } from './hooks/useAppContext';
 import { AppLoadingScreen } from './components/app-shell/AppLoadingScreen';
 import { AppShell } from './components/app-shell/AppShell';
+import { useNotifications } from './notifications/useNotifications';
 
 export default function App() {
   const { userProfile, householdId, isAuthLoading } = useAppContext();
   const { resolvedMode } = useThemeMode();
   const theme = useMemo(() => createAppTheme(resolvedMode), [resolvedMode]);
+
+  // Register FCM push notifications once the user has a household. Side-effect
+  // only — this instance handles the logout-unregister and re-register-on-reload
+  // paths. It does NOT auto-prompt (iOS requires a user gesture for that);
+  // the Notifications settings page owns the prompt via its own instance.
+  useNotifications(householdId);
 
   if (isAuthLoading) return <AppLoadingScreen theme={theme} />;
 
