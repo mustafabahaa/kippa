@@ -331,7 +331,7 @@ export function RecentActivityCard() {
           <Button onClick={() => setEditingTx(null)} color="inherit">
             Cancel
           </Button>
-          <Button onClick={handleSaveEdit} variant="contained" sx={{ borderRadius: '12px', boxShadow: 'none' }}>
+          <Button onClick={handleSaveEdit} variant="contained" loading={updateMutation.isPending} sx={{ borderRadius: '12px', boxShadow: 'none' }}>
             Save Changes
           </Button>
         </DialogActions>

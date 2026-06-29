@@ -711,7 +711,9 @@ export function FastEntry() {
           {/* Submit Action Button */}
           <Button
             onClick={handleSave}
-            disabled={isSaving}
+            loading={isSaving}
+            loadingPosition="start"
+            startIcon={<span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>}
             fullWidth
             variant="contained"
             sx={{
@@ -728,8 +730,7 @@ export function FastEntry() {
               gap: 1
             }}
           >
-            <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
-            {isSaving ? 'Saving...' : mode === 'expense' ? 'Save Expense' : mode === 'income' ? 'Save Income' : 'Save Transaction'}
+            {mode === 'expense' ? 'Save Expense' : mode === 'income' ? 'Save Income' : 'Save Transaction'}
           </Button>
         </Box>
 

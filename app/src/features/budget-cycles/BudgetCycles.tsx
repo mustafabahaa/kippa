@@ -357,10 +357,10 @@ export function BudgetCycles() {
                 }
               }} 
               variant="contained"
-              disabled={isSavingBudget}
+              loading={isSavingBudget}
               sx={{ borderRadius: '12px', textTransform: 'none', fontWeight: 'bold', bgcolor: 'primary.dark' }}
             >
-              {isSavingBudget ? 'Saving...' : 'Save'}
+              Save
             </Button>
           </DialogActions>
         </Dialog>
@@ -466,6 +466,7 @@ export function BudgetCycles() {
           <Button 
             onClick={handleCreateCycle} 
             variant="contained"
+            loading={createCycleMutation.isPending}
             sx={{ borderRadius: '12px', textTransform: 'none', fontWeight: 'bold', bgcolor: 'primary.dark' }}
           >
             Create
@@ -519,6 +520,7 @@ export function BudgetCycles() {
           <Button 
             onClick={handleCloseCycle} 
             disabled={!check1 || !check2 || !check3}
+            loading={updateCycleStatusMutation.isPending}
             variant="contained" 
             color="error"
             sx={{ borderRadius: '12px', textTransform: 'none', fontWeight: 'bold', bgcolor: '#ba1a1a' }}

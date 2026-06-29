@@ -39,35 +39,27 @@ function isStandalone(): boolean {
  * click-triggered flow uniform across platforms for simplicity.
  */
 export function useNotifications(householdId: string | null | undefined) {
-  const [status, setStatus] = useState<NotificationStatus>('pending');
-  const currentTokenRef = useRef<string | null>(null);
-
-  // Compute the static status (unsupported / ios-not-installed) once.
-  useEffect(() => {
-    if (!householdId) return;
-
+  const [status, setStatus] = useState<NotificationStatus>(() => {
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-      setStatus('unsupported');
-      return;
+      return 'unsupported';
     }
 
     if (isIosSafari() && !isStandalone()) {
-      setStatus('ios-not-installed');
-      return;
+      return 'ios-not-installed';
     }
 
     if (!vapidKey || !auth) {
-      setStatus('unsupported');
-      return;
+      return 'unsupported';
     }
 
-    // If already granted (e.g. returning user), reflect that and re-register.
-    if (Notification.permission === 'granted') {
-      setStatus('pending'); // will resolve to 'enabled' once token registers
-    } else {
-      setStatus('pending');
+    if (typeof Notification !== 'undefined' && Notification.permission === 'denied') {
+      return 'permission-denied';
     }
-  }, [householdId]);
+
+    return 'pending';
+  });
+
+  const currentTokenRef = useRef<string | null>(null);
 
   // Re-register token when already granted (e.g. app reload), and handle
   // logout → unregister. This path does NOT call requestPermission, so it is

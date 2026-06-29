@@ -139,7 +139,7 @@ export function Categories() {
                 fullWidth
                 variant="contained"
                 onClick={handleCreateCategory}
-                disabled={createCategoryMutation.isPending}
+                loading={createCategoryMutation.isPending}
                 sx={{
                   py: 1.2,
                   borderRadius: '12px',

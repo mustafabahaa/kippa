@@ -222,6 +222,7 @@ export function Accounts() {
                 fullWidth
                 variant="contained"
                 onClick={handleCreateAccount}
+                loading={createAccountMutation.isPending}
                 sx={{
                   py: 1.2,
                   borderRadius: '12px',
@@ -293,7 +294,7 @@ export function Accounts() {
           <Button onClick={() => setEditingAccount(null)} color="inherit">
             Cancel
           </Button>
-          <Button onClick={handleUpdateAccount} variant="contained" sx={{ borderRadius: '12px', boxShadow: 'none' }}>
+          <Button onClick={handleUpdateAccount} variant="contained" loading={updateAccountMutation.isPending} sx={{ borderRadius: '12px', boxShadow: 'none' }}>
             Save Changes
           </Button>
         </DialogActions>
