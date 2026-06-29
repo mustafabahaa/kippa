@@ -1,4 +1,14 @@
-import { doc, setDoc, deleteDoc, getFirestore } from 'firebase/firestore';
+import {
+  doc,
+  setDoc,
+  deleteDoc,
+  getFirestore,
+  collection,
+  query,
+  where,
+  getDocs,
+  writeBatch,
+} from 'firebase/firestore';
 import { getToken as getFcmToken, deleteToken as deleteFcmToken } from 'firebase/messaging';
 import { getMessagingAsync } from '@/config/firebase';
 
@@ -23,15 +33,11 @@ export async function registerFcmToken(
   uid: string,
   vapidKey: string,
 ): Promise<string | null> {
-  const messaging = await getMessagingAsync();
-  if (!messaging) {
-    console.warn('[notifications] Messaging not initialized (no VAPID key?)');
-    return null;
-  }
-
-  // 1. Request permission
-  let permission = Notification.permission;
-  if (permission === 'default') {
+  // 1. Request permission FIRST to preserve the user gesture on iOS/Safari.
+  // Any async operation (like getMessagingAsync()) prior to requestPermission()
+  // breaks the user gesture trust chain, causing Safari to silently ignore the prompt and hang.
+  let permission = typeof Notification !== 'undefined' ? Notification.permission : 'default';
+  if (permission === 'default' && typeof Notification !== 'undefined') {
     try {
       permission = await Notification.requestPermission();
     } catch (e) {
@@ -44,7 +50,14 @@ export async function registerFcmToken(
     return null;
   }
 
-  // 2. Get token.
+  // 2. Initialize messaging
+  const messaging = await getMessagingAsync();
+  if (!messaging) {
+    console.warn('[notifications] Messaging not initialized (no VAPID key?)');
+    return null;
+  }
+
+  // 3. Get token.
   // Pre-register the Firebase messaging SW and pass it to getToken(). The SW
   // activation is awaited with a BOUNDED timeout — on iOS, if another SW
   // (vite-plugin-pwa's Workbox sw.js) controls the page, the messaging SW can
@@ -73,19 +86,57 @@ export async function registerFcmToken(
   }
   if (!token) return null;
 
-  // 3. Write to Firestore
+  // 4. Write to Firestore
   const db = getFirestore();
   const now = new Date().toISOString();
+  const deviceId = getOrCreateDeviceId();
   const tokenRef = doc(db, `households/${householdId}/fcmTokens`, token);
   await setDoc(tokenRef, {
     token,
     uid,
+    deviceId,
     deviceType: detectDeviceType(),
     createdAt: now,
     lastSeenAt: now,
   });
 
+  // Clean up any other old tokens for this same physical device/browser
+  try {
+    const tokensColl = collection(db, `households/${householdId}/fcmTokens`);
+    const q = query(
+      tokensColl,
+      where('uid', '==', uid),
+      where('deviceId', '==', deviceId)
+    );
+    const snap = await getDocs(q);
+    const batch = writeBatch(db);
+    let hasDeletes = false;
+    snap.forEach((d) => {
+      if (d.id !== token) {
+        batch.delete(d.ref);
+        hasDeletes = true;
+      }
+    });
+    if (hasDeletes) {
+      await batch.commit();
+    }
+  } catch (e) {
+    console.warn('[notifications] Failed to clean up stale device tokens:', e);
+  }
+
   return token;
+}
+
+function getOrCreateDeviceId(): string {
+  if (typeof window === 'undefined' || !window.localStorage) {
+    return 'unknown-device';
+  }
+  let deviceId = localStorage.getItem('kippa_device_id');
+  if (!deviceId) {
+    deviceId = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2) + Date.now().toString(36);
+    localStorage.setItem('kippa_device_id', deviceId);
+  }
+  return deviceId;
 }
 
 /**
