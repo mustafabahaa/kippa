@@ -81,14 +81,17 @@ export function NotificationSettingsForm({
               />
 
               <FormControlLabel
+                disabled
                 control={
-                  <Checkbox 
-                    checked={notifSettings.savingWarningEnabled} 
-                    onChange={e => setNotifSettings({ ...notifSettings, savingWarningEnabled: e.target.checked })} 
+                  <Checkbox
+                    checked={notifSettings.savingWarningEnabled}
                   />
                 }
                 label="Saving Warning Alerts"
               />
+              <Typography variant="caption" sx={{ color: 'text.secondary', mt: -1.5, ml: 4 }}>
+                Coming soon
+              </Typography>
 
               <FormControlLabel
                 control={
