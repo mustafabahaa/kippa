@@ -47,8 +47,6 @@ export interface NotificationSettings {
   userId: string;
   householdId: string;
   dailyReminderEnabled: boolean;
-  dailyReminderTime: string; // "HH:MM"
-  timezone: string; // IANA tz, e.g. "Africa/Cairo"
   categoryWarningEnabled: boolean;
   auditReminderEnabled: boolean;
 }
