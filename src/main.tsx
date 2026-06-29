@@ -5,6 +5,7 @@ import { SnackbarProvider } from 'notistack';
 import App from './App';
 
 import { AppProvider } from './contexts/AppContext';
+import { ThemeModeProvider } from './hooks/useThemeMode';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -20,10 +21,13 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
       <AppProvider>
-        <SnackbarProvider maxSnack={3} anchorOrigin={{ vertical: 'top', horizontal: 'center' }}>
-          <App />
-        </SnackbarProvider>
+        <ThemeModeProvider>
+          <SnackbarProvider maxSnack={3} anchorOrigin={{ vertical: 'top', horizontal: 'center' }}>
+            <App />
+          </SnackbarProvider>
+        </ThemeModeProvider>
       </AppProvider>
     </QueryClientProvider>
   </React.StrictMode>,
 );
+
