@@ -13,24 +13,38 @@ import {
   Checkbox
 } from '@mui/material';
 import { NotificationSettings } from '../../domain/financeTypes';
+import { useNotifications } from '../../notifications/useNotifications';
+import { IosInstallBanner } from '../../notifications/IosInstallBanner';
 
 interface NotificationSettingsFormProps {
   dbSettings: NotificationSettings;
   onSave: (settings: NotificationSettings) => Promise<void>;
   isSaving: boolean;
+  /** The user's householdId, used to drive the notification permission flow. */
+  householdId: string;
 }
 
 export function NotificationSettingsForm({
   dbSettings,
   onSave,
-  isSaving
+  isSaving,
+  householdId
 }: NotificationSettingsFormProps) {
   const { enqueueSnackbar } = useSnackbar();
   const [notifSettings, setNotifSettings] = useState<NotificationSettings>(dbSettings);
+  const { status: notifStatus, requestPermission } = useNotifications(householdId);
 
   const handleSaveNotifications = async () => {
     await onSave(notifSettings);
     enqueueSnackbar('Notification settings updated!', { variant: 'success' });
+  };
+
+  const handleEnableNotifications = async () => {
+    // MUST be a user gesture (button click) — iOS Safari requires this.
+    await requestPermission();
+    if (Notification.permission === 'granted') {
+      enqueueSnackbar('Notifications enabled!', { variant: 'success' });
+    }
   };
 
   return (
@@ -44,6 +58,65 @@ export function NotificationSettingsForm({
             Manage reminder alerts, warning levels, and email notification configurations
           </Typography>
         </Box>
+
+        {/* Push notification enablement — status + action.
+            On iOS the permission prompt must come from a user gesture (click),
+            hence the explicit button rather than an auto-prompt. */}
+        {notifStatus === 'ios-not-installed' && <IosInstallBanner />}
+
+        {notifStatus === 'unsupported' && (
+          <Card sx={{ border: '1px solid', borderColor: 'divider', borderRadius: '20px', boxShadow: 'none' }}>
+            <CardContent sx={{ p: 2.5 }}>
+              <Typography color="text.secondary" sx={{ fontSize: '14px' }}>
+                Push notifications aren't supported in this browser. For iPhone, add Kippa to your
+                Home Screen (iOS 16.4+) to enable them.
+              </Typography>
+            </CardContent>
+          </Card>
+        )}
+
+        {notifStatus === 'permission-denied' && (
+          <Card sx={{ border: '1px solid', borderColor: 'divider', borderRadius: '20px', boxShadow: 'none' }}>
+            <CardContent sx={{ p: 2.5 }}>
+              <Typography color="text.secondary" sx={{ fontSize: '14px' }}>
+                Notifications are blocked. Enable them in your device/browser settings, then reopen
+                Kippa.
+              </Typography>
+            </CardContent>
+          </Card>
+        )}
+
+        {(notifStatus === 'pending' || notifStatus === 'enabled') && (
+          <Card sx={{ border: '1px solid', borderColor: 'divider', borderRadius: '20px', boxShadow: 'none' }}>
+            <CardContent sx={{ p: 2.5 }}>
+              <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap" useFlexGap>
+                <Box>
+                  <Typography sx={{ fontWeight: 600, fontSize: '15px' }}>
+                    Push notifications {notifStatus === 'enabled' ? 'enabled' : 'not enabled yet'}
+                  </Typography>
+                  <Typography color="text.secondary" sx={{ fontSize: '13px' }}>
+                    Get reminded to log expenses and notified of household activity.
+                  </Typography>
+                </Box>
+                {notifStatus !== 'enabled' && (
+                  <Button
+                    variant="contained"
+                    onClick={handleEnableNotifications}
+                    sx={{
+                      ml: 'auto',
+                      borderRadius: '12px',
+                      boxShadow: 'none',
+                      textTransform: 'none',
+                      fontWeight: 'bold',
+                    }}
+                  >
+                    Enable notifications
+                  </Button>
+                )}
+              </Stack>
+            </CardContent>
+          </Card>
+        )}
 
         <Card sx={{ border: '1px solid', borderColor: 'divider', borderRadius: '20px', boxShadow: 'none' }}>
           <CardContent sx={{ p: 2.5 }}>

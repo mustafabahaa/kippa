@@ -26,8 +26,9 @@ export default function App() {
   const theme = useMemo(() => createAppTheme(resolvedMode), [resolvedMode]);
 
   // Register FCM push notifications once the user has a household. Side-effect
-  // only — handles permission, token registration, and iOS Home Screen gating.
-  // Must run after the auth gate below so householdId is non-null at call time.
+  // only — this instance handles the logout-unregister and re-register-on-reload
+  // paths. It does NOT auto-prompt (iOS requires a user gesture for that);
+  // the Notifications settings page owns the prompt via its own instance.
   useNotifications(householdId);
 
   if (isAuthLoading) return <AppLoadingScreen theme={theme} />;

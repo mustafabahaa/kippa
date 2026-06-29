@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth, vapidKey } from '../config/firebase';
 import { registerFcmToken, unregisterFcmToken, touchFcmToken } from './registerToken';
@@ -6,9 +6,9 @@ import { registerFcmToken, unregisterFcmToken, touchFcmToken } from './registerT
 export type NotificationStatus =
   | 'unsupported'       // browser doesn't support service workers / push
   | 'ios-not-installed' // iOS Safari but not added to Home Screen
-  | 'permission-denied' // user denied
+  | 'permission-denied' // user denied (must change in OS settings)
   | 'enabled'           // token registered successfully
-  | 'pending';          // still working
+  | 'pending';          // still working / not yet requested
 
 function isIosSafari(): boolean {
   const ua = navigator.userAgent;
@@ -25,40 +25,58 @@ function isStandalone(): boolean {
 }
 
 /**
- * Handles the full push-notification registration lifecycle:
- * - Detects iOS Safari and requires Home Screen install.
- * - Requests permission.
- * - Registers the FCM token.
- * - Updates lastSeenAt on app open.
- * - Unregisters on logout.
+ * Push-notification registration lifecycle.
  *
- * Call this once at the app root, after the user is logged in and has a
- * household.
+ * IMPORTANT: on iOS Safari (PWA), the permission request MUST be triggered
+ * by a user gesture (a click). Calling requestPermission() on page load fails
+ * silently on iOS. So this hook does NOT auto-request permission. Instead it:
+ *   - Detects platform support / iOS install state (read via `status`).
+ *   - Exposes `requestPermission()` to be called from a button onClick.
+ *   - Unregisters the token on logout.
+ *   - Refreshes `lastSeenAt` while enabled.
+ *
+ * On Android/desktop, auto-requesting would also work, but we keep the
+ * click-triggered flow uniform across platforms for simplicity.
  */
-export function useNotifications(householdId: string | null | undefined): NotificationStatus {
+export function useNotifications(householdId: string | null | undefined) {
   const [status, setStatus] = useState<NotificationStatus>('pending');
   const currentTokenRef = useRef<string | null>(null);
 
+  // Compute the static status (unsupported / ios-not-installed) once.
   useEffect(() => {
     if (!householdId) return;
 
-    // Check browser support
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
       setStatus('unsupported');
       return;
     }
 
-    // iOS Safari requires Home Screen install for push
     if (isIosSafari() && !isStandalone()) {
       setStatus('ios-not-installed');
       return;
     }
 
-    if (!vapidKey) {
-      console.warn('[notifications] VITE_FIREBASE_VAPID_KEY not set');
+    if (!vapidKey || !auth) {
       setStatus('unsupported');
       return;
     }
+
+    // If already granted (e.g. returning user), reflect that and re-register.
+    if (Notification.permission === 'granted') {
+      setStatus('pending'); // will resolve to 'enabled' once token registers
+    } else {
+      setStatus('pending');
+    }
+  }, [householdId]);
+
+  // Re-register token when already granted (e.g. app reload), and handle
+  // logout → unregister. This path does NOT call requestPermission, so it is
+  // safe to run outside a user gesture.
+  useEffect(() => {
+    if (!householdId || !auth) return;
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+    if (isIosSafari() && !isStandalone()) return;
+    if (!vapidKey) return;
 
     let cancelled = false;
 
@@ -74,17 +92,17 @@ export function useNotifications(householdId: string | null | undefined): Notifi
         return;
       }
 
-      // Logged in — register
-      const token = await registerFcmToken(householdId, user.uid, vapidKey);
-      if (cancelled) return;
-
-      if (token) {
-        currentTokenRef.current = token;
-        setStatus('enabled');
-      } else if (Notification.permission === 'denied') {
-        setStatus('permission-denied');
-      } else {
-        setStatus('pending');
+      // Only auto-register when permission is ALREADY granted (no prompt).
+      // If permission is 'default', wait for the user to click the button.
+      if (Notification.permission === 'granted') {
+        const token = await registerFcmToken(householdId, user.uid, vapidKey);
+        if (cancelled) return;
+        if (token) {
+          currentTokenRef.current = token;
+          setStatus('enabled');
+        } else {
+          setStatus('pending');
+        }
       }
     });
 
@@ -94,11 +112,33 @@ export function useNotifications(householdId: string | null | undefined): Notifi
     };
   }, [householdId]);
 
+  /**
+   * Request notification permission and register the token.
+   * MUST be called from a user gesture (button onClick) — iOS Safari requires
+   * this or the permission prompt fails silently.
+   */
+  const requestPermission = useCallback(async () => {
+    if (!householdId || !auth) return;
+    const user = auth.currentUser;
+    if (!user) return;
+
+    setStatus('pending');
+    const token = await registerFcmToken(householdId, user.uid, vapidKey);
+    if (token) {
+      currentTokenRef.current = token;
+      setStatus('enabled');
+    } else if (Notification.permission === 'denied') {
+      setStatus('permission-denied');
+    } else {
+      setStatus('pending');
+    }
+  }, [householdId]);
+
   // Heartbeat: update lastSeenAt when enabled
   useEffect(() => {
     if (status !== 'enabled' || !currentTokenRef.current || !householdId) return;
     touchFcmToken(householdId, currentTokenRef.current).catch(() => {});
   }, [status, householdId]);
 
-  return status;
+  return { status, requestPermission };
 }
