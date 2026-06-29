@@ -7,6 +7,9 @@ import { auditLogLib } from '../libs/auditLog';
 import { authLib } from '../libs/auth';
 import { currencyLib } from '../libs/currency';
 import { useAppContext } from './useAppContext';
+import { useSnackbar } from 'notistack';
+import { useOnlineStatus } from './useOnlineStatus';
+import { notifyOfflineAwareSuccess } from '../lib/offlineToast';
 import { 
   Account, 
   Category, 
@@ -36,6 +39,17 @@ function useAuditUser() {
     displayName: userProfile.displayName,
     photoURL: userProfile.photoURL,
   };
+}
+
+/**
+ * Shared notifier for mutation onSuccess handlers. When offline, a successful
+ * mutation means the Firestore SDK buffered the write locally — surface the
+ * "will sync" toast so the user knows it wasn't lost.
+ */
+function useOfflineSuccessNotifier() {
+  const isOnline = useOnlineStatus();
+  const { enqueueSnackbar } = useSnackbar();
+  return () => notifyOfflineAwareSuccess({ isOnline, enqueue: enqueueSnackbar });
 }
 
 // --- Queries ---
@@ -252,6 +266,7 @@ export function useUnreadActivityCount(householdId: string, userId: string | und
 export function useCreateTransactionMutation() {
   const queryClient = useQueryClient();
   const auditUser = useAuditUser();
+  const notifyOfflineSuccess = useOfflineSuccessNotifier();
   return useMutation({
     mutationFn: (data: {
       householdId: string;
@@ -260,6 +275,7 @@ export function useCreateTransactionMutation() {
       conversionDetails?: Omit<ConversionDetails, 'transactionId'>;
     }) => transactionsLib.createTransaction(data.householdId, data.transaction, data.lines, data.conversionDetails, auditUser),
     onSuccess: (_, variables) => {
+      notifyOfflineSuccess();
       queryClient.invalidateQueries({ queryKey: ['transactions', variables.householdId] });
       queryClient.invalidateQueries({ queryKey: ['ledgerLines', variables.householdId] });
     },
@@ -269,10 +285,12 @@ export function useCreateTransactionMutation() {
 export function useVoidTransactionMutation() {
   const queryClient = useQueryClient();
   const auditUser = useAuditUser();
+  const notifyOfflineSuccess = useOfflineSuccessNotifier();
   return useMutation({
     mutationFn: (data: { householdId: string; transactionId: string }) =>
       transactionsLib.voidTransaction(data.householdId, data.transactionId, auditUser),
     onSuccess: (_, variables) => {
+      notifyOfflineSuccess();
       queryClient.invalidateQueries({ queryKey: ['transactions', variables.householdId] });
       queryClient.invalidateQueries({ queryKey: ['ledgerLines', variables.householdId] });
     },
@@ -282,6 +300,7 @@ export function useVoidTransactionMutation() {
 export function useUpdateTransactionMutation() {
   const queryClient = useQueryClient();
   const auditUser = useAuditUser();
+  const notifyOfflineSuccess = useOfflineSuccessNotifier();
   return useMutation({
     mutationFn: (data: {
       householdId: string;
@@ -296,6 +315,7 @@ export function useUpdateTransactionMutation() {
       auditUser
     ),
     onSuccess: (_, variables) => {
+      notifyOfflineSuccess();
       queryClient.invalidateQueries({ queryKey: ['transactions', variables.householdId] });
       queryClient.invalidateQueries({ queryKey: ['ledgerLines', variables.householdId] });
     },
@@ -305,12 +325,14 @@ export function useUpdateTransactionMutation() {
 export function useCreateAccountMutation() {
   const queryClient = useQueryClient();
   const auditUser = useAuditUser();
+  const notifyOfflineSuccess = useOfflineSuccessNotifier();
   return useMutation({
     mutationFn: (data: {
       householdId: string;
       account: Omit<Account, 'id' | 'householdId' | 'createdAt'>;
     }) => ledgerLib.createAccount(data.householdId, data.account, auditUser),
     onSuccess: (_, variables) => {
+      notifyOfflineSuccess();
       queryClient.invalidateQueries({ queryKey: ['accounts', variables.householdId] });
     },
   });
@@ -319,6 +341,7 @@ export function useCreateAccountMutation() {
 export function useUpdateAccountMutation() {
   const queryClient = useQueryClient();
   const auditUser = useAuditUser();
+  const notifyOfflineSuccess = useOfflineSuccessNotifier();
   return useMutation({
     mutationFn: (data: {
       householdId: string;
@@ -326,6 +349,7 @@ export function useUpdateAccountMutation() {
       updated: Account;
     }) => ledgerLib.updateAccount(data.householdId, data.accountId, data.updated, auditUser),
     onSuccess: (_, variables) => {
+      notifyOfflineSuccess();
       queryClient.invalidateQueries({ queryKey: ['accounts', variables.householdId] });
     },
   });
@@ -334,12 +358,14 @@ export function useUpdateAccountMutation() {
 export function useCreateCategoryMutation() {
   const queryClient = useQueryClient();
   const auditUser = useAuditUser();
+  const notifyOfflineSuccess = useOfflineSuccessNotifier();
   return useMutation({
     mutationFn: (data: {
       householdId: string;
       category: Omit<Category, 'id' | 'householdId' | 'createdAt'>;
     }) => ledgerLib.createCategory(data.householdId, data.category, auditUser),
     onSuccess: (_, variables) => {
+      notifyOfflineSuccess();
       queryClient.invalidateQueries({ queryKey: ['categories', variables.householdId] });
     },
   });
@@ -348,6 +374,7 @@ export function useCreateCategoryMutation() {
 export function useUpdateCategoryMutation() {
   const queryClient = useQueryClient();
   const auditUser = useAuditUser();
+  const notifyOfflineSuccess = useOfflineSuccessNotifier();
   return useMutation({
     mutationFn: (data: {
       householdId: string;
@@ -355,6 +382,7 @@ export function useUpdateCategoryMutation() {
       updates: Partial<Pick<Category, 'name' | 'isActive'>>;
     }) => ledgerLib.updateCategory(data.householdId, data.categoryId, data.updates, auditUser),
     onSuccess: (_, variables) => {
+      notifyOfflineSuccess();
       queryClient.invalidateQueries({ queryKey: ['categories', variables.householdId] });
     },
   });
@@ -363,12 +391,14 @@ export function useUpdateCategoryMutation() {
 export function useCreateCycleMutation() {
   const queryClient = useQueryClient();
   const auditUser = useAuditUser();
+  const notifyOfflineSuccess = useOfflineSuccessNotifier();
   return useMutation({
     mutationFn: (data: {
       householdId: string;
       cycle: Omit<BudgetCycle, 'id' | 'householdId'>;
     }) => cyclesLib.createCycle(data.householdId, data.cycle, auditUser),
     onSuccess: (_, variables) => {
+      notifyOfflineSuccess();
       queryClient.invalidateQueries({ queryKey: ['budgetCycles', variables.householdId] });
       queryClient.invalidateQueries({ queryKey: ['activeCycle', variables.householdId] });
     },
@@ -378,6 +408,7 @@ export function useCreateCycleMutation() {
 export function useUpdateCycleStatusMutation() {
   const queryClient = useQueryClient();
   const auditUser = useAuditUser();
+  const notifyOfflineSuccess = useOfflineSuccessNotifier();
   return useMutation({
     mutationFn: (data: {
       householdId: string;
@@ -386,6 +417,7 @@ export function useUpdateCycleStatusMutation() {
       extra?: Partial<BudgetCycle>;
     }) => cyclesLib.updateCycleStatus(data.householdId, data.cycleId, data.status, data.extra, auditUser),
     onSuccess: (_, variables) => {
+      notifyOfflineSuccess();
       queryClient.invalidateQueries({ queryKey: ['budgetCycles', variables.householdId] });
       queryClient.invalidateQueries({ queryKey: ['activeCycle', variables.householdId] });
     },
@@ -395,12 +427,14 @@ export function useUpdateCycleStatusMutation() {
 export function useSaveAllocationMutation() {
   const queryClient = useQueryClient();
   const auditUser = useAuditUser();
+  const notifyOfflineSuccess = useOfflineSuccessNotifier();
   return useMutation({
     mutationFn: (data: {
       householdId: string;
       allocation: Omit<BudgetAllocation, 'id' | 'householdId'>;
     }) => cyclesLib.saveBudgetAllocation(data.householdId, data.allocation, auditUser),
     onSuccess: (_, variables) => {
+      notifyOfflineSuccess();
       queryClient.invalidateQueries({ queryKey: ['budgetAllocations', variables.householdId, variables.allocation.budgetCycleId] });
     },
   });
@@ -409,6 +443,7 @@ export function useSaveAllocationMutation() {
 export function useSaveAllocationsBatchMutation() {
   const queryClient = useQueryClient();
   const auditUser = useAuditUser();
+  const notifyOfflineSuccess = useOfflineSuccessNotifier();
   return useMutation({
     mutationFn: (data: {
       householdId: string;
@@ -416,6 +451,7 @@ export function useSaveAllocationsBatchMutation() {
       allocations: Omit<BudgetAllocation, 'id' | 'householdId'>[];
     }) => cyclesLib.saveBudgetAllocationsBatch(data.householdId, data.allocations, auditUser),
     onSuccess: (_, variables) => {
+      notifyOfflineSuccess();
       queryClient.invalidateQueries({ queryKey: ['budgetAllocations', variables.householdId, variables.cycleId] });
     },
   });
@@ -424,12 +460,14 @@ export function useSaveAllocationsBatchMutation() {
 export function useSaveExpectedIncomeMutation() {
   const queryClient = useQueryClient();
   const auditUser = useAuditUser();
+  const notifyOfflineSuccess = useOfflineSuccessNotifier();
   return useMutation({
     mutationFn: (data: {
       householdId: string;
       income: Omit<ExpectedIncome, 'id' | 'householdId'>;
     }) => cyclesLib.saveExpectedIncome(data.householdId, data.income, auditUser),
     onSuccess: (_, variables) => {
+      notifyOfflineSuccess();
       queryClient.invalidateQueries({ queryKey: ['expectedIncome', variables.householdId, variables.income.budgetCycleId] });
     },
   });
@@ -438,6 +476,7 @@ export function useSaveExpectedIncomeMutation() {
 export function useUpdateNotificationSettingsMutation() {
   const queryClient = useQueryClient();
   const auditUser = useAuditUser();
+  const notifyOfflineSuccess = useOfflineSuccessNotifier();
   return useMutation({
     mutationFn: (data: {
       householdId: string;
@@ -445,6 +484,7 @@ export function useUpdateNotificationSettingsMutation() {
       settings: NotificationSettings;
     }) => ledgerLib.updateNotificationSettings(data.householdId, data.userId, data.settings, auditUser),
     onSuccess: (_, variables) => {
+      notifyOfflineSuccess();
       queryClient.invalidateQueries({ queryKey: ['notificationSettings', variables.householdId, variables.userId] });
     },
   });
@@ -453,6 +493,7 @@ export function useUpdateNotificationSettingsMutation() {
 export function useSaveReconciliationMutation() {
   const queryClient = useQueryClient();
   const auditUser = useAuditUser();
+  const notifyOfflineSuccess = useOfflineSuccessNotifier();
   return useMutation({
     mutationFn: (data: {
       householdId: string;
@@ -460,6 +501,7 @@ export function useSaveReconciliationMutation() {
       reconLog: Reconciliation;
     }) => ledgerLib.createReconciliation(data.householdId, data.reconId, data.reconLog, auditUser),
     onSuccess: (_, variables) => {
+      notifyOfflineSuccess();
       queryClient.invalidateQueries({ queryKey: ['reconciliations', variables.householdId] });
     },
   });
@@ -467,12 +509,14 @@ export function useSaveReconciliationMutation() {
 
 export function useCreateHouseholdMutation() {
   const queryClient = useQueryClient();
+  const notifyOfflineSuccess = useOfflineSuccessNotifier();
   return useMutation({
     mutationFn: (data: {
       userId: string;
       name: string;
     }) => authLib.createHousehold(data.userId, data.name),
     onSuccess: () => {
+      notifyOfflineSuccess();
       queryClient.invalidateQueries({ queryKey: ['userHouseholds'] });
     },
   });
@@ -480,12 +524,14 @@ export function useCreateHouseholdMutation() {
 
 export function useJoinHouseholdMutation() {
   const queryClient = useQueryClient();
+  const notifyOfflineSuccess = useOfflineSuccessNotifier();
   return useMutation({
     mutationFn: (data: {
       userId: string;
       householdId: string;
     }) => authLib.joinHousehold(data.userId, data.householdId),
     onSuccess: () => {
+      notifyOfflineSuccess();
       queryClient.invalidateQueries({ queryKey: ['userHouseholds'] });
     },
   });
