@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth, vapidKey } from '../config/firebase';
-import { registerFcmToken, unregisterFcmToken, touchFcmToken } from './registerToken';
+import { registerFcmToken, unregisterFcmToken, touchFcmToken, disableNotifications } from './registerToken';
 
 export type NotificationStatus =
   | 'unsupported'       // browser doesn't support service workers / push
@@ -140,5 +140,17 @@ export function useNotifications(householdId: string | null | undefined) {
     touchFcmToken(householdId, currentTokenRef.current).catch(() => {});
   }, [status, householdId]);
 
-  return { status, requestPermission };
+  /**
+   * Disable notifications for this device. Revokes the FCM token and removes
+   * the Firestore doc. The browser permission stays 'granted' (only the OS
+   * settings can revoke that), so re-enabling is a single tap.
+   */
+  const disable = useCallback(async () => {
+    if (!householdId || !currentTokenRef.current) return;
+    await disableNotifications(householdId, currentTokenRef.current);
+    currentTokenRef.current = null;
+    setStatus('pending');
+  }, [householdId]);
+
+  return { status, requestPermission, disable };
 }
