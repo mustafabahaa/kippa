@@ -18,11 +18,17 @@ import { DotGridBackground } from './features/shared/components/DotGrid';
 import { useAppContext } from './hooks/useAppContext';
 import { AppLoadingScreen } from './components/app-shell/AppLoadingScreen';
 import { AppShell } from './components/app-shell/AppShell';
+import { useNotifications } from './notifications/useNotifications';
 
 export default function App() {
   const { userProfile, householdId, isAuthLoading } = useAppContext();
   const { resolvedMode } = useThemeMode();
   const theme = useMemo(() => createAppTheme(resolvedMode), [resolvedMode]);
+
+  // Register FCM push notifications once the user has a household. Side-effect
+  // only — handles permission, token registration, and iOS Home Screen gating.
+  // Must run after the auth gate below so householdId is non-null at call time.
+  useNotifications(householdId);
 
   if (isAuthLoading) return <AppLoadingScreen theme={theme} />;
 
