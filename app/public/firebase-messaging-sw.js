@@ -24,7 +24,13 @@ const messaging = firebase.messaging();
 // Handle background messages. When a push arrives and the app is closed/
 // in the background, show a notification.
 messaging.onBackgroundMessage((payload) => {
-  const { title, body } = payload.notification ?? {};
+  // If the message has a notification payload, the Firebase SDK automatically
+  // displays it. Calling showNotification() here would display a duplicate.
+  if (payload.notification) {
+    return;
+  }
+
+  const { title, body } = payload.data ?? {};
   const { type, deepLink } = payload.data ?? {};
 
   const notificationOptions = {
