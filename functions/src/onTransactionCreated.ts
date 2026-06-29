@@ -44,7 +44,37 @@ export const onTransactionCreated = onDocumentCreated(
     if (recipientUids.length > 0) {
       const author = members.find((m) => m.uid === txn.createdBy);
       const authorName = author?.displayName ?? 'Someone';
-      const desc = txn.description || txn.type;
+
+      // Fetch amount/currency from ledger lines
+      let amountStr = '';
+      try {
+        const linesSnap = await db
+          .collection(`households/${householdId}/ledgerLines`)
+          .where('transactionId', '==', event.params.transactionId)
+          .get();
+        const lines = linesSnap.docs.map((d) => d.data() as LedgerLine);
+        amountStr = getAmountString(txn.type, lines);
+      } catch (err) {
+        console.error('Error fetching ledger lines for notification:', err);
+      }
+
+      // Fetch category name if categoryId exists
+      let categoryName = '';
+      if (txn.categoryId) {
+        try {
+          const categorySnap = await db
+            .doc(`households/${householdId}/categories/${txn.categoryId}`)
+            .get();
+          if (categorySnap.exists) {
+            categoryName = categorySnap.data()?.name ?? '';
+          }
+        } catch (err) {
+          console.error('Error fetching category for notification:', err);
+        }
+      }
+
+      const body = formatTransactionNotificationBody(authorName, txn, amountStr, categoryName);
+
       const tokens = await getTokensForUsers(householdId, recipientUids);
       if (tokens.length > 0) {
         await sendToMany(
@@ -53,7 +83,7 @@ export const onTransactionCreated = onDocumentCreated(
           buildMessagePayload({
             type: 'transaction',
             title: 'New transaction',
-            body: `${authorName} added ${txn.type} — ${desc}`,
+            body,
             householdId,
             deepLink: '/',
           }),
@@ -165,4 +195,55 @@ async function checkCategoryWarning(
     [warningKey]: today,
   };
   await householdStateRef.set({ lastWarningFor: updatedWarningFor }, { merge: true });
+}
+
+export function getAmountString(
+  type: FinanceTransaction['type'],
+  lines: Pick<LedgerLine, 'signedAmount' | 'currency'>[]
+): string {
+  if (type === 'conversion') {
+    const debitLine = lines.find((l) => l.signedAmount < 0);
+    const creditLine = lines.find((l) => l.signedAmount > 0);
+    if (debitLine && creditLine) {
+      return `${Math.abs(debitLine.signedAmount)} ${debitLine.currency} to ${creditLine.signedAmount} ${creditLine.currency}`;
+    } else if (lines.length > 0) {
+      return lines
+        .map((l) => `${l.signedAmount > 0 ? '+' : ''}${l.signedAmount} ${l.currency}`)
+        .join(', ');
+    }
+  } else if (type === 'transfer') {
+    const debitLine = lines.find((l) => l.signedAmount < 0);
+    const creditLine = lines.find((l) => l.signedAmount > 0);
+    if (debitLine) {
+      return `${Math.abs(debitLine.signedAmount)} ${debitLine.currency}`;
+    } else if (creditLine) {
+      return `${creditLine.signedAmount} ${creditLine.currency}`;
+    }
+  } else {
+    // expense, income, adjustment
+    const line = lines[0];
+    if (line) {
+      return `${Math.abs(line.signedAmount)} ${line.currency}`;
+    }
+  }
+  return '';
+}
+
+export function formatTransactionNotificationBody(
+  authorName: string,
+  txn: Pick<FinanceTransaction, 'type' | 'description'>,
+  amountStr: string,
+  categoryName: string
+): string {
+  let body = `${authorName} added ${txn.type}`;
+  if (amountStr) {
+    body += `: ${amountStr}`;
+  }
+  if (categoryName) {
+    body += ` in ${categoryName}`;
+  }
+  if (txn.description) {
+    body += ` (${txn.description})`;
+  }
+  return body;
 }

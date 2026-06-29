@@ -3,7 +3,6 @@ import { createTheme, alpha, type Theme } from '@mui/material/styles';
 /**
  * Design tokens sourced from the Stitch "Workspace Productivity System"
  * design system (asset ID: d778924a54e1410caa5f4bc7d35e5bca).
- *
  * Light-mode surface/text tokens are derived from the Stitch design system.
  * Dark-mode surface/text tokens are tuned to keep the teal primary palette
  * while giving the app a standard Material-3 dark appearance.
