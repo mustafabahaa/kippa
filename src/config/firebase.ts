@@ -1,6 +1,11 @@
 import { initializeApp, getApp, getApps, FirebaseApp } from 'firebase/app';
 import { getAuth, Auth } from 'firebase/auth';
-import { getFirestore, Firestore } from 'firebase/firestore';
+import {
+  initializeFirestore,
+  persistentLocalCache,
+  persistentMultipleTabManager,
+  Firestore,
+} from 'firebase/firestore';
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -27,14 +32,20 @@ if (isFirebaseConfigured) {
   try {
     firebaseApp = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
     auth = getAuth(firebaseApp);
-    db = getFirestore(firebaseApp);
+    // Persistent IndexedDB cache: lets the SDK buffer writes locally and serve
+    // cached reads while offline, auto-syncing on reconnect. Must be set up
+    // before any Firestore call and only once — this is the single init point.
+    db = initializeFirestore(firebaseApp, {
+      localCache: persistentLocalCache({
+        tabManager: persistentMultipleTabManager(),
+      }),
+    });
   } catch (error) {
     console.error('Firebase initialization failed:', error);
   }
 } else {
   console.error(
-    'Firebase credentials missing. Copy .env.example to .env and set VITE_FIREBASE_* values. ' +
-    'All data is stored in Firestore — local storage is not used for ledger data.'
+    'Firebase credentials missing. Copy .env.example to .env and set VITE_FIREBASE_* values.'
   );
 }
 
