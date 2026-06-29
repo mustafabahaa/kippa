@@ -6,6 +6,7 @@ import {
   persistentMultipleTabManager,
   Firestore,
 } from 'firebase/firestore';
+import { getMessaging, Messaging, isSupported } from 'firebase/messaging';
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -51,4 +52,29 @@ if (isFirebaseConfigured) {
 
 export const isFirebaseReady = isFirebaseConfigured && !!auth && !!db;
 
-export { firebaseApp, auth, db };
+// FCM messaging — lazy-initialized on first request. Null/undefined until
+// getMessagingAsync() is awaited. Use the getter in hooks; don't read the
+// `messaging` export synchronously (it may not have resolved yet).
+let messaging: Messaging | null = null;
+const vapidKey = import.meta.env.VITE_FIREBASE_VAPID_KEY;
+
+/**
+ * Lazily initializes and returns the Firebase Messaging instance, or null
+ * if push isn't supported in this browser / VAPID key is missing.
+ */
+export async function getMessagingAsync(): Promise<Messaging | null> {
+  if (messaging) return messaging;
+  if (!firebaseApp || !vapidKey) return null;
+  if (typeof window === 'undefined' || !('serviceWorker' in navigator)) return null;
+  try {
+    const supported = await isSupported();
+    if (!supported) return null;
+    messaging = getMessaging(firebaseApp);
+    return messaging;
+  } catch (e) {
+    console.warn('Firebase messaging initialization failed:', e);
+    return null;
+  }
+}
+
+export { firebaseApp, auth, db, messaging, vapidKey };
