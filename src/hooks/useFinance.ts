@@ -536,3 +536,19 @@ export function useJoinHouseholdMutation() {
     },
   });
 }
+
+export function useAllBudgetAllocations(householdId: string) {
+  return useQuery({
+    queryKey: ['allBudgetAllocations', householdId],
+    queryFn: () => cyclesLib.getAllBudgetAllocations(householdId),
+    enabled: !!householdId,
+  });
+}
+
+export function useAllExpectedIncomes(householdId: string) {
+  return useQuery({
+    queryKey: ['allExpectedIncomes', householdId],
+    queryFn: () => cyclesLib.getAllExpectedIncomes(householdId),
+    enabled: !!householdId,
+  });
+}

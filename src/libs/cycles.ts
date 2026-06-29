@@ -166,5 +166,15 @@ export const cyclesLib = {
       );
     }
     return id;
+  },
+
+  async getAllBudgetAllocations(householdId: string): Promise<BudgetAllocation[]> {
+    const list = await dbLib.getDocs(householdId, 'budgetAllocations');
+    return list as BudgetAllocation[];
+  },
+
+  async getAllExpectedIncomes(householdId: string): Promise<ExpectedIncome[]> {
+    const list = await dbLib.getDocs(householdId, 'expectedIncome');
+    return list as ExpectedIncome[];
   }
 };

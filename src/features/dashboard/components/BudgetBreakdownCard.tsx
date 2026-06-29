@@ -1,4 +1,6 @@
-import { Box, Paper, Skeleton, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from '@mui/material';
+
+import { Box, Paper, Skeleton, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, useTheme } from '@mui/material';
+import { PieChart } from '@mui/x-charts/PieChart';
 import { 
   useTransactions, 
   useLedgerLines, 
@@ -12,6 +14,19 @@ import { useAppContext } from '../../../hooks/useAppContext';
 
 export function BudgetBreakdownCard() {
   const { householdId } = useAppContext();
+  const theme = useTheme();
+
+  const chartColors = [
+    theme.palette.primary.main,
+    theme.palette.success.main,
+    theme.palette.warning.main,
+    theme.palette.error.main,
+    theme.palette.secondary?.main || '#006a61',
+    '#0f766e',
+    '#80d5cb',
+    '#495167',
+    '#616980',
+  ];
   const { data: transactions } = useTransactions(householdId);
   const { data: ledgerLines } = useLedgerLines(householdId);
   const { data: categories = [] } = useCategories(householdId);
@@ -45,11 +60,53 @@ export function BudgetBreakdownCard() {
     displayRate
   );
 
+  const pieData = data.categoryStatus
+    .filter(cat => cat.spent > 0)
+    .map((cat, idx) => ({
+      id: idx,
+      value: cat.spent,
+      label: cat.categoryName,
+    }));
+
   return (
     <Stack spacing={1.5}>
       <Typography variant="h3" sx={{ fontSize: '18px', fontWeight: 700, color: 'text.primary' }}>
         Budget Breakdown
       </Typography>
+
+      {pieData.length > 0 && (
+        <Paper 
+          sx={{ 
+            borderRadius: '20px', 
+            border: '1px solid', 
+            borderColor: 'divider', 
+            boxShadow: 'none', 
+            p: 2, 
+            display: 'flex', 
+            justifyContent: 'center', 
+            alignItems: 'center',
+            bgcolor: 'background.paper',
+            height: 180,
+            overflow: 'hidden'
+          }}
+        >
+          <PieChart
+            colors={chartColors}
+            series={[
+              {
+                data: pieData,
+                innerRadius: 50,
+                outerRadius: 75,
+                paddingAngle: 2,
+                cornerRadius: 4,
+              },
+            ]}
+            height={160}
+            slotProps={{ legend: { hidden: true } }}
+          />
+        </Paper>
+      )}
+
       <TableContainer 
         component={Paper} 
         sx={{ 
