@@ -2,8 +2,6 @@ import { useState } from 'react';
 import { useSnackbar } from 'notistack';
 import {
   Box,
-  Card,
-  CardContent,
   Container,
   Stack,
   Typography,
@@ -12,6 +10,9 @@ import {
   Chip,
   Skeleton
 } from '@mui/material';
+import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
+import SavingsIcon from '@mui/icons-material/Savings';
+import PaymentsIcon from '@mui/icons-material/Payments';
 import { 
   useAccounts, 
   useTransactions, 
@@ -24,12 +25,25 @@ import {
 import { Reconciliation as ReconModel } from '../../domain/financeTypes';
 import { useAppContext } from '../../hooks/useAppContext';
 import { PageHeader } from '../shared/components/PageHeader';
+import { EmptyLayout } from '../shared/components/EmptyLayout';
 
 type AdjustmentReason = 'forgotten expense' | 'bank fee' | 'exchange difference' | 'cash counting correction' | 'unknown difference';
 
 export function Reconciliation() {
   const { enqueueSnackbar } = useSnackbar();
   const { householdId, userProfile } = useAppContext();
+
+  const getAccountIcon = (type: string) => {
+    const iconStyle = { fontSize: '14px', color: 'inherit' };
+    if (type.toLowerCase() === 'savings' || type.toLowerCase() === 'savings bank') {
+      return <SavingsIcon sx={iconStyle} />;
+    }
+    if (type.toLowerCase() === 'cash' || type.toLowerCase() === 'wallet') {
+      return <PaymentsIcon sx={iconStyle} />;
+    }
+    return <AccountBalanceIcon sx={iconStyle} />;
+  };
+
   // Queries
   const { data: accounts = [], isLoading: accountsLoading } = useAccounts(householdId);
   const { data: transactions = [], isLoading: txsLoading } = useTransactions(householdId);
@@ -41,8 +55,18 @@ export function Reconciliation() {
   const createTxMutation = useCreateTransactionMutation();
   const saveReconMutation = useSaveReconciliationMutation();
 
+  // Sort accounts so EGP comes first, then cash accounts, then everything else (e.g. USD).
+  const sortedAccounts = [...accounts].sort((a, b) => {
+    const rank = (acc: typeof a) => {
+      if (acc.currency === 'EGP') return 0;
+      if (acc.type === 'cash') return 1;
+      return 2;
+    };
+    return rank(a) - rank(b);
+  });
+
   const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null);
-  const selectedAccount = accounts.find(a => a.id === selectedAccountId) || accounts[0] || null;
+  const selectedAccount = accounts.find(a => a.id === selectedAccountId) || sortedAccounts[0] || null;
   const [actualBalanceInput, setActualBalanceInput] = useState('');
   const [reason, setReason] = useState<AdjustmentReason>('forgotten expense');
   const [note, setNote] = useState('');
@@ -162,148 +186,156 @@ export function Reconciliation() {
           subtitle="Audit your account balances manually to keep records perfectly aligned."
         />
 
-        {/* Audit Form Card */}
-        <Card sx={{ border: '1px solid', borderColor: 'divider', borderRadius: '20px' }}>
-          <CardContent sx={{ p: 2.5 }}>
-            <Stack spacing={2.5}>
-              {/* Account Selection */}
-              <Box>
-                <Typography variant="body1" sx={{ fontWeight: 'bold', color: 'text.primary', fontSize: '14px', mb: 1 }}>
-                  Select Account
-                </Typography>
-                <Stack 
-                  direction="row" 
-                  spacing={1} 
-                  sx={{ 
-                    overflowX: 'auto', 
-                    pb: 0.5, 
-                    '&::-webkit-scrollbar': { display: 'none' }, 
-                    msOverflowStyle: 'none', 
-                    scrollbarWidth: 'none' 
+        {/* Account Selection */}
+        <Box sx={{ width: '100%' }}>
+          <Typography variant="body1" sx={{ fontWeight: 'bold', color: 'text.primary', fontSize: '14px', mb: 1 }}>
+            Select Account
+          </Typography>
+          <Stack direction="row" spacing={1.5}>
+            {sortedAccounts.map(acc => {
+              const isSelected = selectedAccount?.id === acc.id;
+              return (
+                <Box
+                  key={acc.id}
+                  onClick={() => {
+                    setSelectedAccountId(acc.id);
+                    setActualBalanceInput('');
+                  }}
+                  sx={{
+                    flex: 1,
+                    p: 1.5,
+                    borderRadius: '16px',
+                    border: '1px solid',
+                    borderColor: isSelected ? 'primary.main' : 'divider',
+                    bgcolor: isSelected ? 'info.light' : 'background.paper',
+                    color: isSelected ? 'primary.main' : 'text.secondary',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'flex-start'
                   }}
                 >
-                  {accounts.map(acc => {
-                    const isSelected = selectedAccount?.id === acc.id;
-                    return (
-                      <Chip
-                        key={acc.id}
-                        label={`${acc.name} (${acc.currency})`}
-                        onClick={() => {
-                          setSelectedAccountId(acc.id);
-                          setActualBalanceInput('');
-                        }}
-                        variant={isSelected ? 'filled' : 'outlined'}
-                        sx={{
-                          fontSize: '12px',
-                          height: 32,
-                          bgcolor: isSelected ? 'primary.main' : 'background.paper',
-                          color: isSelected ? 'primary.contrastText' : 'text.secondary',
-                          borderColor: isSelected ? 'primary.main' : 'divider',
-                          fontWeight: isSelected ? 'bold' : 'normal',
-                          '&:hover': { bgcolor: isSelected ? 'primary.main' : 'action.hover' }
-                        }}
-                      />
-                    );
-                  })}
-                </Stack>
-              </Box>
-
-              {selectedAccount && (
-                <Stack spacing={2.5}>
-                  <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
-                    <Box sx={{ p: 1.5, bgcolor: 'action.hover', borderRadius: '16px', border: '1px solid', borderColor: 'divider' }}>
-                      <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '11px', fontWeight: 500 }}>
-                        Calculated Balance
-                      </Typography>
-                      <Typography variant="body1" sx={{ fontWeight: 'bold', mt: 0.5, fontSize: '15px' }}>
-                        {calculatedBalance.toLocaleString(undefined, { minimumFractionDigits: 2 })} {selectedAccount.currency}
-                      </Typography>
+                  <Box display="flex" alignItems="center" gap={1} sx={{ width: '100%', mb: 0.5 }}>
+                    <Box sx={{ 
+                      width: 24, 
+                      height: 24, 
+                      borderRadius: '8px', 
+                      bgcolor: isSelected ? 'primary.main' : 'action.hover', 
+                      color: isSelected ? 'primary.contrastText' : 'text.secondary', 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center',
+                      flexShrink: 0
+                    }}>
+                      {getAccountIcon(acc.type)}
                     </Box>
-                    <Box sx={{ p: 1.5, bgcolor: 'background.paper', borderRadius: '16px', border: '1px solid', borderColor: 'divider' }}>
-                      <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '11px', fontWeight: 500 }}>
-                        Difference
-                      </Typography>
-                      <Typography variant="body1" sx={{ fontWeight: 'bold', mt: 0.5, fontSize: '15px', color: Math.abs(difference) < 0.01 ? 'text.primary' : difference > 0 ? '#1E8E3E' : 'error.main' }}>
-                        {difference > 0 ? '+' : ''}{difference.toLocaleString(undefined, { minimumFractionDigits: 2 })} {selectedAccount.currency}
-                      </Typography>
-                    </Box>
+                    <Typography variant="body2" sx={{ opacity: 0.7, fontSize: '11px', textTransform: 'capitalize' }}>
+                      {acc.type} ({acc.currency})
+                    </Typography>
                   </Box>
+                  <Typography variant="body1" sx={{ fontWeight: 'bold', fontSize: '13.5px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', width: '100%', color: isSelected ? 'primary.main' : 'text.primary' }}>
+                    {acc.name}
+                  </Typography>
+                </Box>
+              );
+            })}
+          </Stack>
+        </Box>
 
-                  <TextField
-                    label={`Actual ${selectedAccount.currency} Balance`}
-                    type="number"
-                    fullWidth
-                    value={actualBalanceInput}
-                    onChange={e => setActualBalanceInput(e.target.value)}
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        borderRadius: '16px',
-                      }
-                    }}
-                  />
+        {selectedAccount && (
+          <Stack spacing={2.5}>
+            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+              <Box sx={{ p: 1.5, bgcolor: 'action.hover', borderRadius: '16px', border: '1px solid', borderColor: 'divider' }}>
+                <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '11px', fontWeight: 500 }}>
+                  Calculated Balance
+                </Typography>
+                <Typography variant="body1" sx={{ fontWeight: 'bold', mt: 0.5, fontSize: '15px' }}>
+                  {calculatedBalance.toLocaleString(undefined, { minimumFractionDigits: 2 })} {selectedAccount.currency}
+                </Typography>
+              </Box>
+              <Box sx={{ p: 1.5, bgcolor: 'background.paper', borderRadius: '16px', border: '1px solid', borderColor: 'divider' }}>
+                <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '11px', fontWeight: 500 }}>
+                  Difference
+                </Typography>
+                <Typography variant="body1" sx={{ fontWeight: 'bold', mt: 0.5, fontSize: '15px', color: Math.abs(difference) < 0.01 ? 'text.primary' : difference > 0 ? '#1E8E3E' : 'error.main' }}>
+                  {difference > 0 ? '+' : ''}{difference.toLocaleString(undefined, { minimumFractionDigits: 2 })} {selectedAccount.currency}
+                </Typography>
+              </Box>
+            </Box>
 
-                  {Math.abs(difference) > 0.001 && (
-                    <Stack spacing={2}>
-                      <Box>
-                        <Typography variant="body1" sx={{ fontWeight: 'bold', color: 'text.primary', fontSize: '14px', mb: 1 }}>
-                          Reason for Adjustment
-                        </Typography>
-                        <Stack direction="row" spacing={1} sx={{ overflowX: 'auto', pb: 0.5, '&::-webkit-scrollbar': { display: 'none' }, msOverflowStyle: 'none', scrollbarWidth: 'none' }}>
-                          {(['forgotten expense', 'bank fee', 'exchange difference', 'cash counting correction'] as AdjustmentReason[]).map(r => {
-                            const isSel = reason === r;
-                            return (
-                              <Chip
-                                key={r}
-                                label={r.toUpperCase()}
-                                onClick={() => setReason(r)}
-                                variant={isSel ? 'filled' : 'outlined'}
-                                sx={{
-                                  fontSize: '11px',
-                                  height: 28,
-                                  bgcolor: isSel ? 'primary.main' : 'background.paper',
-                                  color: isSel ? 'primary.contrastText' : 'text.secondary',
-                                  borderColor: isSel ? 'primary.main' : 'divider'
-                                }}
-                              />
-                            );
-                          })}
-                        </Stack>
-                      </Box>
+            <TextField
+              label={`Actual ${selectedAccount.currency} Balance`}
+              type="number"
+              fullWidth
+              value={actualBalanceInput}
+              onChange={e => setActualBalanceInput(e.target.value)}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: '16px',
+                }
+              }}
+            />
 
-                      <TextField
-                        label="Adjustment Note"
-                        fullWidth
-                        placeholder="Explain the reason..."
-                        value={note}
-                        onChange={e => setNote(e.target.value)}
-                        sx={{
-                          '& .MuiOutlinedInput-root': {
-                            borderRadius: '16px',
-                          }
-                        }}
-                      />
-                    </Stack>
-                  )}
+            {Math.abs(difference) > 0.001 && (
+              <Stack spacing={2.5}>
+                <Box>
+                  <Typography variant="body1" sx={{ fontWeight: 'bold', color: 'text.primary', fontSize: '14px', mb: 1 }}>
+                    Reason for Adjustment
+                  </Typography>
+                  <Stack direction="row" spacing={1} sx={{ overflowX: 'auto', pb: 0.5, '&::-webkit-scrollbar': { display: 'none' }, msOverflowStyle: 'none', scrollbarWidth: 'none' }}>
+                    {(['forgotten expense', 'bank fee', 'exchange difference', 'cash counting correction'] as AdjustmentReason[]).map(r => {
+                      const isSel = reason === r;
+                      return (
+                        <Chip
+                          key={r}
+                          label={r.toUpperCase()}
+                          onClick={() => setReason(r)}
+                          variant={isSel ? 'filled' : 'outlined'}
+                          sx={{
+                            fontSize: '11px',
+                            height: 28,
+                            bgcolor: isSel ? 'primary.main' : 'background.paper',
+                            color: isSel ? 'primary.contrastText' : 'text.secondary',
+                            borderColor: isSel ? 'primary.main' : 'divider'
+                          }}
+                        />
+                      );
+                    })}
+                  </Stack>
+                </Box>
 
-                  <Button
-                    onClick={handleResolve}
-                    disabled={isProcessing}
-                    fullWidth
-                    variant="contained"
-                    sx={{
-                      height: 48,
+                <TextField
+                  label="Adjustment Note"
+                  fullWidth
+                  placeholder="Explain the reason..."
+                  value={note}
+                  onChange={e => setNote(e.target.value)}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
                       borderRadius: '16px',
-                      bgcolor: 'primary.dark',
-                      fontWeight: 'bold'
-                    }}
-                  >
-                    {isProcessing ? 'Processing...' : 'Apply Correction & Reconcile'}
-                  </Button>
-                </Stack>
-              )}
-            </Stack>
-          </CardContent>
-        </Card>
+                    }
+                  }}
+                />
+              </Stack>
+            )}
+
+            <Button
+              onClick={handleResolve}
+              disabled={isProcessing}
+              fullWidth
+              variant="contained"
+              sx={{
+                height: 48,
+                borderRadius: '16px',
+                bgcolor: 'primary.dark',
+                fontWeight: 'bold'
+              }}
+            >
+              {isProcessing ? 'Processing...' : 'Apply Correction & Reconcile'}
+            </Button>
+          </Stack>
+        )}
 
         {/* History */}
         <Stack spacing={1.5}>
@@ -312,9 +344,10 @@ export function Reconciliation() {
           </Typography>
           <Stack spacing={1}>
             {sortedHistory.length === 0 ? (
-              <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic', pl: 1 }}>
-                No past reconciliation logs found.
-              </Typography>
+              <EmptyLayout 
+                title="No past reconciliation logs found" 
+                description="Manual adjustments will appear here after reconciling your accounts." 
+              />
             ) : (
               sortedHistory.map(item => {
                 const acc = accounts.find(a => a.id === item.accountId);

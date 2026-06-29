@@ -89,8 +89,57 @@ export function FastEntry() {
 
   const toAccount = accounts.find(a => a.id === toAccountId) || null;
 
+  // Filter destination accounts based on chosen mode and source account
+  const eligibleDestinationAccounts = sortedAccounts.filter(acc => {
+    if (acc.id === selectedAccountId) return false;
+    if (!selectedAccount) return true;
+    if (mode === 'conversion') {
+      return acc.currency !== selectedAccount.currency;
+    }
+    if (mode === 'transfer') {
+      return acc.currency === selectedAccount.currency;
+    }
+    return true;
+  });
+
   const selectedCategory = (selectedCategoryId && categories.find(c => c.id === selectedCategoryId && c.type === mode))
     || null;
+
+  // Event handlers to update state and reset target/destination account if it is invalid for the chosen mode or source account.
+  const handleSelectSourceAccount = (id: string | null) => {
+    setSelectedAccountId(id);
+    if (!id || !toAccountId) return;
+    const sourceAcc = accounts.find(a => a.id === id);
+    const toAcc = accounts.find(a => a.id === toAccountId);
+    if (!sourceAcc || !toAcc) return;
+
+    if (toAccountId === id) {
+      setToAccountId(null);
+      return;
+    }
+
+    if (mode === 'conversion' && toAcc.currency === sourceAcc.currency) {
+      setToAccountId(null);
+    } else if (mode === 'transfer' && toAcc.currency !== sourceAcc.currency) {
+      setToAccountId(null);
+    }
+  };
+
+  const handleSelectMode = (m: EntryMode) => {
+    setMode(m);
+    setSelectedCategoryId(null);
+    
+    if (!toAccountId || !selectedAccountId) return;
+    const sourceAcc = accounts.find(a => a.id === selectedAccountId);
+    const toAcc = accounts.find(a => a.id === toAccountId);
+    if (!sourceAcc || !toAcc) return;
+
+    if (m === 'conversion' && toAcc.currency === sourceAcc.currency) {
+      setToAccountId(null);
+    } else if (m === 'transfer' && toAcc.currency !== sourceAcc.currency) {
+      setToAccountId(null);
+    }
+  };
 
   // Keypad controls
   const handleKeypadPress = (val: string) => {
@@ -183,6 +232,14 @@ export function FastEntry() {
           enqueueSnackbar('Please select a Destination Account', { variant: 'warning' });
           return;
         }
+        if (toAccount.id === selectedAccount.id) {
+          enqueueSnackbar('Source and Destination accounts must be different', { variant: 'warning' });
+          return;
+        }
+        if (toAccount.currency === selectedAccount.currency) {
+          enqueueSnackbar('Source and Destination currencies must be different for a conversion', { variant: 'warning' });
+          return;
+        }
         const toAmount = parseFloat(toAmountStr);
         if (isNaN(toAmount) || toAmount <= 0) {
           enqueueSnackbar('Please enter a valid destination amount', { variant: 'warning' });
@@ -194,7 +251,7 @@ export function FastEntry() {
           transaction: {
             type: 'conversion',
             date,
-            description: description || `USD to EGP Conversion`,
+            description: description || `${selectedAccount.currency} to ${toAccount.currency} Conversion`,
             budgetCycleId: activeCycle?.id || undefined,
             createdBy: userProfile!.uid,
           },
@@ -209,7 +266,15 @@ export function FastEntry() {
               signedAmount: toAmount,
               currency: toAccount.currency,
             }
-          ]
+          ],
+          conversionDetails: {
+            fromCurrency: selectedAccount.currency,
+            toCurrency: toAccount.currency,
+            fromAmount: amount,
+            toAmount: toAmount,
+            effectiveRate: toAmount / amount,
+            rateSource: 'manual',
+          }
         });
         enqueueSnackbar('Saved conversion!', { variant: 'success' });
         setAmountStr('0');
@@ -220,6 +285,14 @@ export function FastEntry() {
       else if (mode === 'transfer') {
         if (!toAccount) {
           enqueueSnackbar('Please select a Destination Account', { variant: 'warning' });
+          return;
+        }
+        if (toAccount.id === selectedAccount.id) {
+          enqueueSnackbar('Source and Destination accounts must be different', { variant: 'warning' });
+          return;
+        }
+        if (toAccount.currency !== selectedAccount.currency) {
+          enqueueSnackbar('Source and Destination currencies must be the same for a transfer. Use Conversion instead.', { variant: 'warning' });
           return;
         }
 
@@ -282,10 +355,7 @@ export function FastEntry() {
           {(['expense', 'income', 'conversion', 'transfer'] as EntryMode[]).map(m => (
             <Button
               key={m}
-              onClick={() => {
-                setMode(m);
-                setSelectedCategoryId(null);
-              }}
+              onClick={() => handleSelectMode(m)}
               variant={mode === m ? 'contained' : 'outlined'}
               sx={{ 
                 flex: 1, 
@@ -363,7 +433,7 @@ export function FastEntry() {
               return (
                 <Box
                   key={acc.id}
-                  onClick={() => setSelectedAccountId(acc.id)}
+                  onClick={() => handleSelectSourceAccount(acc.id)}
                   sx={{
                     flex: 1,
                     p: 1.5,
@@ -419,53 +489,63 @@ export function FastEntry() {
                 </Typography>
               )}
             </Box>
-            <Stack direction="row" spacing={1.5}>
-            {sortedAccounts.map(acc => {
-              const isSelected = toAccount?.id === acc.id;
-                return (
-                  <Box
-                    key={acc.id}
-                    onClick={() => setToAccountId(acc.id)}
-                    sx={{
-                      flex: 1,
-                      p: 1.5,
-                      borderRadius: '16px',
-                      border: '1px solid',
-                      borderColor: isSelected ? 'primary.main' : 'divider',
-                      bgcolor: isSelected ? 'info.light' : 'background.paper',
-                      color: isSelected ? 'primary.main' : 'text.secondary',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'flex-start'
-                    }}
-                  >
-                    <Box display="flex" alignItems="center" gap={1} sx={{ width: '100%', mb: 0.5 }}>
-                      <Box sx={{ 
-                        width: 24, 
-                        height: 24, 
-                        borderRadius: '8px', 
-                        bgcolor: isSelected ? 'primary.main' : 'action.hover', 
-                        color: isSelected ? 'primary.contrastText' : 'text.secondary', 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        justifyContent: 'center',
-                        flexShrink: 0
-                      }}>
-                        {getAccountIcon(acc.type)}
+            {eligibleDestinationAccounts.length > 0 ? (
+              <Stack direction="row" spacing={1.5}>
+                {eligibleDestinationAccounts.map(acc => {
+                  const isSelected = toAccount?.id === acc.id;
+                  return (
+                    <Box
+                      key={acc.id}
+                      onClick={() => setToAccountId(acc.id)}
+                      sx={{
+                        flex: 1,
+                        p: 1.5,
+                        borderRadius: '16px',
+                        border: '1px solid',
+                        borderColor: isSelected ? 'primary.main' : 'divider',
+                        bgcolor: isSelected ? 'info.light' : 'background.paper',
+                        color: isSelected ? 'primary.main' : 'text.secondary',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'flex-start'
+                      }}
+                    >
+                      <Box display="flex" alignItems="center" gap={1} sx={{ width: '100%', mb: 0.5 }}>
+                        <Box sx={{ 
+                          width: 24, 
+                          height: 24, 
+                          borderRadius: '8px', 
+                          bgcolor: isSelected ? 'primary.main' : 'action.hover', 
+                          color: isSelected ? 'primary.contrastText' : 'text.secondary', 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          justifyContent: 'center',
+                          flexShrink: 0
+                        }}>
+                          {getAccountIcon(acc.type)}
+                        </Box>
+                        <Typography variant="body2" sx={{ opacity: 0.7, fontSize: '11px', textTransform: 'capitalize' }}>
+                          {acc.type}
+                        </Typography>
                       </Box>
-                      <Typography variant="body2" sx={{ opacity: 0.7, fontSize: '11px', textTransform: 'capitalize' }}>
-                        {acc.type}
+                      <Typography variant="body1" sx={{ fontWeight: 'bold', fontSize: '13.5px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', width: '100%', color: isSelected ? 'primary.main' : 'text.primary' }}>
+                        {acc.name}
                       </Typography>
                     </Box>
-                    <Typography variant="body1" sx={{ fontWeight: 'bold', fontSize: '13.5px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', width: '100%', color: isSelected ? 'primary.main' : 'text.primary' }}>
-                      {acc.name}
-                    </Typography>
-                  </Box>
-                );
-              })}
-            </Stack>
+                  );
+                })}
+              </Stack>
+            ) : (
+              <Typography variant="body2" sx={{ color: 'text.secondary', fontStyle: 'italic', fontSize: '13px', py: 1 }}>
+                {selectedAccountId 
+                  ? (mode === 'conversion' 
+                      ? 'No accounts with a different currency available.' 
+                      : 'No other accounts with the same currency available.')
+                  : 'Please select a Source Account first.'}
+              </Typography>
+            )}
           </Box>
         )}
 
