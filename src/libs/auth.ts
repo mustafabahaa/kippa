@@ -1,9 +1,9 @@
 import {
   signOut as firebaseSignOut,
   onAuthStateChanged,
+  getRedirectResult,
   User as FirebaseUser,
   GoogleAuthProvider,
-  signInWithPopup,
   signInWithRedirect,
   Auth
 } from 'firebase/auth';
@@ -71,6 +71,13 @@ export const authLib = {
       return () => {};
     }
 
+    // After a signInWithRedirect, consume the redirect result on load so any
+    // error surfaces and the credential is cleared. The signed-in user is then
+    // delivered via the onAuthStateChanged listener below.
+    getRedirectResult(auth).catch((e) => {
+      console.warn('[auth] getRedirectResult error:', e);
+    });
+
     return onAuthStateChanged(auth, async (fbUser: FirebaseUser | null) => {
       if (fbUser) {
         // Create or migrate the profile. This path covers BOTH the popup
@@ -86,36 +93,20 @@ export const authLib = {
   },
 
   /**
-   * Sign in with Google. Uses signInWithPopup, falling back to
-   * signInWithRedirect when popups are blocked or can't communicate back
-   * (e.g. desktop Chrome with third-party cookies disabled, which causes an
-   * infinite popup loop). With redirect, the page navigates away and back;
-   * the signed-in user is then picked up by the onAuthStateChanged listener.
+   * Sign in with Google using full-page redirect.
+   *
+   * We use signInWithRedirect instead of signInWithPopup because popups are
+   * unreliable in modern browsers: desktop Chrome blocks the third-party
+   * cookies the popup credential handoff depends on, causing an infinite
+   * popup loop. Redirect navigates the whole page to Google and back — no
+   * popups, no third-party cookies. The signed-in user is picked up by the
+   * onAuthStateChanged listener when the page reloads after redirect.
    */
   async signInWithGoogle(): Promise<UserProfile | null> {
     const firebaseAuth = requireAuth();
     const provider = new GoogleAuthProvider();
-
-    try {
-      const credentials = await signInWithPopup(firebaseAuth, provider);
-      const fbUser = credentials.user;
-      return await upsertProfile(fbUser);
-    } catch (e: any) {
-      // popup-blocked / popup-closed-by-user / credential communication failed
-      // → fall back to full-page redirect, which doesn't depend on popups or
-      // third-party cookies. Result arrives via onAuthStateChanged.
-      if (
-        e?.code === 'auth/popup-blocked' ||
-        e?.code === 'auth/popup-closed-by-user' ||
-        e?.code === 'auth/cancelled-popup-request' ||
-        e?.code === 'auth/operation-not-supported-in-this-environment' ||
-        e?.code === 'auth/web-storage-unsupported'
-      ) {
-        await signInWithRedirect(firebaseAuth, provider);
-        return null; // page navigates away; onAuthStateChanged finishes the flow
-      }
-      throw e;
-    }
+    await signInWithRedirect(firebaseAuth, provider);
+    return null; // page navigates away; onAuthStateChanged finishes the flow
   },
 
   async logout(): Promise<void> {
