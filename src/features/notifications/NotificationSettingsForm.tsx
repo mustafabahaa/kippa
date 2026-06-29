@@ -32,7 +32,7 @@ export function NotificationSettingsForm({
 }: NotificationSettingsFormProps) {
   const { enqueueSnackbar } = useSnackbar();
   const [notifSettings, setNotifSettings] = useState<NotificationSettings>(dbSettings);
-  const { status: notifStatus, requestPermission } = useNotifications(householdId);
+  const { status: notifStatus, requestPermission, disable } = useNotifications(householdId);
 
   const handleSaveNotifications = async () => {
     await onSave(notifSettings);
@@ -45,6 +45,11 @@ export function NotificationSettingsForm({
     if (Notification.permission === 'granted') {
       enqueueSnackbar('Notifications enabled!', { variant: 'success' });
     }
+  };
+
+  const handleDisableNotifications = async () => {
+    await disable();
+    enqueueSnackbar('Notifications disabled', { variant: 'info' });
   };
 
   return (
@@ -98,7 +103,22 @@ export function NotificationSettingsForm({
                     Get reminded to log expenses and notified of household activity.
                   </Typography>
                 </Box>
-                {notifStatus !== 'enabled' && (
+                {notifStatus === 'enabled' ? (
+                  <Button
+                    variant="outlined"
+                    color="error"
+                    onClick={handleDisableNotifications}
+                    sx={{
+                      ml: 'auto',
+                      borderRadius: '12px',
+                      boxShadow: 'none',
+                      textTransform: 'none',
+                      fontWeight: 'bold',
+                    }}
+                  >
+                    Disable
+                  </Button>
+                ) : (
                   <Button
                     variant="contained"
                     onClick={handleEnableNotifications}

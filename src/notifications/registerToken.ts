@@ -1,5 +1,5 @@
 import { doc, setDoc, deleteDoc, getFirestore } from 'firebase/firestore';
-import { getToken as getFcmToken } from 'firebase/messaging';
+import { getToken as getFcmToken, deleteToken as deleteFcmToken } from 'firebase/messaging';
 import { getMessagingAsync } from '../config/firebase';
 
 export type DeviceType = 'ios' | 'android' | 'web';
@@ -45,28 +45,27 @@ export async function registerFcmToken(
   }
 
   // 2. Get token.
-  // Register the Firebase messaging SW explicitly and pass the registration to
-  // getToken(). vite-plugin-pwa registers /sw.js (Workbox) at scope '/' too;
-  // if we let Firebase auto-register its SW, the two can fight for control of
-  // the scope on iOS Safari and the internal SW handshake silently fails,
-  // yielding an empty token. Owning the registration avoids that race.
+  // Pre-register the Firebase messaging SW and pass it to getToken(). The SW
+  // activation is awaited with a BOUNDED timeout — on iOS, if another SW
+  // (vite-plugin-pwa's Workbox sw.js) controls the page, the messaging SW can
+  // stall in 'waiting' indefinitely, so we must not wait forever.
   let token: string;
   try {
     const swReg = await navigator.serviceWorker.register('/firebase-messaging-sw.js', {
       scope: '/',
     });
-    // Wait for the SW to be active before asking FCM for a token — on first
-    // registration it starts in 'installing'/'waiting' and getToken() would
-    // race ahead and return empty.
-    if (swReg.active === null) {
-      await new Promise<void>((resolve) => {
-        const sw = swReg.installing ?? swReg.waiting;
-        if (!sw) return resolve();
-        sw.addEventListener('statechange', () => {
-          if (sw.state === 'activated') resolve();
-        });
+    // Wait up to 3s for the SW to activate; resolve regardless after that.
+    await new Promise<void>((resolve) => {
+      if (swReg.active) return resolve();
+      const sw = swReg.installing ?? swReg.waiting;
+      if (!sw) return resolve();
+      let done = false;
+      const finish = () => { if (!done) { done = true; resolve(); } };
+      sw.addEventListener('statechange', () => {
+        if (sw.state === 'activated' || sw.state === 'redundant') finish();
       });
-    }
+      setTimeout(finish, 3000);
+    });
     token = await getFcmToken(messaging, { vapidKey, serviceWorkerRegistration: swReg });
   } catch (e) {
     console.warn('[notifications] getToken failed:', e);
@@ -114,3 +113,29 @@ export async function touchFcmToken(
   const tokenRef = doc(db, `households/${householdId}/fcmTokens`, token);
   await setDoc(tokenRef, { lastSeenAt: new Date().toISOString() }, { merge: true });
 }
+
+/**
+ * Disables notifications for this device: revokes the FCM token from the
+ * messaging service and deletes its Firestore doc.
+ *
+ * Note: this does NOT change the browser-level permission (that stays
+ * 'granted' — only the user can revoke it in OS settings). It removes the
+ * device's registration so the server can no longer target it. To re-enable,
+ * the user taps "Enable notifications" again, which re-registers a fresh token.
+ */
+export async function disableNotifications(
+  householdId: string,
+  token: string,
+): Promise<void> {
+  const messaging = await getMessagingAsync();
+  if (messaging) {
+    try {
+      await deleteFcmToken(messaging);
+    } catch (e) {
+      console.warn('[notifications] deleteToken failed:', e);
+      // Still remove the Firestore doc — don't leave stale tokens.
+    }
+  }
+  await unregisterFcmToken(householdId, token);
+}
+

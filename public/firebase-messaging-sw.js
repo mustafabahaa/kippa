@@ -6,8 +6,17 @@
 importScripts('https://www.gstatic.com/firebasejs/11.10.0/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/11.10.0/firebase-messaging-compat.js');
 
+// Full Firebase config is required here (not just messagingSenderId) because
+// getToken() uses the Firebase Installations API, which needs projectId,
+// apiKey, and appId. Service workers can't read .env, so these public client
+// values are inlined. They are NOT secrets — they're already in the app bundle.
 firebase.initializeApp({
+  apiKey: 'YOUR_FIREBASE_API_KEY',
+  authDomain: 'YOUR_FIREBASE_PROJECT_ID.firebaseapp.com',
+  projectId: 'YOUR_FIREBASE_PROJECT_ID',
+  storageBucket: 'YOUR_FIREBASE_PROJECT_ID.firebasestorage.app',
   messagingSenderId: 'YOUR_MESSAGING_SENDER_ID',
+  appId: '1:YOUR_MESSAGING_SENDER_ID:web:YOUR_APP_ID_SUFFIX',
 });
 
 const messaging = firebase.messaging();
