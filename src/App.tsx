@@ -124,6 +124,32 @@ export default function App() {
     );
   }
 
+  const currentHousehold = userHouseholds.find(hh => hh.id === householdId);
+  const householdName = currentHousehold ? currentHousehold.name : 'Personal Household';
+
+  const menuItemStyle = {
+    mx: 1,
+    my: 0.25,
+    px: 1.5,
+    py: 1,
+    borderRadius: '8px',
+    '&.MuiMenuItem-root': {
+      borderRadius: '8px',
+    },
+    '& .MuiListItemIcon-root': {
+      minWidth: 30,
+      color: 'text.secondary',
+    },
+    '& .MuiListItemText-primary': {
+      fontSize: '0.875rem',
+      fontWeight: 500,
+      color: 'text.primary',
+    },
+    '& .MuiListItemText-secondary': {
+      fontSize: '0.75rem',
+    },
+  };
+
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
@@ -167,18 +193,17 @@ export default function App() {
               anchorEl={profileAnchorEl}
               open={isProfileMenuOpen}
               onClose={handleCloseProfileMenu}
-              onClick={handleCloseProfileMenu}
               slotProps={{
                 paper: {
-                  elevation: 3,
+                  elevation: 0,
                   sx: {
                     overflow: 'visible',
                     mt: 1.5,
                     minWidth: 280,
-                    borderRadius: 2,
+                    borderRadius: '12px',
                     border: '1px solid',
                     borderColor: 'divider',
-                    boxShadow: 'rgba(0, 0, 0, 0.15) 0px 4px 12px 0px',
+                    boxShadow: 'rgba(0, 0, 0, 0.08) 0px 12px 24px -4px, rgba(0, 0, 0, 0.04) 0px 4px 12px -2px',
                     '&::before': {
                       content: '""',
                       display: 'block',
@@ -209,93 +234,152 @@ export default function App() {
                   >
                     {userProfile?.displayName ? userProfile.displayName.charAt(0).toUpperCase() : 'U'}
                   </Avatar>
-                  <Box>
-                    <Typography variant="body1" sx={{ fontWeight: 600, color: 'text.primary' }}>
+                  <Box sx={{ minWidth: 0 }}>
+                    <Typography variant="body1" noWrap sx={{ fontWeight: 600, color: 'text.primary' }}>
                       {userProfile?.displayName || 'User'}
                     </Typography>
-                    <Typography variant="body2" sx={{ color: 'text.secondary', wordBreak: 'break-all' }}>
+                    <Typography variant="body2" sx={{ color: 'text.secondary', wordBreak: 'break-all', fontSize: '0.75rem' }}>
                       {userProfile?.email || 'No email associated'}
                     </Typography>
                   </Box>
                 </Stack>
               </Box>
 
-              <Divider />
+              <Divider sx={{ my: 1 }} />
 
               {/* Household sharing info */}
-              <Box sx={{ px: 2.5, py: 1.5 }}>
-                <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.secondary', textTransform: 'uppercase', fontSize: '0.675rem', letterSpacing: '0.05em' }}>
+              <Box sx={{ py: 0.75 }}>
+                <Typography 
+                  variant="body2" 
+                  sx={{ 
+                    fontWeight: 700, 
+                    color: 'text.secondary', 
+                    textTransform: 'uppercase', 
+                    fontSize: '0.65rem', 
+                    letterSpacing: '0.08em',
+                    px: 2.5,
+                    mb: 1,
+                    display: 'block'
+                  }}
+                >
                   Current Household
                 </Typography>
-                <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 1 }}>
-                  <HomeIcon sx={{ color: 'text.secondary', fontSize: 18 }} />
-                  <Typography variant="body1" sx={{ fontWeight: 500, fontSize: '0.875rem' }}>
-                    ID: {householdId ? `${householdId.slice(0, 8)}...` : 'None'}
-                  </Typography>
+                
+                <Stack 
+                  direction="row" 
+                  spacing={1.5} 
+                  alignItems="center" 
+                  sx={{ 
+                    mx: 1,
+                    px: 1.5, 
+                    py: 1.25, 
+                    borderRadius: '8px', 
+                    bgcolor: 'action.hover',
+                    border: '1px solid',
+                    borderColor: 'divider'
+                  }}
+                >
+                  <HomeIcon sx={{ color: 'text.secondary', fontSize: 20 }} />
+                  <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+                    <Typography variant="body2" noWrap sx={{ fontWeight: 600, color: 'text.primary', fontSize: '0.8125rem' }}>
+                      {householdName}
+                    </Typography>
+                    <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', fontSize: '0.6875rem' }}>
+                      ID: {householdId ? `${householdId.slice(0, 8)}...` : 'None'}
+                    </Typography>
+                  </Box>
                   {householdId && (
-                    <Tooltip title="Copy ID">
+                    <Tooltip title="Copy Household ID">
                       <IconButton 
                         size="small" 
                         onClick={(e) => {
                           e.stopPropagation();
                           navigator.clipboard.writeText(householdId || '');
                         }}
-                        sx={{ ml: 'auto', p: 0.5 }}
+                        sx={{ 
+                          p: 0.5, 
+                          bgcolor: 'background.paper', 
+                          border: '1px solid', 
+                          borderColor: 'divider', 
+                          borderRadius: '6px',
+                          '&:hover': {
+                            bgcolor: 'action.hover'
+                          }
+                        }}
                       >
-                        <ContentCopyIcon sx={{ fontSize: 16 }} />
+                        <ContentCopyIcon sx={{ fontSize: 13, color: 'text.secondary' }} />
                       </IconButton>
                     </Tooltip>
                   )}
                 </Stack>
               </Box>
 
-              <Divider />
-
               {/* Quick Switch Households */}
               {userHouseholds.length > 1 && (
                 <>
-                  <Box sx={{ px: 2.5, py: 1 }}>
-                    <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.secondary', textTransform: 'uppercase', fontSize: '0.675rem', letterSpacing: '0.05em' }}>
-                      Switch Household
-                    </Typography>
-                    {userHouseholds.map(hh => {
-                      if (hh.id === householdId) return null;
-                      return (
-                        <MenuItem 
-                          key={hh.id} 
-                          onClick={async () => {
-                            handleCloseProfileMenu();
-                            try {
-                              await switchHousehold(hh.id);
-                            } catch (err) {
-                              console.error('Failed to switch household:', err);
-                            }
-                          }}
-                          sx={{ px: 1, py: 0.75, borderRadius: '8px', mt: 0.5 }}
-                        >
-                          <ListItemIcon>
-                            <HomeIcon fontSize="small" />
-                          </ListItemIcon>
-                          <ListItemText 
-                            primary={hh.name} 
-                            secondary={`${hh.id.slice(0, 8)}...`}
-                            primaryTypographyProps={{ fontSize: '0.875rem', fontWeight: 500 }}
-                            secondaryTypographyProps={{ fontSize: '0.75rem' }}
-                          />
-                        </MenuItem>
-                      );
-                    })}
-                  </Box>
-                  <Divider />
+                  <Typography 
+                    variant="body2" 
+                    sx={{ 
+                      fontWeight: 700, 
+                      color: 'text.secondary', 
+                      textTransform: 'uppercase', 
+                      fontSize: '0.65rem', 
+                      letterSpacing: '0.08em',
+                      px: 2.5,
+                      mt: 1.5,
+                      mb: 0.5,
+                      display: 'block'
+                    }}
+                  >
+                    Switch Household
+                  </Typography>
+                  {userHouseholds.map(hh => {
+                    if (hh.id === householdId) return null;
+                    return (
+                      <MenuItem 
+                        key={hh.id} 
+                        onClick={async () => {
+                          handleCloseProfileMenu();
+                          try {
+                            await switchHousehold(hh.id);
+                          } catch (err) {
+                            console.error('Failed to switch household:', err);
+                          }
+                        }}
+                        sx={menuItemStyle}
+                      >
+                        <ListItemIcon>
+                          <HomeIcon fontSize="small" />
+                        </ListItemIcon>
+                        <ListItemText 
+                          primary={hh.name} 
+                          secondary={`ID: ${hh.id.slice(0, 8)}...`}
+                        />
+                      </MenuItem>
+                    );
+                  })}
                 </>
               )}
 
+              <Divider sx={{ my: 1 }} />
+
               {/* Appearance / Theme */}
-              <Box sx={{ px: 2.5, py: 1 }}>
-                <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.secondary', textTransform: 'uppercase', fontSize: '0.675rem', letterSpacing: '0.05em' }}>
-                  Appearance
-                </Typography>
-              </Box>
+              <Typography 
+                variant="body2" 
+                sx={{ 
+                  fontWeight: 700, 
+                  color: 'text.secondary', 
+                  textTransform: 'uppercase', 
+                  fontSize: '0.65rem', 
+                  letterSpacing: '0.08em',
+                  px: 2.5,
+                  mt: 0.5,
+                  mb: 0.5,
+                  display: 'block'
+                }}
+              >
+                Appearance
+              </Typography>
               {([
                 { value: 'light' as ThemeModePref, label: 'Light', Icon: LightModeIcon },
                 { value: 'dark' as ThemeModePref, label: 'Dark', Icon: DarkModeIcon },
@@ -306,60 +390,77 @@ export default function App() {
                   <MenuItem
                     key={value}
                     onClick={() => { setModePref(value); handleCloseProfileMenu(); }}
-                    sx={{ px: 1.5, py: 0.75, borderRadius: '8px', mt: 0.25 }}
+                    sx={{ ...menuItemStyle, py: 0.75 }}
                   >
                     <ListItemIcon>
                       <Icon fontSize="small" />
                     </ListItemIcon>
-                    <ListItemText primary={label} primaryTypographyProps={{ fontSize: '0.875rem', fontWeight: 500 }} />
+                    <ListItemText primary={label} />
                     {selected && (
-                      <CheckIcon fontSize="small" sx={{ color: 'primary.main', ml: 1 }} />
+                      <CheckIcon fontSize="small" sx={{ color: 'primary.main', ml: 'auto' }} />
                     )}
                   </MenuItem>
                 );
               })}
 
-              <Divider />
+              <Divider sx={{ my: 1 }} />
 
               {/* Shortcuts */}
-              <MenuItem onClick={() => { handleCloseProfileMenu(); setActiveTab('accounts'); }}>
+              <MenuItem onClick={() => { handleCloseProfileMenu(); setActiveTab('accounts'); }} sx={menuItemStyle}>
                 <ListItemIcon>
                   <AccountBalanceIcon fontSize="small" />
                 </ListItemIcon>
                 <ListItemText primary="Bank Accounts" />
               </MenuItem>
 
-              <MenuItem onClick={() => { handleCloseProfileMenu(); setActiveTab('household'); }}>
+              <MenuItem onClick={() => { handleCloseProfileMenu(); setActiveTab('household'); }} sx={menuItemStyle}>
                 <ListItemIcon>
                   <HomeIcon fontSize="small" />
                 </ListItemIcon>
                 <ListItemText primary="Household Sharing" />
               </MenuItem>
 
-              <MenuItem onClick={() => { handleCloseProfileMenu(); setActiveTab('categories'); }}>
+              <MenuItem onClick={() => { handleCloseProfileMenu(); setActiveTab('categories'); }} sx={menuItemStyle}>
                 <ListItemIcon>
                   <CategoryIcon fontSize="small" />
                 </ListItemIcon>
                 <ListItemText primary="Categories Settings" />
               </MenuItem>
 
-              <MenuItem onClick={() => { handleCloseProfileMenu(); setActiveTab('notifications'); }}>
+              <MenuItem onClick={() => { handleCloseProfileMenu(); setActiveTab('notifications'); }} sx={menuItemStyle}>
                 <ListItemIcon>
                   <NotificationsActiveIcon fontSize="small" />
                 </ListItemIcon>
                 <ListItemText primary="Reminders & Alerts" />
               </MenuItem>
 
-              <MenuItem onClick={() => { handleCloseProfileMenu(); setActiveTab('auditLog'); }}>
+              <MenuItem onClick={() => { handleCloseProfileMenu(); setActiveTab('auditLog'); }} sx={menuItemStyle}>
                 <ListItemIcon>
                   <HistoryIcon fontSize="small" />
                 </ListItemIcon>
                 <ListItemText primary="Activity Log" />
               </MenuItem>
               
-              <MenuItem onClick={() => { handleCloseProfileMenu(); handleLogout(); }} sx={{ color: 'error.main' }}>
+              <Divider sx={{ my: 1 }} />
+
+              <MenuItem 
+                onClick={() => { handleCloseProfileMenu(); handleLogout(); }} 
+                sx={{ 
+                  ...menuItemStyle, 
+                  color: 'error.main', 
+                  '& .MuiListItemIcon-root': { 
+                    minWidth: 30, 
+                    color: 'error.main' 
+                  },
+                  '& .MuiListItemText-primary': {
+                    fontSize: '0.875rem',
+                    fontWeight: 600,
+                    color: 'error.main'
+                  }
+                }}
+              >
                 <ListItemIcon>
-                  <LogoutIcon fontSize="small" sx={{ color: 'error.main' }} />
+                  <LogoutIcon fontSize="small" />
                 </ListItemIcon>
                 <ListItemText primary="Sign Out" />
               </MenuItem>

@@ -72,26 +72,26 @@ export const designTokens = {
 
   // ── Dark-mode surface/text/border overrides ──────────────────────────
   dark: {
-    surface:               '#13141a',
-    surfacePure:           '#1b1c22',
-    surfaceOffWhite:       '#25262d',
-    surfaceContainerLow:   '#1d1e24',
-    surfaceContainer:      '#202127',
-    surfaceContainerHigh:  '#26272e',
-    surfaceContainerHighest:'#2b2c33',
-    infoAccent:            '#1d2a2a',
+    surface:               '#090a0f',  // deep rich navy-black
+    surfacePure:           '#121420',  // rich navy-slate card surface
+    surfaceOffWhite:       '#1a1d2d',
+    surfaceContainerLow:   '#141725',
+    surfaceContainer:      '#171a2a',
+    surfaceContainerHigh:  '#1d2134',
+    surfaceContainerHighest:'#24293f',
+    infoAccent:            '#0c2122',
 
-    textPrimary:    '#e5e2ea',
-    textSecondary:  '#b4b1bb',
-    textTertiary:   '#9a97a3',
-    disabled:       '#6c6973',
+    textPrimary:    '#f1f0f5', // brighter white for high-end feel
+    textSecondary:  '#c5c2cf', // brighter text secondary
+    textTertiary:   '#9e9bb0', // brighter text tertiary
+    disabled:       '#6a6b7d',
 
-    borderGray:     '#3a3b42',
-    outline:        '#8a8893',
-    outlineVariant: '#3a3b42',
+    borderGray:     '#23273a', // slate-navy border
+    outline:        '#0f766e', // primary container teal outline
+    outlineVariant: '#23273a',
 
-    onSurface:        '#e5e2ea',
-    onSurfaceVariant: '#b4b1bb',
+    onSurface:        '#f1f0f5',
+    onSurfaceVariant: '#c5c2cf',
   },
 
   // ── Stitch Elevation Shadows ─────────────────────────────────────────
@@ -299,11 +299,16 @@ export function createAppTheme(mode: 'light' | 'dark'): Theme {
             background: t.surfacePure,
             border: `1px solid ${t.borderGray}`,
             borderRadius: designTokens.radius.card,       // 20px
-            boxShadow: 'none',
-            transition: 'all 0.2s ease-in-out',
+            boxShadow: mode === 'dark'
+              ? 'rgba(0, 0, 0, 0.4) 0px 4px 20px -2px'
+              : 'none',
+            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
             '&:hover': {
-              borderColor: t.outline,
-              boxShadow: 'rgba(0, 0, 0, 0.05) 0px 4px 12px 0px',
+              borderColor: mode === 'dark' ? 'primary.main' : t.outline,
+              boxShadow: mode === 'dark'
+                ? 'rgba(15, 118, 110, 0.15) 0px 12px 30px -4px, rgba(0, 0, 0, 0.5) 0px 8px 24px -4px'
+                : 'rgba(0, 0, 0, 0.05) 0px 8px 24px 0px',
+              transform: 'translateY(-2px)',
             },
           },
         },

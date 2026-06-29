@@ -63,26 +63,25 @@ export function BudgetBreakdownCard() {
         }}
       >
         <Table 
-          size="small" 
+          size="medium" 
           stickyHeader 
           aria-label="budget breakdown table" 
           sx={{ 
-            '& .MuiTableCell-root': { px: 1 },
             '& .MuiTableCell-head': { bgcolor: 'action.hover' }
           }}
         >
           <TableHead>
             <TableRow>
-              <TableCell sx={{ fontWeight: 'bold', fontSize: '12px', py: 1.5, width: '100%' }}>Category</TableCell>
-              <TableCell align="right" sx={{ fontWeight: 'bold', fontSize: '12px', py: 1.5 }}>Planned</TableCell>
-              <TableCell align="right" sx={{ fontWeight: 'bold', fontSize: '12px', py: 1.5 }}>Spent</TableCell>
-              <TableCell align="right" sx={{ fontWeight: 'bold', fontSize: '12px', py: 1.5 }}>Remaining</TableCell>
+              <TableCell sx={{ fontWeight: 'bold', width: '100%' }}>Category</TableCell>
+              <TableCell align="right" sx={{ fontWeight: 'bold' }}>Planned</TableCell>
+              <TableCell align="right" sx={{ fontWeight: 'bold' }}>Spent</TableCell>
+              <TableCell align="right" sx={{ fontWeight: 'bold' }}>Remaining</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {data.categoryStatus.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} align="center" sx={{ py: 3, color: 'text.secondary', fontSize: '13px' }}>
+                <TableCell colSpan={4} align="center" sx={{ py: 3, color: 'text.secondary' }}>
                   No budget allocations found for this cycle.
                 </TableCell>
               </TableRow>
@@ -92,21 +91,19 @@ export function BudgetBreakdownCard() {
                 const isOver = remaining < 0;
                 return (
                   <TableRow key={cat.categoryId} hover sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
-                    <TableCell component="th" scope="row" sx={{ fontSize: '13px', fontWeight: 500, py: 1.2 }}>
+                    <TableCell component="th" scope="row" sx={{ fontWeight: 500 }}>
                       {cat.categoryName}
                     </TableCell>
-                    <TableCell align="right" sx={{ fontSize: '13px', py: 1.2 }}>
+                    <TableCell align="right">
                       {cat.planned.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                     </TableCell>
-                    <TableCell align="right" sx={{ fontSize: '13px', py: 1.2, color: cat.spent > 0 ? 'text.primary' : 'text.disabled' }}>
+                    <TableCell align="right" sx={{ color: cat.spent > 0 ? 'text.primary' : 'text.disabled' }}>
                       {cat.spent > 0 ? cat.spent.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 }) : '-'}
                     </TableCell>
                     <TableCell 
                       align="right" 
                       sx={{ 
-                        fontSize: '13px', 
                         fontWeight: 'bold', 
-                        py: 1.2, 
                         color: isOver ? 'error.main' : remaining > 0 ? 'success.main' : 'text.secondary' 
                       }}
                     >
