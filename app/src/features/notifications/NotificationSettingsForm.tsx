@@ -10,7 +10,8 @@ import {
   Button,
   TextField,
   FormControlLabel,
-  Checkbox
+  Checkbox,
+  Skeleton
 } from '@mui/material';
 import { NotificationSettings } from '@/domain/financeTypes';
 import { useNotifications } from '@/notifications/useNotifications';
@@ -99,6 +100,28 @@ export function NotificationSettingsForm({
                 Notifications are blocked. Enable them in your device/browser settings, then reopen
                 Kippa.
               </Typography>
+            </CardContent>
+          </Card>
+        )}
+
+        {notifStatus === 'checking' && (
+          <Card sx={{ border: '1px solid', borderColor: 'divider', borderRadius: '20px', boxShadow: 'none' }}>
+            <CardContent sx={{ p: 2.5 }}>
+              <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap" useFlexGap>
+                <Box sx={{ flex: 1 }}>
+                  <Skeleton variant="text" width="180px" height={24} sx={{ mb: 0.5 }} />
+                  <Skeleton variant="text" width="320px" height={18} />
+                </Box>
+                <Skeleton
+                  variant="rectangular"
+                  width={140}
+                  height={36}
+                  sx={{
+                    ml: 'auto',
+                    borderRadius: '12px',
+                  }}
+                />
+              </Stack>
             </CardContent>
           </Card>
         )}
