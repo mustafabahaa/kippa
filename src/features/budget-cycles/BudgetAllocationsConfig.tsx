@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useSnackbar } from 'notistack';
 import {
   Box,
@@ -35,6 +35,10 @@ interface BudgetAllocationsConfigProps {
   categories: Category[];
   dbAllocations: BudgetAllocation[];
   cycles: BudgetCycle[];
+  onSave?: () => void;
+  saveRef?: React.MutableRefObject<(() => Promise<void>) | null>;
+  onSavingStatusChange?: (isSaving: boolean) => void;
+  onTotalBudgetChange?: (total: number) => void;
 }
 
 interface AllocationRow {
@@ -47,7 +51,11 @@ export function BudgetAllocationsConfig({
   activeCycle,
   categories,
   dbAllocations,
-  cycles
+  cycles,
+  onSave,
+  saveRef,
+  onSavingStatusChange,
+  onTotalBudgetChange
 }: BudgetAllocationsConfigProps) {
   const { enqueueSnackbar } = useSnackbar();
   const expenseCategories = categories.filter(c => c.type === 'expense');
@@ -86,6 +94,8 @@ export function BudgetAllocationsConfig({
   const saveAllocationsBatchMutation = useSaveAllocationsBatchMutation();
   const createCategoryMutation = useCreateCategoryMutation();
   const updateCategoryMutation = useUpdateCategoryMutation();
+
+
 
   // Categories available to add (not already in rows)
   const usedCategoryIds = new Set(rows.map(r => r.categoryId));
@@ -136,7 +146,7 @@ export function BudgetAllocationsConfig({
     setNewCategoryName('');
   };
 
-  const handleSaveAllocations = async () => {
+  const handleSaveAllocations = useCallback(async () => {
     const payload: Omit<BudgetAllocation, 'id' | 'householdId'>[] = rows.map(row => ({
       budgetCycleId: activeCycle.id,
       categoryId: row.categoryId,
@@ -151,7 +161,8 @@ export function BudgetAllocationsConfig({
       allocations: payload
     });
     enqueueSnackbar('Allocations saved!', { variant: 'success' });
-  };
+    if (onSave) onSave();
+  }, [rows, activeCycle.id, householdId, saveAllocationsBatchMutation, enqueueSnackbar, onSave]);
 
   const handleCopyPreviousAllocations = async () => {
     const closedCycle = cycles.find(c => c.status === 'closed');
@@ -179,6 +190,27 @@ export function BudgetAllocationsConfig({
   };
 
   const totalBudget = rows.reduce((sum, r) => sum + (parseFloat(r.plannedAmount) || 0), 0);
+
+  // Register the save function ref for the parent to call
+  useEffect(() => {
+    if (saveRef) {
+      saveRef.current = handleSaveAllocations;
+    }
+  }, [rows, activeCycle, householdId, saveRef, handleSaveAllocations]);
+
+  // Report saving status to parent
+  useEffect(() => {
+    if (onSavingStatusChange) {
+      onSavingStatusChange(saveAllocationsBatchMutation.isPending);
+    }
+  }, [saveAllocationsBatchMutation.isPending, onSavingStatusChange]);
+
+  // Notify parent of total budget changes
+  useEffect(() => {
+    if (onTotalBudgetChange) {
+      onTotalBudgetChange(totalBudget);
+    }
+  }, [totalBudget, onTotalBudgetChange]);
 
   return (
     <Box>
@@ -281,13 +313,15 @@ export function BudgetAllocationsConfig({
             {totalBudget.toLocaleString(undefined, { minimumFractionDigits: 0 })} EGP
           </Typography>
         </Box>
-        <Button 
-          variant="contained" 
-          onClick={handleSaveAllocations}
-          disabled={saveAllocationsBatchMutation.isPending}
-        >
-          {saveAllocationsBatchMutation.isPending ? 'Saving...' : 'Save'}
-        </Button>
+        {!saveRef && (
+          <Button 
+            variant="contained" 
+            onClick={handleSaveAllocations}
+            disabled={saveAllocationsBatchMutation.isPending}
+          >
+            {saveAllocationsBatchMutation.isPending ? 'Saving...' : 'Save'}
+          </Button>
+        )}
       </Box>
 
       {/* Rename Category Dialog */}
