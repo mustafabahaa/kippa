@@ -8,7 +8,8 @@ export type NotificationStatus =
   | 'ios-not-installed' // iOS Safari but not added to Home Screen
   | 'permission-denied' // user denied (must change in OS settings)
   | 'enabled'           // token registered successfully
-  | 'pending';          // still working / not yet requested
+  | 'pending'           // not yet requested (user gesture needed)
+  | 'checking';         // checking permission/token state on mount
 
 function isIosSafari(): boolean {
   const ua = navigator.userAgent;
@@ -27,9 +28,9 @@ function isStandalone(): boolean {
 /**
  * Push-notification registration lifecycle.
  *
- * IMPORTANT: on iOS Safari (PWA), the permission request MUST be triggered
- * by a user gesture (a click). Calling requestPermission() on page load fails
- * silently on iOS. So this hook does NOT auto-request permission. Instead it:
+ * IMPORTANT: on iOS Safari (PWA), the permission prompt must come from a user gesture (a click).
+ * Calling requestPermission() on page load fails silently on iOS. So this hook does NOT auto-request permission.
+ * Instead it:
  *   - Detects platform support / iOS install state (read via `status`).
  *   - Exposes `requestPermission()` to be called from a button onClick.
  *   - Unregisters the token on logout.
@@ -52,11 +53,16 @@ export function useNotifications(householdId: string | null | undefined) {
       return 'unsupported';
     }
 
-    if (typeof Notification !== 'undefined' && Notification.permission === 'denied') {
-      return 'permission-denied';
+    if (typeof Notification !== 'undefined') {
+      if (Notification.permission === 'denied') {
+        return 'permission-denied';
+      }
+      if (Notification.permission === 'default') {
+        return 'pending';
+      }
     }
 
-    return 'pending';
+    return 'checking';
   });
 
   const currentTokenRef = useRef<string | null>(null);
@@ -87,6 +93,7 @@ export function useNotifications(householdId: string | null | undefined) {
       // Only auto-register when permission is ALREADY granted (no prompt).
       // If permission is 'default', wait for the user to click the button.
       if (Notification.permission === 'granted') {
+        setStatus('checking');
         const token = await registerFcmToken(householdId, user.uid, vapidKey);
         if (cancelled) return;
         if (token) {
@@ -95,6 +102,10 @@ export function useNotifications(householdId: string | null | undefined) {
         } else {
           setStatus('pending');
         }
+      } else if (Notification.permission === 'default') {
+        setStatus('pending');
+      } else if (Notification.permission === 'denied') {
+        setStatus('permission-denied');
       }
     });
 
