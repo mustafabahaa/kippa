@@ -1,10 +1,9 @@
-import {
-  signOut as firebaseSignOut,
-  onAuthStateChanged,
-  getRedirectResult,
+import { 
+  signOut as firebaseSignOut, 
+  onAuthStateChanged, 
   User as FirebaseUser,
   GoogleAuthProvider,
-  signInWithRedirect,
+  signInWithPopup,
   Auth
 } from 'firebase/auth';
 import { auth, isFirebaseConfigured, isFirebaseReady } from '../config/firebase';
@@ -21,49 +20,6 @@ function requireAuth(): Auth {
   return auth;
 }
 
-/**
- * Creates or updates the UserProfile in Firestore from a Firebase user.
- * Shared by the popup path and the redirect-result path.
- */
-async function upsertProfile(fbUser: FirebaseUser): Promise<UserProfile> {
-  const profile = await dbLib.getDoc('system', 'users', fbUser.uid) as UserProfile | null;
-  if (profile) {
-    // Migrate here too just in case
-    let householdIds = profile.householdIds || [];
-    let needsUpdate = false;
-    if (profile.householdId && !householdIds.includes(profile.householdId)) {
-      householdIds = [...householdIds, profile.householdId];
-      needsUpdate = true;
-    }
-    if (fbUser.photoURL && profile.photoURL !== fbUser.photoURL) {
-      needsUpdate = true;
-    }
-    if (needsUpdate) {
-      const updatedProfile = {
-        ...profile,
-        householdIds,
-        photoURL: fbUser.photoURL || profile.photoURL
-      };
-      await dbLib.setDoc('system', 'users', fbUser.uid, updatedProfile);
-      return updatedProfile;
-    }
-    return profile;
-  }
-
-  const newProfile: UserProfile = {
-    uid: fbUser.uid,
-    displayName: fbUser.displayName || fbUser.email?.split('@')[0] || 'Google User',
-    email: fbUser.email || '',
-    householdId: null,
-    householdIds: [],
-    role: 'owner',
-    createdAt: new Date().toISOString(),
-    photoURL: fbUser.photoURL || undefined,
-  };
-  await dbLib.setDoc('system', 'users', fbUser.uid, newProfile);
-  return newProfile;
-}
-
 export const authLib = {
   onAuthStateChanged(callback: (user: UserProfile | null) => void): () => void {
     if (!isFirebaseReady || !auth) {
@@ -71,28 +27,33 @@ export const authLib = {
       return () => {};
     }
 
-    // After a signInWithRedirect, consume the redirect result on load so any
-    // error surfaces and the credential is cleared. The signed-in user is then
-    // delivered via the onAuthStateChanged listener below.
-    getRedirectResult(auth).catch((e) => {
-      console.warn('[auth] getRedirectResult error:', e);
-    });
-
     return onAuthStateChanged(auth, async (fbUser: FirebaseUser | null) => {
       if (fbUser) {
-        // Create or migrate the profile. This path covers BOTH the popup
-        // sign-in and the redirect sign-in (which resolves here after the
-        // page navigates back). Uses upsertProfile so new users get a
-        // persisted profile doc regardless of which sign-in method ran.
-        try {
-          const profile = await upsertProfile(fbUser);
-          callback(profile);
-        } catch (e) {
-          // If the Firestore read/write fails, still unblock the UI with a
-          // basic profile derived from the Firebase user — better than an
-          // infinite loading screen.
-          console.error('[auth] upsertProfile failed in onAuthStateChanged:', e);
-          callback({
+        const profile = await dbLib.getDoc('system', 'users', fbUser.uid) as UserProfile | null;
+        if (profile) {
+          // Migrate old profiles to support multiple households
+          let householdIds = profile.householdIds || [];
+          let needsUpdate = false;
+          if (profile.householdId && !householdIds.includes(profile.householdId)) {
+            householdIds = [...householdIds, profile.householdId];
+            needsUpdate = true;
+          }
+          if (fbUser.photoURL && profile.photoURL !== fbUser.photoURL) {
+            needsUpdate = true;
+          }
+          if (needsUpdate) {
+            const updatedProfile = { 
+              ...profile, 
+              householdIds, 
+              photoURL: fbUser.photoURL || profile.photoURL 
+            };
+            await dbLib.setDoc('system', 'users', fbUser.uid, updatedProfile);
+            callback(updatedProfile);
+          } else {
+            callback(profile);
+          }
+        } else {
+          const tempProfile: UserProfile = {
             uid: fbUser.uid,
             displayName: fbUser.displayName || fbUser.email?.split('@')[0] || 'User',
             email: fbUser.email || '',
@@ -101,7 +62,8 @@ export const authLib = {
             role: 'owner',
             createdAt: new Date().toISOString(),
             photoURL: fbUser.photoURL || undefined,
-          });
+          };
+          callback(tempProfile);
         }
       } else {
         callback(null);
@@ -109,21 +71,48 @@ export const authLib = {
     });
   },
 
-  /**
-   * Sign in with Google using full-page redirect.
-   *
-   * We use signInWithRedirect instead of signInWithPopup because popups are
-   * unreliable in modern browsers: desktop Chrome blocks the third-party
-   * cookies the popup credential handoff depends on, causing an infinite
-   * popup loop. Redirect navigates the whole page to Google and back — no
-   * popups, no third-party cookies. The signed-in user is picked up by the
-   * onAuthStateChanged listener when the page reloads after redirect.
-   */
-  async signInWithGoogle(): Promise<UserProfile | null> {
+  async signInWithGoogle(): Promise<UserProfile> {
     const firebaseAuth = requireAuth();
     const provider = new GoogleAuthProvider();
-    await signInWithRedirect(firebaseAuth, provider);
-    return null; // page navigates away; onAuthStateChanged finishes the flow
+    const credentials = await signInWithPopup(firebaseAuth, provider);
+    const fbUser = credentials.user;
+
+    const profile = await dbLib.getDoc('system', 'users', fbUser.uid) as UserProfile | null;
+    if (profile) {
+      // Migrate here too just in case
+      let householdIds = profile.householdIds || [];
+      let needsUpdate = false;
+      if (profile.householdId && !householdIds.includes(profile.householdId)) {
+        householdIds = [...householdIds, profile.householdId];
+        needsUpdate = true;
+      }
+      if (fbUser.photoURL && profile.photoURL !== fbUser.photoURL) {
+        needsUpdate = true;
+      }
+      if (needsUpdate) {
+        const updatedProfile = { 
+          ...profile, 
+          householdIds, 
+          photoURL: fbUser.photoURL || profile.photoURL 
+        };
+        await dbLib.setDoc('system', 'users', fbUser.uid, updatedProfile);
+        return updatedProfile;
+      }
+      return profile;
+    }
+
+    const newProfile: UserProfile = {
+      uid: fbUser.uid,
+      displayName: fbUser.displayName || fbUser.email?.split('@')[0] || 'Google User',
+      email: fbUser.email || '',
+      householdId: null,
+      householdIds: [],
+      role: 'owner',
+      createdAt: new Date().toISOString(),
+      photoURL: fbUser.photoURL || undefined,
+    };
+    await dbLib.setDoc('system', 'users', fbUser.uid, newProfile);
+    return newProfile;
   },
 
   async logout(): Promise<void> {
