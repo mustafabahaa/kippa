@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { AppBar, Toolbar, Stack, Typography, IconButton, Tooltip, Avatar } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { ActivityBell } from '@/features/activity/ActivityBell';
@@ -30,13 +30,31 @@ export function TopBar({
   const navigate = useNavigate();
   const [profileAnchorEl, setProfileAnchorEl] = useState<null | HTMLElement>(null);
   const isProfileMenuOpen = Boolean(profileAnchorEl);
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 0);
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const currentHousehold = userHouseholds.find(hh => hh.id === householdId);
   const householdName = currentHousehold ? currentHousehold.name : 'Personal Household';
 
   return (
     <>
-      <AppBar position="sticky" color="transparent" elevation={0} sx={{ py: 1 }}>
+      <AppBar
+        position="sticky"
+        color="transparent"
+        elevation={scrolled ? 1 : 0}
+        sx={{
+          py: 1,
+          bgcolor: scrolled ? 'background.default' : 'transparent',
+          backdropFilter: scrolled ? 'blur(12px)' : 'none',
+          WebkitBackdropFilter: scrolled ? 'blur(12px)' : 'none',
+          transition: 'background-color 0.3s ease, box-shadow 0.3s ease, backdrop-filter 0.3s ease',
+        }}
+      >
         <Toolbar sx={{ justifyContent: 'space-between', px: { xs: 2, sm: 3 } }}>
           {/* Left: Logo & Brand Name */}
           <Stack

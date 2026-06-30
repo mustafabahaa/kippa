@@ -363,7 +363,6 @@ export function createAppTheme(mode: 'light' | 'dark'): Theme {
               : '0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.06)',
             transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
             '&:hover': {
-              borderColor: mode === 'dark' ? 'primary.main' : t.outline,
               boxShadow: mode === 'dark'
                 ? 'rgba(15, 118, 110, 0.15) 0px 12px 30px -4px, rgba(0, 0, 0, 0.5) 0px 8px 24px -4px'
                 : 'rgba(0, 0, 0, 0.05) 0px 8px 24px 0px',
