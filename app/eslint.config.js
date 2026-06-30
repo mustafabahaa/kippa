@@ -10,6 +10,10 @@ export default tseslint.config(
     files: ['**/*.{ts,tsx}'],
     languageOptions: {
       ecmaVersion: 2020,
+      parserOptions: {
+        projectService: true,
+        tsconfigRootDir: import.meta.dirname,
+      },
       globals: {
         document: 'readonly',
         window: 'readonly',
@@ -42,6 +46,7 @@ export default tseslint.config(
       ],
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
       '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-deprecated': 'error',
     },
   }
 );

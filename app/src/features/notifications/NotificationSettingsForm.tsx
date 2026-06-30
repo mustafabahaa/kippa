@@ -192,8 +192,7 @@ export function NotificationSettingsForm({
                 <TextField
                   label="Reminder Time"
                   type="time"
-                  size="small"
-                  InputLabelProps={{ shrink: true }}
+                  slotProps={{ inputLabel: { shrink: true } }}
                   value={notifSettings.dailyReminderTime}
                   onChange={e => setNotifSettings({ ...notifSettings, dailyReminderTime: e.target.value })}
                   sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' }, width: '150px' }}

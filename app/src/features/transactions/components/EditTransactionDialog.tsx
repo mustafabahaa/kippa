@@ -234,7 +234,7 @@ export const EditTransactionDialog: React.FC<EditTransactionDialogProps> = ({
               type="date"
               fullWidth
               label="Date"
-              InputLabelProps={{ shrink: true }}
+              slotProps={{ inputLabel: { shrink: true } }}
               value={editDate}
               onChange={(e) => setEditDate(e.target.value)}
               sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}

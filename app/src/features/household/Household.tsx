@@ -205,7 +205,6 @@ export function Household() {
                         style: { fontFamily: 'monospace', fontSize: '13px' }
                       }
                     }}
-                    size="small"
                   />
                 </Box>
               </Stack>
@@ -304,7 +303,6 @@ export function Household() {
                 fullWidth
                 label="Household Name"
                 placeholder="e.g. Vacation Household"
-                size="small"
                 value={newHouseholdName}
                 onChange={e => setNewHouseholdName(e.target.value)}
                 disabled={actionLoading}
@@ -341,7 +339,6 @@ export function Household() {
                 fullWidth
                 label="Invite ID"
                 placeholder="Paste UUID here"
-                size="small"
                 value={householdIdToJoin}
                 onChange={e => setHouseholdIdToJoin(e.target.value)}
                 disabled={actionLoading}
@@ -366,8 +363,10 @@ export function Household() {
         onClose={handleCloseLeaveConfirm}
         aria-labelledby="leave-dialog-title"
         aria-describedby="leave-dialog-description"
-        PaperProps={{
-          sx: { borderRadius: '16px', p: 1 }
+        slotProps={{
+          paper: {
+            sx: { borderRadius: '16px', p: 1 }
+          }
         }}
       >
         <DialogTitle id="leave-dialog-title" sx={{ fontWeight: 'bold' }}>

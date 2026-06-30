@@ -16,7 +16,7 @@ export function IosInstallBanner({ onClose }: Props) {
       icon={false}
       action={
         onClose ? (
-          <Button color="inherit" size="small" onClick={onClose}>
+          <Button color="inherit" onClick={onClose}>
             Dismiss
           </Button>
         ) : undefined

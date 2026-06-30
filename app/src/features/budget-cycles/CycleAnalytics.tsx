@@ -263,7 +263,7 @@ export function CycleAnalytics() {
         {activeTab === 1 && (
           <Box>
             <Stack direction="row" justifyContent="flex-end" sx={{ mb: 2 }}>
-              <FormControl size="small" sx={{ width: 180 }}>
+              <FormControl sx={{ width: 180 }}>
                 <InputLabel id="trend-cat-select-label">Category</InputLabel>
                 <Select
                   labelId="trend-cat-select-label"

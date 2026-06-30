@@ -154,19 +154,20 @@ export function TransactionHistory() {
           <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} alignItems="center">
             {/* Search Input */}
             <TextField
-              size="small"
               placeholder="Search description..."
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
               fullWidth
-              InputProps={{
-                startAdornment: <SearchIcon sx={{ color: 'text.secondary', mr: 1, fontSize: '20px' }} />,
+              slotProps={{
+                input: {
+                  startAdornment: <SearchIcon sx={{ color: 'text.secondary', mr: 1, fontSize: '20px' }} />,
+                },
               }}
               sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
             />
 
             {/* Cycle Selector */}
-            <FormControl size="small" sx={{ minWidth: 150, width: { xs: '100%', md: 'auto' } }}>
+            <FormControl sx={{ minWidth: 150, width: { xs: '100%', md: 'auto' } }}>
               <InputLabel id="history-cycle-label">Budget Cycle</InputLabel>
               <Select
                 labelId="history-cycle-label"
@@ -184,7 +185,7 @@ export function TransactionHistory() {
             </FormControl>
 
             {/* Account Selector */}
-            <FormControl size="small" sx={{ minWidth: 150, width: { xs: '100%', md: 'auto' } }}>
+            <FormControl sx={{ minWidth: 150, width: { xs: '100%', md: 'auto' } }}>
               <InputLabel id="history-account-label">Account</InputLabel>
               <Select
                 labelId="history-account-label"
@@ -201,7 +202,7 @@ export function TransactionHistory() {
             </FormControl>
 
             {/* Category Selector */}
-            <FormControl size="small" sx={{ minWidth: 150, width: { xs: '100%', md: 'auto' } }}>
+            <FormControl sx={{ minWidth: 150, width: { xs: '100%', md: 'auto' } }}>
               <InputLabel id="history-category-label">Category</InputLabel>
               <Select
                 labelId="history-category-label"
@@ -218,7 +219,7 @@ export function TransactionHistory() {
             </FormControl>
 
             {/* Type Selector */}
-            <FormControl size="small" sx={{ minWidth: 120, width: { xs: '100%', md: 'auto' } }}>
+            <FormControl sx={{ minWidth: 120, width: { xs: '100%', md: 'auto' } }}>
               <InputLabel id="history-type-label">Type</InputLabel>
               <Select
                 labelId="history-type-label"

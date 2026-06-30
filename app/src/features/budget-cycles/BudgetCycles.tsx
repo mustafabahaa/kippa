@@ -431,7 +431,7 @@ export function BudgetCycles() {
                   label="Start Date"
                   value={newCycleStart}
                   onChange={e => setNewCycleStart(e.target.value)}
-                  InputLabelProps={{ shrink: true }}
+                  slotProps={{ inputLabel: { shrink: true } }}
                   sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }}
                 />
               </Grid>
@@ -442,7 +442,7 @@ export function BudgetCycles() {
                   label="Target End Date"
                   value={newCycleEnd}
                   onChange={e => setNewCycleEnd(e.target.value)}
-                  InputLabelProps={{ shrink: true }}
+                  slotProps={{ inputLabel: { shrink: true } }}
                   sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }}
                 />
               </Grid>
@@ -756,7 +756,6 @@ function CycleHistoryCard({ cycle, isEditing, onToggleBudget }: CycleHistoryCard
       <Button
         fullWidth
         variant="outlined"
-        size="small"
         startIcon={isEditing ? <ExpandLessIcon /> : <EditIcon />}
         onClick={onToggleBudget}
         sx={{
