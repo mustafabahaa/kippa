@@ -115,14 +115,13 @@ export function Categories() {
             <Stack spacing={2}>
               <TextField
                 fullWidth
-                size="small"
                 label="Category Name"
                 placeholder="e.g. Subscriptions"
                 value={newCatName}
                 onChange={e => setNewCatName(e.target.value)}
                 sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
               />
-              <FormControl fullWidth size="small">
+              <FormControl fullWidth>
                 <InputLabel id="cat-type-label">Type</InputLabel>
                 <Select
                   labelId="cat-type-label"

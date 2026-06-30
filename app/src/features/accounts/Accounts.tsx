@@ -183,14 +183,13 @@ export function Accounts() {
             <Stack spacing={2}>
               <TextField
                 fullWidth
-                size="small"
                 label="Account Name"
                 placeholder="e.g. CIB Bank"
                 value={newAccName}
                 onChange={e => setNewAccName(e.target.value)}
                 sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
               />
-              <FormControl fullWidth size="small">
+              <FormControl fullWidth>
                 <InputLabel id="acc-type-label">Account Type</InputLabel>
                 <Select
                   labelId="acc-type-label"
@@ -205,7 +204,7 @@ export function Accounts() {
                   <MenuItem value="savings">Savings Account</MenuItem>
                 </Select>
               </FormControl>
-              <FormControl fullWidth size="small">
+              <FormControl fullWidth>
                 <InputLabel id="acc-currency-label">Currency</InputLabel>
                 <Select
                   labelId="acc-currency-label"
@@ -245,13 +244,12 @@ export function Accounts() {
           <Stack spacing={2} sx={{ mt: 1 }}>
             <TextField
               fullWidth
-              size="small"
               label="Account Name"
               value={editAccName}
               onChange={e => setEditAccName(e.target.value)}
               sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
             />
-            <FormControl fullWidth size="small">
+            <FormControl fullWidth>
               <InputLabel id="edit-acc-type-label">Account Type</InputLabel>
               <Select
                 labelId="edit-acc-type-label"
@@ -266,7 +264,7 @@ export function Accounts() {
                 <MenuItem value="savings">Savings Account</MenuItem>
               </Select>
             </FormControl>
-            <FormControl fullWidth size="small">
+            <FormControl fullWidth>
               <InputLabel id="edit-acc-currency-label">Currency</InputLabel>
               <Select
                 labelId="edit-acc-currency-label"

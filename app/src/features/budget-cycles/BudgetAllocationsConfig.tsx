@@ -10,7 +10,6 @@ import {
   List,
   ListItem,
   ListItemText,
-  ListItemSecondaryAction,
   Divider,
   Dialog,
   DialogTitle,
@@ -36,7 +35,7 @@ interface BudgetAllocationsConfigProps {
   dbAllocations: BudgetAllocation[];
   cycles: BudgetCycle[];
   onSave?: () => void;
-  saveRef?: React.MutableRefObject<(() => Promise<void>) | null>;
+  saveRef?: React.RefObject<(() => Promise<void>) | null>;
   onSavingStatusChange?: (isSaving: boolean) => void;
   onTotalBudgetChange?: (total: number) => void;
 }
@@ -221,7 +220,6 @@ export function BudgetAllocationsConfig({
         </Typography>
         <Button 
           variant="text" 
-          size="small"
           startIcon={<ContentCopyIcon />}
           onClick={handleCopyPreviousAllocations}
         >
@@ -234,34 +232,37 @@ export function BudgetAllocationsConfig({
         {rows.map((row, idx) => (
           <Box key={row.categoryId}>
             {idx > 0 && <Divider />}
-            <ListItem sx={{ px: 0, py: 1 }}>
+            <ListItem 
+              sx={{ px: 0, py: 1 }}
+              secondaryAction={
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                  <TextField
+                    type="number"
+                    value={row.plannedAmount}
+                    onChange={e => handleAmountChange(row.categoryId, e.target.value)}
+                    sx={{ width: '100px' }}
+                    slotProps={{ htmlInput: { style: { textAlign: 'right' } } }}
+                  />
+                  <IconButton
+                    size="small"
+                    onClick={() => handleOpenRename(row.categoryId)}
+                  >
+                    <EditIcon fontSize="small" />
+                  </IconButton>
+                  <IconButton
+                    size="small"
+                    onClick={() => handleRemoveCategory(row.categoryId)}
+                    color="error"
+                  >
+                    <DeleteOutlineIcon fontSize="small" />
+                  </IconButton>
+                </Box>
+              }
+            >
               <ListItemText
                 primary={getCategoryName(row.categoryId)}
-                primaryTypographyProps={{ fontSize: '13px', fontWeight: 500 }}
+                slotProps={{ primary: { fontSize: '13px', fontWeight: 500 } }}
               />
-              <ListItemSecondaryAction sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                <TextField
-                  size="small"
-                  type="number"
-                  value={row.plannedAmount}
-                  onChange={e => handleAmountChange(row.categoryId, e.target.value)}
-                  sx={{ width: '100px' }}
-                  inputProps={{ style: { textAlign: 'right' } }}
-                />
-                <IconButton
-                  size="small"
-                  onClick={() => handleOpenRename(row.categoryId)}
-                >
-                  <EditIcon fontSize="small" />
-                </IconButton>
-                <IconButton
-                  size="small"
-                  onClick={() => handleRemoveCategory(row.categoryId)}
-                  color="error"
-                >
-                  <DeleteOutlineIcon fontSize="small" />
-                </IconButton>
-              </ListItemSecondaryAction>
             </ListItem>
           </Box>
         ))}
