@@ -1,18 +1,23 @@
 import { useState } from 'react';
 import {
   Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Stack, Typography,
-  Box, Chip, IconButton,
+  Box, Chip, IconButton, Divider,
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { useAppContext } from '@/hooks/useAppContext';
-import { useCardStatements, useMarkAsPaidMutation } from '@/hooks/useFinance';
+import {
+  useCardStatements, useMarkAsPaidMutation, useTransactions, useLedgerLines,
+} from '@/hooks/useFinance';
 import { cardsLib } from '@/libs/cards';
 import { dbLib } from '@/libs/db';
+import { currentCyclePurchases } from '@/libs/cardSelectors';
 import type { Card, CardStatement } from '@/domain/financeTypes';
 
 export function CardDetail({ card, onClose }: { card: Card; onClose: () => void }) {
   const { householdId } = useAppContext();
   const { data: statements = [] } = useCardStatements(householdId, card.id);
+  const { data: allTransactions = [] } = useTransactions(householdId);
+  const { data: allLines = [] } = useLedgerLines(householdId);
   const markAsPaid = useMarkAsPaidMutation();
 
   const [logging, setLogging] = useState(false);
@@ -23,6 +28,22 @@ export function CardDetail({ card, onClose }: { card: Card; onClose: () => void 
   const [payAmount, setPayAmount] = useState<number | ''>('');
 
   const lastStatement = statements[0] ?? null;
+
+  // Charges on this card's credit account: posted outflows with their transaction detail.
+  const postedTxIds = new Set(allTransactions.filter(t => t.status === 'posted').map(t => t.id));
+  const cardCharges = allLines
+    .filter(l => l.accountId === card.parentAccountId && postedTxIds.has(l.transactionId) && l.signedAmount < 0)
+    .map(l => ({
+      line: l,
+      tx: allTransactions.find(t => t.id === l.transactionId),
+    }))
+    .filter(x => x.tx)
+    .sort((a, b) => (b.tx!.date).localeCompare(a.tx!.date));
+
+  const totalDebt = cardCharges.reduce((s, x) => s + Math.abs(x.line.signedAmount), 0);
+  const cyclePurchases = lastStatement
+    ? currentCyclePurchases(allLines, allTransactions, card.parentAccountId, lastStatement)
+    : totalDebt;
 
   const handleLogStatement = async () => {
     if (!stmtDate || stmtBalance === '' || !dueDate) return;
@@ -60,52 +81,108 @@ export function CardDetail({ card, onClose }: { card: Card; onClose: () => void 
   };
 
   const statusColor = { pending: 'warning', partial: 'info', paid: 'success' } as const;
+  const isCredit = card.kind === 'credit';
 
   return (
     <Dialog open onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>{card.name} — statements</DialogTitle>
+      <DialogTitle>{card.name}</DialogTitle>
       <DialogContent>
         <Stack spacing={2} sx={{ mt: 1 }}>
-          {lastStatement && (
+          {/* Summary header */}
+          {isCredit ? (
             <Box>
-              <Typography variant="body2" color="text.secondary">Last bill</Typography>
-              <Typography variant="h3">EGP {lastStatement.statementBalance.toLocaleString()}</Typography>
-              <Typography variant="body2" color="text.secondary">Due {lastStatement.dueDate}</Typography>
-              <Button sx={{ mt: 1 }} variant="contained" disabled={lastStatement.status === 'paid'} onClick={openPay}>
-                Mark as paid
-              </Button>
+              <Typography variant="body2" color="text.secondary">Current debt</Typography>
+              <Typography variant="h3">EGP {totalDebt.toLocaleString(undefined, { minimumFractionDigits: 2 })}</Typography>
+              {lastStatement && (
+                <Stack direction="row" spacing={2} sx={{ mt: 1, alignItems: 'center' }}>
+                  <Typography variant="body2" color="text.secondary">
+                    Bill due {lastStatement.dueDate}: EGP {lastStatement.statementBalance.toLocaleString()}
+                  </Typography>
+                  <Chip size="small" color={statusColor[lastStatement.status]} label={lastStatement.status} />
+                  <Button size="small" variant="contained" disabled={lastStatement.status === 'paid'} onClick={openPay}>
+                    Mark as paid
+                  </Button>
+                </Stack>
+              )}
+              {!lastStatement && (
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                  No statement logged yet. Cycles since last statement: EGP {cyclePurchases.toLocaleString()}.
+                </Typography>
+              )}
             </Box>
+          ) : (
+            <Typography variant="body2" color="text.secondary">
+              Debit card — purchases draw directly from {card.parentAccountId}.
+            </Typography>
           )}
 
-          <Button onClick={() => setLogging(s => !s)}>Log statement</Button>
-          {logging && (
-            <Stack spacing={1}>
-              <TextField type="date" label="Statement date" value={stmtDate}
-                onChange={e => setStmtDate(e.target.value)} slotProps={{ inputLabel: { shrink: true } }} />
-              <TextField type="number" label="Statement balance (EGP)" value={stmtBalance}
-                onChange={e => setStmtBalance(e.target.value ? Number(e.target.value) : '')} />
-              <TextField type="date" label="Due date" value={dueDate}
-                onChange={e => setDueDate(e.target.value)} slotProps={{ inputLabel: { shrink: true } }} />
-              <Button variant="contained" onClick={handleLogStatement}>Save statement</Button>
-            </Stack>
-          )}
+          <Divider />
 
+          {/* The actual charges */}
           <Box>
-            <Typography variant="body2" sx={{ fontWeight: 600, mb: 1 }}>History</Typography>
-            {statements.map(s => (
-              <Stack key={s.id} direction="row" justifyContent="space-between" alignItems="center" sx={{ py: 0.5 }}>
-                <Box>
-                  <Typography variant="body2">{s.statementDate} — EGP {s.statementBalance.toLocaleString()}</Typography>
-                  <Chip size="small" color={statusColor[s.status]} label={s.status} />
-                </Box>
-                {s.status === 'pending' && (
-                  <IconButton size="small" onClick={() => handleDelete(s.id)}>
-                    <DeleteIcon fontSize="small" />
-                  </IconButton>
-                )}
+            <Typography variant="body2" sx={{ fontWeight: 600, mb: 1 }}>
+              {isCredit ? 'Charges on this card' : 'Recent activity'}
+            </Typography>
+            {cardCharges.length === 0 ? (
+              <Typography variant="body2" color="text.secondary">No charges yet.</Typography>
+            ) : (
+              <Stack spacing={1}>
+                {cardCharges.map(({ line, tx }) => (
+                  <Stack key={line.id} direction="row" justifyContent="space-between" alignItems="center">
+                    <Box>
+                      <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                        {tx!.description ?? tx!.type}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        {tx!.date} • {tx!.categoryId ?? 'uncategorized'}
+                      </Typography>
+                    </Box>
+                    <Typography variant="body2" sx={{ fontWeight: 600, color: 'error.main' }}>
+                      −EGP {Math.abs(line.signedAmount).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                    </Typography>
+                  </Stack>
+                ))}
               </Stack>
-            ))}
+            )}
           </Box>
+
+          {/* Statement management */}
+          {isCredit && (
+            <>
+              <Divider />
+              <Button onClick={() => setLogging(s => !s)}>Log statement</Button>
+              {logging && (
+                <Stack spacing={1}>
+                  <TextField type="date" label="Statement date" value={stmtDate}
+                    onChange={e => setStmtDate(e.target.value)} slotProps={{ inputLabel: { shrink: true } }} />
+                  <TextField type="number" label="Statement balance (EGP)" value={stmtBalance}
+                    onChange={e => setStmtBalance(e.target.value ? Number(e.target.value) : '')} />
+                  <TextField type="date" label="Due date" value={dueDate}
+                    onChange={e => setDueDate(e.target.value)} slotProps={{ inputLabel: { shrink: true } }} />
+                  <Button variant="contained" onClick={handleLogStatement}>Save statement</Button>
+                </Stack>
+              )}
+
+              {statements.length > 0 && (
+                <Box>
+                  <Typography variant="body2" sx={{ fontWeight: 600, mb: 1 }}>Statements</Typography>
+                  {statements.map(s => (
+                    <Stack key={s.id} direction="row" justifyContent="space-between" alignItems="center" sx={{ py: 0.5 }}>
+                      <Box>
+                        <Typography variant="body2">{s.statementDate} — EGP {s.statementBalance.toLocaleString()}</Typography>
+                        <Chip size="small" color={statusColor[s.status]} label={s.status} />
+                      </Box>
+                      {s.status === 'pending' && (
+                        <IconButton size="small" onClick={() => handleDelete(s.id)}>
+                          <DeleteIcon fontSize="small" />
+                        </IconButton>
+                      )}
+                    </Stack>
+                  ))}
+                </Box>
+              )}
+            </>
+          )}
         </Stack>
       </DialogContent>
       <DialogActions>
