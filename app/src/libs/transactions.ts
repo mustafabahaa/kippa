@@ -70,7 +70,8 @@ export const transactionsLib = {
 
     // Audit log (fire-and-forget)
     if (auditUser) {
-      const amount = Math.abs(newLines[0]?.signedAmount || 0);
+      const amountRaw = Math.abs(newLines[0]?.signedAmount || 0);
+      const amount = Number(amountRaw.toFixed(2));
       const currency = newLines[0]?.currency || '';
       const desc = transaction.description || transaction.type;
       auditLogLib.logAction(
