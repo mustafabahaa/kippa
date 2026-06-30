@@ -134,9 +134,10 @@ export const ledgerLib = {
   },
 
   // Raw Lines & Transactions Fetchers
-  async getLedgerLines(householdId: string, cycleId?: string): Promise<any[]> {
-    const filters = cycleId ? [{ field: 'budgetCycleId', op: '==' as const, value: cycleId }] : undefined;
-    return dbLib.getDocs(householdId, 'ledgerLines', filters);
+  async getLedgerLines(householdId: string, _cycleId?: string): Promise<any[]> {
+    // Ledger lines don't have a budgetCycleId field — only transactions do.
+    // Callers already match lines to transactions in-memory via transactionId.
+    return dbLib.getDocs(householdId, 'ledgerLines');
   },
 
   async getTransactions(householdId: string, cycleId?: string): Promise<FinanceTransaction[]> {

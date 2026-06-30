@@ -149,8 +149,6 @@ export function TransactionHistory() {
           </Box>
         </Box>
 
-        {/* Filters Card */}
-        <Card sx={{ p: 2, borderRadius: '16px', border: '1px solid', borderColor: 'divider', boxShadow: 'none' }}>
           <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} alignItems="center">
             {/* Search Input */}
             <TextField
@@ -237,7 +235,6 @@ export function TransactionHistory() {
               </Select>
             </FormControl>
           </Stack>
-        </Card>
 
         {/* Table Container */}
         <TableContainer component={Card} sx={{ borderRadius: '20px', border: '1px solid', borderColor: 'divider', boxShadow: 'none' }}>
@@ -270,6 +267,8 @@ export function TransactionHistory() {
                   const amount = firstLine ? Number(Math.abs(firstLine.signedAmount).toFixed(2)) : 0;
                   const currency = firstLine ? firstLine.currency : 'EGP';
                   const isIncome = tx.type === 'income' || (tx.type === 'adjustment' && (firstLine?.signedAmount || 0) >= 0);
+                  const txAccount = firstLine ? accounts.find(a => a.id === firstLine.accountId) : null;
+                  const isCreditCard = tx.type === 'expense' && txAccount?.type === 'credit';
 
                   // Formatting details cell text based on transaction type
                   let detailsText: string;
@@ -295,7 +294,7 @@ export function TransactionHistory() {
                   return (
                     <TableRow key={tx.id} hover sx={{ opacity: tx.status === 'voided' ? 0.5 : 1 }}>
                       <TableCell align="center">
-                        <TransactionIcon type={tx.type} size={36} />
+                        <TransactionIcon type={tx.type} size={36} isCreditCard={isCreditCard} />
                       </TableCell>
                       <TableCell>
                         <Stack direction="row" spacing={1} alignItems="center">

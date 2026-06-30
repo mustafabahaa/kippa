@@ -1,5 +1,6 @@
 import { Box, alpha } from '@mui/material';
 import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
+import CreditCardIcon from '@mui/icons-material/CreditCard';
 import WorkIcon from '@mui/icons-material/Work';
 import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
 import CurrencyExchangeIcon from '@mui/icons-material/CurrencyExchange';
@@ -9,9 +10,11 @@ import { TransactionType } from '@/domain/financeTypes';
 interface TransactionIconProps {
   type: TransactionType;
   size?: number;
+  /** When true, expense transactions show a credit card icon instead of a receipt. */
+  isCreditCard?: boolean;
 }
 
-export const TransactionIcon: React.FC<TransactionIconProps> = ({ type, size = 40 }) => {
+export const TransactionIcon: React.FC<TransactionIconProps> = ({ type, size = 40, isCreditCard }) => {
   const getIconDetails = () => {
     switch (type) {
       case 'income':
@@ -36,6 +39,12 @@ export const TransactionIcon: React.FC<TransactionIconProps> = ({ type, size = 4
         };
       case 'expense':
       default:
+        if (isCreditCard) {
+          return {
+            icon: <CreditCardIcon sx={{ fontSize: size * 0.45, color: 'creditCard.main' }} />,
+            bg: (theme: any) => theme.palette.creditCard.light,
+          };
+        }
         return {
           icon: <ReceiptLongIcon sx={{ fontSize: size * 0.45, color: 'error.main' }} />,
           bg: (theme: any) => alpha(theme.palette.error.main, 0.1),
