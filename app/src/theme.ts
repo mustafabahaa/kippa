@@ -239,6 +239,10 @@ export function createAppTheme(mode: 'light' | 'dark'): Theme {
           c.error,
         ],
       },
+      creditCard: {
+        main: '#7c3aed',
+        light: alpha('#7c3aed', 0.1),
+      },
     },
 
     typography: {

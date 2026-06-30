@@ -565,7 +565,7 @@ export function CardDetail({ card, onClose }: { card: Card; onClose: () => void 
                           sx={{ py: 1 }}
                         >
                           {/* Transaction icon */}
-                          <TransactionIcon type={c.txType} size={38} />
+                          <TransactionIcon type={c.txType} size={38} isCreditCard={card.kind === 'credit'} />
 
                           {/* Details */}
                           <Box sx={{ flex: 1, minWidth: 0 }}>

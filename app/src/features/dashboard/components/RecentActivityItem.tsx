@@ -2,13 +2,14 @@ import React from 'react';
 import { Box, Typography, Stack, IconButton } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { FinanceTransaction, Category, LedgerLine } from '@/domain/financeTypes';
+import { FinanceTransaction, Category, LedgerLine, Account } from '@/domain/financeTypes';
 import { TransactionIcon } from '@/features/transactions/components/TransactionIcon';
 
 interface RecentActivityItemProps {
   tx: FinanceTransaction;
   categories: Category[];
   ledgerLines: LedgerLine[];
+  accounts?: Account[];
   onEdit: (tx: FinanceTransaction) => void;
   onVoid: (txId: string) => void;
 }
@@ -17,6 +18,7 @@ export const RecentActivityItem: React.FC<RecentActivityItemProps> = ({
   tx,
   categories,
   ledgerLines,
+  accounts = [],
   onEdit,
   onVoid,
 }) => {
@@ -28,6 +30,8 @@ export const RecentActivityItem: React.FC<RecentActivityItemProps> = ({
   const amount = firstLine ? Number(Math.abs(firstLine.signedAmount).toFixed(2)) : 0;
   const currency = firstLine ? firstLine.currency : 'EGP';
   const isIncome = tx.type === 'income' || (tx.type === 'adjustment' && (firstLine?.signedAmount || 0) >= 0);
+  const txAccount = firstLine ? accounts.find((a) => a.id === firstLine.accountId) : null;
+  const isCreditCard = tx.type === 'expense' && txAccount?.type === 'credit';
 
   const formatTime = (isoString: string) => {
     try {
@@ -177,7 +181,7 @@ export const RecentActivityItem: React.FC<RecentActivityItemProps> = ({
       }}
     >
       <Box display="flex" alignItems="flex-start" gap={2} sx={{ minWidth: 0, flex: 1 }}>
-        <TransactionIcon type={tx.type} size={40} />
+        <TransactionIcon type={tx.type} size={40} isCreditCard={isCreditCard} />
         {renderItemDetails()}
       </Box>
 

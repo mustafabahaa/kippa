@@ -13,6 +13,7 @@ import {
   useCategories, 
   useTransactions, 
   useLedgerLines,
+  useAccounts,
   useVoidTransactionMutation,
 } from '@/hooks/useFinance';
 import { FinanceTransaction } from '@/domain/financeTypes';
@@ -27,6 +28,7 @@ export function RecentActivityCard() {
   const { data: categories = [] } = useCategories(householdId);
   const { data: transactions, isLoading: txsLoading } = useTransactions(householdId);
   const { data: ledgerLines, isLoading: linesLoading } = useLedgerLines(householdId);
+  const { data: accounts = [] } = useAccounts(householdId);
   
   const voidMutation = useVoidTransactionMutation();
   const [editingTx, setEditingTx] = useState<FinanceTransaction | null>(null);
@@ -81,6 +83,7 @@ export function RecentActivityCard() {
                 tx={tx}
                 categories={categories}
                 ledgerLines={ledgerLines}
+                accounts={accounts}
                 onEdit={setEditingTx}
                 onVoid={handleVoidTransaction}
               />
