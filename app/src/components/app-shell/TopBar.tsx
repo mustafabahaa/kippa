@@ -39,7 +39,13 @@ export function TopBar({
       <AppBar position="sticky" color="transparent" elevation={0} sx={{ py: 1 }}>
         <Toolbar sx={{ justifyContent: 'space-between', px: { xs: 2, sm: 3 } }}>
           {/* Left: Logo & Brand Name */}
-          <Stack direction="row" spacing={1} alignItems="center">
+          <Stack
+            direction="row"
+            spacing={1}
+            alignItems="center"
+            onClick={() => navigate('/')}
+            sx={{ cursor: 'pointer', userSelect: 'none' }}
+          >
             <img src={logoSrc} alt="Kippa Logo" style={{ height: 28, width: 'auto' }} />
             <Typography variant="h3" sx={{ fontWeight: 'bold', letterSpacing: '0.05em', color: 'primary.main' }}>
               Kippa
