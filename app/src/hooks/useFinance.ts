@@ -213,6 +213,7 @@ function getLastSeenKey(householdId: string, userId: string) {
  * "setState in effect" anti-pattern.
  */
 function useLastSeen(householdId: string, userId: string | undefined): [string, (value: string) => void] {
+  const { userProfile, updateUserProfile } = useAppContext();
   const key = householdId && userId ? getLastSeenKey(householdId, userId) : null;
 
   const subscribe = useCallback(
@@ -231,13 +232,37 @@ function useLastSeen(householdId: string, userId: string | undefined): [string, 
 
   const lastSeen = useSyncExternalStore(subscribe, getSnapshot, () => '');
 
+  // Keep localStorage in sync with userProfile.lastSeenActivities from Firestore
+  useEffect(() => {
+    if (!key || !householdId || !userProfile?.lastSeenActivities?.[householdId]) return;
+    const local = localStorage.getItem(key);
+    const profileVal = userProfile.lastSeenActivities[householdId];
+    if (profileVal && profileVal > (local || '')) {
+      localStorage.setItem(key, profileVal);
+      // Dispatch storage event to trigger update in useSyncExternalStore across components/tabs
+      window.dispatchEvent(new StorageEvent('storage', { key }));
+    }
+  }, [key, householdId, userProfile?.lastSeenActivities]);
+
   const setLastSeen = useCallback((value: string) => {
     if (!key) return;
     localStorage.setItem(key, value);
     // useSyncExternalStore can't observe same-tab writes, so dispatch a
     // synthetic 'storage' event to re-trigger the subscription.
     window.dispatchEvent(new StorageEvent('storage', { key }));
-  }, [key]);
+
+    if (userId && householdId) {
+      authLib.updateLastSeenActivity(userId, householdId, value)
+        .then((updatedProfile) => {
+          if (updatedProfile) {
+            updateUserProfile(updatedProfile);
+          }
+        })
+        .catch((err) => {
+          console.error('Failed to update last seen activity in firestore:', err);
+        });
+    }
+  }, [key, userId, householdId, updateUserProfile]);
 
   return [lastSeen, setLastSeen];
 }

@@ -234,6 +234,24 @@ export const authLib = {
   async getUserProfile(userId: string): Promise<UserProfile | null> {
     const data = await dbLib.getDoc('system', 'users', userId);
     return data as UserProfile | null;
+  },
+
+  async updateLastSeenActivity(userId: string, householdId: string, timestamp: string): Promise<UserProfile> {
+    requireAuth();
+    const profile = await dbLib.getDoc('system', 'users', userId) as UserProfile | null;
+    if (!profile) throw new Error('User profile not found');
+
+    const lastSeenActivities = profile.lastSeenActivities || {};
+    if (!lastSeenActivities[householdId] || timestamp > lastSeenActivities[householdId]) {
+      lastSeenActivities[householdId] = timestamp;
+      const updatedProfile: UserProfile = {
+        ...profile,
+        lastSeenActivities,
+      };
+      await dbLib.setDoc('system', 'users', userId, updatedProfile);
+      return updatedProfile;
+    }
+    return profile;
   }
 };
 

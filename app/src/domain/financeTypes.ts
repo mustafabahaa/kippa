@@ -17,6 +17,7 @@ export type UserProfile = {
   role: UserRole;
   createdAt: string;
   photoURL?: string;
+  lastSeenActivities?: Record<string, string>;
 };
 
 export type Household = {
