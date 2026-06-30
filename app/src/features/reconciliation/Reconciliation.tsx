@@ -33,8 +33,8 @@ export function Reconciliation() {
   const { enqueueSnackbar } = useSnackbar();
   const { householdId, userProfile } = useAppContext();
 
-  const getAccountIcon = (type: string) => {
-    const iconStyle = { fontSize: '14px', color: 'inherit' };
+  const getAccountIcon = (type: string, size = '14px') => {
+    const iconStyle = { fontSize: size, color: 'inherit' };
     if (type.toLowerCase() === 'savings' || type.toLowerCase() === 'savings bank') {
       return <SavingsIcon sx={iconStyle} />;
     }
@@ -208,12 +208,16 @@ export function Reconciliation() {
                     border: '1px solid',
                     borderColor: isSelected ? 'primary.main' : 'divider',
                     bgcolor: isSelected ? 'info.light' : 'background.paper',
-                    color: isSelected ? 'primary.main' : 'text.secondary',
                     cursor: 'pointer',
-                    transition: 'all 0.2s',
+                    transition: 'all 0.2s ease-in-out',
                     display: 'flex',
                     flexDirection: 'column',
-                    alignItems: 'flex-start'
+                    alignItems: 'flex-start',
+                    '&:hover': {
+                      borderColor: isSelected ? 'primary.main' : 'primary.light',
+                      bgcolor: isSelected ? 'info.light' : 'action.hover',
+                      transform: 'translateY(-1px)',
+                    }
                   }}
                 >
                   <Box display="flex" alignItems="center" gap={1} sx={{ width: '100%', mb: 0.5 }}>
@@ -342,7 +346,7 @@ export function Reconciliation() {
           <Typography variant="h3" sx={{ fontSize: '18px', fontWeight: 700, color: 'text.primary' }}>
             Audit History
           </Typography>
-          <Stack spacing={1}>
+          <Stack spacing={1.5}>
             {sortedHistory.length === 0 ? (
               <EmptyLayout 
                 title="No past reconciliation logs found" 
@@ -351,41 +355,125 @@ export function Reconciliation() {
             ) : (
               sortedHistory.map(item => {
                 const acc = accounts.find(a => a.id === item.accountId);
+                const isDiffZero = Math.abs(item.difference) < 0.001;
+                const diffColor = isDiffZero 
+                  ? 'text.secondary' 
+                  : item.difference > 0 
+                    ? '#1E8E3E' 
+                    : '#D93025';
+                const diffBg = isDiffZero 
+                  ? 'rgba(73, 81, 103, 0.08)' 
+                  : item.difference > 0 
+                    ? 'rgba(30, 142, 62, 0.08)' 
+                    : 'rgba(217, 48, 37, 0.08)';
+
+                // Safe parsing of YYYY-MM-DD to avoid local timezone offset shift
+                const formatDateString = (dateStr: string) => {
+                  const [year, month, day] = dateStr.split('-');
+                  const date = new Date(Number(year), Number(month) - 1, Number(day));
+                  return date.toLocaleDateString(undefined, { 
+                    month: 'short', 
+                    day: 'numeric', 
+                    year: 'numeric' 
+                  });
+                };
+
                 return (
                   <Box 
                     key={item.id} 
                     sx={{ 
-                      p: 1.5, 
+                      p: 2, 
                       bgcolor: 'background.paper', 
                       borderRadius: '16px', 
                       border: '1px solid', 
                       borderColor: 'divider',
                       display: 'flex',
-                      flexDirection: 'column',
-                      gap: 0.5
+                      alignItems: 'flex-start',
+                      gap: 2,
+                      '&:hover': {
+                        borderColor: 'primary.main',
+                        transform: 'translateY(-1px)',
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
+                      },
+                      transition: 'all 0.2s ease-in-out'
                     }}
                   >
-                    <Box display="flex" justifyContent="space-between">
-                      <Typography variant="body1" sx={{ fontWeight: 'bold', fontSize: '13.5px' }}>
-                        {acc?.name || 'Unknown Account'}
-                      </Typography>
-                      <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '11px' }}>
-                        {item.date}
-                      </Typography>
+                    <Box
+                      sx={{
+                        width: 40,
+                        height: 40,
+                        borderRadius: '12px',
+                        bgcolor: diffBg,
+                        color: diffColor,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0
+                      }}
+                    >
+                      {acc ? getAccountIcon(acc.type, '20px') : <AccountBalanceIcon sx={{ fontSize: '20px' }} />}
                     </Box>
-                    <Box display="flex" justifyContent="space-between">
-                      <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '12px' }}>
-                        Diff: {item.difference > 0 ? '+' : ''}{item.difference.toFixed(2)} {item.currency}
-                      </Typography>
-                      <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '12px' }}>
-                        Actual: {item.actualBalance.toFixed(2)} {item.currency}
-                      </Typography>
+
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                      <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 0.75 }}>
+                        <Typography variant="subtitle1" sx={{ fontWeight: 600, fontSize: '14px', color: 'text.primary' }}>
+                          {acc?.name || 'Unknown Account'}
+                        </Typography>
+                        <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '12px' }}>
+                          {formatDateString(item.date)}
+                        </Typography>
+                      </Box>
+
+                      <Box display="flex" flexWrap="wrap" gap={1.5} alignItems="center">
+                        <Box display="flex" alignItems="center" gap={0.5}>
+                          <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '12px' }}>
+                            Correction:
+                          </Typography>
+                          <Typography 
+                            variant="body2" 
+                            sx={{ 
+                              color: isDiffZero ? 'text.secondary' : diffColor, 
+                              fontWeight: 600, 
+                              fontSize: '12.25px',
+                              bgcolor: diffBg,
+                              px: 1,
+                              py: 0.25,
+                              borderRadius: '6px'
+                            }}
+                          >
+                            {isDiffZero ? 'Perfect Match' : `${item.difference > 0 ? '+' : ''}${item.difference.toFixed(2)} ${item.currency}`}
+                          </Typography>
+                        </Box>
+
+                        <Typography variant="body2" sx={{ color: 'divider', fontSize: '12px' }}>
+                          |
+                        </Typography>
+                        
+                        <Box display="flex" alignItems="center" gap={0.5}>
+                          <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '12px' }}>
+                            Actual Balance:
+                          </Typography>
+                          <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '12px', color: 'text.primary' }}>
+                            {item.actualBalance.toLocaleString(undefined, { minimumFractionDigits: 2 })} {item.currency}
+                          </Typography>
+                        </Box>
+                      </Box>
+
+                      {item.note && (
+                        <Box sx={{
+                          mt: 1.25,
+                          p: 1.25,
+                          bgcolor: 'action.hover',
+                          borderRadius: '8px',
+                          borderLeft: '3px solid',
+                          borderColor: isDiffZero ? 'text.disabled' : diffColor,
+                        }}>
+                          <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '11.5px', fontStyle: 'italic' }}>
+                            "{item.note}"
+                          </Typography>
+                        </Box>
+                      )}
                     </Box>
-                    {item.note && (
-                      <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '11px', mt: 0.5, fontStyle: 'italic' }}>
-                        Note: {item.note}
-                      </Typography>
-                    )}
                   </Box>
                 );
               })
