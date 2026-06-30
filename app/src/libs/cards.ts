@@ -140,8 +140,38 @@ export const cardsLib = {
   },
 
   /**
-   * "Mark as paid" — auto-creates a transfer paymentAccount → creditAccount and
-   * links it to the statement (spec §6.1, §9.5 idempotency).
+   * Pay the card — creates a transfer paymentAccount → creditAccount.
+   * No statement required. Works for any amount (a single charge, several, or all).
+   * The credit account balance simply drops by the paid amount.
+   */
+  async payCard(
+    householdId: string,
+    card: Card,
+    amount: number,
+    auditUser?: AuditUser
+  ): Promise<string> {
+    if (amount <= 0) throw new Error('Payment amount must be greater than 0.');
+    if (!card.paymentAccountId) throw new Error('Card has no paymentAccountId.');
+    return transactionsLib.createTransaction(
+      householdId,
+      {
+        type: 'transfer',
+        date: new Date().toISOString().slice(0, 10),
+        description: `Card payment — ${card.name}`,
+        createdBy: auditUser?.uid ?? 'system',
+      },
+      [
+        { accountId: card.paymentAccountId, signedAmount: -amount, currency: card.currency },
+        { accountId: card.parentAccountId, signedAmount: amount, currency: card.currency },
+      ],
+      undefined,
+      auditUser
+    );
+  },
+
+  /**
+   * "Mark as paid" — legacy statement-linked payment (spec §6.1, §9.5 idempotency).
+   * Kept for backward compatibility but the UI now uses payCard instead.
    */
   async markAsPaid(
     householdId: string,
@@ -154,21 +184,7 @@ export const cardsLib = {
       throw new Error('This statement already has a linked payment.');
     }
     if (!card.paymentAccountId) throw new Error('Card has no paymentAccountId.');
-    const txId = await transactionsLib.createTransaction(
-      householdId,
-      {
-        type: 'transfer',
-        date: new Date().toISOString().slice(0, 10),
-        description: `Card payment — ${card.name}`,
-        createdBy: auditUser?.uid ?? 'system',
-      },
-      [
-        { accountId: card.paymentAccountId, signedAmount: -amount, currency: card.currency },
-        { accountId: statement.creditAccountId, signedAmount: amount, currency: card.currency },
-      ],
-      undefined,
-      auditUser
-    );
+    const txId = await this.payCard(householdId, card, amount, auditUser);
     const status = computeStatementStatus(statement, amount);
     const updated: CardStatement = { ...statement, paymentTransactionId: txId, status };
     await dbLib.setDoc(householdId, 'cardStatements', statement.id, updated);
