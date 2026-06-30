@@ -123,13 +123,10 @@ export function CardDetail({ card, onClose }: { card: Card; onClose: () => void 
     : null;
 
   const PAGE_SIZE = 10;
-  const [visibleCounts, setVisibleCounts] = useState<Record<string, number>>({});
+  const [visibleCycleCount, setVisibleCycleCount] = useState(1);
 
-  const showMore = (groupId: string) => {
-    setVisibleCounts(prev => ({
-      ...prev,
-      [groupId]: (prev[groupId] ?? PAGE_SIZE) + PAGE_SIZE,
-    }));
+  const loadNextCycle = () => {
+    setVisibleCycleCount(prev => prev + 1);
   };
 
   type CycleGroup = {
@@ -390,16 +387,6 @@ export function CardDetail({ card, onClose }: { card: Card; onClose: () => void 
                           <Typography sx={{ fontSize: '10px', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '1px', color: 'rgba(255,255,255,0.7)', mt: 0.5 }}>
                             Available Balance
                           </Typography>
-                          <Box sx={{ mt: 2, pt: 2, borderTop: '1px solid rgba(255,255,255,0.15)' }}>
-                            <Stack direction="row" justifyContent="space-between" alignItems="center">
-                              <Typography sx={{ fontSize: '10px', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '1px', color: 'rgba(255,255,255,0.7)' }}>
-                                Total Spent
-                              </Typography>
-                              <Typography sx={{ fontSize: '14px', fontWeight: 700, color: '#ffffff' }}>
-                                −EGP {charges.reduce((s, c) => s + c.amount, 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                              </Typography>
-                            </Stack>
-                          </Box>
                         </>
                       )}
                     </Box>
@@ -522,16 +509,6 @@ export function CardDetail({ card, onClose }: { card: Card; onClose: () => void 
                       <Typography sx={{ fontSize: '10px', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '1px', color: 'rgba(255,255,255,0.6)', mt: 0.5 }}>
                         Available Balance
                       </Typography>
-                      <Box sx={{ mt: 2, pt: 2, borderTop: '1px solid rgba(255,255,255,0.15)' }}>
-                        <Stack direction="row" justifyContent="space-between" alignItems="center">
-                          <Typography sx={{ fontSize: '10px', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '1px', color: 'rgba(255,255,255,0.6)' }}>
-                            Total Spent
-                          </Typography>
-                          <Typography sx={{ fontSize: '14px', fontWeight: 700, color: '#fff' }}>
-                            −EGP {charges.reduce((s, c) => s + c.amount, 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                          </Typography>
-                        </Stack>
-                      </Box>
                     </>
                   )}
                 </Box>
@@ -549,11 +526,7 @@ export function CardDetail({ card, onClose }: { card: Card; onClose: () => void 
             />
           ) : (
             <Stack spacing={0} divider={<Divider />}>
-              {cycleGroups.map((group) => {
-                const visibleCount = visibleCounts[group.groupId] ?? PAGE_SIZE;
-                const visibleCharges = group.charges.slice(0, visibleCount);
-                const remaining = group.charges.length - visibleCount;
-
+              {cycleGroups.slice(0, visibleCycleCount).map((group) => {
                 return (
                   <Box key={group.groupId}>
                     {/* Cycle group header */}
@@ -579,7 +552,7 @@ export function CardDetail({ card, onClose }: { card: Card; onClose: () => void 
                     </Stack>
 
                     {/* Charges in this cycle */}
-                    {visibleCharges.map((c) => {
+                    {group.charges.map((c) => {
                       const cat = c.categoryId ? categories.find(ct => ct.id === c.categoryId) : null;
                       const currency = card.currency;
 
@@ -673,28 +646,28 @@ export function CardDetail({ card, onClose }: { card: Card; onClose: () => void 
                         </Stack>
                       );
                     })}
-
-                    {/* Show more button */}
-                    {remaining > 0 && (
-                      <Box sx={{ textAlign: 'center', py: 0.5 }}>
-                        <Button
-                          size="small"
-                          onClick={() => showMore(group.groupId)}
-                          sx={{
-                            fontWeight: 600,
-                            fontSize: '12px',
-                            color: 'primary.main',
-                            textTransform: 'none',
-                            px: 2,
-                          }}
-                        >
-                          Show more ({remaining} remaining)
-                        </Button>
-                      </Box>
-                    )}
                   </Box>
                 );
               })}
+
+              {/* Load next cycle */}
+              {visibleCycleCount < cycleGroups.length && (
+                <Box sx={{ textAlign: 'center', py: 1 }}>
+                  <Button
+                    size="small"
+                    onClick={loadNextCycle}
+                    sx={{
+                      fontWeight: 600,
+                      fontSize: '12px',
+                      color: 'primary.main',
+                      textTransform: 'none',
+                      px: 2,
+                    }}
+                  >
+                    Load previous cycle ({cycleGroups.length - visibleCycleCount} remaining)
+                  </Button>
+                </Box>
+              )}
             </Stack>
           )}
         </DialogContent>
