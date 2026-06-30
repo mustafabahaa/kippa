@@ -140,14 +140,14 @@ export function CardDetail({ card, onClose }: { card: Card; onClose: () => void 
   const cycleMap = new Map<string, CycleGroup>();
 
   for (const c of charges) {
-    const groupId = c.budgetCycleId ?? 'uncategorized';
+    const resolvedCycle = c.budgetCycleId ? allCycles.find(cy => cy.id === c.budgetCycleId) : null;
+    const groupId = resolvedCycle ? resolvedCycle.id : 'uncategorized';
     if (!cycleMap.has(groupId)) {
-      const cycle = c.budgetCycleId ? allCycles.find(cy => cy.id === c.budgetCycleId) : null;
       cycleMap.set(groupId, {
         groupId,
-        cycleName: cycle?.name ?? 'Uncategorized',
-        cycleDateRange: cycle ? formatDateRange(cycle.startDate, cycle.endDate) : '',
-        startDate: cycle?.startDate ?? '0000-00-00',
+        cycleName: resolvedCycle?.name ?? 'Uncategorized',
+        cycleDateRange: resolvedCycle ? formatDateRange(resolvedCycle.startDate, resolvedCycle.endDate) : '',
+        startDate: resolvedCycle?.startDate ?? '0000-00-00',
         charges: [],
       });
     }
