@@ -223,14 +223,15 @@ export function CardDetail({ card, onClose }: { card: Card; onClose: () => void 
             p: 2.5,
             pb: 3,
             position: 'relative',
-            overflow: 'hidden',
             display: 'flex',
             flexDirection: 'column',
           }}
         >
           {isHsbc ? (
             <>
-              <HsbcLionBackground kind={hsbcKind} />
+              <Box sx={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none', zIndex: 0 }}>
+                <HsbcLionBackground kind={hsbcKind} />
+              </Box>
 
               {/* Close button */}
               <IconButton
