@@ -1,4 +1,4 @@
-import { Box, Skeleton, Stack, Typography } from '@mui/material';
+import { Box, Skeleton, Stack, Typography, useTheme } from '@mui/material';
 import { 
   useAccounts, 
   useTransactions, 
@@ -17,6 +17,7 @@ import { PixelBlast } from '@/features/shared/components/PixelBlast';
 
 export function TotalBalanceHeroCard() {
   const { householdId } = useAppContext();
+  const theme = useTheme();
   const { data: accounts, isLoading: accountsLoading } = useAccounts(householdId);
   const { data: transactions, isLoading: txsLoading } = useTransactions(householdId);
   const { data: ledgerLines, isLoading: linesLoading } = useLedgerLines(householdId);
@@ -88,7 +89,7 @@ export function TotalBalanceHeroCard() {
         <PixelBlast
           variant="square"
           pixelSize={4}
-          color="#9cf2e8"
+          color={theme.palette.primary.light}
           patternScale={2}
           patternDensity={1.2}
           pixelSizeJitter={0.1}

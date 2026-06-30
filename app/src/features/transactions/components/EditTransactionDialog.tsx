@@ -55,6 +55,7 @@ export const EditTransactionDialog: React.FC<EditTransactionDialogProps> = ({
   const [editAmount, setEditAmount] = useState('0');
   const [editType, setEditType] = useState<'income' | 'expense'>('expense');
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (transaction) {
       setEditDesc(transaction.description || '');
@@ -68,6 +69,7 @@ export const EditTransactionDialog: React.FC<EditTransactionDialogProps> = ({
       setEditAmount(firstLine ? Number(Math.abs(firstLine.signedAmount).toFixed(2)).toString() : '0');
     }
   }, [transaction, ledgerLines]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   if (!transaction) return null;
 
@@ -86,7 +88,7 @@ export const EditTransactionDialog: React.FC<EditTransactionDialogProps> = ({
 
     // If it's a regular transaction, it determines sign based on editType.
     // If it's a special transaction, it retains its original sign!
-    let signedAmount = 0;
+    let signedAmount: number;
     if (isRegularTx) {
       signedAmount = editType === 'income' ? amount : -amount;
     } else {

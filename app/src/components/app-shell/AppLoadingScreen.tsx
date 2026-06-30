@@ -24,8 +24,8 @@ export function AppLoadingScreen({ theme }: AppLoadingScreenProps) {
           alignItems: 'center',
           justifyContent: 'center',
           background: isDark
-            ? 'radial-gradient(circle at center, #112d2a 0%, #090a0f 100%)'
-            : 'radial-gradient(circle at center, #f0fdfa 0%, #f8fafc 100%)',
+            ? `radial-gradient(circle at center, ${theme.palette.primary.dark}33 0%, ${theme.palette.background.default} 100%)`
+            : `radial-gradient(circle at center, ${theme.palette.primary.light}22 0%, ${theme.palette.background.default} 100%)`,
           transition: 'background 0.3s ease',
         }}
       >
@@ -77,7 +77,7 @@ export function AppLoadingScreen({ theme }: AppLoadingScreenProps) {
                 letterSpacing: '2px',
                 margin: 0,
                 textTransform: 'uppercase',
-                color: isDark ? '#f1f0f5' : '#131b2e',
+                color: theme.palette.text.primary,
                 fontFamily: "'Plus Jakarta Sans', system-ui, -apple-system, sans-serif",
               }}
             >
@@ -92,7 +92,7 @@ export function AppLoadingScreen({ theme }: AppLoadingScreenProps) {
                 marginBottom: 0,
                 opacity: 0.7,
                 fontStyle: 'italic',
-                color: isDark ? '#9e9bb0' : '#5f6675',
+                color: theme.palette.text.secondary,
                 fontFamily: "'Plus Jakarta Sans', system-ui, -apple-system, sans-serif",
               }}
             >
@@ -118,7 +118,7 @@ export function AppLoadingScreen({ theme }: AppLoadingScreenProps) {
             sx={{
               width: '100%',
               height: '100%',
-              backgroundColor: '#0f766e',
+              backgroundColor: theme.palette.primary.main,
               transformOrigin: '0% 50%',
               animation: 'splashProgress 1.6s infinite ease-in-out',
             }}

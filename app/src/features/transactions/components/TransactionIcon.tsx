@@ -1,5 +1,4 @@
-import React from 'react';
-import { Box } from '@mui/material';
+import { Box, alpha } from '@mui/material';
 import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
 import WorkIcon from '@mui/icons-material/Work';
 import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
@@ -17,29 +16,29 @@ export const TransactionIcon: React.FC<TransactionIconProps> = ({ type, size = 4
     switch (type) {
       case 'income':
         return {
-          icon: <WorkIcon sx={{ fontSize: size * 0.45, color: '#1E8E3E' }} />,
-          bg: 'rgba(30, 142, 62, 0.1)',
+          icon: <WorkIcon sx={{ fontSize: size * 0.45, color: 'success.main' }} />,
+          bg: (theme: any) => alpha(theme.palette.success.main, 0.1),
         };
       case 'transfer':
         return {
-          icon: <SwapHorizIcon sx={{ fontSize: size * 0.45, color: '#1976D2' }} />,
-          bg: 'rgba(25, 118, 210, 0.1)',
+          icon: <SwapHorizIcon sx={{ fontSize: size * 0.45, color: 'info.main' }} />,
+          bg: (theme: any) => alpha(theme.palette.info.main, 0.1),
         };
       case 'conversion':
         return {
-          icon: <CurrencyExchangeIcon sx={{ fontSize: size * 0.45, color: '#F29900' }} />,
-          bg: 'rgba(242, 153, 0, 0.1)',
+          icon: <CurrencyExchangeIcon sx={{ fontSize: size * 0.45, color: 'warning.main' }} />,
+          bg: (theme: any) => alpha(theme.palette.warning.main, 0.1),
         };
       case 'adjustment':
         return {
-          icon: <TuneIcon sx={{ fontSize: size * 0.45, color: '#008080' }} />,
-          bg: 'rgba(0, 128, 128, 0.1)',
+          icon: <TuneIcon sx={{ fontSize: size * 0.45, color: 'secondary.main' }} />,
+          bg: (theme: any) => alpha(theme.palette.secondary.main, 0.1),
         };
       case 'expense':
       default:
         return {
-          icon: <ReceiptLongIcon sx={{ fontSize: size * 0.45, color: '#D93025' }} />,
-          bg: 'rgba(217, 48, 37, 0.1)',
+          icon: <ReceiptLongIcon sx={{ fontSize: size * 0.45, color: 'error.main' }} />,
+          bg: (theme: any) => alpha(theme.palette.error.main, 0.1),
         };
     }
   };

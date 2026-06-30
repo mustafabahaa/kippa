@@ -16,7 +16,9 @@ import {
   Skeleton,
   Chip,
   IconButton,
-  LinearProgress
+  LinearProgress,
+  alpha,
+  useTheme
 } from '@mui/material';
 import { EmptyLayout } from '@/features/shared/components/EmptyLayout';
 import AddIcon from '@mui/icons-material/Add';
@@ -68,21 +70,21 @@ function formatDate(dateStr: string) {
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
-function getStatusColor(status: string) {
+function getStatusColor(status: string, theme: any) {
   switch (status) {
-    case 'open': return '#1E8E3E';
-    case 'planned': return '#005c55';
-    case 'closed': return '#5f6675';
-    default: return '#5f6675';
+    case 'open': return theme.palette.success.main;
+    case 'planned': return theme.palette.primary.main;
+    case 'closed': return theme.palette.text.secondary;
+    default: return theme.palette.text.secondary;
   }
 }
 
-function getStatusBgColor(status: string) {
+function getStatusBgColor(status: string, theme: any) {
   switch (status) {
-    case 'open': return 'rgba(30, 142, 62, 0.08)';
-    case 'planned': return 'rgba(0, 92, 85, 0.08)';
-    case 'closed': return 'rgba(154, 160, 166, 0.12)';
-    default: return 'rgba(154, 160, 166, 0.12)';
+    case 'open': return alpha(theme.palette.success.main, 0.08);
+    case 'planned': return alpha(theme.palette.primary.main, 0.08);
+    case 'closed': return alpha(theme.palette.text.secondary, 0.12);
+    default: return alpha(theme.palette.text.secondary, 0.12);
   }
 }
 
@@ -90,6 +92,7 @@ function getStatusBgColor(status: string) {
 
 export function BudgetCycles() {
   const { householdId } = useAppContext();
+  const theme = useTheme();
 
   // Cycle Creation State
   const [openCreateDialog, setOpenCreateDialog] = useState(false);
@@ -303,8 +306,8 @@ export function BudgetCycles() {
                       fontSize: '10px',
                       height: 20,
                       borderRadius: '6px',
-                      bgcolor: getStatusBgColor(editingCycle.status),
-                      color: getStatusColor(editingCycle.status),
+                      bgcolor: getStatusBgColor(editingCycle.status, theme),
+                      color: getStatusColor(editingCycle.status, theme),
                     }}
                   />
                 )}
@@ -523,7 +526,7 @@ export function BudgetCycles() {
             loading={updateCycleStatusMutation.isPending}
             variant="contained" 
             color="error"
-            sx={{ borderRadius: '12px', textTransform: 'none', fontWeight: 'bold', bgcolor: '#ba1a1a' }}
+            sx={{ borderRadius: '12px', textTransform: 'none', fontWeight: 'bold', bgcolor: 'error.main' }}
           >
             Confirm & Close
           </Button>
@@ -560,18 +563,17 @@ function ActiveCycleCard({ cycle, daysInfo, onCloseCycle, isEditingBudget, onTog
       }}
     >
       <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
-        {/* Active Badge */}
         <Chip
           label="ACTIVE"
           size="small"
-          icon={<Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: '#1E8E3E' }} />}
+          icon={<Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: 'success.main' }} />}
           sx={{
             fontWeight: 700,
             fontSize: '10px',
             height: 24,
             borderRadius: '6px',
-            bgcolor: 'rgba(30, 142, 62, 0.08)',
-            color: '#1E8E3E',
+            bgcolor: (theme) => alpha(theme.palette.success.main, 0.08),
+            color: 'success.main',
             alignSelf: 'flex-start',
             mb: 1.5,
             '& .MuiChip-icon': { display: 'block', ml: 1, mr: -0.5 }
@@ -685,8 +687,9 @@ interface CycleHistoryCardProps {
 }
 
 function CycleHistoryCard({ cycle, isEditing, onToggleBudget }: CycleHistoryCardProps) {
-  const statusColor = getStatusColor(cycle.status);
-  const statusBg = getStatusBgColor(cycle.status);
+  const theme = useTheme();
+  const statusColor = getStatusColor(cycle.status, theme);
+  const statusBg = getStatusBgColor(cycle.status, theme);
 
   return (
     <Box

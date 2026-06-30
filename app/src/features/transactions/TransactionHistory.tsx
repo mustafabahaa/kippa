@@ -271,7 +271,7 @@ export function TransactionHistory() {
                   const isIncome = tx.type === 'income' || (tx.type === 'adjustment' && (firstLine?.signedAmount || 0) >= 0);
 
                   // Formatting details cell text based on transaction type
-                  let detailsText = '';
+                  let detailsText: string;
                   if (tx.type === 'transfer') {
                     const fromL = txLines.find(l => l.signedAmount < 0);
                     const toL = txLines.find(l => l.signedAmount > 0);
@@ -324,7 +324,7 @@ export function TransactionHistory() {
                             Exchange Completed
                           </Typography>
                         ) : (
-                          <Typography variant="body1" sx={{ fontWeight: 'bold', color: tx.status === 'voided' ? 'text.secondary' : isIncome ? '#1E8E3E' : 'text.primary' }}>
+                          <Typography variant="body1" sx={{ fontWeight: 'bold', color: tx.status === 'voided' ? 'text.secondary' : isIncome ? 'success.main' : 'text.primary' }}>
                             {isIncome ? '+' : '-'}{amount.toLocaleString()} {currency}
                           </Typography>
                         )}

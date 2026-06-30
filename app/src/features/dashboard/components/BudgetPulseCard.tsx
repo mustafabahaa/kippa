@@ -1,4 +1,4 @@
-import { Box, Card, CardContent, LinearProgress, Skeleton, Stack, Typography } from '@mui/material';
+import { Box, Card, CardContent, LinearProgress, Skeleton, Stack, Typography, useTheme, alpha } from '@mui/material';
 import {
   useAccounts,
   useTransactions,
@@ -16,6 +16,7 @@ import { metricExplanations } from '@/features/shared/constants/metricExplanatio
 
 export function BudgetPulseCard() {
   const { householdId } = useAppContext();
+  const theme = useTheme();
   const { data: accounts } = useAccounts(householdId);
   const { data: transactions } = useTransactions(householdId);
   const { data: ledgerLines } = useLedgerLines(householdId);
@@ -32,15 +33,15 @@ export function BudgetPulseCard() {
   const isLoading = allocationsLoading || !accounts || !transactions || !ledgerLines;
 
   const getStatusColor = (status: DashboardData['saving']['status']) => {
-    if (status === 'on-track') return '#1E8E3E';
-    if (status === 'warning') return '#F9AB00';
-    return '#ba1a1a';
+    if (status === 'on-track') return theme.palette.success.main;
+    if (status === 'warning') return theme.palette.warning.main;
+    return theme.palette.error.main;
   };
 
   const getStatusBgColor = (status: DashboardData['saving']['status']) => {
-    if (status === 'on-track') return 'rgba(30, 142, 62, 0.1)';
-    if (status === 'warning') return 'rgba(249, 171, 0, 0.1)';
-    return 'rgba(186, 26, 26, 0.1)';
+    if (status === 'on-track') return alpha(theme.palette.success.main, 0.1);
+    if (status === 'warning') return alpha(theme.palette.warning.main, 0.1);
+    return alpha(theme.palette.error.main, 0.1);
   };
 
   const getStatusLabel = (status: DashboardData['saving']['status']) => {
