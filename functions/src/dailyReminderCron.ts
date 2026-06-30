@@ -4,13 +4,8 @@ import type { NotificationSettings, NotificationState } from './types.js';
 import { buildMessagePayload, getTokensForUsers, sendToMany } from './sendToMany.js';
 
 /**
- * Runs once per day at 09:00 UTC. Two independent reminders per run:
- *
- * 1. Daily expense logging: for each household that had zero posted transactions
- *    today, pushes a reminder to enabled members (once per user per day).
- *
- * 2. Audit reminder: gentle nudge to check cash/bank balances, sent to enabled
- *    members (once per user per day).
+ * Runs once per day at 09:00 UTC. For each household that had zero posted
+ * transactions today, pushes a daily reminder to enabled members (once per user per day).
  */
 export const dailyReminderCron = onSchedule('0 9 * * *', async () => {
   const db = getFirestore();
@@ -65,27 +60,6 @@ export const dailyReminderCron = onSchedule('0 9 * * *', async () => {
             );
           }
           await stateRef.set({ lastReminderSentDate: todayUtc }, { merge: true });
-        }
-      }
-
-      // --- Send audit reminder? ---
-      if (settings.auditReminderEnabled) {
-        if (state.lastAuditReminderSentDate !== todayUtc) {
-          const tokens = await getTokensForUsers(householdId, [userId]);
-          if (tokens.length > 0) {
-            await sendToMany(
-              householdId,
-              tokens,
-              buildMessagePayload({
-                type: 'audit_reminder',
-                title: 'Audit reminder',
-                body: 'Time to do a quick audit — check your cash, bank balances, and make sure everything lines up.',
-                householdId,
-                deepLink: '/accounts',
-              }),
-            );
-          }
-          await stateRef.set({ lastAuditReminderSentDate: todayUtc }, { merge: true });
         }
       }
     }
