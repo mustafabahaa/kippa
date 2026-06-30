@@ -39,15 +39,4 @@ describe('buildMessagePayload', () => {
     });
     expect(payload.data.type).toBe('daily_reminder');
   });
-
-  it('builds a cycle_close payload with deepLink to cycle', () => {
-    const payload = buildMessagePayload({
-      type: 'cycle_close',
-      title: 'Cycle closing',
-      body: "Cycle 'June' is past due.",
-      householdId: 'hh1',
-      deepLink: '/cycle/june123',
-    });
-    expect(payload.data.deepLink).toBe('/cycle/june123');
-  });
 });

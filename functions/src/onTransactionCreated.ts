@@ -9,7 +9,16 @@ import type {
   NotificationState,
   UserProfile,
 } from './types.js';
-import { shouldWarnCategory, spentPercentage } from './warnings.js';
+import {
+  checkPercentageThresholds,
+  checkVelocitySpike,
+  isVelocityKeyExpired,
+  buildCategoryWarningNotification,
+  sumAmounts,
+  countUniqueDays,
+  type SpendingEntry,
+  type VelocityContext,
+} from './warnings.js';
 import { buildMessagePayload, getTokensForUsers, sendToMany } from './sendToMany.js';
 import { todayInTz } from './timezone.js';
 
@@ -126,21 +135,22 @@ async function checkCategoryWarning(
   const allocation = allocSnap.docs[0].data() as BudgetAllocation;
   if (allocation.plannedAmount <= 0) return;
 
-  // Sum posted expense ledger lines for this category in this cycle.
+  // Fetch all posted expense transactions for this category in this cycle
   const txnsSnap = await db
     .collection(`households/${householdId}/transactions`)
     .where('categoryId', '==', categoryId)
     .where('status', '==', 'posted')
     .get();
-  const postedTxnIds = new Set(
-    txnsSnap.docs
-      .filter((d) => (d.data() as FinanceTransaction).budgetCycleId === cycleId)
-      .map((d) => d.id),
-  );
-  if (postedTxnIds.size === 0) return;
+  const postedTxns = txnsSnap.docs
+    .filter((d) => {
+      const data = d.data() as FinanceTransaction;
+      return data.budgetCycleId === cycleId;
+    })
+    .map((d) => d.data() as FinanceTransaction);
+  if (postedTxns.length === 0) return;
 
-  // Fetch ledger lines for these transactions and sum the debit amounts.
-  // signedAmount is negative for debits; we use absolute value.
+  // Fetch ledger lines and sum spent
+  const postedTxnIds = new Set(postedTxns.map((t) => t.id));
   const linesSnap = await db.collection(`households/${householdId}/ledgerLines`).get();
   let spent = 0;
   for (const lineDoc of linesSnap.docs) {
@@ -150,38 +160,117 @@ async function checkCategoryWarning(
     }
   }
 
-  if (!shouldWarnCategory(spent, allocation.plannedAmount)) return;
+  // Check percentage thresholds
+  const threshold = checkPercentageThresholds(spent, allocation.plannedAmount);
 
-  // Dedup: check if we already warned for this category+cycle today.
-  // Warnings are household-scoped, so we use a household-level state doc.
+  // Check velocity spike — split transactions into earlier/recent periods
+  const today = new Date();
+  const cycleStart = new Date(cycle.startDate + 'T00:00:00Z');
+  const msPerDay = 1000 * 60 * 60 * 24;
+  const cutoffDate = new Date(today.getTime() - 7 * msPerDay);
+  const cutoffStr = cutoffDate.toISOString().slice(0, 10);
+
+  const earlierEntries: SpendingEntry[] = [];
+  const recentEntries: SpendingEntry[] = [];
+  for (const t of postedTxns) {
+    const entry: SpendingEntry = { amount: 0, date: t.date };
+    for (const lineDoc of linesSnap.docs) {
+      const line = lineDoc.data() as LedgerLine;
+      if (line.transactionId === t.id && line.signedAmount < 0) {
+        entry.amount += Math.abs(line.signedAmount);
+      }
+    }
+    if (t.date < cutoffStr) {
+      earlierEntries.push(entry);
+    } else {
+      recentEntries.push(entry);
+    }
+  }
+
+  let velocityContext: VelocityContext | null = null;
+  if (checkVelocitySpike(earlierEntries, recentEntries, allocation.plannedAmount)) {
+    const earlierDays = countUniqueDays(earlierEntries);
+    const recentDays = countUniqueDays(recentEntries);
+    const earlierTotal = sumAmounts(earlierEntries);
+    const recentTotal = sumAmounts(recentEntries);
+    velocityContext = {
+      earlierAvg: Math.round(earlierTotal / earlierDays),
+      recentAvg: Math.round(recentTotal / recentDays),
+    };
+  }
+
+  if (!threshold && !velocityContext) return;
+
+  // Dedup check
   const householdStateRef = db.doc(
     `households/${householdId}/notificationState/_household`,
   );
   const stateSnap = await householdStateRef.get();
   const state = (stateSnap.data() as NotificationState) ?? {};
-  const warningKey = `${categoryId}_${cycleId}`;
-  const today = todayInTz(new Date(), 'UTC'); // warning dedup is UTC-daily
 
-  if (state.lastWarningFor?.[warningKey] === today) return;
+  const keysToFire: string[] = [];
+
+  if (threshold) {
+    const key = `${categoryId}_${cycleId}_${threshold}`;
+    if (!state.lastWarningFor?.[key]) {
+      keysToFire.push(key);
+    }
+  }
+
+  if (velocityContext) {
+    const velKey = `${categoryId}_${cycleId}_vel`;
+    const lastDate = state.lastWarningFor?.[velKey];
+    if (isVelocityKeyExpired(lastDate)) {
+      keysToFire.push(velKey);
+    } else {
+      velocityContext = null; // deduped — don't include in message
+    }
+  }
+
+  if (keysToFire.length === 0) return;
+
+  // Fetch category name
+  let categoryName = '';
+  try {
+    const categorySnap = await db
+      .doc(`households/${householdId}/categories/${categoryId}`)
+      .get();
+    if (categorySnap.exists) {
+      categoryName = categorySnap.data()?.name ?? '';
+    }
+  } catch {
+    // non-critical
+  }
+
+  const notification = buildCategoryWarningNotification({
+    categoryName,
+    spent,
+    planned: allocation.plannedAmount,
+    currency: allocation.currency,
+    threshold,
+    velocityContext,
+  });
+  if (!notification) return;
 
   // Find members with categoryWarningEnabled
   const settingsSnap = await db
     .collection(`households/${householdId}/notificationSettings`)
     .where('categoryWarningEnabled', '==', true)
     .get();
-  const settingsUids = settingsSnap.docs.map((d) => (d.data() as NotificationSettings).userId);
+  const settingsUids = settingsSnap.docs.map(
+    (d) => (d.data() as NotificationSettings).userId,
+  );
 
   if (settingsUids.length > 0) {
     const tokens = await getTokensForUsers(householdId, settingsUids);
-    const pct = spentPercentage(spent, allocation.plannedAmount);
     if (tokens.length > 0) {
       await sendToMany(
         householdId,
         tokens,
         buildMessagePayload({
           type: 'category_warning',
-          title: 'Budget warning',
-          body: `Spending is at ${pct}% of the budget for this category.`,
+          title: notification.title,
+          body: notification.body,
           householdId,
           deepLink: '/budget',
         }),
@@ -189,11 +278,14 @@ async function checkCategoryWarning(
     }
   }
 
-  // Record that we warned today
+  // Mark fired keys
   const updatedWarningFor = {
     ...(state.lastWarningFor ?? {}),
-    [warningKey]: today,
   };
+  const todayStr = todayInTz(today, 'UTC');
+  for (const key of keysToFire) {
+    updatedWarningFor[key] = todayStr;
+  }
   await householdStateRef.set({ lastWarningFor: updatedWarningFor }, { merge: true });
 }
 

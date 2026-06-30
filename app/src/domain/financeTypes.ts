@@ -151,11 +151,7 @@ export type NotificationSettings = {
   userId: string;
   householdId: string;
   dailyReminderEnabled: boolean;
-  dailyReminderTime: string; // HH:MM
-  timezone: string;
   categoryWarningEnabled: boolean;
-  savingWarningEnabled: boolean;
-  cycleCloseReminderEnabled: boolean;
 };
 
 export type AuditAction =
