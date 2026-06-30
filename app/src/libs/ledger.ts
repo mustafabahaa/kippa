@@ -229,14 +229,15 @@ export const ledgerLib = {
 
     // Audit log (fire-and-forget)
     if (auditUser) {
-      const diff = Math.abs(reconLog.difference);
-      const verdict = reconLog.difference === 0 ? 'matched' : `had a ${reconLog.difference > 0 ? 'surplus' : 'shortfall'} of ${diff} ${reconLog.currency}`;
+      const diff = Number(Math.abs(reconLog.difference).toFixed(2));
+      const cleanDifference = Number(reconLog.difference.toFixed(2));
+      const verdict = cleanDifference === 0 ? 'matched' : `had a ${cleanDifference > 0 ? 'surplus' : 'shortfall'} of ${diff} ${reconLog.currency}`;
       auditLogLib.logAction(
         householdId,
         auditUser,
         'reconciliation_created',
         `${auditUser.displayName} reconciled an account (${verdict})`,
-        { reconciliationId: reconId, accountId: reconLog.accountId, difference: reconLog.difference, currency: reconLog.currency }
+        { reconciliationId: reconId, accountId: reconLog.accountId, difference: cleanDifference, currency: reconLog.currency }
       );
     }
   },

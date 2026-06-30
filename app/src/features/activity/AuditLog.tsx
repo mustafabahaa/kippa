@@ -30,6 +30,7 @@ import { PageHeader } from '@/features/shared/components/PageHeader';
 import { useAuditLog, useUnreadActivityCount } from '@/hooks/useFinance';
 import { useAppContext } from '@/hooks/useAppContext';
 import { AuditAction, AuditLogEntry } from '@/domain/financeTypes';
+import { TransactionIcon } from '@/features/transactions/components/TransactionIcon';
 
 interface ActionVisual {
   Icon: React.ComponentType<{ sx?: object }>;
@@ -136,21 +137,25 @@ function AuditLogRow({ entry }: { entry: AuditLogEntry }) {
     >
       <Stack direction="row" spacing={1.75} sx={{ width: '100%', alignItems: 'flex-start' }}>
         {/* Action icon badge */}
-        <Box
-          sx={{
-            mt: 0.25,
-            width: 38,
-            height: 38,
-            borderRadius: '50%',
-            bgcolor: bg,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            flexShrink: 0,
-          }}
-        >
-          <Icon sx={{ color, fontSize: 20 }} />
-        </Box>
+        {entry.action === 'transaction_created' ? (
+          <TransactionIcon type={entry.details?.type || 'expense'} size={38} />
+        ) : (
+          <Box
+            sx={{
+              mt: 0.25,
+              width: 38,
+              height: 38,
+              borderRadius: '50%',
+              bgcolor: bg,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+            }}
+          >
+            <Icon sx={{ color, fontSize: 20 }} />
+          </Box>
+        )}
 
         <Box sx={{ flex: 1, minWidth: 0 }}>
           <Typography
