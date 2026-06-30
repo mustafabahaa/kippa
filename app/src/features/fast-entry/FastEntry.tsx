@@ -73,10 +73,10 @@ export function FastEntry() {
   const dateLabel = isToday(entryDate) ? 'Today' : format(entryDate, 'MMM d');
 
   // Sort accounts so EGP comes first, then cash accounts, then everything else (e.g. USD).
-  // Priority: EGP currency (0) -> cash type (1) -> other (2). Stable within each tier.
+  // Priority: EGP running account (0) -> cash type (1) -> other (2). Stable within each tier.
   const sortedAccounts = [...accounts].sort((a, b) => {
     const rank = (acc: typeof a) => {
-      if (acc.currency === 'EGP') return 0;
+      if (acc.currency === 'EGP' && acc.type === 'running') return 0;
       if (acc.type === 'cash') return 1;
       return 2;
     };

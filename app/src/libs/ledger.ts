@@ -40,9 +40,9 @@ export const ledgerLib = {
 
   async seedDefaultAccounts(householdId: string): Promise<void> {
     const defaultAccounts: Omit<Account, 'id' | 'householdId' | 'createdAt'>[] = [
-      { name: 'EGP Bank', type: 'bank', currency: 'EGP', isActive: true, sortOrder: 1 },
+      { name: 'EGP Bank', type: 'running', currency: 'EGP', isActive: true, sortOrder: 1 },
       { name: 'EGP Cash', type: 'cash', currency: 'EGP', isActive: true, sortOrder: 2 },
-      { name: 'USD Bank', type: 'bank', currency: 'USD', isActive: true, sortOrder: 3 },
+      { name: 'USD Bank', type: 'running', currency: 'USD', isActive: true, sortOrder: 3 },
     ];
 
     for (const acc of defaultAccounts) {
