@@ -190,19 +190,6 @@ export function NotificationSettingsForm({
               <FormControlLabel
                 control={
                   <Checkbox
-                    checked={notifSettings.auditReminderEnabled}
-                    onChange={e => setNotifSettings({ ...notifSettings, auditReminderEnabled: e.target.checked })}
-                  />
-                }
-                label="Daily Audit Reminder"
-              />
-              <Typography variant="caption" sx={{ color: 'text.secondary', mt: -1.5, ml: 4 }}>
-                Gentle daily reminder to check your cash and bank balances.
-              </Typography>
-
-              <FormControlLabel
-                control={
-                  <Checkbox
                     checked={notifSettings.categoryWarningEnabled}
                     onChange={e => setNotifSettings({ ...notifSettings, categoryWarningEnabled: e.target.checked })}
                   />

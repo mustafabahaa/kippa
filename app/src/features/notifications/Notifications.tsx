@@ -46,7 +46,6 @@ export function Notifications() {
     householdId,
     dailyReminderEnabled: true,
     categoryWarningEnabled: true,
-    auditReminderEnabled: true,
   };
 
   return (

@@ -5,8 +5,7 @@ import type { FcmToken } from './types.js';
 export type NotificationType =
   | 'transaction'
   | 'category_warning'
-  | 'daily_reminder'
-  | 'audit_reminder';
+  | 'daily_reminder';
 
 export interface PayloadInput {
   type: NotificationType;

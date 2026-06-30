@@ -152,7 +152,6 @@ export type NotificationSettings = {
   householdId: string;
   dailyReminderEnabled: boolean;
   categoryWarningEnabled: boolean;
-  auditReminderEnabled: boolean;
 };
 
 export type AuditAction =
