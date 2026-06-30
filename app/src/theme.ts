@@ -47,13 +47,14 @@ export const designTokens = {
     onError: '#ffffff',
     errorContainer: '#ffdad6',
 
-    // Surfaces (light) – brightened toward white to reduce grey cast
-    surface:               '#ffffff',
+    // Surfaces (light) – background is slightly off-white so cards (pure white)
+    // visually stand out. Container hierarchy stays subtle.
+    surface:               '#f4f5f7',
     surfaceBright:         '#ffffff',
     surfaceContainer:      '#fbfbfc',
     surfaceContainerHigh:  '#f7f7f9',
     surfaceContainerHighest:'#f2f2f4',
-    surfaceContainerLow:   '#fdfdfe',
+    surfaceContainerLow:   '#f8f9fa',
     surfaceContainerLowest:'#ffffff',
     surfaceDim:            '#f0f0f2',
     surfaceTint:           '#006a63',
@@ -359,7 +360,7 @@ export function createAppTheme(mode: 'light' | 'dark'): Theme {
             borderRadius: designTokens.radius.card,       // 20px
             boxShadow: mode === 'dark'
               ? 'rgba(0, 0, 0, 0.4) 0px 4px 20px -2px'
-              : 'none',
+              : '0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.06)',
             transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
             '&:hover': {
               borderColor: mode === 'dark' ? 'primary.main' : t.outline,

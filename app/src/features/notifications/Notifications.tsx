@@ -46,6 +46,7 @@ export function Notifications() {
     householdId,
     dailyReminderEnabled: true,
     categoryWarningEnabled: true,
+    cardExpiryWarningEnabled: true,
   };
 
   return (

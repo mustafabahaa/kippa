@@ -112,16 +112,17 @@ export function MyAccountsCard() {
 
               {linked.length > 0 && (
                 <Box sx={{ px: 2, pb: 2 }}>
-                  <Stack direction="row" spacing={1.5} sx={{ flexWrap: 'wrap', gap: 1.5 }}>
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
                     {linked.map(card => (
                       <CardTile
                         key={card.id}
                         card={card}
                         summary={summaryFor(card)}
+                        parentAccountBalance={balancesMap[card.parentAccountId]}
                         onOpenDetail={() => setDetailCard(card)}
                       />
                     ))}
-                  </Stack>
+                  </Box>
                 </Box>
               )}
             </Box>

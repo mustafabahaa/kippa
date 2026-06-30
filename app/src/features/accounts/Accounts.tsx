@@ -215,12 +215,13 @@ export function Accounts() {
                   {/* Cards nested inside this account */}
                   {canHoldCard && (
                     <Box sx={{ px: 2, pb: linked.length > 0 ? 2 : 1.5 }}>
-                      <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', gap: 1.5, mb: linked.length > 0 ? 1.5 : 0 }}>
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: linked.length > 0 ? 2 : 0 }}>
                         {linked.map(card => (
                           <CardTile
                             key={card.id}
                             card={card}
                             summary={summaryFor(card)}
+                            parentAccountBalance={accountBalance(card.parentAccountId)}
                             onFreeze={() => updateCard.mutate({
                               householdId, cardId: card.id,
                               updates: { isActive: !card.isActive }, accounts,
@@ -228,7 +229,7 @@ export function Accounts() {
                             onOpenDetail={() => setDetailCard(card)}
                           />
                         ))}
-                      </Stack>
+                      </Box>
                       <Button
                         size="small"
                         startIcon={<AddIcon />}
