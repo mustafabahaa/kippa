@@ -40,7 +40,7 @@ export function computeCardSummary(
   card: Card,
   creditAccountBalance: number, // ledger balance of the credit account (negative = debt)
   lastStatement: CardStatement | null,
-  allStatements: CardStatement[]
+  _allStatements: CardStatement[]
 ): CardSummary {
   const currentDebt = Math.max(0, -creditAccountBalance);
   const hasLimit = card.creditLimit != null;

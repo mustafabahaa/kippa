@@ -1,16 +1,16 @@
 import { useState } from 'react';
-import { 
-  Box, 
-  Card, 
-  CardContent, 
-  Container, 
-  Stack, 
-  Typography, 
-  Button, 
-  TextField, 
-  Select, 
-  MenuItem, 
-  FormControl, 
+import {
+  Box,
+  Card,
+  CardContent,
+  Container,
+  Stack,
+  Typography,
+  Button,
+  TextField,
+  Select,
+  MenuItem,
+  FormControl,
   InputLabel,
   Divider,
   Dialog,
@@ -25,32 +25,63 @@ import {
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
 import SavingsIcon from '@mui/icons-material/Savings';
 import PaymentsIcon from '@mui/icons-material/Payments';
+import CreditCardIcon from '@mui/icons-material/CreditCard';
 import EditIcon from '@mui/icons-material/Edit';
-import { 
-  useAccounts, 
-  useCreateAccountMutation, 
-  useUpdateAccountMutation 
+import AddIcon from '@mui/icons-material/Add';
+import {
+  useAccounts,
+  useCreateAccountMutation,
+  useUpdateAccountMutation,
+  useCards,
+  useUpdateCardMutation,
+  useLedgerLines,
+  useTransactions,
+  useCardStatements,
 } from '@/hooks/useFinance';
-import { Account, AccountType, CurrencyCode } from '@/domain/financeTypes';
+import { Account, AccountType, CurrencyCode, Card as CardType } from '@/domain/financeTypes';
 import { useAppContext } from '@/hooks/useAppContext';
+import { CardTile } from '@/features/cards/CardTile';
+import { AddCardDialog } from '@/features/cards/AddCardDialog';
+import { CardDetail } from '@/features/cards/CardDetail';
+import { computeCardSummary } from '@/libs/cardSelectors';
 
 export function Accounts() {
   const { householdId } = useAppContext();
   const [newAccName, setNewAccName] = useState('');
-  const [newAccType, setNewAccType] = useState<AccountType>('bank');
+  const [newAccType, setNewAccType] = useState<AccountType>('running');
   const [newAccCurrency, setNewAccCurrency] = useState<CurrencyCode>('EGP');
 
   // Edit Account State
   const [editingAccount, setEditingAccount] = useState<Account | null>(null);
   const [editAccName, setEditAccName] = useState('');
-  const [editAccType, setEditAccType] = useState<AccountType>('bank');
+  const [editAccType, setEditAccType] = useState<AccountType>('running');
   const [editAccCurrency, setEditAccCurrency] = useState<CurrencyCode>('EGP');
   const [editAccIsActive, setEditAccIsActive] = useState(true);
 
+  // Card UI state
+  const [addCardOpen, setAddCardOpen] = useState(false);
+  const [detailCard, setDetailCard] = useState<CardType | null>(null);
+
   // Queries & Mutations
   const { data: accounts = [], isLoading } = useAccounts(householdId);
+  const { data: cards = [], isLoading: cardsLoading } = useCards(householdId);
+  const { data: ledgerLines = [] } = useLedgerLines(householdId);
+  const { data: transactions = [] } = useTransactions(householdId);
+  const { data: statements = [] } = useCardStatements(householdId);
   const createAccountMutation = useCreateAccountMutation();
   const updateAccountMutation = useUpdateAccountMutation();
+  const updateCard = useUpdateCardMutation();
+
+  // Compute the summary for a credit card from ledger + statements.
+  const summaryFor = (card: CardType) => {
+    const postedTxIds = new Set(transactions.filter(t => t.status === 'posted').map(t => t.id));
+    const creditBalance = ledgerLines
+      .filter(l => l.accountId === card.parentAccountId && postedTxIds.has(l.transactionId))
+      .reduce((s, l) => s + l.signedAmount, 0);
+    const cardStmts = statements.filter(s => s.cardId === card.id);
+    const last = cardStmts[0] ?? null;
+    return computeCardSummary(card, creditBalance, last, cardStmts);
+  };
 
   const handleOpenEdit = (acc: Account) => {
     setEditingAccount(acc);
@@ -99,53 +130,112 @@ export function Accounts() {
   };
 
   const getAccountIcon = (type: string) => {
-    if (type.toLowerCase() === 'savings' || type.toLowerCase() === 'savings bank') {
-      return <SavingsIcon sx={{ color: 'text.secondary' }} />;
+    switch (type) {
+      case 'savings': return <SavingsIcon sx={{ color: 'text.secondary' }} />;
+      case 'cash':
+      case 'wallet': return <PaymentsIcon sx={{ color: 'text.secondary' }} />;
+      case 'credit': return <CreditCardIcon sx={{ color: 'text.secondary' }} />;
+      case 'running':
+      default: return <AccountBalanceIcon sx={{ color: 'text.secondary' }} />;
     }
-    if (type.toLowerCase() === 'cash' || type.toLowerCase() === 'wallet') {
-      return <PaymentsIcon sx={{ color: 'text.secondary' }} />;
-    }
-    return <AccountBalanceIcon sx={{ color: 'text.secondary' }} />;
   };
+
+  // Credit accounts are debt buckets owned by their cards — hide them from the
+  // accounts list (you never transact with them directly outside card flows).
+  const visibleAccounts = accounts.filter(a => a.type !== 'credit');
+  const depositAccounts = accounts.filter(a => a.type === 'running' || a.type === 'savings');
 
   return (
     <Container maxWidth="md" sx={{ py: 1, px: { xs: 2, sm: 3 } }}>
       <Stack spacing={3}>
         <Box sx={{ mt: 1 }}>
           <Typography variant="h2" sx={{ fontSize: '24px', fontWeight: 700, color: 'text.primary' }}>
-            Bank Accounts
+            Accounts & Cards
           </Typography>
           <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '13px', mt: 0.5 }}>
-            Manage EGP and USD bank accounts and wallets
+            Manage accounts, cash, wallets and cards
           </Typography>
         </Box>
 
-        {/* Current Accounts List */}
+        {/* Cards section */}
+        <Box>
+          <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
+            <Typography variant="h3" sx={{ fontSize: '18px', fontWeight: 700 }}>Cards</Typography>
+            <Button
+              startIcon={<AddIcon />}
+              onClick={() => setAddCardOpen(true)}
+              disabled={depositAccounts.length === 0}
+              sx={{ textTransform: 'none' }}
+            >
+              Add card
+            </Button>
+          </Stack>
+          {cardsLoading ? (
+            <Skeleton variant="rectangular" height={160} sx={{ borderRadius: '20px' }} />
+          ) : cards.length === 0 ? (
+            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+              {depositAccounts.length === 0
+                ? 'Add a bank account first, then you can attach a card to it.'
+                : 'No cards yet.'}
+            </Typography>
+          ) : (
+            <Stack spacing={2}>
+              {depositAccounts.map(acc => {
+                const linked = cards.filter(c =>
+                  c.parentAccountId === acc.id || c.paymentAccountId === acc.id);
+                if (linked.length === 0) return null;
+                return (
+                  <Box key={acc.id}>
+                    <Typography variant="body2" sx={{ fontWeight: 600, mb: 1 }}>{acc.name}</Typography>
+                    <Stack direction="row" spacing={2} sx={{ flexWrap: 'wrap', gap: 2 }}>
+                      {linked.map(card => (
+                        <CardTile
+                          key={card.id}
+                          card={card}
+                          summary={summaryFor(card)}
+                          onFreeze={() => updateCard.mutate({
+                            householdId, cardId: card.id,
+                            updates: { isActive: !card.isActive }, accounts,
+                          })}
+                          onOpenDetail={() => setDetailCard(card)}
+                        />
+                      ))}
+                    </Stack>
+                  </Box>
+                );
+              })}
+            </Stack>
+          )}
+        </Box>
+
+        <Divider />
+
+        {/* Accounts List */}
         <Stack spacing={1}>
           {isLoading ? (
             [1, 2].map(i => (
-              <Skeleton 
-                key={i} 
-                variant="rectangular" 
-                width="100%" 
-                height={76} 
-                sx={{ borderRadius: '20px' }} 
-                animation="wave" 
+              <Skeleton
+                key={i}
+                variant="rectangular"
+                width="100%"
+                height={76}
+                sx={{ borderRadius: '20px' }}
+                animation="wave"
               />
             ))
           ) : (
-            accounts.map(acc => (
-              <Box 
-                key={acc.id} 
-                sx={{ 
-                  p: 2, 
-                  border: '1px solid', 
-                  borderColor: 'divider', 
-                  borderRadius: '20px', 
-                  bgcolor: 'background.paper', 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'space-between' 
+            visibleAccounts.map(acc => (
+              <Box
+                key={acc.id}
+                sx={{
+                  p: 2,
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  borderRadius: '20px',
+                  bgcolor: 'background.paper',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between'
                 }}
               >
                 <Box display="flex" alignItems="center" gap={2}>
@@ -172,8 +262,6 @@ export function Accounts() {
           )}
         </Stack>
 
-        <Divider />
-
         {/* Add Account Card */}
         <Card sx={{ border: '1px solid', borderColor: 'divider', borderRadius: '20px', boxShadow: 'none' }}>
           <CardContent sx={{ p: 2.5 }}>
@@ -198,10 +286,10 @@ export function Accounts() {
                   onChange={e => setNewAccType(e.target.value as AccountType)}
                   sx={{ borderRadius: '12px' }}
                 >
-                  <MenuItem value="bank">Bank Account</MenuItem>
-                  <MenuItem value="cash">Cash Wallet</MenuItem>
-                  <MenuItem value="card">Credit Card</MenuItem>
-                  <MenuItem value="savings">Savings Account</MenuItem>
+                  <MenuItem value="running">Running Bank</MenuItem>
+                  <MenuItem value="savings">Savings Bank</MenuItem>
+                  <MenuItem value="cash">Cash</MenuItem>
+                  <MenuItem value="wallet">Wallet</MenuItem>
                 </Select>
               </FormControl>
               <FormControl fullWidth>
@@ -237,6 +325,10 @@ export function Accounts() {
         </Card>
       </Stack>
 
+      {/* Card dialogs */}
+      <AddCardDialog open={addCardOpen} onClose={() => setAddCardOpen(false)} />
+      {detailCard && <CardDetail card={detailCard} onClose={() => setDetailCard(null)} />}
+
       {/* Edit Account Dialog */}
       <Dialog open={Boolean(editingAccount)} onClose={() => setEditingAccount(null)}>
         <DialogTitle sx={{ fontWeight: 'bold' }}>Edit Account</DialogTitle>
@@ -258,10 +350,10 @@ export function Accounts() {
                 onChange={e => setEditAccType(e.target.value as AccountType)}
                 sx={{ borderRadius: '12px' }}
               >
-                <MenuItem value="bank">Bank Account</MenuItem>
-                <MenuItem value="cash">Cash Wallet</MenuItem>
-                <MenuItem value="card">Credit Card</MenuItem>
-                <MenuItem value="savings">Savings Account</MenuItem>
+                <MenuItem value="running">Running Bank</MenuItem>
+                <MenuItem value="savings">Savings Bank</MenuItem>
+                <MenuItem value="cash">Cash</MenuItem>
+                <MenuItem value="wallet">Wallet</MenuItem>
               </Select>
             </FormControl>
             <FormControl fullWidth>
