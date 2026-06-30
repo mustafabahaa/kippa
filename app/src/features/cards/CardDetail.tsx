@@ -224,7 +224,7 @@ export function CardDetail({ card, onClose }: { card: Card; onClose: () => void 
             pb: isCredit ? 4 : 3,
             position: 'relative',
             overflow: 'hidden',
-            minHeight: isHsbc ? (isCredit ? 260 : 200) : isCredit ? 240 : 200,
+            minHeight: isHsbc ? (isCredit ? 300 : 200) : isCredit ? 280 : 200,
             display: 'flex',
             flexDirection: 'column',
           }}
