@@ -5,10 +5,18 @@ declare module '@mui/material/styles' {
     chart: {
       colors: string[];
     };
+    creditCard: {
+      main: string;
+      light: string;
+    };
   }
   interface PaletteOptions {
     chart?: {
       colors?: string[];
+    };
+    creditCard?: {
+      main?: string;
+      light?: string;
     };
   }
 }

@@ -122,7 +122,6 @@ export function CardDetail({ card, onClose }: { card: Card; onClose: () => void 
     ? Math.min(100, Math.round((totalDebt / card.creditLimit) * 100))
     : null;
 
-  const PAGE_SIZE = 10;
   const [visibleCycleCount, setVisibleCycleCount] = useState(1);
 
   const loadNextCycle = () => {

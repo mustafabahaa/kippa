@@ -1,4 +1,4 @@
-import { Paper, BottomNavigation, BottomNavigationAction } from '@mui/material';
+import { Paper, BottomNavigation, BottomNavigationAction, useTheme, alpha } from '@mui/material';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import AddCircleIcon from '@mui/icons-material/AddCircle';
 import SyncAltIcon from '@mui/icons-material/SyncAlt';
@@ -15,6 +15,7 @@ const NAV_ITEMS = [
 export function BottomNav() {
   const navigate = useNavigate();
   const { pathname } = useLocation();
+  const theme = useTheme();
 
   const currentPath = pathname === '/' ? '/' : pathname;
 
@@ -30,8 +31,8 @@ export function BottomNav() {
         bgcolor: 'background.paper',
         borderRadius: '32px',
         border: '1px solid',
-        borderColor: 'divider',
-        boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.08)',
+        borderColor: alpha(theme.palette.primary.main, 0.25),
+        boxShadow: `0 0 16px ${alpha(theme.palette.primary.main, 0.15)}, 0 0 40px ${alpha(theme.palette.primary.main, 0.08)}`,
         padding: '6px',
         maxWidth: 'calc(100vw - 24px)',
         overflow: 'hidden',

@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { useSnackbar } from 'notistack';
 import {
   Box,
@@ -63,12 +63,19 @@ export function TransactionHistory() {
   const [selectedType, setSelectedType] = useState('all');
   const [selectedCycleId, setSelectedCycleId] = useState('active');
 
+  const handleSearch = (value: string) => { setSearchTerm(value); resetPage(); };
+  const handleCategoryChange = (value: string) => { setSelectedCategory(value); resetPage(); };
+  const handleAccountChange = (value: string) => { setSelectedAccount(value); resetPage(); };
+  const handleTypeChange = (value: string) => { setSelectedType(value); resetPage(); };
+  const handleCycleChange = (value: string) => { setSelectedCycleId(value); resetPage(); };
+
   // Edit Transaction Modal State
   const [editingTx, setEditingTx] = useState<FinanceTransaction | null>(null);
 
   // Pagination State
   const PAGE_SIZE = 25;
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const resetPage = () => setVisibleCount(PAGE_SIZE);
 
   // Queries & Mutations
   const { data: accounts = [], isLoading: accountsLoading } = useAccounts(householdId);
@@ -126,11 +133,6 @@ export function TransactionHistory() {
     return searchMatch && catMatch && accMatch && typeMatch;
   });
 
-  // Reset pagination when filters change
-  useEffect(() => {
-    setVisibleCount(PAGE_SIZE);
-  }, [searchTerm, selectedCategory, selectedAccount, selectedType, selectedCycleId]);
-
   const isLoading = accountsLoading || categoriesLoading || txsLoading || linesLoading;
 
   if (isLoading) {
@@ -164,7 +166,7 @@ export function TransactionHistory() {
             <TextField
               placeholder="Search description..."
               value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
+              onChange={e => handleSearch(e.target.value)}
               fullWidth
               slotProps={{
                 input: {
@@ -181,7 +183,7 @@ export function TransactionHistory() {
                 labelId="history-cycle-label"
                 value={selectedCycleId}
                 label="Budget Cycle"
-                onChange={e => setSelectedCycleId(e.target.value)}
+                onChange={e => handleCycleChange(e.target.value)}
                 sx={{ borderRadius: '12px' }}
               >
                 <MenuItem value="all">All Cycles</MenuItem>
@@ -199,7 +201,7 @@ export function TransactionHistory() {
                 labelId="history-account-label"
                 value={selectedAccount}
                 label="Account"
-                onChange={e => setSelectedAccount(e.target.value)}
+                onChange={e => handleAccountChange(e.target.value)}
                 sx={{ borderRadius: '12px' }}
               >
                 <MenuItem value="all">All Accounts</MenuItem>
@@ -216,7 +218,7 @@ export function TransactionHistory() {
                 labelId="history-category-label"
                 value={selectedCategory}
                 label="Category"
-                onChange={e => setSelectedCategory(e.target.value)}
+                onChange={e => handleCategoryChange(e.target.value)}
                 sx={{ borderRadius: '12px' }}
               >
                 <MenuItem value="all">All Categories</MenuItem>
@@ -233,7 +235,7 @@ export function TransactionHistory() {
                 labelId="history-type-label"
                 value={selectedType}
                 label="Type"
-                onChange={e => setSelectedType(e.target.value)}
+                onChange={e => handleTypeChange(e.target.value)}
                 sx={{ borderRadius: '12px' }}
               >
                 <MenuItem value="all">All Types</MenuItem>
