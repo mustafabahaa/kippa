@@ -112,7 +112,7 @@ export function Reconciliation() {
 
   const calculatedBalance = getCalculatedBalance();
   const actualBalance = parseFloat(actualBalanceInput) || 0;
-  const difference = selectedAccount ? actualBalance - calculatedBalance : 0;
+  const difference = selectedAccount ? Number((actualBalance - calculatedBalance).toFixed(2)) : 0;
 
   const handleResolve = async () => {
     if (!selectedAccount) return;

@@ -5,15 +5,11 @@ import {
   Container,
   Stack,
   Typography,
-  Button,
   TextField,
   Select,
   MenuItem,
   FormControl,
   InputLabel,
-  FormControlLabel,
-  Radio,
-  RadioGroup,
   Table,
   TableBody,
   TableCell,
@@ -23,17 +19,10 @@ import {
   Card,
   Skeleton,
   IconButton,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
-import WorkIcon from '@mui/icons-material/Work';
-import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
-import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
 
 import { 
   useAccounts, 
@@ -41,12 +30,14 @@ import {
   useTransactions, 
   useLedgerLines,
   useVoidTransactionMutation,
-  useUpdateTransactionMutation,
   useCycles,
   useActiveCycle
 } from '@/hooks/useFinance';
-import { FinanceTransaction, CurrencyCode } from '@/domain/financeTypes';
+import { FinanceTransaction } from '@/domain/financeTypes';
 import { useAppContext } from '@/hooks/useAppContext';
+import { TransactionIcon } from './components/TransactionIcon';
+import { TransactionTypeChip } from './components/TransactionTypeChip';
+import { EditTransactionDialog } from './components/EditTransactionDialog';
 
 /** Format an ISO timestamp as a short time, e.g. "3:45 PM". */
 function formatTime(iso: string): string {
@@ -63,6 +54,7 @@ function formatTime(iso: string): string {
 export function TransactionHistory() {
   const { enqueueSnackbar } = useSnackbar();
   const { householdId } = useAppContext();
+  
   // Filter States
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -72,12 +64,6 @@ export function TransactionHistory() {
 
   // Edit Transaction Modal State
   const [editingTx, setEditingTx] = useState<FinanceTransaction | null>(null);
-  const [editDesc, setEditDesc] = useState('');
-  const [editDate, setEditDate] = useState('');
-  const [editCatId, setEditCatId] = useState('');
-  const [editAccId, setEditAccId] = useState('');
-  const [editAmount, setEditAmount] = useState('0');
-  const [editType, setEditType] = useState<'income' | 'expense'>('expense');
 
   // Queries & Mutations
   const { data: accounts = [], isLoading: accountsLoading } = useAccounts(householdId);
@@ -95,80 +81,16 @@ export function TransactionHistory() {
   const { data: ledgerLines = [], isLoading: linesLoading } = useLedgerLines(householdId, queryCycleId);
 
   const voidTxMutation = useVoidTransactionMutation();
-  const updateTxMutation = useUpdateTransactionMutation();
-
-  const getTxIcon = (type: string) => {
-    if (type.toLowerCase() === 'income') {
-      return <WorkIcon sx={{ color: '#1E8E3E' }} />;
-    }
-    if (type.toLowerCase() === 'transfer' || type.toLowerCase() === 'conversion') {
-      return <SwapHorizIcon sx={{ color: 'primary.main' }} />;
-    }
-    return <ShoppingCartIcon sx={{ color: 'text.secondary' }} />;
-  };
-
-  const getTxIconBg = (type: string) => {
-    if (type.toLowerCase() === 'income') {
-      return 'rgba(30, 142, 62, 0.1)';
-    }
-    if (type.toLowerCase() === 'transfer' || type.toLowerCase() === 'conversion') {
-      return 'secondary.container';
-    }
-    return 'action.hover';
-  };
-
-  // Open Edit Modal
-  const handleOpenEdit = (tx: FinanceTransaction) => {
-    setEditingTx(tx);
-    setEditDesc(tx.description || '');
-    setEditDate(tx.date);
-    setEditCatId(tx.categoryId || '');
-    setEditType((tx.type === 'income' ? 'income' : 'expense') as 'income' | 'expense');
-
-    const txLines = ledgerLines.filter(l => l.transactionId === tx.id);
-    const firstLine = txLines.find(l => l.signedAmount !== 0) || txLines[0];
-    setEditAccId(firstLine ? firstLine.accountId : '');
-    setEditAmount(firstLine ? Math.abs(firstLine.signedAmount).toString() : '0');
-  };
-
-  // Save Transaction Changes
-  const handleSaveEdit = async () => {
-    if (!editingTx) return;
-
-    const amount = parseFloat(editAmount);
-    if (isNaN(amount) || amount <= 0) {
-      enqueueSnackbar('Please enter a valid amount.', { variant: 'warning' });
-      return;
-    }
-
-    const signedAmount = editType === 'income' ? amount : -amount;
-    const txLines = ledgerLines.filter(l => l.transactionId === editingTx.id);
-    const firstLine = txLines.find(l => l.signedAmount !== 0) || txLines[0];
-    const currency = firstLine ? firstLine.currency : 'EGP';
-
-    await updateTxMutation.mutateAsync({
-      householdId,
-      transactionId: editingTx.id,
-      transactionUpdates: {
-        description: editDesc,
-        date: editDate,
-        categoryId: editCatId || null,
-        type: editType
-      },
-      lineUpdates: {
-        accountId: editAccId,
-        signedAmount: signedAmount,
-        currency: currency as CurrencyCode
-      }
-    });
-
-    setEditingTx(null);
-  };
 
   // Void Transaction
   const handleVoid = async (txId: string) => {
-    if (window.confirm('Are you sure you want to void this transaction?')) {
-      await voidTxMutation.mutateAsync({ householdId, transactionId: txId });
+    if (window.confirm('Are you sure you want to void this transaction? This updates balances immediately.')) {
+      try {
+        await voidTxMutation.mutateAsync({ householdId, transactionId: txId });
+        enqueueSnackbar('Transaction voided successfully.', { variant: 'success' });
+      } catch (err: any) {
+        enqueueSnackbar(err.message || 'Failed to void transaction', { variant: 'error' });
+      }
     }
   };
 
@@ -178,18 +100,23 @@ export function TransactionHistory() {
     const searchMatch = (tx.description || '').toLowerCase().includes(searchTerm.toLowerCase());
     
     // 2. Category Filter
-    const catMatch = selectedCategory === 'all' || tx.categoryId === selectedCategory;
+    let catMatch = true;
+    if (selectedCategory !== 'all') {
+      catMatch = tx.categoryId === selectedCategory;
+    }
 
     // 3. Account Filter
-    const txLines = ledgerLines.filter(l => l.transactionId === tx.id);
-    const accMatch = selectedAccount === 'all' || txLines.some(l => l.accountId === selectedAccount);
+    let accMatch = true;
+    if (selectedAccount !== 'all') {
+      const txLines = ledgerLines.filter(l => l.transactionId === tx.id);
+      accMatch = txLines.some(l => l.accountId === selectedAccount);
+    }
 
     // 4. Type Filter
-    const typeMatch = 
-      selectedType === 'all' ||
-      (selectedType === 'income' && tx.type === 'income') ||
-      (selectedType === 'expense' && tx.type === 'expense') ||
-      (selectedType === 'transfer' && (tx.type === 'transfer' || tx.type === 'conversion'));
+    let typeMatch = true;
+    if (selectedType !== 'all') {
+      typeMatch = tx.type === selectedType;
+    }
 
     return searchMatch && catMatch && accMatch && typeMatch;
   });
@@ -198,13 +125,10 @@ export function TransactionHistory() {
 
   if (isLoading) {
     return (
-      <Container maxWidth="md" sx={{ py: 2 }}>
+      <Container maxWidth="lg" sx={{ py: 3 }}>
         <Stack spacing={3}>
-          <Box>
-            <Skeleton variant="text" width="40%" height={32} />
-            <Skeleton variant="text" width="20%" height={20} />
-          </Box>
-          <Skeleton variant="rectangular" width="100%" height={100} sx={{ borderRadius: '20px' }} />
+          <Skeleton variant="text" width="40%" height={32} />
+          <Skeleton variant="rectangular" width="100%" height={80} sx={{ borderRadius: '16px' }} />
           <Skeleton variant="rectangular" width="100%" height={300} sx={{ borderRadius: '20px' }} />
         </Stack>
       </Container>
@@ -212,146 +136,156 @@ export function TransactionHistory() {
   }
 
   return (
-    <Container maxWidth="md" sx={{ py: 2 }}>
+    <Container maxWidth="lg" sx={{ py: 3, px: { xs: 2, sm: 3 } }}>
       <Stack spacing={3}>
-        <Box>
-          <Typography variant="h2" sx={{ fontSize: '24px', fontWeight: 700, color: 'text.primary' }}>
-            Transaction History
-          </Typography>
-          <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '13px', mt: 0.5 }}>
-            View and manage all transaction histories and entries
-          </Typography>
+        <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={2}>
+          <Box>
+            <Typography variant="h1" sx={{ fontSize: '24px', fontWeight: 800, color: 'text.primary' }}>
+              Transaction History
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+              View, search, and manage your household transactions.
+            </Typography>
+          </Box>
         </Box>
 
-        {/* Filter Toolbar Card */}
-      
-            <Stack spacing={2}>
-              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
-                <TextField
-                  fullWidth
-                  placeholder="Search description, notes..."
-                  value={searchTerm}
-                  onChange={e => setSearchTerm(e.target.value)}
-                  slotProps={{
-                    input: {
-                      startAdornment: <SearchIcon sx={{ color: 'text.secondary', mr: 1, fontSize: '20px' }} />
-                    }
-                  }}
-                  sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
-                />
+        {/* Filters Card */}
+        <Card sx={{ p: 2, borderRadius: '16px', border: '1px solid', borderColor: 'divider', boxShadow: 'none' }}>
+          <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} alignItems="center">
+            {/* Search Input */}
+            <TextField
+              size="small"
+              placeholder="Search description..."
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              fullWidth
+              InputProps={{
+                startAdornment: <SearchIcon sx={{ color: 'text.secondary', mr: 1, fontSize: '20px' }} />,
+              }}
+              sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+            />
 
-                <FormControl sx={{ minWidth: { xs: '100%', sm: '200px' } }}>
-                  <InputLabel id="filter-cycle-label">Budget Cycle</InputLabel>
-                  <Select
-                    labelId="filter-cycle-label"
-                    value={selectedCycleId}
-                    label="Budget Cycle"
-                    onChange={e => setSelectedCycleId(e.target.value)}
-                    sx={{ borderRadius: '12px' }}
-                  >
-                    <MenuItem value="active">Active Cycle</MenuItem>
-                    <MenuItem value="all">All Cycles</MenuItem>
-                    {cycles.map(c => (
-                      <MenuItem key={c.id} value={c.id}>
-                        {c.name} {c.status === 'open' ? '(Active)' : ''}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Stack>
+            {/* Cycle Selector */}
+            <FormControl size="small" sx={{ minWidth: 150, width: { xs: '100%', md: 'auto' } }}>
+              <InputLabel id="history-cycle-label">Budget Cycle</InputLabel>
+              <Select
+                labelId="history-cycle-label"
+                value={selectedCycleId}
+                label="Budget Cycle"
+                onChange={e => setSelectedCycleId(e.target.value)}
+                sx={{ borderRadius: '12px' }}
+              >
+                <MenuItem value="all">All Cycles</MenuItem>
+                <MenuItem value="active">Active Cycle</MenuItem>
+                {cycles.filter(c => c.status !== 'open').map(c => (
+                  <MenuItem key={c.id} value={c.id}>{c.name} ({c.status})</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
 
-              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
-                {/* Category selector */}
-                <FormControl fullWidth>
-                  <InputLabel id="filter-cat-label">Category</InputLabel>
-                  <Select
-                    labelId="filter-cat-label"
-                    value={selectedCategory}
-                    label="Category"
-                    onChange={e => setSelectedCategory(e.target.value)}
-                    sx={{ borderRadius: '12px' }}
-                  >
-                    <MenuItem value="all">All Categories</MenuItem>
-                    {categories.map(c => (
-                      <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
+            {/* Account Selector */}
+            <FormControl size="small" sx={{ minWidth: 150, width: { xs: '100%', md: 'auto' } }}>
+              <InputLabel id="history-account-label">Account</InputLabel>
+              <Select
+                labelId="history-account-label"
+                value={selectedAccount}
+                label="Account"
+                onChange={e => setSelectedAccount(e.target.value)}
+                sx={{ borderRadius: '12px' }}
+              >
+                <MenuItem value="all">All Accounts</MenuItem>
+                {accounts.map(a => (
+                  <MenuItem key={a.id} value={a.id}>{a.name}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
 
-                {/* Account selector */}
-                <FormControl fullWidth>
-                  <InputLabel id="filter-acc-label">Account</InputLabel>
-                  <Select
-                    labelId="filter-acc-label"
-                    value={selectedAccount}
-                    label="Account"
-                    onChange={e => setSelectedAccount(e.target.value)}
-                    sx={{ borderRadius: '12px' }}
-                  >
-                    <MenuItem value="all">All Accounts</MenuItem>
-                    {accounts.map(a => (
-                      <MenuItem key={a.id} value={a.id}>{a.name}</MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
+            {/* Category Selector */}
+            <FormControl size="small" sx={{ minWidth: 150, width: { xs: '100%', md: 'auto' } }}>
+              <InputLabel id="history-category-label">Category</InputLabel>
+              <Select
+                labelId="history-category-label"
+                value={selectedCategory}
+                label="Category"
+                onChange={e => setSelectedCategory(e.target.value)}
+                sx={{ borderRadius: '12px' }}
+              >
+                <MenuItem value="all">All Categories</MenuItem>
+                {categories.map(c => (
+                  <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
 
-                {/* Type selector */}
-                <FormControl fullWidth>
-                  <InputLabel id="filter-type-label">Type</InputLabel>
-                  <Select
-                    labelId="filter-type-label"
-                    value={selectedType}
-                    label="Type"
-                    onChange={e => setSelectedType(e.target.value)}
-                    sx={{ borderRadius: '12px' }}
-                  >
-                    <MenuItem value="all">All Types</MenuItem>
-                    <MenuItem value="expense">Expense</MenuItem>
-                    <MenuItem value="income">Income</MenuItem>
-                    <MenuItem value="transfer">Transfers & Exchanges</MenuItem>
-                  </Select>
-                </FormControl>
-              </Stack>
-            </Stack>
-        
+            {/* Type Selector */}
+            <FormControl size="small" sx={{ minWidth: 120, width: { xs: '100%', md: 'auto' } }}>
+              <InputLabel id="history-type-label">Type</InputLabel>
+              <Select
+                labelId="history-type-label"
+                value={selectedType}
+                label="Type"
+                onChange={e => setSelectedType(e.target.value)}
+                sx={{ borderRadius: '12px' }}
+              >
+                <MenuItem value="all">All Types</MenuItem>
+                <MenuItem value="expense">Expense</MenuItem>
+                <MenuItem value="income">Income</MenuItem>
+                <MenuItem value="transfer">Transfer</MenuItem>
+                <MenuItem value="conversion">Exchange</MenuItem>
+                <MenuItem value="adjustment">Reconciliation</MenuItem>
+              </Select>
+            </FormControl>
+          </Stack>
+        </Card>
 
-        {/* Transactions Table */}
-        <TableContainer component={Card} sx={{ overflow: 'hidden' }}>
-          <Table aria-label="transactions activity table" sx={{ '& .MuiTableCell-head': { bgcolor: 'action.hover' } }}>
-            <TableHead>
+        {/* Table Container */}
+        <TableContainer component={Card} sx={{ borderRadius: '20px', border: '1px solid', borderColor: 'divider', boxShadow: 'none' }}>
+          <Table>
+            <TableHead sx={{ bgcolor: 'action.hover' }}>
               <TableRow>
-                <TableCell width="60px"></TableCell>
-                <TableCell>Date / Description</TableCell>
-                <TableCell>Details</TableCell>
-                <TableCell align="right">Amount</TableCell>
-                <TableCell align="center" width="100px">Actions</TableCell>
+                <TableCell align="center" sx={{ width: 60, fontWeight: 'bold' }}>Type</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>Transaction</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>Account Info</TableCell>
+                <TableCell align="right" sx={{ fontWeight: 'bold' }}>Amount</TableCell>
+                <TableCell align="center" sx={{ width: 120, fontWeight: 'bold' }}>Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {filteredTxs.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} align="center" sx={{ py: 6, color: 'text.secondary', fontStyle: 'italic' }}>
-                    No matching activities found.
+                  <TableCell colSpan={5} align="center" sx={{ py: 6 }}>
+                    <Typography variant="body2" color="text.secondary">
+                      No transactions match the selected filters.
+                    </Typography>
                   </TableCell>
                 </TableRow>
               ) : (
                 filteredTxs.map(tx => {
                   const cat = categories.find(c => c.id === tx.categoryId);
+                  
+                  // Find amount from ledgerLines
                   const txLines = ledgerLines.filter(l => l.transactionId === tx.id);
                   const firstLine = txLines.find(l => l.signedAmount !== 0) || txLines[0];
-                  
-                  const isIncome = tx.type === 'income' || (tx.type === 'adjustment' && (firstLine?.signedAmount || 0) >= 0);
-                  const amount = firstLine ? Math.abs(firstLine.signedAmount) : 0;
+                  const amount = firstLine ? Number(Math.abs(firstLine.signedAmount).toFixed(2)) : 0;
                   const currency = firstLine ? firstLine.currency : 'EGP';
+                  const isIncome = tx.type === 'income' || (tx.type === 'adjustment' && (firstLine?.signedAmount || 0) >= 0);
 
-                  // Build details string
-                  let detailsText: string;
-                  if (tx.type === 'transfer' || tx.type === 'conversion') {
+                  // Formatting details cell text based on transaction type
+                  let detailsText = '';
+                  if (tx.type === 'transfer') {
                     const fromL = txLines.find(l => l.signedAmount < 0);
                     const toL = txLines.find(l => l.signedAmount > 0);
                     const fromAcc = accounts.find(a => a.id === fromL?.accountId);
                     const toAcc = accounts.find(a => a.id === toL?.accountId);
                     detailsText = `${fromAcc?.name || 'Wallet'} ➔ ${toAcc?.name || 'Bank'}`;
+                  } else if (tx.type === 'conversion') {
+                    const fromL = txLines.find(l => l.signedAmount < 0);
+                    const toL = txLines.find(l => l.signedAmount > 0);
+                    const fromAcc = accounts.find(a => a.id === fromL?.accountId);
+                    const toAcc = accounts.find(a => a.id === toL?.accountId);
+                    const fromAmt = fromL ? Number(Math.abs(fromL.signedAmount).toFixed(2)) : 0;
+                    const toAmt = toL ? Number(Math.abs(toL.signedAmount).toFixed(2)) : 0;
+                    detailsText = `${fromAmt} ${fromL?.currency || 'EGP'} (${fromAcc?.name || 'Wallet'}) ➔ ${toAmt} ${toL?.currency || 'USD'} (${toAcc?.name || 'Bank'})`;
                   } else {
                     const acc = accounts.find(a => a.id === firstLine?.accountId);
                     detailsText = acc?.name || 'Account';
@@ -360,15 +294,22 @@ export function TransactionHistory() {
                   return (
                     <TableRow key={tx.id} hover sx={{ opacity: tx.status === 'voided' ? 0.5 : 1 }}>
                       <TableCell align="center">
-                        <Box sx={{ width: 36, height: 36, borderRadius: '50%', bgcolor: getTxIconBg(tx.type), display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                          {getTxIcon(tx.type)}
-                        </Box>
+                        <TransactionIcon type={tx.type} size={36} />
                       </TableCell>
                       <TableCell>
-                        <Typography variant="body1" sx={{ fontWeight: 'bold', fontSize: '13.5px' }}>
-                          {tx.type === 'transfer' ? 'Transfer' : tx.type === 'conversion' ? 'Currency Exchange' : (cat?.name || 'General')}
-                        </Typography>
-                        <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '11px' }}>
+                        <Stack direction="row" spacing={1} alignItems="center">
+                          <Typography variant="body1" sx={{ fontWeight: 'bold', fontSize: '13.5px' }}>
+                            {tx.type === 'transfer' 
+                              ? 'Transfer' 
+                              : tx.type === 'conversion' 
+                              ? 'Currency Exchange' 
+                              : tx.type === 'adjustment' 
+                              ? 'Reconciliation' 
+                              : (cat?.name || 'General')}
+                          </Typography>
+                          <TransactionTypeChip type={tx.type} />
+                        </Stack>
+                        <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '11px', mt: 0.25 }}>
                           {[tx.description, `${tx.date} • ${formatTime(tx.createdAt)}`].filter(Boolean).join(' • ')} {tx.status === 'voided' && '• (VOIDED)'}
                         </Typography>
                       </TableCell>
@@ -378,21 +319,25 @@ export function TransactionHistory() {
                         </Typography>
                       </TableCell>
                       <TableCell align="right">
-                        <Typography variant="body1" sx={{ fontWeight: 'bold', color: tx.status === 'voided' ? 'text.secondary' : isIncome ? '#1E8E3E' : 'text.primary' }}>
-                          {isIncome ? '+' : '-'}{amount.toLocaleString()} {currency}
-                        </Typography>
+                        {tx.type === 'conversion' ? (
+                          <Typography variant="body1" sx={{ fontWeight: 'bold', color: tx.status === 'voided' ? 'text.secondary' : 'text.primary' }}>
+                            Exchange Completed
+                          </Typography>
+                        ) : (
+                          <Typography variant="body1" sx={{ fontWeight: 'bold', color: tx.status === 'voided' ? 'text.secondary' : isIncome ? '#1E8E3E' : 'text.primary' }}>
+                            {isIncome ? '+' : '-'}{amount.toLocaleString()} {currency}
+                          </Typography>
+                        )}
                       </TableCell>
                       <TableCell align="center">
                         <Stack direction="row" spacing={0.5} justifyContent="center">
                           <IconButton 
-                            
-                            onClick={() => handleOpenEdit(tx)}
+                            onClick={() => setEditingTx(tx)}
                             disabled={tx.status === 'voided'}
                           >
                             <EditIcon sx={{ fontSize: '18px' }} />
                           </IconButton>
                           <IconButton 
-                            
                             color="error" 
                             onClick={() => handleVoid(tx.id)}
                             disabled={tx.status === 'voided'}
@@ -410,104 +355,12 @@ export function TransactionHistory() {
         </TableContainer>
       </Stack>
 
-      {/* Edit Transaction Dialog */}
-      <Dialog open={Boolean(editingTx)} onClose={() => setEditingTx(null)}>
-        <DialogTitle sx={{ fontWeight: 'bold' }}>Edit Transaction</DialogTitle>
-        <DialogContent sx={{ minWidth: 300, pt: 1 }}>
-          <Stack spacing={2} sx={{ mt: 1 }}>
-            <RadioGroup
-              row
-              value={editType}
-              onChange={e => setEditType(e.target.value as 'income' | 'expense')}
-            >
-              <FormControlLabel value="expense" control={<Radio />} label="Expense" />
-              <FormControlLabel value="income" control={<Radio />} label="Income" />
-            </RadioGroup>
-
-            <TextField
-              type="date"
-              
-              label="Date"
-              InputLabelProps={{ shrink: true }}
-              value={editDate}
-              onChange={e => setEditDate(e.target.value)}
-              sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
-            />
-
-            <TextField
-              
-              label="Description"
-              value={editDesc}
-              onChange={e => setEditDesc(e.target.value)}
-              sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
-            />
-
-            <TextField
-              type="number"
-              
-              label="Amount"
-              value={editAmount}
-              onChange={e => setEditAmount(e.target.value)}
-              sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
-            />
-
-            <FormControl fullWidth>
-              <InputLabel id="edit-tx-acc-label">Account</InputLabel>
-              <Select
-                labelId="edit-tx-acc-label"
-                value={editAccId}
-                label="Account"
-                onChange={e => setEditAccId(e.target.value)}
-                sx={{ borderRadius: '12px' }}
-              >
-                {accounts.map(a => (
-                  <MenuItem key={a.id} value={a.id}>{a.name}</MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-
-            {editType === 'expense' ? (
-              <FormControl fullWidth>
-                <InputLabel id="edit-tx-cat-label">Category</InputLabel>
-                <Select
-                  labelId="edit-tx-cat-label"
-                  value={editCatId}
-                  label="Category"
-                  onChange={e => setEditCatId(e.target.value)}
-                  sx={{ borderRadius: '12px' }}
-                >
-                  {categories.filter(c => c.type === 'expense').map(c => (
-                    <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            ) : (
-              <FormControl fullWidth>
-                <InputLabel id="edit-tx-cat-income-label">Income Category</InputLabel>
-                <Select
-                  labelId="edit-tx-cat-income-label"
-                  value={editCatId}
-                  label="Income Category"
-                  onChange={e => setEditCatId(e.target.value)}
-                  sx={{ borderRadius: '12px' }}
-                >
-                  {categories.filter(c => c.type === 'income').map(c => (
-                    <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            )}
-          </Stack>
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2.5 }}>
-          <Button onClick={() => setEditingTx(null)} color="inherit">
-            Cancel
-          </Button>
-          <Button onClick={handleSaveEdit} variant="contained" loading={updateTxMutation.isPending} sx={{ borderRadius: '12px', boxShadow: 'none' }}>
-            Save Changes
-          </Button>
-        </DialogActions>
-      </Dialog>
+      {/* Shared Edit Dialog */}
+      <EditTransactionDialog
+        open={Boolean(editingTx)}
+        transaction={editingTx}
+        onClose={() => setEditingTx(null)}
+      />
     </Container>
   );
 }

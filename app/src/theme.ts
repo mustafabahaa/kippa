@@ -274,10 +274,31 @@ export function createAppTheme(mode: 'light' | 'dark'): Theme {
     components: {
       MuiCssBaseline: {
         styleOverrides: `
+          html {
+            color-scheme: ${mode};
+          }
           input, textarea, select {
             font-size: 16px !important;
           }
         `,
+      },
+      // ── Paper & Dialog Backgrounds ──────────────────────────────────
+      MuiPaper: {
+        styleOverrides: {
+          root: {
+            backgroundImage: 'none !important',
+          },
+        },
+      },
+      MuiDialog: {
+        styleOverrides: {
+          paper: {
+            backgroundColor: t.surfacePure,
+            backgroundImage: 'none !important',
+            borderRadius: '20px',
+            border: `1px solid ${t.borderGray}`,
+          },
+        },
       },
       // ── AppBar ────────────────────────────────────────────────────────
       MuiAppBar: {
