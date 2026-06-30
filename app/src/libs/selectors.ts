@@ -249,7 +249,7 @@ export function computeDashboard(
   // Cash-Safe: Available EGP bank + cash - essential budget remaining - saving target
   let egpLiquidBalance = 0;
   accounts.forEach(acc => {
-    if (acc.currency === 'EGP' && (acc.type === 'bank' || acc.type === 'cash' || acc.type === 'wallet')) {
+    if (acc.currency === 'EGP' && (acc.type === 'running' || acc.type === 'cash' || acc.type === 'wallet')) {
       egpLiquidBalance += balancesMap[acc.id] || 0;
     }
   });
