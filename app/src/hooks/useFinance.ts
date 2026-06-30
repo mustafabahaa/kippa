@@ -459,6 +459,21 @@ export function useMarkAsPaidMutation() {
   });
 }
 
+export function usePayCardMutation() {
+  const queryClient = useQueryClient();
+  const auditUser = useAuditUser();
+  const notifyOfflineSuccess = useOfflineSuccessNotifier();
+  return useMutation({
+    mutationFn: (data: { householdId: string; card: Card; amount: number }) =>
+      cardsLib.payCard(data.householdId, data.card, data.amount, auditUser),
+    onSuccess: (_, variables) => {
+      notifyOfflineSuccess();
+      queryClient.invalidateQueries({ queryKey: ['transactions', variables.householdId] });
+      queryClient.invalidateQueries({ queryKey: ['ledgerLines', variables.householdId] });
+    },
+  });
+}
+
 export function useCreateCategoryMutation() {
   const queryClient = useQueryClient();
   const auditUser = useAuditUser();
