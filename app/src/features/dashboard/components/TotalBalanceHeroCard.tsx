@@ -66,10 +66,6 @@ export function TotalBalanceHeroCard() {
         p: 2.5, 
         borderRadius: '24px', 
         boxShadow: '0px 4px 12px rgba(0,0,0,0.08)', 
-        display: 'flex', 
-        flexDirection: 'column', 
-        justifyContent: 'space-between', 
-        minHeight: '180px', 
         position: 'relative', 
         overflow: 'hidden' 
       }}
@@ -107,7 +103,7 @@ export function TotalBalanceHeroCard() {
         />
       </Box>
 
-      <Box sx={{ zIndex: 1, position: 'relative', pointerEvents: 'none', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', flex: 1, minHeight: '130px' }}>
+      <Box sx={{ zIndex: 1, position: 'relative', pointerEvents: 'none' }}>
         <Box>
           <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)', fontSize: '11px', fontWeight: 'bold', letterSpacing: '1px', textTransform: 'uppercase' }}>
             <Box component="span" sx={{ pointerEvents: 'auto' }}>
@@ -121,30 +117,31 @@ export function TotalBalanceHeroCard() {
             EGP {data.totalEgpEquivalent.toLocaleString(undefined, { maximumFractionDigits: 0 })}
           </Typography>
           
-          <Stack direction="row" spacing={2} sx={{ mt: 1 }}>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5, mt: 1.5 }}>
             {accounts.map(acc => {
               const balanceObj = data.accountBalances.find(b => b.accountId === acc.id);
               const bal = balanceObj ? balanceObj.balance : 0;
               return (
-                <Typography key={acc.id} variant="body2" sx={{ color: 'rgba(255,255,255,0.85)', fontSize: '12px', fontWeight: 500 }}>
-                  {acc.currency === 'USD' ? '$' : ''}{bal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {acc.currency !== 'USD' ? acc.currency : ''}
-                </Typography>
+                <Box
+                  key={acc.id}
+                  sx={{
+                    bgcolor: 'rgba(255,255,255,0.22)',
+                    px: 2,
+                    py: 1.25,
+                    borderRadius: '12px',
+                  }}
+                >
+                  <Typography sx={{ color: 'rgba(255,255,255,0.75)', fontSize: '10px', fontWeight: 700, letterSpacing: '0.5px', textTransform: 'uppercase', lineHeight: 1 }}>
+                    {acc.name}
+                  </Typography>
+                  <Typography sx={{ color: '#fff', fontSize: '14px', fontWeight: 800, mt: 0.5, lineHeight: 1.3 }}>
+                    {acc.currency === 'USD' ? '$' : ''}{bal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {acc.currency !== 'USD' ? acc.currency : ''}
+                  </Typography>
+                </Box>
               );
             })}
-          </Stack>
-        </Box>
-
-        <Stack direction="row" spacing={1.5} sx={{ mt: 3 }}>
-          <Box sx={{ bgcolor: 'rgba(255,255,255,0.18)', px: 1.5, py: 0.5, borderRadius: '8px', display: 'flex', alignItems: 'center', gap: 0.5, pointerEvents: 'auto' }}>
-            <span className="material-symbols-outlined" style={{ fontSize: '16px', color: '#fff' }}>payments</span>
-            <Typography variant="body2" sx={{ color: '#fff', fontSize: '12px', fontWeight: 500 }}>
-              <InfoTooltip
-                label={<span style={{ color: '#fff' }}>Safe Daily: EGP {data.safeDailySpend.budgetSafe.toFixed(0)}</span>}
-                text={metricExplanations.safeDailyBudget}
-              />
-            </Typography>
           </Box>
-        </Stack>
+        </Box>
       </Box>
     </Box>
   );
