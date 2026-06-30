@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ledgerLib } from '@/libs/ledger';
 import { cyclesLib } from '@/libs/cycles';
 import { transactionsLib } from '@/libs/transactions';
+import { cardsLib, type CardInput } from '@/libs/cards';
 import { auditLogLib } from '@/libs/auditLog';
 import { authLib } from '@/libs/auth';
 import { currencyLib } from '@/libs/currency';
@@ -10,20 +11,22 @@ import { useAppContext } from '@/hooks/useAppContext';
 import { useSnackbar } from 'notistack';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { notifyOfflineAwareSuccess } from '@/lib/offlineToast';
-import { 
-  Account, 
-  Category, 
-  BudgetCycle, 
-  FinanceTransaction, 
-  LedgerLine, 
-  BudgetAllocation, 
-  ExpectedIncome, 
-  Reconciliation, 
-  NotificationSettings, 
+import {
+  Account,
+  Category,
+  BudgetCycle,
+  FinanceTransaction,
+  LedgerLine,
+  BudgetAllocation,
+  ExpectedIncome,
+  Reconciliation,
+  NotificationSettings,
   UserProfile,
   CurrencyCode,
   ConversionDetails,
-  AuditLogEntry
+  AuditLogEntry,
+  Card,
+  CardStatement,
 } from '@/domain/financeTypes';
 
 /**
@@ -131,6 +134,22 @@ export function useNotificationSettings(householdId: string, userId: string) {
     queryKey: ['notificationSettings', householdId, userId],
     queryFn: () => ledgerLib.getNotificationSettings(householdId, userId),
     enabled: !!householdId && !!userId,
+  });
+}
+
+export function useCards(householdId: string) {
+  return useQuery({
+    queryKey: ['cards', householdId],
+    queryFn: () => cardsLib.getCards(householdId),
+    enabled: !!householdId,
+  });
+}
+
+export function useCardStatements(householdId: string, cardId?: string) {
+  return useQuery({
+    queryKey: ['cardStatements', householdId, cardId],
+    queryFn: () => cardsLib.getStatements(householdId, cardId),
+    enabled: !!householdId,
   });
 }
 
@@ -376,6 +395,81 @@ export function useUpdateAccountMutation() {
     onSuccess: (_, variables) => {
       notifyOfflineSuccess();
       queryClient.invalidateQueries({ queryKey: ['accounts', variables.householdId] });
+    },
+  });
+}
+
+export function useCreateDebitCardMutation() {
+  const queryClient = useQueryClient();
+  const auditUser = useAuditUser();
+  const notifyOfflineSuccess = useOfflineSuccessNotifier();
+  return useMutation({
+    mutationFn: (data: { householdId: string; card: CardInput; accounts: Account[] }) =>
+      cardsLib.createDebitCard(data.householdId, data.card, data.accounts, auditUser),
+    onSuccess: (_, variables) => {
+      notifyOfflineSuccess();
+      queryClient.invalidateQueries({ queryKey: ['cards', variables.householdId] });
+      queryClient.invalidateQueries({ queryKey: ['accounts', variables.householdId] });
+    },
+  });
+}
+
+export function useCreateCreditCardMutation() {
+  const queryClient = useQueryClient();
+  const auditUser = useAuditUser();
+  const notifyOfflineSuccess = useOfflineSuccessNotifier();
+  return useMutation({
+    mutationFn: (data: { householdId: string; card: CardInput; accounts: Account[]; sortOrder: number }) =>
+      cardsLib.createCreditCard(data.householdId, data.card, data.accounts, data.sortOrder, auditUser),
+    onSuccess: (_, variables) => {
+      notifyOfflineSuccess();
+      queryClient.invalidateQueries({ queryKey: ['cards', variables.householdId] });
+      queryClient.invalidateQueries({ queryKey: ['accounts', variables.householdId] });
+    },
+  });
+}
+
+export function useUpdateCardMutation() {
+  const queryClient = useQueryClient();
+  const auditUser = useAuditUser();
+  const notifyOfflineSuccess = useOfflineSuccessNotifier();
+  return useMutation({
+    mutationFn: (data: { householdId: string; cardId: string; updates: Partial<Card>; accounts: Account[] }) =>
+      cardsLib.updateCard(data.householdId, data.cardId, data.updates, data.accounts, auditUser),
+    onSuccess: (_, variables) => {
+      notifyOfflineSuccess();
+      queryClient.invalidateQueries({ queryKey: ['cards', variables.householdId] });
+    },
+  });
+}
+
+export function useMarkAsPaidMutation() {
+  const queryClient = useQueryClient();
+  const auditUser = useAuditUser();
+  const notifyOfflineSuccess = useOfflineSuccessNotifier();
+  return useMutation({
+    mutationFn: (data: { householdId: string; statement: CardStatement; card: Card; amount: number }) =>
+      cardsLib.markAsPaid(data.householdId, data.statement, data.card, data.amount, auditUser),
+    onSuccess: (_, variables) => {
+      notifyOfflineSuccess();
+      queryClient.invalidateQueries({ queryKey: ['transactions', variables.householdId] });
+      queryClient.invalidateQueries({ queryKey: ['ledgerLines', variables.householdId] });
+      queryClient.invalidateQueries({ queryKey: ['cardStatements', variables.householdId] });
+    },
+  });
+}
+
+export function usePayCardMutation() {
+  const queryClient = useQueryClient();
+  const auditUser = useAuditUser();
+  const notifyOfflineSuccess = useOfflineSuccessNotifier();
+  return useMutation({
+    mutationFn: (data: { householdId: string; card: Card; amount: number }) =>
+      cardsLib.payCard(data.householdId, data.card, data.amount, auditUser),
+    onSuccess: (_, variables) => {
+      notifyOfflineSuccess();
+      queryClient.invalidateQueries({ queryKey: ['transactions', variables.householdId] });
+      queryClient.invalidateQueries({ queryKey: ['ledgerLines', variables.householdId] });
     },
   });
 }

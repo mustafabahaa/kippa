@@ -48,6 +48,7 @@ export interface NotificationSettings {
   householdId: string;
   dailyReminderEnabled: boolean;
   categoryWarningEnabled: boolean;
+  cardExpiryWarningEnabled: boolean;
 }
 
 export interface FcmToken {
@@ -61,6 +62,24 @@ export interface FcmToken {
 export interface NotificationState {
   lastReminderSentDate?: string; // YYYY-MM-DD in user's tz
   lastWarningFor?: Record<string, string>; // `${categoryId}_${cycleId}` -> YYYY-MM-DD
+}
+
+export interface Card {
+  id: string;
+  householdId: string;
+  kind: 'debit' | 'credit';
+  parentAccountId: string;
+  name: string;
+  last4?: string;
+  network?: string;
+  expiryMonth?: number;
+  expiryYear?: number;
+  isActive: boolean;
+  createdAt: string;
+  creditLimit?: number;
+  paymentAccountId?: string;
+  currency: string;
+  notifiedCardExpiryAt?: string; // YYYY-MM-DD sentinel so expiry push fires once
 }
 
 export interface UserProfile {

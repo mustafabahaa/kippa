@@ -1,28 +1,38 @@
+import { useState } from 'react';
 import { Box, Card, CardContent, Skeleton, Stack, Typography } from '@mui/material';
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
 import SavingsIcon from '@mui/icons-material/Savings';
 import PaymentsIcon from '@mui/icons-material/Payments';
-import { 
-  useAccounts, 
-  useTransactions, 
-  useLedgerLines 
+import CreditCardIcon from '@mui/icons-material/CreditCard';
+import {
+  useAccounts,
+  useTransactions,
+  useLedgerLines,
+  useCards,
 } from '@/hooks/useFinance';
 import { useAppContext } from '@/hooks/useAppContext';
+import { CardTile } from '@/features/cards/CardTile';
+import { CardDetail } from '@/features/cards/CardDetail';
+import { computeCardSummary } from '@/libs/cardSelectors';
+import type { Card as CardType } from '@/domain/financeTypes';
 
 export function MyAccountsCard() {
   const { householdId } = useAppContext();
   const { data: accounts, isLoading: accountsLoading } = useAccounts(householdId);
   const { data: transactions, isLoading: txsLoading } = useTransactions(householdId);
   const { data: ledgerLines, isLoading: linesLoading } = useLedgerLines(householdId);
+  const { data: cards = [] } = useCards(householdId);
+  const [detailCard, setDetailCard] = useState<CardType | null>(null);
 
   const getAccountIcon = (type: string) => {
-    if (type.toLowerCase() === 'savings' || type.toLowerCase() === 'savings bank') {
-      return <SavingsIcon sx={{ color: 'text.secondary' }} />;
+    switch (type) {
+      case 'savings': return <SavingsIcon sx={{ color: 'text.secondary' }} />;
+      case 'cash':
+      case 'wallet': return <PaymentsIcon sx={{ color: 'text.secondary' }} />;
+      case 'credit': return <CreditCardIcon sx={{ color: 'text.secondary' }} />;
+      case 'running':
+      default: return <AccountBalanceIcon sx={{ color: 'text.secondary' }} />;
     }
-    if (type.toLowerCase() === 'cash' || type.toLowerCase() === 'wallet') {
-      return <PaymentsIcon sx={{ color: 'text.secondary' }} />;
-    }
-    return <AccountBalanceIcon sx={{ color: 'text.secondary' }} />;
   };
 
   const isLoading = accountsLoading || txsLoading || linesLoading;
@@ -51,18 +61,24 @@ export function MyAccountsCard() {
     );
   }
 
-  // Calculate local balances
+  // Calculate balances.
   const activeTxIds = new Set(transactions.filter(t => t.status === 'posted').map(t => t.id));
   const activeLines = ledgerLines.filter(line => activeTxIds.has(line.transactionId));
   const balancesMap: Record<string, number> = {};
-  accounts.forEach(acc => {
-    balancesMap[acc.id] = 0;
-  });
+  accounts.forEach(acc => { balancesMap[acc.id] = 0; });
   activeLines.forEach(line => {
     if (balancesMap[line.accountId] !== undefined) {
       balancesMap[line.accountId] += line.signedAmount;
     }
   });
+
+  // Credit accounts are debt buckets — hide from the accounts list.
+  const visibleAccounts = accounts.filter(a => a.type !== 'credit');
+
+  const summaryFor = (card: CardType) => {
+    const creditBalance = balancesMap[card.parentAccountId] ?? 0;
+    return computeCardSummary(card, creditBalance, null, []);
+  };
 
   return (
     <Stack spacing={1.5}>
@@ -73,38 +89,47 @@ export function MyAccountsCard() {
       </Box>
 
       <Stack spacing={1}>
-        {accounts.map(acc => {
+        {visibleAccounts.map(acc => {
           const bal = balancesMap[acc.id] || 0;
+          const linked = cards.filter(c =>
+            c.parentAccountId === acc.id || c.paymentAccountId === acc.id);
           return (
-            <Box 
-              key={acc.id} 
-              sx={{ 
-                p: 2, 
-                border: '1px solid', 
-                borderColor: 'divider', 
-                borderRadius: '20px', 
-                bgcolor: 'background.paper', 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'space-between' 
-              }}
-            >
-              <Box display="flex" alignItems="center" gap={2}>
-                <Box sx={{ width: 44, height: 44, borderRadius: '12px', bgcolor: 'action.hover', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  {getAccountIcon(acc.type)}
+            <Box key={acc.id} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: '20px', bgcolor: 'background.paper', overflow: 'hidden' }}>
+              <Box sx={{ p: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Box display="flex" alignItems="center" gap={2}>
+                  <Box sx={{ width: 44, height: 44, borderRadius: '12px', bgcolor: 'action.hover', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    {getAccountIcon(acc.type)}
+                  </Box>
+                  <Box>
+                    <Typography variant="body1" sx={{ fontWeight: 'bold', color: 'text.primary' }}>{acc.name}</Typography>
+                    <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '11px' }}>{acc.type}</Typography>
+                  </Box>
                 </Box>
-                <Box>
-                  <Typography variant="body1" sx={{ fontWeight: 'bold', color: 'text.primary' }}>{acc.name}</Typography>
-                  <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '11px' }}>{acc.type}</Typography>
-                </Box>
+                <Typography variant="body1" sx={{ fontWeight: 'bold', color: acc.currency === 'USD' ? 'primary.main' : 'text.primary' }}>
+                  {acc.currency === 'USD' ? '$' : ''}{bal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {acc.currency !== 'USD' ? acc.currency : ''}
+                </Typography>
               </Box>
-              <Typography variant="body1" sx={{ fontWeight: 'bold', color: acc.currency === 'USD' ? 'primary.main' : 'text.primary' }}>
-                {acc.currency === 'USD' ? '$' : ''}{bal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {acc.currency !== 'USD' ? acc.currency : ''}
-              </Typography>
+
+              {linked.length > 0 && (
+                <Box sx={{ px: 2, pb: 2 }}>
+                  <Stack direction="row" spacing={1.5} sx={{ flexWrap: 'wrap', gap: 1.5 }}>
+                    {linked.map(card => (
+                      <CardTile
+                        key={card.id}
+                        card={card}
+                        summary={summaryFor(card)}
+                        onOpenDetail={() => setDetailCard(card)}
+                      />
+                    ))}
+                  </Stack>
+                </Box>
+              )}
             </Box>
           );
         })}
       </Stack>
+
+      {detailCard && <CardDetail card={detailCard} onClose={() => setDetailCard(null)} />}
     </Stack>
   );
 }
