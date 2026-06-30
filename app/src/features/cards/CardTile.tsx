@@ -14,12 +14,14 @@ const NETWORK_GRADIENTS: Record<string, string> = {
 export function CardTile({
   card,
   summary,
+  parentAccountBalance,
   onFreeze,
   onEdit,
   onOpenDetail,
 }: {
   card: Card;
   summary?: CardSummary;
+  parentAccountBalance?: number;
   onFreeze?: () => void;
   onEdit?: () => void;
   onOpenDetail?: () => void;
@@ -27,6 +29,13 @@ export function CardTile({
   const gradient = NETWORK_GRADIENTS[card.network ?? 'other'];
   const utilizationPct = summary?.utilization != null ? Math.round(summary.utilization * 100) : null;
   const barColor = utilizationPct == null ? 'primary' : utilizationPct > 95 ? 'error' : utilizationPct > 80 ? 'warning' : 'success';
+  const isCredit = card.kind === 'credit';
+
+  const formattedBalance = parentAccountBalance != null ? (
+    card.currency === 'USD'
+      ? `$${parentAccountBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+      : `${parentAccountBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${card.currency}`
+  ) : null;
 
   return (
     <Box
@@ -35,78 +44,137 @@ export function CardTile({
         background: card.isActive ? gradient : undefined,
         filter: card.isActive ? 'none' : 'grayscale(0.7) brightness(0.7)',
         borderRadius: '20px',
-        p: 2,
-        color: '#fff',
+        p: 2.5,
+        color: card.isActive ? '#fff' : 'text.primary',
         cursor: onOpenDetail ? 'pointer' : 'default',
-        minHeight: 160,
+        minHeight: isCredit ? 200 : 190,
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'space-between',
         position: 'relative',
-        border: '1px solid rgba(255,255,255,0.1)',
+        border: card.isActive ? '1px solid rgba(255,255,255,0.1)' : '1px solid',
+        borderColor: card.isActive ? undefined : 'divider',
+        flex: '1 1 280px',
+        maxWidth: { xs: '100%', sm: 340 },
+        boxSizing: 'border-box',
+        transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+        '&:hover': onOpenDetail ? {
+          transform: 'translateY(-4px)',
+          boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
+        } : {},
       }}
     >
       {!card.isActive && (
         <Chip
-          icon={<AcUnitIcon sx={{ fontSize: 14, color: '#fff' }} />}
+          icon={<AcUnitIcon sx={{ fontSize: 14 }} />}
           label="Frozen"
           size="small"
-          sx={{ position: 'absolute', top: 8, right: 8, bgcolor: 'rgba(255,255,255,0.2)', color: '#fff' }}
+          sx={{ position: 'absolute', top: 12, right: 12, bgcolor: 'rgba(255,255,255,0.2)', color: '#fff' }}
         />
       )}
       <Box>
-        <Typography sx={{ fontWeight: 700, fontSize: 16 }}>{card.name}</Typography>
-        <Typography sx={{ fontSize: 13, opacity: 0.85 }}>{card.kind.toUpperCase()}</Typography>
+        <Typography sx={{ fontWeight: 700, fontSize: '18px', lineHeight: 1.2, color: 'inherit' }}>
+          {card.name}
+        </Typography>
+        <Typography sx={{ fontSize: '11px', fontWeight: 600, mt: 0.5, letterSpacing: '0.5px', color: 'inherit', opacity: 0.8 }}>
+          {card.kind.toUpperCase()} • {card.network?.toUpperCase() ?? 'OTHER'}
+        </Typography>
       </Box>
-      <Stack direction="row" justifyContent="space-between" alignItems="flex-end">
-        <Box>
-          <Typography sx={{ fontSize: 18, fontWeight: 700, letterSpacing: 2 }}>
-            •••• {card.last4 ?? '----'}
+
+      <Box sx={{ mt: isCredit ? 2 : 3, mb: isCredit ? 2 : 1 }}>
+        <Typography sx={{ fontSize: '20px', fontWeight: 700, letterSpacing: '3px', fontFamily: 'monospace', color: 'inherit' }}>
+          •••• •••• •••• {card.last4 ?? '----'}
+        </Typography>
+        {card.expiryMonth && card.expiryYear && (
+          <Typography sx={{ fontSize: '11px', mt: 0.5, color: 'inherit', opacity: 0.75 }}>
+            Expires {String(card.expiryMonth).padStart(2, '0')}/{String(card.expiryYear).slice(-2)}
           </Typography>
-          <Typography sx={{ fontSize: 11, opacity: 0.8 }}>
-            {card.network?.toUpperCase() ?? ''}
-            {card.expiryMonth && card.expiryYear
-              ? `  ${String(card.expiryMonth).padStart(2, '0')}/${String(card.expiryYear).slice(-2)}`
-              : ''}
-          </Typography>
-        </Box>
-        <Stack alignItems="flex-end" spacing={0.5}>
-          {summary && (
-            <>
-              {card.kind === 'credit' && (
-                <Typography sx={{ fontSize: 12, opacity: 0.85 }}>
-                  {`EGP ${summary.currentDebt.toLocaleString()} owed`}
+        )}
+      </Box>
+
+      <Box sx={{ mt: 'auto' }}>
+        {isCredit && summary && (
+          <Stack spacing={0.5} sx={{ mb: (onFreeze || onEdit) ? 1.5 : 0 }}>
+            <Typography sx={{ fontSize: '26px', fontWeight: 800, letterSpacing: '-0.5px', lineHeight: 1.2, color: 'inherit' }}>
+              {card.currency === 'USD' ? '$' : ''}{summary.currentDebt.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {card.currency !== 'USD' ? card.currency : ''}
+            </Typography>
+            <Stack direction="row" justifyContent="space-between" alignItems="center">
+              <Typography sx={{ fontSize: '10px', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '1px', color: 'inherit', opacity: 0.65 }}>
+                Outstanding Balance
+              </Typography>
+              {summary.nextDueDate && (
+                <Typography sx={{ fontSize: '10px', fontWeight: 600, color: 'inherit', opacity: 0.8 }}>
+                  Due {summary.nextDueDate}
                 </Typography>
               )}
-              {card.kind === 'credit' && utilizationPct != null && (
+            </Stack>
+            {utilizationPct != null && (
+              <Box sx={{ mt: 0.5 }}>
                 <LinearProgress
                   color={barColor as any}
                   variant="determinate"
                   value={Math.min(100, utilizationPct)}
-                  sx={{ width: 120, bgcolor: 'rgba(255,255,255,0.2)' }}
+                  sx={{
+                    height: 6,
+                    borderRadius: 3,
+                    bgcolor: 'rgba(255,255,255,0.2)',
+                  }}
                 />
-              )}
-              {summary.nextDueDate && (
-                <Typography sx={{ fontSize: 10, opacity: 0.8 }}>Due {summary.nextDueDate}</Typography>
-              )}
-            </>
-          )}
-        </Stack>
-      </Stack>
-      {(onFreeze || onEdit) && (
-        <Stack direction="row" spacing={1} sx={{ mt: 1 }} onClick={e => e.stopPropagation()}>
-          {onFreeze && (
-            <IconButton size="small" onClick={onFreeze} sx={{ color: '#fff' }}>
-              <AcUnitIcon sx={{ fontSize: 18 }} />
-            </IconButton>
-          )}
-          {onEdit && (
-            <IconButton size="small" onClick={onEdit} sx={{ color: '#fff' }}>
-              <EditIcon sx={{ fontSize: 18 }} />
-            </IconButton>
-          )}
-        </Stack>
-      )}
+                <Stack direction="row" justifyContent="space-between" sx={{ mt: 0.5 }}>
+                  <Typography sx={{ fontSize: '9px', color: 'inherit', opacity: 0.6 }}>
+                    {utilizationPct}% utilized
+                  </Typography>
+                  {card.creditLimit != null && (
+                    <Typography sx={{ fontSize: '9px', color: 'inherit', opacity: 0.6 }}>
+                      Limit: {card.currency} {card.creditLimit.toLocaleString()}
+                    </Typography>
+                  )}
+                </Stack>
+              </Box>
+            )}
+          </Stack>
+        )}
+
+        {!isCredit && formattedBalance && (
+          <Stack spacing={0.25} sx={{ mb: (onFreeze || onEdit) ? 1.5 : 0 }}>
+            <Typography sx={{ fontSize: '26px', fontWeight: 800, letterSpacing: '-0.5px', lineHeight: 1.2, color: 'inherit' }}>
+              {formattedBalance}
+            </Typography>
+            <Typography sx={{ fontSize: '10px', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '1px', color: 'inherit', opacity: 0.65 }}>
+              Available Balance
+            </Typography>
+          </Stack>
+        )}
+
+        {(onFreeze || onEdit) && (
+          <Stack direction="row" spacing={1} justifyContent="flex-end" onClick={e => e.stopPropagation()}>
+            {onFreeze && (
+              <IconButton
+                size="small"
+                onClick={onFreeze}
+                sx={{
+                  bgcolor: 'rgba(255,255,255,0.1)',
+                  '&:hover': { bgcolor: 'rgba(255,255,255,0.2)' }
+                }}
+              >
+                <AcUnitIcon sx={{ fontSize: 16 }} />
+              </IconButton>
+            )}
+            {onEdit && (
+              <IconButton
+                size="small"
+                onClick={onEdit}
+                sx={{
+                  bgcolor: 'rgba(255,255,255,0.1)',
+                  '&:hover': { bgcolor: 'rgba(255,255,255,0.2)' }
+                }}
+              >
+                <EditIcon sx={{ fontSize: 16 }} />
+              </IconButton>
+            )}
+          </Stack>
+        )}
+      </Box>
     </Box>
   );
 }

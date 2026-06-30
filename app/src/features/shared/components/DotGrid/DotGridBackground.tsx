@@ -17,7 +17,12 @@ export default function DotGridBackground() {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
-  const baseColor = theme.palette.divider;
+  // Light mode: divider (#ecedf0) is too close to the off-white background
+  // (#f4f5f7) — use text.secondary (#4a5160) so dots are perceptible.
+  // Dark mode: divider (#23273a) has good contrast on dark surfaces.
+  const baseColor = isDark
+    ? theme.palette.divider
+    : (theme.palette.text.secondary as string);
   const activeColor = theme.palette.primary.main as string;
 
   return (
@@ -32,7 +37,7 @@ export default function DotGridBackground() {
         pointerEvents: 'none',
         // Fade the grid toward the edges so it reads as ambient texture, not a
         // flat fill. Keeps the top (under AppBar) slightly cleaner.
-        opacity: isDark ? 0.5 : 0.35,
+        opacity: isDark ? 0.5 : 0.18,
       }}
     >
       <DotGrid
