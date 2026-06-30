@@ -33,7 +33,7 @@ export const RecentActivityItem: React.FC<RecentActivityItemProps> = ({
     try {
       const date = new Date(isoString);
       return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    } catch (e) {
+    } catch {
       return '';
     }
   };
@@ -111,7 +111,7 @@ export const RecentActivityItem: React.FC<RecentActivityItemProps> = ({
             <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', fontSize: '10px', mt: 0.25, opacity: 0.8 }}>
               {tx.date} • {formatTime(tx.createdAt)}
             </Typography>
-            <Typography variant="body1" sx={{ fontWeight: 'bold', color: isIncome ? '#1E8E3E' : '#D93025', fontSize: '13.5px', whiteSpace: 'nowrap', mt: 0.5 }}>
+            <Typography variant="body1" sx={{ fontWeight: 'bold', color: isIncome ? 'success.main' : 'error.main', fontSize: '13.5px', whiteSpace: 'nowrap', mt: 0.5 }}>
               {isIncome ? '+' : '-'}{amount.toLocaleString()} {currency}
             </Typography>
           </Box>
@@ -132,7 +132,7 @@ export const RecentActivityItem: React.FC<RecentActivityItemProps> = ({
             <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', fontSize: '10px', mt: 0.25, opacity: 0.8 }}>
               {tx.date} • {formatTime(tx.createdAt)}
             </Typography>
-            <Typography variant="body1" sx={{ fontWeight: 'bold', color: '#1E8E3E', fontSize: '13.5px', whiteSpace: 'nowrap', mt: 0.5 }}>
+            <Typography variant="body1" sx={{ fontWeight: 'bold', color: 'success.main', fontSize: '13.5px', whiteSpace: 'nowrap', mt: 0.5 }}>
               +{amount.toLocaleString()} {currency}
             </Typography>
           </Box>

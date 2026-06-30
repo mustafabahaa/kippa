@@ -28,21 +28,6 @@ export function InfoTooltip({ text, label, iconSize = 14, sx }: InfoTooltipProps
       enterTouchDelay={0}
       leaveTouchDelay={4000}
       placement="top"
-      slotProps={{
-        tooltip: {
-          sx: {
-            bgcolor: 'rgba(33, 33, 33, 0.95)',
-            color: '#fff',
-            px: 1.5,
-            py: 1,
-            borderRadius: 1.5,
-            boxShadow: '0px 4px 16px rgba(0,0,0,0.25)',
-          },
-        },
-        arrow: {
-          sx: { color: 'rgba(33, 33, 33, 0.95)' },
-        },
-      }}
     >
       <Box
         component="span"

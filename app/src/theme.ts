@@ -1,5 +1,18 @@
 import { createTheme, alpha, type Theme } from '@mui/material/styles';
 
+declare module '@mui/material/styles' {
+  interface Palette {
+    chart: {
+      colors: string[];
+    };
+  }
+  interface PaletteOptions {
+    chart?: {
+      colors?: string[];
+    };
+  }
+}
+
 /**
  * Design tokens sourced from the Stitch "Workspace Productivity System"
  * design system (asset ID: d778924a54e1410caa5f4bc7d35e5bca).
@@ -28,7 +41,7 @@ export const designTokens = {
     tertiaryContainer: '#616980',
 
     // Semantic status
-    success: '#1E8E3E',
+    success: '#0f766e',
     warning: '#F9AB00',
     error:   '#ba1a1a',
     onError: '#ffffff',
@@ -213,6 +226,18 @@ export function createAppTheme(mode: 'light' | 'dark'): Theme {
       action: {
         hover: t.surfaceOffWhite,
       },
+      chart: {
+        colors: [
+          c.primaryContainer,
+          c.secondary,
+          c.tertiary,
+          c.primaryFixedDim,
+          c.tertiaryContainer,
+          c.secondaryContainer,
+          c.warning,
+          c.error,
+        ],
+      },
     },
 
     typography: {
@@ -279,6 +304,12 @@ export function createAppTheme(mode: 'light' | 'dark'): Theme {
           }
           input, textarea, select {
             font-size: 16px !important;
+          }
+          .notistack-MuiContent-success {
+            background-color: ${c.primaryContainer} !important;
+          }
+          .SnackbarItem-variantSuccess {
+            background-color: ${c.primaryContainer} !important;
           }
         `,
       },
@@ -551,8 +582,16 @@ export function createAppTheme(mode: 'light' | 'dark'): Theme {
         styleOverrides: {
           tooltip: {
             fontFamily,
-            fontSize: '12px',
+            fontSize: '12.5px',
             fontWeight: 500,
+            backgroundColor: 'rgba(33, 33, 33, 0.95)',
+            color: '#ffffff',
+            padding: '8px 12px',
+            borderRadius: '6px',
+            boxShadow: '0px 4px 16px rgba(0,0,0,0.25)',
+          },
+          arrow: {
+            color: 'rgba(33, 33, 33, 0.95)',
           },
         },
       },

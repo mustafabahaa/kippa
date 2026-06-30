@@ -10,6 +10,8 @@ import {
   Skeleton,
   Stack,
   Typography,
+  useTheme,
+  alpha
 } from '@mui/material';
 
 // Action icons
@@ -39,38 +41,38 @@ interface ActionVisual {
 }
 
 /** Maps an audit action to its icon and color treatment. */
-function getActionVisual(action: AuditAction): ActionVisual {
+function getActionVisual(action: AuditAction, theme: any): ActionVisual {
   switch (action) {
     case 'transaction_created':
       // Could be income/expense/conversion — neutral-ish blue handled per-entry in summary
-      return { Icon: ShoppingCartIcon, color: '#0f766e', bg: 'rgba(15, 118, 110, 0.10)' };
+      return { Icon: ShoppingCartIcon, color: theme.palette.primary.main, bg: alpha(theme.palette.primary.main, 0.10) };
     case 'transaction_updated':
-      return { Icon: EditIcon, color: '#495167', bg: 'rgba(73, 81, 103, 0.10)' };
+      return { Icon: EditIcon, color: theme.palette.text.secondary, bg: alpha(theme.palette.text.secondary, 0.10) };
     case 'transaction_voided':
-      return { Icon: CancelIcon, color: '#ba1a1a', bg: 'rgba(186, 26, 26, 0.10)' };
+      return { Icon: CancelIcon, color: theme.palette.error.main, bg: alpha(theme.palette.error.main, 0.10) };
     case 'account_created':
     case 'account_updated':
-      return { Icon: AccountBalanceIcon, color: '#0f766e', bg: 'rgba(15, 118, 110, 0.10)' };
+      return { Icon: AccountBalanceIcon, color: theme.palette.primary.main, bg: alpha(theme.palette.primary.main, 0.10) };
     case 'category_created':
     case 'category_updated':
-      return { Icon: CategoryIcon, color: '#495167', bg: 'rgba(73, 81, 103, 0.10)' };
+      return { Icon: CategoryIcon, color: theme.palette.text.secondary, bg: alpha(theme.palette.text.secondary, 0.10) };
     case 'cycle_created':
     case 'cycle_status_changed':
-      return { Icon: CalendarMonthIcon, color: '#0f766e', bg: 'rgba(15, 118, 110, 0.10)' };
+      return { Icon: CalendarMonthIcon, color: theme.palette.primary.main, bg: alpha(theme.palette.primary.main, 0.10) };
     case 'allocation_saved':
     case 'allocations_batch_saved':
-      return { Icon: PieChartIcon, color: '#495167', bg: 'rgba(73, 81, 103, 0.10)' };
+      return { Icon: PieChartIcon, color: theme.palette.text.secondary, bg: alpha(theme.palette.text.secondary, 0.10) };
     case 'expected_income_saved':
-      return { Icon: SavingsIcon, color: '#1E8E3E', bg: 'rgba(30, 142, 62, 0.10)' };
+      return { Icon: SavingsIcon, color: theme.palette.success.main, bg: alpha(theme.palette.success.main, 0.10) };
     case 'reconciliation_created':
-      return { Icon: SyncAltIcon, color: '#0f766e', bg: 'rgba(15, 118, 110, 0.10)' };
+      return { Icon: SyncAltIcon, color: theme.palette.primary.main, bg: alpha(theme.palette.primary.main, 0.10) };
     case 'notification_settings_updated':
-      return { Icon: NotificationsActiveIcon, color: '#495167', bg: 'rgba(73, 81, 103, 0.10)' };
+      return { Icon: NotificationsActiveIcon, color: theme.palette.text.secondary, bg: alpha(theme.palette.text.secondary, 0.10) };
     case 'household_joined':
     case 'household_left':
-      return { Icon: HomeIcon, color: '#0f766e', bg: 'rgba(15, 118, 110, 0.10)' };
+      return { Icon: HomeIcon, color: theme.palette.primary.main, bg: alpha(theme.palette.primary.main, 0.10) };
     default:
-      return { Icon: HistoryIcon, color: '#495167', bg: 'action.hover' };
+      return { Icon: HistoryIcon, color: theme.palette.text.secondary, bg: theme.palette.action.hover };
   }
 }
 
@@ -123,7 +125,8 @@ function initials(name: string): string {
 }
 
 function AuditLogRow({ entry }: { entry: AuditLogEntry }) {
-  const { Icon, color, bg } = getActionVisual(entry.action);
+  const theme = useTheme();
+  const { Icon, color, bg } = getActionVisual(entry.action, theme);
   return (
     <ListItem
       disableGutters

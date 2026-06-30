@@ -16,17 +16,7 @@ export function BudgetBreakdownCard() {
   const { householdId } = useAppContext();
   const theme = useTheme();
 
-  const chartColors = [
-    theme.palette.primary.main,
-    theme.palette.success.main,
-    theme.palette.warning.main,
-    theme.palette.error.main,
-    theme.palette.secondary?.main || '#006a61',
-    '#0f766e',
-    '#80d5cb',
-    '#495167',
-    '#616980',
-  ];
+  const chartColors = theme.palette.chart.colors;
   const { data: transactions } = useTransactions(householdId);
   const { data: ledgerLines } = useLedgerLines(householdId);
   const { data: categories = [] } = useCategories(householdId);
@@ -79,7 +69,7 @@ export function BudgetBreakdownCard() {
     : [{ id: 0, value: 1, label: 'No spending yet' }];
   const displayPieColors = hasSpending
     ? chartColors
-    : [theme.palette.action.disabledBackground || '#e0e0e0'];
+    : [theme.palette.action.disabledBackground || theme.palette.divider];
 
   return (
     <Card 

@@ -17,7 +17,7 @@ export default function DotGridBackground() {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
-  const baseColor = isDark ? '#3a3b42' : '#d8d9de';
+  const baseColor = theme.palette.divider;
   const activeColor = theme.palette.primary.main as string;
 
   return (

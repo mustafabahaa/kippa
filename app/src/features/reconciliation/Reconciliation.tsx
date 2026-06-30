@@ -8,7 +8,9 @@ import {
   Button,
   TextField,
   Chip,
-  Skeleton
+  Skeleton,
+  useTheme,
+  alpha
 } from '@mui/material';
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
 import SavingsIcon from '@mui/icons-material/Savings';
@@ -32,6 +34,7 @@ type AdjustmentReason = 'forgotten expense' | 'bank fee' | 'exchange difference'
 export function Reconciliation() {
   const { enqueueSnackbar } = useSnackbar();
   const { householdId, userProfile } = useAppContext();
+  const theme = useTheme();
 
   const getAccountIcon = (type: string, size = '14px') => {
     const iconStyle = { fontSize: size, color: 'inherit' };
@@ -262,7 +265,7 @@ export function Reconciliation() {
                 <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '11px', fontWeight: 500 }}>
                   Difference
                 </Typography>
-                <Typography variant="body1" sx={{ fontWeight: 'bold', mt: 0.5, fontSize: '15px', color: Math.abs(difference) < 0.01 ? 'text.primary' : difference > 0 ? '#1E8E3E' : 'error.main' }}>
+                <Typography variant="body1" sx={{ fontWeight: 'bold', mt: 0.5, fontSize: '15px', color: Math.abs(difference) < 0.01 ? 'text.primary' : difference > 0 ? 'success.main' : 'error.main' }}>
                   {difference > 0 ? '+' : ''}{difference.toLocaleString(undefined, { minimumFractionDigits: 2 })} {selectedAccount.currency}
                 </Typography>
               </Box>
@@ -359,13 +362,13 @@ export function Reconciliation() {
                 const diffColor = isDiffZero 
                   ? 'text.secondary' 
                   : item.difference > 0 
-                    ? '#1E8E3E' 
-                    : '#D93025';
+                    ? theme.palette.success.main 
+                    : theme.palette.error.main;
                 const diffBg = isDiffZero 
                   ? 'rgba(73, 81, 103, 0.08)' 
                   : item.difference > 0 
-                    ? 'rgba(30, 142, 62, 0.08)' 
-                    : 'rgba(217, 48, 37, 0.08)';
+                    ? alpha(theme.palette.success.main, 0.08) 
+                    : alpha(theme.palette.error.main, 0.08);
 
                 // Safe parsing of YYYY-MM-DD to avoid local timezone offset shift
                 const formatDateString = (dateStr: string) => {
