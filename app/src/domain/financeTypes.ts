@@ -1,6 +1,6 @@
 export type CurrencyCode = 'EGP' | 'USD';
 
-export type AccountType = 'cash' | 'bank' | 'wallet' | 'card' | 'adjustment';
+export type AccountType = 'running' | 'savings' | 'cash' | 'wallet' | 'credit' | 'adjustment';
 
 export type TransactionType = 'income' | 'expense' | 'transfer' | 'conversion' | 'adjustment';
 
@@ -36,6 +36,43 @@ export type Account = {
   currency: CurrencyCode;
   isActive: boolean;
   sortOrder: number;
+  createdAt: string;
+};
+
+export type CardKind = 'debit' | 'credit';
+export type CardNetwork = 'visa' | 'mastercard' | 'meeza' | 'other';
+export type CardStatementStatus = 'pending' | 'partial' | 'paid';
+
+export type Card = {
+  id: string;
+  householdId: string;
+  kind: CardKind;
+  parentAccountId: string;          // REQUIRED. debit → running/savings account; credit → credit account.
+  name: string;
+  last4?: string;
+  network?: CardNetwork;
+  expiryMonth?: number;             // 1–12
+  expiryYear?: number;              // e.g. 2027
+  isActive: boolean;
+  createdAt: string;
+  // Credit only:
+  creditLimit?: number;
+  paymentAccountId?: string;        // default source account for "Mark as paid"
+  currency: CurrencyCode;           // must equal paymentAccountId's currency
+};
+
+export type CardStatement = {
+  id: string;
+  householdId: string;
+  cardId: string;
+  creditAccountId: string;          // denormalized for query
+  statementDate: string;            // ISO date user entered (cycle close)
+  statementBalance: number;         // user-entered bill amount
+  minPayment?: number;
+  dueDate: string;                  // ISO date user entered
+  status: CardStatementStatus;
+  paymentTransactionId?: string;    // linked transfer(s) — see markAsPaid
+  notifiedCardExpiryAt?: string;    // sentinel so expiry push fires once
   createdAt: string;
 };
 
@@ -152,6 +189,7 @@ export type NotificationSettings = {
   householdId: string;
   dailyReminderEnabled: boolean;
   categoryWarningEnabled: boolean;
+  cardExpiryWarningEnabled: boolean;
 };
 
 export type AuditAction =
