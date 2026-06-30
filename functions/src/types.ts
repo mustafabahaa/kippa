@@ -32,7 +32,6 @@ export interface BudgetCycle {
   startDate: string;
   endDate?: string;
   status: 'planned' | 'open' | 'closed';
-  notifiedCycleClose?: boolean;
 }
 
 export interface BudgetAllocation {
@@ -48,11 +47,7 @@ export interface NotificationSettings {
   userId: string;
   householdId: string;
   dailyReminderEnabled: boolean;
-  dailyReminderTime: string; // "HH:MM"
-  timezone: string; // IANA tz, e.g. "Africa/Cairo"
   categoryWarningEnabled: boolean;
-  savingWarningEnabled: boolean;
-  cycleCloseReminderEnabled: boolean;
 }
 
 export interface FcmToken {

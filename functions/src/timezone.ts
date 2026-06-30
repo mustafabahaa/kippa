@@ -17,39 +17,3 @@ export function todayInTz(nowUtc: Date, timezone: string): string {
     return nowUtc.toISOString().slice(0, 10);
   }
 }
-
-/**
- * Returns the HH:MM (24h) for a given UTC instant in the given timezone.
- */
-export function hhmmInTz(nowUtc: Date, timezone: string): string {
-  try {
-    const formatter = new Intl.DateTimeFormat('en-GB', {
-      timeZone: timezone,
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false,
-    });
-    return formatter.format(nowUtc);
-  } catch {
-    // Invalid timezone — return UTC time
-    return nowUtc.toISOString().slice(11, 16);
-  }
-}
-
-/**
- * Returns true if the user's local time (in their timezone) matches their
- * configured reminder time for the given UTC instant.
- */
-export function shouldRemindNow(
-  nowUtc: Date,
-  reminderTime: string, // "HH:MM"
-  timezone: string,
-): boolean {
-  // Validate timezone first — shouldRemindNow should return false for invalid tz
-  try {
-    Intl.DateTimeFormat('en-GB', { timeZone: timezone });
-  } catch {
-    return false;
-  }
-  return hhmmInTz(nowUtc, timezone) === reminderTime;
-}
