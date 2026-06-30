@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useSnackbar } from 'notistack';
 import {
   Box,
@@ -19,6 +19,7 @@ import {
   Card,
   Skeleton,
   IconButton,
+  Button,
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import EditIcon from '@mui/icons-material/Edit';
@@ -64,6 +65,10 @@ export function TransactionHistory() {
 
   // Edit Transaction Modal State
   const [editingTx, setEditingTx] = useState<FinanceTransaction | null>(null);
+
+  // Pagination State
+  const PAGE_SIZE = 25;
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
   // Queries & Mutations
   const { data: accounts = [], isLoading: accountsLoading } = useAccounts(householdId);
@@ -120,6 +125,11 @@ export function TransactionHistory() {
 
     return searchMatch && catMatch && accMatch && typeMatch;
   });
+
+  // Reset pagination when filters change
+  useEffect(() => {
+    setVisibleCount(PAGE_SIZE);
+  }, [searchTerm, selectedCategory, selectedAccount, selectedType, selectedCycleId]);
 
   const isLoading = accountsLoading || categoriesLoading || txsLoading || linesLoading;
 
@@ -258,7 +268,7 @@ export function TransactionHistory() {
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredTxs.map(tx => {
+                filteredTxs.slice(0, visibleCount).map(tx => {
                   const cat = categories.find(c => c.id === tx.categoryId);
                   
                   // Find amount from ledgerLines
@@ -352,6 +362,17 @@ export function TransactionHistory() {
               )}
             </TableBody>
           </Table>
+          {visibleCount < filteredTxs.length && (
+            <Box sx={{ textAlign: 'center', py: 1.5 }}>
+              <Button
+                size="small"
+                onClick={() => setVisibleCount(prev => prev + PAGE_SIZE)}
+                sx={{ fontWeight: 600, fontSize: '12px', color: 'primary.main', textTransform: 'none', px: 2 }}
+              >
+                Load more ({filteredTxs.length - visibleCount} remaining)
+              </Button>
+            </Box>
+          )}
         </TableContainer>
       </Stack>
 
