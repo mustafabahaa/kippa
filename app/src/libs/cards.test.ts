@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { validateCardInput, computeStatementStatus } from './cards';
-import type { Card, CardStatement, Account } from '@/domain/financeTypes';
+import type { CardStatement, Account } from '@/domain/financeTypes';
 
 const runningAcc = (id: string, currency: 'EGP' | 'USD' = 'EGP'): Account => ({
   id, householdId: 'h', name: id, type: 'running', currency, isActive: true, sortOrder: 1, createdAt: '',
