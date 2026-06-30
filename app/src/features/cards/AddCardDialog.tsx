@@ -7,29 +7,30 @@ import { useAppContext } from '@/hooks/useAppContext';
 import { useAccounts, useCreateDebitCardMutation, useCreateCreditCardMutation } from '@/hooks/useFinance';
 import type { CardKind, CardNetwork, CurrencyCode } from '@/domain/financeTypes';
 
-export function AddCardDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+export function AddCardDialog({ open, preselectAccountId, onClose }: { open: boolean; preselectAccountId: string | null; onClose: () => void }) {
+  return open ? (
+    <AddCardDialogInner key={preselectAccountId ?? 'none'} preselectAccountId={preselectAccountId} onClose={onClose} />
+  ) : null;
+}
+
+function AddCardDialogInner({ preselectAccountId, onClose }: { preselectAccountId: string | null; onClose: () => void }) {
   const { householdId } = useAppContext();
   const { data: accounts = [] } = useAccounts(householdId);
   const createDebit = useCreateDebitCardMutation();
   const createCredit = useCreateCreditCardMutation();
 
+  const preAcc = preselectAccountId ? accounts.find(a => a.id === preselectAccountId) : undefined;
   const [kind, setKind] = useState<CardKind>('debit');
   const [name, setName] = useState('');
   const [last4, setLast4] = useState('');
   const [network, setNetwork] = useState<CardNetwork>('visa');
   const [expiryMonth, setExpiryMonth] = useState<number | ''>('');
   const [expiryYear, setExpiryYear] = useState<number | ''>('');
-  const [currency, setCurrency] = useState<CurrencyCode>('EGP');
-  const [parentAccountId, setParentAccountId] = useState('');
+  const [currency, setCurrency] = useState<CurrencyCode>(preAcc?.currency ?? 'EGP');
+  const [parentAccountId, setParentAccountId] = useState(preselectAccountId ?? '');
   const [creditLimit, setCreditLimit] = useState<number | ''>('');
-  const [paymentAccountId, setPaymentAccountId] = useState('');
+  const [paymentAccountId, setPaymentAccountId] = useState(preselectAccountId ?? '');
   const [error, setError] = useState('');
-
-  const reset = () => {
-    setKind('debit'); setName(''); setLast4(''); setNetwork('visa');
-    setExpiryMonth(''); setExpiryYear(''); setCurrency('EGP'); setParentAccountId('');
-    setCreditLimit(''); setPaymentAccountId(''); setError('');
-  };
 
   const depositAccounts = accounts.filter(a => a.type === 'running' || a.type === 'savings');
 
@@ -54,7 +55,6 @@ export function AddCardDialog({ open, onClose }: { open: boolean; onClose: () =>
           accounts, sortOrder: nextOrder,
         });
       }
-      reset();
       onClose();
     } catch (e: any) {
       setError(e.message ?? String(e));
@@ -62,7 +62,7 @@ export function AddCardDialog({ open, onClose }: { open: boolean; onClose: () =>
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+    <Dialog open onClose={onClose} maxWidth="sm" fullWidth>
       <DialogTitle>Add a card</DialogTitle>
       <DialogContent>
         <Stack spacing={2} sx={{ mt: 1 }}>
