@@ -221,10 +221,9 @@ export function CardDetail({ card, onClose }: { card: Card; onClose: () => void 
             background: card.isActive ? (isHsbc ? hsbcBackground : gradient) : undefined,
             filter: card.isActive ? 'none' : 'grayscale(0.7) brightness(0.7)',
             p: 2.5,
-            pb: isCredit ? 4 : 3,
+            pb: 3,
             position: 'relative',
             overflow: 'hidden',
-            minHeight: isHsbc ? (isCredit ? 300 : 200) : isCredit ? 280 : 200,
             display: 'flex',
             flexDirection: 'column',
           }}
