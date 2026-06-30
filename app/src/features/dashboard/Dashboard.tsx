@@ -19,7 +19,7 @@ export function Dashboard() {
               left (8/12) = Hero, BudgetPulse, MyAccounts
               right (4/12) = RecentActivity, BudgetBreakdown */}
         <Grid container spacing={3}>
-          <Grid size={{ xs: 12, md: 7 }}>
+          <Grid size={{ xs: 12, md: 8 }}>
             <Stack spacing={3}>
               <Box>
                 <Typography variant="h3" sx={{ fontSize: '18px', fontWeight: 700, color: 'text.primary', mb: 1.5 }}>
@@ -28,13 +28,13 @@ export function Dashboard() {
                 <TotalBalanceHeroCard />
               </Box>
               <BudgetPulseCard />
-              <MyAccountsCard />
+              <BudgetBreakdownCard />
             </Stack>
           </Grid>
-          <Grid size={{ xs: 12, md: 5 }}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <Stack spacing={3}>
+              <MyAccountsCard />
               <RecentActivityCard />
-              <BudgetBreakdownCard />
             </Stack>
           </Grid>
         </Grid>
