@@ -70,26 +70,28 @@ export function CardTile({
               : ''}
           </Typography>
         </Box>
-        <Box>
+        <Stack alignItems="flex-end" spacing={0.5}>
           {summary && (
             <>
-              <Typography sx={{ fontSize: 12, opacity: 0.85 }}>
-                {card.kind === 'credit' ? `EGP ${summary.currentDebt.toLocaleString()} owed` : ''}
-              </Typography>
+              {card.kind === 'credit' && (
+                <Typography sx={{ fontSize: 12, opacity: 0.85 }}>
+                  {`EGP ${summary.currentDebt.toLocaleString()} owed`}
+                </Typography>
+              )}
               {card.kind === 'credit' && utilizationPct != null && (
                 <LinearProgress
                   color={barColor as any}
                   variant="determinate"
                   value={Math.min(100, utilizationPct)}
-                  sx={{ width: 120, mt: 0.5, bgcolor: 'rgba(255,255,255,0.2)' }}
+                  sx={{ width: 120, bgcolor: 'rgba(255,255,255,0.2)' }}
                 />
               )}
               {summary.nextDueDate && (
-                <Typography sx={{ fontSize: 10, opacity: 0.8, mt: 0.5 }}>Due {summary.nextDueDate}</Typography>
+                <Typography sx={{ fontSize: 10, opacity: 0.8 }}>Due {summary.nextDueDate}</Typography>
               )}
             </>
           )}
-        </Box>
+        </Stack>
       </Stack>
       {(onFreeze || onEdit) && (
         <Stack direction="row" spacing={1} sx={{ mt: 1 }} onClick={e => e.stopPropagation()}>
