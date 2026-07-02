@@ -2,7 +2,7 @@ import { Box, Typography, Stack } from '@mui/material';
 import type { CardKind } from '@/domain/financeTypes';
 
 /**
- * Hand-built SVG emblems + wordmarks for the Egyptian banks.
+ * Hand-built SVG emblems + wordmarks for the built-in bank presets.
  * Each renders an inline SVG emblem (white / light tones on dark card backgrounds)
  * next to a bold uppercase wordmark. Emblems are ~24x24 viewBox geometric marks.
  */
