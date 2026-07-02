@@ -34,7 +34,7 @@ export function AppShell() {
   return (
     <>
       <title>{pageTitle ? `Kippa — ${pageTitle}` : 'Kippa'}</title>
-      <Box sx={{ position: 'relative', zIndex: 1, minHeight: '100vh', pb: { xs: 10, md: 12 }, bgcolor: 'transparent', overflowX: 'hidden' }}>
+      <Box sx={{ position: 'relative', zIndex: 1, minHeight: '100vh', pb: { xs: 10, md: 12 }, bgcolor: 'transparent', overflowX: 'clip' }}>
         <OfflineBanner isOnline={isOnline} />
         <TopBar
           logoSrc={logoSrc}
