@@ -24,7 +24,7 @@ import {
   useCycles,
 } from '@/hooks/useFinance';
 import type { Card, TransactionType } from '@/domain/financeTypes';
-import { HsbcLionBackground, HsbcLogo, CardChip, CardBrandLogo, ContactlessIcon } from './HsbcCardDesign';
+import { CardBackground, BankLogo, NetworkLogo, TierLabel, CardChip, ContactlessIcon } from './CardDesign';
 import { TransactionIcon } from '@/features/transactions/components/TransactionIcon';
 import { EmptyLayout } from '@/features/shared/components/EmptyLayout';
 
@@ -50,13 +50,6 @@ function formatDateRange(startDate: string, endDate?: string | null): string {
   };
   return `${fmt(startDate)} – ${endDate ? fmt(endDate) : 'Present'}`;
 }
-
-const NETWORK_GRADIENTS: Record<string, string> = {
-  visa: 'linear-gradient(135deg, #1a1f71 0%, #2d35a8 100%)',
-  mastercard: 'linear-gradient(135deg, #0f766e 0%, #005c55 100%)',
-  meeza: 'linear-gradient(135deg, #b45309 0%, #92400e 100%)',
-  other: 'linear-gradient(135deg, #495167 0%, #2d3344 100%)',
-};
 
 export function CardDetail({ card, onClose }: { card: Card; onClose: () => void }) {
   const { householdId } = useAppContext();
@@ -183,16 +176,9 @@ export function CardDetail({ card, onClose }: { card: Card; onClose: () => void 
     }
   };
 
-  const gradient = NETWORK_GRADIENTS[card.network ?? 'other'];
   const formattedBalance = card.currency === 'USD'
     ? `$${Math.abs(accountBalance).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
     : `${Math.abs(accountBalance).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${card.currency}`;
-
-  const isHsbc = card.name.toLowerCase().includes('hsbc');
-  const hsbcKind = card.kind;
-  const hsbcBackground = hsbcKind === 'credit'
-    ? 'linear-gradient(135deg, #7A0A10 0%, #4A0205 60%, #200002 100%)'
-    : 'linear-gradient(135deg, #0e1635 0%, #1b213b 30%, #12141a 60%, #0b0c10 100%)';
 
   return (
     <>
@@ -212,309 +198,171 @@ export function CardDetail({ card, onClose }: { card: Card; onClose: () => void 
         }}
       >
         {/* ── Card Header ──────────────────────────────────────────── */}
-        <Box
-          sx={{
-            background: card.isActive ? (isHsbc ? hsbcBackground : gradient) : undefined,
-            filter: card.isActive ? 'none' : 'grayscale(0.7) brightness(0.7)',
-            p: 2.5,
-            pb: 3,
-            position: 'relative',
-            display: 'flex',
-            flexDirection: 'column',
-          }}
-        >
-          {isHsbc ? (
-            <>
-              <Box sx={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none', zIndex: 0 }}>
-                <HsbcLionBackground kind={hsbcKind} />
-              </Box>
+        <CardBackground bankId={card.bankId} kind={card.kind} tierId={card.tierId}>
+          <Box
+            sx={{
+              filter: card.isActive ? 'none' : 'grayscale(0.7) brightness(0.7)',
+              p: 2.5,
+              pb: 3,
+              position: 'relative',
+              display: 'flex',
+              flexDirection: 'column',
+              minHeight: 1,
+            }}
+          >
+            {/* Close button */}
+            <IconButton
+              onClick={onClose}
+              size="small"
+              sx={{
+                position: 'absolute',
+                top: 8,
+                right: 8,
+                color: '#fff',
+                bgcolor: 'rgba(255,255,255,0.15)',
+                '&:hover': { bgcolor: 'rgba(255,255,255,0.25)' },
+                zIndex: 2,
+              }}
+            >
+              <CloseIcon sx={{ fontSize: 18 }} />
+            </IconButton>
 
-              {/* Close button */}
-              <IconButton
-                onClick={onClose}
-                size="small"
-                sx={{
-                  position: 'absolute',
-                  top: 8,
-                  right: 8,
-                  color: '#fff',
-                  bgcolor: 'rgba(255,255,255,0.15)',
-                  '&:hover': { bgcolor: 'rgba(255,255,255,0.25)' },
-                  zIndex: 2,
-                }}
-              >
-                <CloseIcon sx={{ fontSize: 18 }} />
-              </IconButton>
+            <Box sx={{ position: 'relative', zIndex: 1, flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+              {/* Top Row: Bank Logo */}
+              <Stack direction="row" justifyContent="flex-end" sx={{ mr: 4 }}>
+                <BankLogo bankId={card.bankId} kind={card.kind} />
+              </Stack>
 
-              <Box sx={{ position: 'relative', zIndex: 1, flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                {/* Top Row: HSBC Logo */}
-                <Stack direction="row" justifyContent="flex-end" sx={{ mr: 4 }}>
-                  <HsbcLogo kind={hsbcKind} />
-                </Stack>
-
-                {/* Middle Row: Chip + Contactless waves & tier */}
-                <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mt: 1 }}>
-                  <CardChip />
-                  <Stack direction="row" alignItems="center" spacing={1.5}>
-                    {hsbcKind === 'credit' && (
-                      <Typography
-                        sx={{
-                          fontFamily: '"Outfit", "Inter", sans-serif',
-                          fontSize: '12px',
-                          fontWeight: 300,
-                          color: '#ffffff',
-                          opacity: 0.6,
-                          letterSpacing: '0.5px',
-                        }}
-                      >
-                        platinum
-                      </Typography>
-                    )}
-                    {hsbcKind === 'debit' && (
-                      <Typography
-                        sx={{
-                          fontFamily: '"Inter", sans-serif',
-                          fontSize: '14px',
-                          fontWeight: 700,
-                          color: '#ffffff',
-                          mr: 0.5,
-                        }}
-                      >
-                        Debit
-                      </Typography>
-                    )}
-                    <ContactlessIcon />
-                  </Stack>
-                </Stack>
-
-                {/* Card Number and Expiry */}
-                <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mt: 0.5, mb: 0.5 }}>
-                  <Typography
-                    sx={{
-                      fontSize: '16px',
-                      fontWeight: 700,
-                      letterSpacing: '2px',
-                      fontFamily: 'monospace',
-                      color: '#ffffff',
-                      textShadow: '0 1px 2px rgba(0,0,0,0.3)',
-                    }}
-                  >
-                    •••• •••• {card.last4 ?? '----'}
-                  </Typography>
-
-                  {card.expiryMonth && card.expiryYear && (
-                    <Stack direction="row" alignItems="center" spacing={0.5} sx={{ opacity: 0.9 }}>
-                      <Typography sx={{ fontSize: '7px', fontWeight: 700, color: '#ffffff', opacity: 0.7, mr: 0.25 }}>
-                        THRU ▶
-                      </Typography>
-                      <Typography
-                        sx={{
-                          fontSize: '12px',
-                          fontWeight: 600,
-                          fontFamily: 'monospace',
-                          color: '#ffffff',
-                        }}
-                      >
-                        {String(card.expiryMonth).padStart(2, '0')}/{String(card.expiryYear).slice(-2)}
-                      </Typography>
-                    </Stack>
-                  )}
-                </Stack>
-
-                {/* Bottom Row: Balance, Actions, and Brand Logo */}
-                <Box sx={{ mt: 1 }}>
-                  <Stack direction="row" justifyContent="space-between" alignItems="flex-end">
-                    <Box sx={{ flex: 1, mr: 2 }}>
-                      {isCredit ? (
-                        <>
-                          <Typography sx={{ fontSize: '28px', fontWeight: 800, color: '#ffffff', letterSpacing: '-0.5px', lineHeight: 1.2 }}>
-                            EGP {totalDebt.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                          </Typography>
-                          <Typography sx={{ fontSize: '10px', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '1px', color: 'rgba(255,255,255,0.7)', mt: 0.5 }}>
-                            Outstanding Balance
-                          </Typography>
-                          {utilizationPct != null && (
-                            <Box sx={{ mt: 1.5 }}>
-                              <LinearProgress
-                                variant="determinate"
-                                value={utilizationPct}
-                                sx={{
-                                  height: 6,
-                                  borderRadius: 3,
-                                  bgcolor: 'rgba(255,255,255,0.25)',
-                                  '& .MuiLinearProgress-bar': {
-                                    bgcolor: utilizationPct > 95 ? '#ef4444' : utilizationPct > 80 ? '#F9AB00' : '#4ade80',
-                                    borderRadius: 3,
-                                  },
-                                }}
-                              />
-                              <Stack direction="row" justifyContent="space-between" sx={{ mt: 0.5 }}>
-                                <Typography sx={{ fontSize: '9px', color: 'rgba(255,255,255,0.7)' }}>
-                                  {utilizationPct}% utilized
-                                </Typography>
-                                {card.creditLimit != null && (
-                                  <Typography sx={{ fontSize: '9px', color: 'rgba(255,255,255,0.7)' }}>
-                                    Limit: {card.currency} {card.creditLimit.toLocaleString()}
-                                  </Typography>
-                                )}
-                              </Stack>
-                            </Box>
-                          )}
-                          <Button
-                            variant="contained"
-                            disabled={totalDebt <= 0}
-                            onClick={openPayAll}
-                            sx={{
-                              mt: 2,
-                              bgcolor: 'rgba(255,255,255,0.2)',
-                              color: '#ffffff',
-                              fontWeight: 600,
-                              px: 3,
-                              borderRadius: '12px',
-                              '&:hover': { bgcolor: 'rgba(255,255,255,0.3)' },
-                              '&.Mui-disabled': { bgcolor: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.4)' },
-                            }}
-                          >
-                            Pay all
-                          </Button>
-                        </>
-                      ) : (
-                        <>
-                          <Typography sx={{ fontSize: '28px', fontWeight: 800, color: '#ffffff', letterSpacing: '-0.5px', lineHeight: 1.2 }}>
-                            {formattedBalance}
-                          </Typography>
-                          <Typography sx={{ fontSize: '10px', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '1px', color: 'rgba(255,255,255,0.7)', mt: 0.5 }}>
-                            Available Balance
-                          </Typography>
-                        </>
-                      )}
-                    </Box>
-                    <CardBrandLogo kind={hsbcKind} />
-                  </Stack>
-                </Box>
-              </Box>
-            </>
-          ) : (
-            <>
-              {/* Subtle dot pattern overlay */}
-              <Box
-                aria-hidden
-                sx={{
-                  position: 'absolute',
-                  inset: 0,
-                  opacity: 0.06,
-                  backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.8) 1px, transparent 1px)',
-                  backgroundSize: '16px 16px',
-                  pointerEvents: 'none',
-                }}
-              />
-
-              {/* Close button */}
-              <IconButton
-                onClick={onClose}
-                size="small"
-                sx={{
-                  position: 'absolute',
-                  top: 8,
-                  right: 8,
-                  color: '#fff',
-                  bgcolor: 'rgba(255,255,255,0.15)',
-                  '&:hover': { bgcolor: 'rgba(255,255,255,0.25)' },
-                  zIndex: 2,
-                }}
-              >
-                <CloseIcon sx={{ fontSize: 18 }} />
-              </IconButton>
-
-              <Box sx={{ position: 'relative', zIndex: 1, flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
-                <Typography sx={{ fontSize: '11px', fontWeight: 600, letterSpacing: '0.5px', color: 'rgba(255,255,255,0.7)', textTransform: 'uppercase' }}>
-                  {card.kind.toUpperCase()} &bull; {card.network?.toUpperCase() ?? 'OTHER'}
-                </Typography>
-                <Typography sx={{ fontWeight: 700, fontSize: '20px', color: '#fff', mt: 0.5 }}>
-                  {card.name}
-                </Typography>
-
-                <Stack direction="row" alignItems="baseline" spacing={1} sx={{ mt: 1.5 }}>
-                  <Typography sx={{ fontSize: '16px', fontWeight: 700, letterSpacing: '3px', fontFamily: 'monospace', color: '#fff', opacity: 0.9 }}>
-                    &bull;&bull;&bull;&bull; &bull;&bull;&bull;&bull; &bull;&bull;&bull;&bull; {card.last4 ?? '----'}
-                  </Typography>
-                  {card.expiryMonth && card.expiryYear && (
-                    <Typography sx={{ fontSize: '11px', color: '#fff', opacity: 0.6 }}>
-                      Exp {String(card.expiryMonth).padStart(2, '0')}/{String(card.expiryYear).slice(-2)}
+              {/* Middle Row: Chip + Contactless waves & tier */}
+              <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mt: 1 }}>
+                <CardChip />
+                <Stack direction="row" alignItems="center" spacing={1.5}>
+                  <TierLabel bankId={card.bankId} tierId={card.tierId} />
+                  {!card.tierId && (
+                    <Typography
+                      sx={{
+                        fontFamily: '"Inter", sans-serif',
+                        fontSize: '14px',
+                        fontWeight: 700,
+                        color: '#ffffff',
+                        mr: 0.5,
+                      }}
+                    >
+                      Debit
                     </Typography>
                   )}
+                  <ContactlessIcon />
                 </Stack>
+              </Stack>
 
-                {/* Balance / Debt */}
-                <Box sx={{ mt: 2 }}>
-                  {isCredit ? (
-                    <>
-                      <Typography sx={{ fontSize: '28px', fontWeight: 800, color: '#fff', letterSpacing: '-0.5px', lineHeight: 1.2 }}>
-                        EGP {totalDebt.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                      </Typography>
-                      <Typography sx={{ fontSize: '10px', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '1px', color: 'rgba(255,255,255,0.6)', mt: 0.5 }}>
-                        Outstanding Balance
-                      </Typography>
-                      {utilizationPct != null && (
-                        <Box sx={{ mt: 1.5 }}>
-                          <LinearProgress
-                            variant="determinate"
-                            value={utilizationPct}
-                            sx={{
-                              height: 6,
-                              borderRadius: 3,
-                              bgcolor: 'rgba(255,255,255,0.2)',
-                              '& .MuiLinearProgress-bar': {
-                                bgcolor: utilizationPct > 95 ? '#ef4444' : utilizationPct > 80 ? '#F9AB00' : '#4ade80',
+              {/* Card Number and Expiry */}
+              <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mt: 0.5, mb: 0.5 }}>
+                <Typography
+                  sx={{
+                    fontSize: '16px',
+                    fontWeight: 700,
+                    letterSpacing: '2px',
+                    fontFamily: 'monospace',
+                    color: '#ffffff',
+                    textShadow: '0 1px 2px rgba(0,0,0,0.3)',
+                  }}
+                >
+                  •••• •••• {card.last4 ?? '----'}
+                </Typography>
+
+                {card.expiryMonth && card.expiryYear && (
+                  <Stack direction="row" alignItems="center" spacing={0.5} sx={{ opacity: 0.9 }}>
+                    <Typography sx={{ fontSize: '7px', fontWeight: 700, color: '#ffffff', opacity: 0.7, mr: 0.25 }}>
+                      THRU ▶
+                    </Typography>
+                    <Typography
+                      sx={{
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        fontFamily: 'monospace',
+                        color: '#ffffff',
+                      }}
+                    >
+                      {String(card.expiryMonth).padStart(2, '0')}/{String(card.expiryYear).slice(-2)}
+                    </Typography>
+                  </Stack>
+                )}
+              </Stack>
+
+              {/* Bottom Row: Balance, Actions, and Network Logo */}
+              <Box sx={{ mt: 1 }}>
+                <Stack direction="row" justifyContent="space-between" alignItems="flex-end">
+                  <Box sx={{ flex: 1, mr: 2 }}>
+                    {isCredit ? (
+                      <>
+                        <Typography sx={{ fontSize: '28px', fontWeight: 800, color: '#ffffff', letterSpacing: '-0.5px', lineHeight: 1.2 }}>
+                          EGP {totalDebt.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                        </Typography>
+                        <Typography sx={{ fontSize: '10px', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '1px', color: 'rgba(255,255,255,0.7)', mt: 0.5 }}>
+                          Outstanding Balance
+                        </Typography>
+                        {utilizationPct != null && (
+                          <Box sx={{ mt: 1.5 }}>
+                            <LinearProgress
+                              variant="determinate"
+                              value={utilizationPct}
+                              sx={{
+                                height: 6,
                                 borderRadius: 3,
-                              },
-                            }}
-                          />
-                          <Stack direction="row" justifyContent="space-between" sx={{ mt: 0.5 }}>
-                            <Typography sx={{ fontSize: '9px', color: 'rgba(255,255,255,0.6)' }}>
-                              {utilizationPct}% utilized
-                            </Typography>
-                            {card.creditLimit != null && (
-                              <Typography sx={{ fontSize: '9px', color: 'rgba(255,255,255,0.6)' }}>
-                                Limit: {card.currency} {card.creditLimit.toLocaleString()}
+                                bgcolor: 'rgba(255,255,255,0.25)',
+                                '& .MuiLinearProgress-bar': {
+                                  bgcolor: utilizationPct > 95 ? '#ef4444' : utilizationPct > 80 ? '#F9AB00' : '#4ade80',
+                                  borderRadius: 3,
+                                },
+                              }}
+                            />
+                            <Stack direction="row" justifyContent="space-between" sx={{ mt: 0.5 }}>
+                              <Typography sx={{ fontSize: '9px', color: 'rgba(255,255,255,0.7)' }}>
+                                {utilizationPct}% utilized
                               </Typography>
-                            )}
-                          </Stack>
-                        </Box>
-                      )}
-                      <Button
-                        variant="contained"
-                        disabled={totalDebt <= 0}
-                        onClick={openPayAll}
-                        sx={{
-                          mt: 2,
-                          bgcolor: 'rgba(255,255,255,0.2)',
-                          color: '#fff',
-                          fontWeight: 600,
-                          px: 3,
-                          borderRadius: '12px',
-                          '&:hover': { bgcolor: 'rgba(255,255,255,0.3)' },
-                          '&.Mui-disabled': { bgcolor: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.4)' },
-                        }}
-                      >
-                        Pay all
-                      </Button>
-                    </>
-                  ) : (
-                    <>
-                      <Typography sx={{ fontSize: '28px', fontWeight: 800, color: '#fff', letterSpacing: '-0.5px', lineHeight: 1.2 }}>
-                        {formattedBalance}
-                      </Typography>
-                      <Typography sx={{ fontSize: '10px', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '1px', color: 'rgba(255,255,255,0.6)', mt: 0.5 }}>
-                        Available Balance
-                      </Typography>
-                    </>
-                  )}
-                </Box>
+                              {card.creditLimit != null && (
+                                <Typography sx={{ fontSize: '9px', color: 'rgba(255,255,255,0.7)' }}>
+                                  Limit: {card.currency} {card.creditLimit.toLocaleString()}
+                                </Typography>
+                              )}
+                            </Stack>
+                          </Box>
+                        )}
+                        <Button
+                          variant="contained"
+                          disabled={totalDebt <= 0}
+                          onClick={openPayAll}
+                          sx={{
+                            mt: 2,
+                            bgcolor: 'rgba(255,255,255,0.2)',
+                            color: '#ffffff',
+                            fontWeight: 600,
+                            px: 3,
+                            borderRadius: '12px',
+                            '&:hover': { bgcolor: 'rgba(255,255,255,0.3)' },
+                            '&.Mui-disabled': { bgcolor: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.4)' },
+                          }}
+                        >
+                          Pay all
+                        </Button>
+                      </>
+                    ) : (
+                      <>
+                        <Typography sx={{ fontSize: '28px', fontWeight: 800, color: '#ffffff', letterSpacing: '-0.5px', lineHeight: 1.2 }}>
+                          {formattedBalance}
+                        </Typography>
+                        <Typography sx={{ fontSize: '10px', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '1px', color: 'rgba(255,255,255,0.7)', mt: 0.5 }}>
+                          Available Balance
+                        </Typography>
+                      </>
+                    )}
+                  </Box>
+                  <NetworkLogo network={card.network} />
+                </Stack>
               </Box>
-            </>
-          )}
-        </Box>
+            </Box>
+          </Box>
+        </CardBackground>
 
         {/* ── Activity Section ─────────────────────────────────────── */}
         <DialogContent sx={{ px: 3, pb: 3, pt: 2 }}>
