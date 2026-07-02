@@ -62,12 +62,9 @@
 
 ## 🚀 Quick start
 
-### Prerequisites
+**New here?** Follow the complete, step-by-step guide: **[GETTING_STARTED.md](./GETTING_STARTED.md)** — it covers installing the Firebase CLI and `gcloud`, creating a project, getting config values, enabling services, and deploying. Written so a human *or* an AI agent can get the app running and hosted in minutes.
 
-- Node.js 20+ and npm
-- A Firebase project (create one free at [console.firebase.google.com](https://console.firebase.google.com))
-
-### Install
+### TL;DR
 
 ```bash
 git clone https://github.com/mustafabahaa/kippa.git
@@ -75,62 +72,18 @@ cd kippa
 npm install
 ```
 
-### Configure Firebase
+### Configure & deploy
 
-This project uses a monorepo layout (`app/` + `functions/`). Several config files cannot read `.env` and hold project-specific values; each has a committed `.example` template — copy and fill in your own.
+Firebase configuration, hosting, and deployment are all covered end-to-end in **[GETTING_STARTED.md](./GETTING_STARTED.md)**.
 
-1. **App environment** — copy `app/.env.example` → `app/.env`:
-
-   ```bash
-   cp app/.env.example app/.env
-   ```
-
-   Fill in your Firebase web app values (API key, auth domain, project ID, storage bucket, messaging sender ID, app ID, VAPID key).
-
-2. **Firebase CLI alias** — copy `.firebaserc.example` → `.firebaserc`:
-
-   ```bash
-   cp .firebaserc.example .firebaserc
-   ```
-
-   Set `"default"` to your Firebase project ID.
-
-3. **Firebase config** — copy `firebase.json.example` → `firebase.json`:
-
-   ```bash
-   cp firebase.json.example firebase.json
-   ```
-
-   Update the OAuth support email and any hosting rules for your setup.
-
-4. **Cloud Messaging service worker** — copy the example → the real file:
-
-   ```bash
-   cp app/public/firebase-messaging-sw.example.js app/public/firebase-messaging-sw.js
-   ```
-
-   Service workers can't read `.env`, so inline your Firebase project's public client values (they are **not** secrets — the same values ship in your app bundle).
-
-All four real files are gitignored, so your local config stays private.
-
-### Run locally
+Once configured, the everyday commands are:
 
 ```bash
 npm run dev          # Vite dev server
-```
-
-### Build & test
-
-```bash
 npm run build        # type-check + production build
 npm run test         # Vitest unit tests (app + functions)
 npm run lint         # ESLint
 npm run typecheck    # TypeScript, no emit
-```
-
-### Deploy
-
-```bash
 npm run deploy       # build + firebase deploy (hosting + firestore + functions)
 ```
 
@@ -153,6 +106,7 @@ npm run deploy       # build + firebase deploy (hosting + firestore + functions)
 │       └── notifications/      # FCM registration and handling
 ├── functions/                  # Cloud Functions (cron reminders, FCM fanout, derived data)
 ├── docs/                       # Product spec, data model, design system, UX flows
+├── GETTING_STARTED.md          # End-to-end setup guide (CLIs → deploy)
 ├── .firebaserc.example
 ├── firebase.json.example
 └── LICENSE
@@ -160,7 +114,8 @@ npm run deploy       # build + firebase deploy (hosting + firestore + functions)
 
 ## 📚 Documentation
 
-Deep-dive docs live in [`docs/`](./docs):
+- **[Getting Started (full setup guide)](./GETTING_STARTED.md)** — install CLIs, create a Firebase project, configure, deploy.
+- Deep-dive docs live in [`docs/`](./docs):
 
 - [Product spec](./docs/product-spec.md)
 - [Data model](./docs/data-model.md)
