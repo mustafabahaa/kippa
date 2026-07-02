@@ -39,7 +39,15 @@ Build check:
 npm run build
 ```
 
-Firebase config should be added through `.env`, using [.env.example](./.env.example) as the template.
+Firebase config should be added through `.env`, using [app/.env.example](./app/.env.example) as the template.
+
+### Per-project config files
+
+A few files cannot read `.env` and hold project-specific values. The real files are gitignored so your local copies stay untouched; each has a committed `.example` template:
+
+1. **`firebase.json`** — hosting/firestore/functions config including OAuth support email. Copy `firebase.json.example` → `firebase.json`.
+2. **`.firebaserc`** — Firebase CLI project alias. Copy `.firebaserc.example` → `.firebaserc`.
+3. **`app/public/firebase-messaging-sw.js`** — Cloud Messaging service worker (service workers can't read `.env`, so public client values are inlined). Copy `firebase-messaging-sw.example.js` → `firebase-messaging-sw.js`.
 
 ## Design System
 

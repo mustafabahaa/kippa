@@ -21,7 +21,7 @@
     "providers": {
       "googleSignIn": {
         "oAuthBrandDisplayName": "Kippa",
-        "supportEmail": "YOUR_SUPPORT_EMAIL"
+        "supportEmail": "your-email@example.com"
       }
     }
   },

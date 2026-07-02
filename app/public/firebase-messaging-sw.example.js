@@ -3,20 +3,25 @@
 // Firebase registers this file automatically at /firebase-messaging-sw.js
 // when the client calls getMessaging(). It must live in /public so it is
 // served at the site root as-is (not bundled by Vite).
+//
+// Copy this file to firebase-messaging-sw.js and fill in your own Firebase
+// project's public client values. Service workers can't read .env, so these
+// must be inlined. They are NOT secrets — the same values ship in your app
+// bundle. Use the values from your Firebase project settings, NOT admin
+// credentials.
 importScripts('https://www.gstatic.com/firebasejs/11.10.0/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/11.10.0/firebase-messaging-compat.js');
 
 // Full Firebase config is required here (not just messagingSenderId) because
 // getToken() uses the Firebase Installations API, which needs projectId,
-// apiKey, and appId. Service workers can't read .env, so these public client
-// values are inlined. They are NOT secrets — they're already in the app bundle.
+// apiKey, and appId.
 firebase.initializeApp({
   apiKey: 'YOUR_FIREBASE_API_KEY',
-  authDomain: 'YOUR_FIREBASE_PROJECT_ID.firebaseapp.com',
-  projectId: 'YOUR_FIREBASE_PROJECT_ID',
-  storageBucket: 'YOUR_FIREBASE_PROJECT_ID.firebasestorage.app',
+  authDomain: 'YOUR_PROJECT_ID.firebaseapp.com',
+  projectId: 'YOUR_PROJECT_ID',
+  storageBucket: 'YOUR_PROJECT_ID.firebasestorage.app',
   messagingSenderId: 'YOUR_MESSAGING_SENDER_ID',
-  appId: '1:YOUR_MESSAGING_SENDER_ID:web:YOUR_APP_ID_SUFFIX',
+  appId: 'YOUR_APP_ID',
 });
 
 const messaging = firebase.messaging();
