@@ -12,6 +12,10 @@ export type CardInput = Omit<Card, 'id' | 'householdId' | 'createdAt'>;
  * Pure function — safe to unit test without Firestore.
  */
 export function validateCardInput(card: CardInput, accounts: Account[]): void {
+  if (!card.bankId) {
+    throw new Error('bankId is required.');
+  }
+
   if (!card.parentAccountId) {
     throw new Error('parentAccountId is required (no card without an account).');
   }
