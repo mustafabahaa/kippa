@@ -82,7 +82,9 @@ export const cyclesLib = {
     allocation: Omit<BudgetAllocation, 'id' | 'householdId'>,
     auditUser?: AuditUser
   ): Promise<string> {
-    const id = crypto.randomUUID();
+    // Canonical id keyed on (cycle, category) so re-saving upserts the same doc
+    // instead of creating duplicates.
+    const id = `${allocation.budgetCycleId}_${allocation.categoryId}`;
     const newAlloc: BudgetAllocation = {
       ...allocation,
       id,
@@ -109,7 +111,9 @@ export const cyclesLib = {
     auditUser?: AuditUser
   ): Promise<void> {
     const ops = allocations.map(a => {
-      const id = crypto.randomUUID();
+      // Canonical id keyed on (cycle, category) so re-saving upserts the same
+      // doc instead of creating duplicates.
+      const id = `${a.budgetCycleId}_${a.categoryId}`;
       return {
         type: 'set' as const,
         collectionName: 'budgetAllocations',
