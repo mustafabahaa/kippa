@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useSnackbar } from 'notistack';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   Box,
   Card,
@@ -35,9 +36,11 @@ import GroupAddIcon from '@mui/icons-material/GroupAdd';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CheckIcon from '@mui/icons-material/Check';
 
-import type { Household } from '@/domain/financeTypes';
+import type { Household, CurrencyCode } from '@/domain/financeTypes';
 import { useAppContext } from '@/hooks/useAppContext';
 import { useThemeMode } from '@/hooks/useThemeMode';
+import { CurrencySelect } from '@/features/shared/components/CurrencySelect';
+import { ledgerLib } from '@/libs/ledger';
 
 export function Household() {
   const { enqueueSnackbar } = useSnackbar();
@@ -56,6 +59,9 @@ export function Household() {
   // Leave Confirmation Dialog
   const [leaveConfirmOpen, setLeaveConfirmOpen] = useState(false);
   const [householdToLeave, setHouseholdToLeave] = useState<Household | null>(null);
+
+  const queryClient = useQueryClient();
+  const [baseCurrencyLoading, setBaseCurrencyLoading] = useState(false);
 
   // Forms state
   const [newHouseholdName, setNewHouseholdName] = useState('');
@@ -144,6 +150,20 @@ export function Household() {
   // Find active household info
   const activeHh = householdsList.find(h => h.id === householdId);
 
+  const handleBaseCurrencyChange = async (newCurrency: CurrencyCode) => {
+    if (!activeHh || newCurrency === activeHh.baseCurrency) return;
+    setBaseCurrencyLoading(true);
+    try {
+      await ledgerLib.updateHouseholdBaseCurrency(householdId, newCurrency);
+      await queryClient.invalidateQueries({ queryKey: ['userHouseholds'] });
+      enqueueSnackbar(`Base currency updated to ${newCurrency}`, { variant: 'success' });
+    } catch (err: any) {
+      enqueueSnackbar(err?.message || 'Failed to update base currency', { variant: 'error' });
+    } finally {
+      setBaseCurrencyLoading(false);
+    }
+  };
+
   return (
     <Container maxWidth="md" sx={{ py: 1, px: { xs: 2, sm: 3 } }}>
       <Stack spacing={3}>
@@ -187,6 +207,23 @@ export function Household() {
                     icon={<CheckCircleIcon sx={{ fontSize: '14px !important' }} />}
                     sx={{ fontWeight: 'bold', borderRadius: '8px' }} 
                   />
+                </Box>
+
+                {/* Base Currency Setting */}
+                <Box sx={{ mt: 1 }}>
+                  <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 0.5 }}>
+                    Base Currency
+                  </Typography>
+                  <CurrencySelect
+                    labelId="hh-base-currency-label"
+                    value={activeHh.baseCurrency}
+                    onChange={handleBaseCurrencyChange}
+                  />
+                  {baseCurrencyLoading && (
+                    <Typography variant="caption" sx={{ color: 'text.secondary', mt: 0.5, display: 'block' }}>
+                      Saving…
+                    </Typography>
+                  )}
                 </Box>
 
                 <Divider />
