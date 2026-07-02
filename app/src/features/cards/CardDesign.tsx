@@ -24,9 +24,19 @@ export function CardBackground({
   const bank = getBank(bankId) ?? getBank('other')!;
   const { css, overlay } = bank.background({ kind, tierId });
   return (
-    <Box sx={{ position: 'relative', background: css, overflow: 'hidden', height: fill ? '100%' : undefined, flexShrink: 0 }}>
+    <Box
+      sx={{
+        position: 'relative',
+        background: css,
+        overflow: 'hidden',
+        // fill (tile): grow to fill the flex-column outer box so the
+        // background and content stretch to the bordered tile height.
+        // !fill (dialog header): don't grow or shrink — honor minHeight.
+        flex: fill ? '1 1 auto' : '0 0 auto',
+      }}
+    >
       {overlay}
-      <Box sx={{ position: 'relative', zIndex: 1, height: fill ? '100%' : undefined }}>{children}</Box>
+      <Box sx={{ position: 'relative', zIndex: 1, flex: fill ? '1 1 auto' : undefined, display: fill ? 'flex' : undefined, flexDirection: fill ? 'column' : undefined }}>{children}</Box>
     </Box>
   );
 }
