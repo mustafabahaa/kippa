@@ -17,10 +17,18 @@ firebase-debug.log
 firestore-debug.log
 ui-debug.log
 
+# Per-project Firebase config — copy the *.example files and fill in your own.
+.firebaserc
+firebase.json
+app/public/firebase-messaging-sw.js
+
 # OS/editor
 .DS_Store
 .idea/
 .vscode/
+
+# Vite dependency cache & local build artifacts
+.vite/
 
 .agents/*
 
