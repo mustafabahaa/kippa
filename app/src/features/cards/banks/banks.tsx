@@ -1,3 +1,9 @@
+/**
+ * Generic preset catalog of international banks with brand theming
+ * (logos, tier gradients, background patterns). Built-in entries lean
+ * Egyptian for historical reasons; adding banks from any country is
+ * a data-only change — append to the BANKS record below.
+ */
 import type { ReactNode } from 'react';
 import type { CardKind, CardNetwork } from '@/domain/financeTypes';
 import {
