@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { computeDashboard } from './selectors';
-import type { Account, FinanceTransaction, LedgerLine, Category, BudgetCycle, BudgetAllocation, ExpectedIncome } from '@/domain/financeTypes';
+import type { Account, FinanceTransaction, LedgerLine } from '@/domain/financeTypes';
 
 const mkAccount = (id: string, currency: string, type: Account['type'] = 'running'): Account => ({
   id, householdId: 'h', name: id, type, currency, isActive: true, sortOrder: 1, createdAt: '',

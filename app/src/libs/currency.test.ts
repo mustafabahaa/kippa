@@ -43,7 +43,7 @@ describe('currencyLib', () => {
     // getRate(foreign, base) reads data.rates[base], so the mock returns USD rate per call.
     // SAR→USD = 0.267, EUR→USD = 1.087
     const callCount: Record<string, number> = { USD: 0 };
-    vi.stubGlobal('fetch', vi.fn().mockImplementation((url: string) => {
+    vi.stubGlobal('fetch', vi.fn().mockImplementation(() => {
       callCount.USD += 1;
       // Both SAR→USD and EUR→USD read data.rates.USD; return distinct values per call.
       const rate = callCount.USD === 1 ? 0.267 : 1.087;
