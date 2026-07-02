@@ -62,7 +62,7 @@ export function CardTile({
           position: 'relative',
           border: card.isActive ? '1px solid rgba(255,255,255,0.1)' : '1px solid',
           borderColor: card.isActive ? undefined : 'divider',
-          flex: '1 1 280px',
+          flex: { xs: '1 1 100%', sm: '1 1 280px' },
           maxWidth: { xs: '100%', sm: 340 },
           boxSizing: 'border-box',
           transition: 'transform 0.2s ease, box-shadow 0.2s ease',
