@@ -10,51 +10,58 @@ const creditAcc = (id: string): Account => ({
 });
 
 describe('validateCardInput', () => {
+  it('rejects a card with no bankId', () => {
+    expect(() => validateCardInput(
+      { kind: 'debit', bankId: '', parentAccountId: 'a', name: 'X', currency: 'EGP', isActive: true } as any,
+      [runningAcc('a')]
+    )).toThrow(/bankId/i);
+  });
+
   it('rejects a card with no parentAccountId', () => {
     expect(() => validateCardInput(
-      { kind: 'debit', parentAccountId: '', name: 'X', currency: 'EGP', isActive: true } as any,
+      { kind: 'debit', bankId: 'hsbc', parentAccountId: '', name: 'X', currency: 'EGP', isActive: true } as any,
       [runningAcc('a')]
     )).toThrow(/parentAccountId/i);
   });
 
   it('rejects a debit card whose parent is not running/savings', () => {
     expect(() => validateCardInput(
-      { kind: 'debit', parentAccountId: 'c', name: 'X', currency: 'EGP', isActive: true } as any,
+      { kind: 'debit', bankId: 'hsbc', parentAccountId: 'c', name: 'X', currency: 'EGP', isActive: true } as any,
       [runningAcc('a'), creditAcc('c')]
     )).toThrow(/running|savings/i);
   });
 
   it('rejects a credit card whose parent is not a credit account', () => {
     expect(() => validateCardInput(
-      { kind: 'credit', parentAccountId: 'a', name: 'X', currency: 'EGP', creditLimit: 10000, paymentAccountId: 'a', isActive: true } as any,
+      { kind: 'credit', bankId: 'hsbc', parentAccountId: 'a', name: 'X', currency: 'EGP', creditLimit: 10000, paymentAccountId: 'a', isActive: true } as any,
       [runningAcc('a')]
     )).toThrow(/credit/i);
   });
 
   it('rejects a credit card whose currency != paymentAccountId currency', () => {
     expect(() => validateCardInput(
-      { kind: 'credit', parentAccountId: 'c', name: 'X', currency: 'EGP', creditLimit: 10000, paymentAccountId: 'u', isActive: true } as any,
+      { kind: 'credit', bankId: 'hsbc', parentAccountId: 'c', name: 'X', currency: 'EGP', creditLimit: 10000, paymentAccountId: 'u', isActive: true } as any,
       [creditAcc('c'), runningAcc('u', 'USD')]
     )).toThrow(/currency/i);
   });
 
   it('rejects last4 longer than 4 chars', () => {
     expect(() => validateCardInput(
-      { kind: 'debit', parentAccountId: 'a', name: 'X', currency: 'EGP', last4: '12345', isActive: true } as any,
+      { kind: 'debit', bankId: 'hsbc', parentAccountId: 'a', name: 'X', currency: 'EGP', last4: '12345', isActive: true } as any,
       [runningAcc('a')]
     )).toThrow(/last4/i);
   });
 
   it('accepts a valid debit card', () => {
     expect(() => validateCardInput(
-      { kind: 'debit', parentAccountId: 'a', name: 'X', currency: 'EGP', last4: '4242', isActive: true } as any,
+      { kind: 'debit', bankId: 'hsbc', parentAccountId: 'a', name: 'X', currency: 'EGP', last4: '4242', isActive: true } as any,
       [runningAcc('a')]
     )).not.toThrow();
   });
 
   it('accepts a valid credit card', () => {
     expect(() => validateCardInput(
-      { kind: 'credit', parentAccountId: 'c', name: 'X', currency: 'EGP', creditLimit: 10000, paymentAccountId: 'a', last4: '4242', isActive: true } as any,
+      { kind: 'credit', bankId: 'hsbc', parentAccountId: 'c', name: 'X', currency: 'EGP', creditLimit: 10000, paymentAccountId: 'a', last4: '4242', isActive: true } as any,
       [creditAcc('c'), runningAcc('a')]
     )).not.toThrow();
   });
