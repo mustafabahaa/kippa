@@ -7,6 +7,7 @@ import { cardsLib, type CardInput } from '@/libs/cards';
 import { auditLogLib } from '@/libs/auditLog';
 import { authLib } from '@/libs/auth';
 import { currencyLib } from '@/libs/currency';
+import { detectBaseCurrency } from '@/libs/currencyMeta';
 import { useAppContext } from '@/hooks/useAppContext';
 import { useSnackbar } from 'notistack';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
@@ -170,12 +171,32 @@ export function useCardStatements(householdId: string, cardId?: string) {
   });
 }
 
-export function useUsdRate() {
+/**
+ * Fetch live foreign → base rates for the given set of currencies.
+ * Returns a map { [foreignCode]: rate }. Base currency is omitted (implicit 1).
+ */
+export function useDisplayRates(
+  baseCurrency: CurrencyCode | undefined,
+  foreignCurrencies: CurrencyCode[]
+) {
+  const key = Array.from(new Set(foreignCurrencies)).sort().join(',');
   return useQuery({
-    queryKey: ['usdToEgpRate'],
-    queryFn: () => currencyLib.getUsdToEgpRate(),
-    staleTime: 1000 * 60 * 15, // 15 mins cache
+    queryKey: ['displayRates', baseCurrency, key],
+    queryFn: () => currencyLib.getRatesToBase(baseCurrency!, foreignCurrencies),
+    enabled: !!baseCurrency && foreignCurrencies.length > 0,
+    staleTime: 1000 * 60 * 15,
   });
+}
+
+/**
+ * Resolve the active household's base currency.
+ * Falls back to detectBaseCurrency() when the household info isn't loaded yet
+ * or is missing the field (legacy data).
+ */
+export function useHouseholdBaseCurrency(): CurrencyCode {
+  const { householdId, userHouseholds } = useAppContext();
+  const active = userHouseholds.find(h => h.id === householdId);
+  return active?.baseCurrency || detectBaseCurrency();
 }
 
 export function useHouseholdName(householdId: string) {
