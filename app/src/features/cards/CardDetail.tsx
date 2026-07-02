@@ -207,7 +207,9 @@ export function CardDetail({ card, onClose }: { card: Card; onClose: () => void 
               position: 'relative',
               display: 'flex',
               flexDirection: 'column',
-              minHeight: 1,
+              // Match the tall credit-card layout height so debit cards
+              // aren't clipped/shorter in the dialog header.
+              minHeight: 240,
             }}
           >
             {/* Close button */}
