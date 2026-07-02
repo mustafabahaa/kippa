@@ -51,6 +51,8 @@ export type Card = {
   name: string;
   last4?: string;
   network?: CardNetwork;
+  bankId: string;                    // e.g. 'hsbc' | 'cib' | 'nbe' | 'other'
+  tierId?: string;                   // e.g. 'premier' | 'platinum' | 'classic'
   expiryMonth?: number;             // 1–12
   expiryYear?: number;              // e.g. 2027
   isActive: boolean;

@@ -4,7 +4,7 @@ import type { Card, CardStatement, LedgerLine, FinanceTransaction } from '@/doma
 
 const card: Card = {
   id: 'card', householdId: 'h', kind: 'credit', parentAccountId: 'credit',
-  name: 'HSBC', currency: 'EGP', isActive: true, createdAt: '', creditLimit: 10000, paymentAccountId: 'bank',
+  name: 'HSBC', bankId: 'hsbc', tierId: 'advance', currency: 'EGP', isActive: true, createdAt: '', creditLimit: 10000, paymentAccountId: 'bank',
 };
 
 const tx = (id: string, date: string): FinanceTransaction => ({
