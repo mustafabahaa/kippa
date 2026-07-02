@@ -14,7 +14,8 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
-  DialogActions
+  DialogActions,
+  Chip
 } from '@mui/material';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import AddIcon from '@mui/icons-material/Add';
@@ -268,22 +269,30 @@ export function BudgetAllocationsConfig({
         ))}
       </List>
 
-      {/* Add buttons */}
+      {/* Add existing categories as chips */}
+      {availableCategories.length > 0 && (
+        <Box sx={{ mt: 2 }}>
+          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.75 }}>
+            Add to cycle
+          </Typography>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
+            {availableCategories.map(cat => (
+              <Chip
+                key={cat.id}
+                label={cat.name}
+                size="small"
+                variant="outlined"
+                icon={<AddIcon />}
+                onClick={() => handleAddExistingCategory(cat.id)}
+                sx={{ borderRadius: '8px' }}
+              />
+            ))}
+          </Box>
+        </Box>
+      )}
+
+      {/* New category button */}
       <Stack direction="row" spacing={1} sx={{ mt: 2 }}>
-        {availableCategories.length > 0 && (
-          <Button
-            variant="outlined"
-            size="small"
-            startIcon={<AddIcon />}
-            onClick={() => {
-              // Add the first available one, or if you want a picker we could do a menu
-              // For simplicity, just add all available as a dropdown-like approach
-              handleAddExistingCategory(availableCategories[0].id);
-            }}
-          >
-            Add Existing ({availableCategories.length})
-          </Button>
-        )}
         <Button
           variant="outlined"
           size="small"
