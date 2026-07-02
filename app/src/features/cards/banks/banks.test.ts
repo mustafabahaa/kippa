@@ -58,4 +58,29 @@ describe('bank catalog', () => {
   it('"other" bank has empty tiers', () => {
     expect(BANKS['other'].tiers).toEqual([]);
   });
+
+  it('tier color overrides bank default: gold vs platinum differ', () => {
+    const goldBg = BANKS.cib.background({ kind: 'credit', tierId: 'gold' }).css;
+    const platinumBg = BANKS.cib.background({ kind: 'credit', tierId: 'platinum' }).css;
+    const classicBg = BANKS.cib.background({ kind: 'credit', tierId: 'classic' }).css;
+    expect(goldBg).not.toBe(platinumBg);
+    expect(goldBg).not.toBe(classicBg);
+    // classic falls back to bank brand color
+    expect(classicBg).toContain('linear-gradient');
+  });
+
+  it('HSBC premier keeps HSBC gradient, advance keeps HSBC gradient', () => {
+    const premier = BANKS.hsbc.background({ kind: 'debit', tierId: 'premier' }).css;
+    const advance = BANKS.hsbc.background({ kind: 'credit', tierId: 'advance' }).css;
+    expect(premier).toMatch(/0e1635|1b213b/); // HSBC debit gradient signature
+    expect(advance).toMatch(/7A0A10|4A0205/); // HSBC credit gradient signature
+  });
+
+  it('every non-other bank has a pattern overlay', () => {
+    for (const b of BANK_LIST) {
+      if (b.id === 'other') continue;
+      const { overlay } = b.background({ kind: 'credit', tierId: 'gold' });
+      expect(overlay).toBeDefined();
+    }
+  });
 });
