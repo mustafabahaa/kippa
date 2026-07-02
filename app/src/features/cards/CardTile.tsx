@@ -75,7 +75,7 @@ export function CardTile({
             <CardChip />
             <Stack direction="row" alignItems="center" spacing={1.5}>
               <TierLabel bankId={card.bankId} tierId={card.tierId} />
-              {!card.tierId && (
+              {!card.tierId && !isCredit && (
                 <Typography
                   sx={{
                     fontFamily: '"Inter", sans-serif',
