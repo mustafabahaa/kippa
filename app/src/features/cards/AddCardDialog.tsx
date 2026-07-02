@@ -137,7 +137,7 @@ function AddCardDialogInner({ preselectAccountId, onClose }: { preselectAccountI
           </Box>
         ) : (
           <Stack spacing={2} sx={{ mt: 1 }}>
-            <Box sx={{ maxWidth: 340 }}>
+            <Box sx={{ maxWidth: 340, mb: 1 }}>
               <CardTile card={previewCard} />
             </Box>
 
