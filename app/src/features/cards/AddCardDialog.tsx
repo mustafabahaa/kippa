@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import {
   Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Select, MenuItem,
-  FormControl, InputLabel, Stack, Typography, Box, IconButton,
+  FormControl, InputLabel, Stack, Typography, Box, IconButton, Grid, Divider, ToggleButton, ToggleButtonGroup,
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { useAppContext } from '@/hooks/useAppContext';
@@ -136,101 +136,205 @@ function AddCardDialogInner({ preselectAccountId, onClose }: { preselectAccountI
             <BankPicker onPick={id => { setBankId(id); setStep('details'); }} />
           </Box>
         ) : (
-          <Stack spacing={2} sx={{ mt: 1 }}>
+          <Box sx={{ mt: 1 }}>
             <Box sx={{ maxWidth: 340 }}>
               <CardTile card={previewCard} />
             </Box>
 
             <Box sx={{ height: 32 }} />
 
-            <FormControl fullWidth>
-              <InputLabel>Card type</InputLabel>
-              <Select value={kind} label="Card type" onChange={e => handleKindChange(e.target.value as CardKind)}>
-                <MenuItem value="debit">Debit</MenuItem>
-                <MenuItem value="credit">Credit</MenuItem>
-              </Select>
-            </FormControl>
+            <Grid container spacing={2.5}>
+              {/* ── Section 1: Card Type ─────────────────────────────── */}
+              <Grid size={{ xs: 12 }}>
+                <Typography variant="caption" sx={{ fontWeight: 700, color: 'primary.main', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                  Card Type
+                </Typography>
+                <Divider sx={{ mt: 1, mb: 1 }} />
+              </Grid>
 
-            {isOtherBank ? (
-              <TextField
-                label="Tier"
-                value={tierId}
-                onChange={e => setTierId(e.target.value)}
-                placeholder="e.g. Platinum"
-                fullWidth
-              />
-            ) : (
-              <FormControl fullWidth>
-                <InputLabel>Tier</InputLabel>
-                <Select
-                  value={tierId}
-                  label="Tier"
-                  onChange={e => handleTierChange(e.target.value as string)}
+              <Grid size={{ xs: 12 }}>
+                <ToggleButtonGroup
+                  exclusive
+                  fullWidth
+                  value={kind}
+                  onChange={(_, v: CardKind | null) => v && handleKindChange(v)}
+                  sx={{
+                    gap: 1,
+                    '& .MuiToggleButton-root': {
+                      borderRadius: '12px',
+                      border: '1px solid',
+                      borderColor: 'divider',
+                      textTransform: 'none',
+                      fontWeight: 600,
+                      py: 1.25,
+                      color: 'text.secondary',
+                      '&.Mui-selected': {
+                        bgcolor: 'primary.main',
+                        color: '#fff',
+                        borderColor: 'primary.main',
+                        '&:hover': { bgcolor: 'primary.dark' },
+                      },
+                    },
+                  }}
                 >
-                  {availableTiers.map(t => (
-                    <MenuItem key={t.id} value={t.id}>{t.label}</MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            )}
+                  <ToggleButton value="debit">Debit</ToggleButton>
+                  <ToggleButton value="credit">Credit</ToggleButton>
+                </ToggleButtonGroup>
+              </Grid>
 
-            <FormControl fullWidth>
-              <InputLabel>Network</InputLabel>
-              <Select
-                value={network}
-                label="Network"
-                onChange={e => setNetwork(e.target.value as CardNetwork)}
-              >
-                {availableNetworks.map(n => (
-                  <MenuItem key={n} value={n}>
-                    {n.charAt(0).toUpperCase() + n.slice(1)}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                {isOtherBank ? (
+                  <TextField
+                    label="Tier"
+                    value={tierId}
+                    onChange={e => setTierId(e.target.value)}
+                    placeholder="e.g. Platinum"
+                    fullWidth
+                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+                  />
+                ) : (
+                  <FormControl fullWidth>
+                    <InputLabel>Tier</InputLabel>
+                    <Select
+                      value={tierId}
+                      label="Tier"
+                      onChange={e => handleTierChange(e.target.value as string)}
+                      sx={{ borderRadius: '12px' }}
+                    >
+                      {availableTiers.map(t => (
+                        <MenuItem key={t.id} value={t.id}>{t.label}</MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                )}
+              </Grid>
 
-            <FormControl fullWidth>
-              <InputLabel>{kind === 'debit' ? 'Draws from account' : 'Payment account (pays the bill)'}</InputLabel>
-              <Select
-                value={kind === 'debit' ? parentAccountId : paymentAccountId}
-                label={kind === 'debit' ? 'Draws from account' : 'Payment account (pays the bill)'}
-                onChange={e => {
-                  const id = e.target.value as string;
-                  const acc = accounts.find(a => a.id === id);
-                  if (kind === 'debit') setParentAccountId(id);
-                  else setPaymentAccountId(id);
-                  if (acc) setCurrency(acc.currency);
-                }}
-              >
-                {depositAccounts.map(a => (
-                  <MenuItem key={a.id} value={a.id}>{a.name} ({a.currency})</MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <FormControl fullWidth>
+                  <InputLabel>Network</InputLabel>
+                  <Select
+                    value={network}
+                    label="Network"
+                    onChange={e => setNetwork(e.target.value as CardNetwork)}
+                    sx={{ borderRadius: '12px' }}
+                  >
+                    {availableNetworks.map(n => (
+                      <MenuItem key={n} value={n}>
+                        {n.charAt(0).toUpperCase() + n.slice(1)}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
 
-            <TextField label="Card name" value={name} onChange={e => setName(e.target.value)} fullWidth />
-            <TextField label="Last 4 digits" value={last4} onChange={e => setLast4(e.target.value.slice(0, 4))} fullWidth />
-            <Stack direction="row" spacing={2}>
-              <TextField label="Expiry month (1-12)" type="number" value={expiryMonth}
-                onChange={e => setExpiryMonth(e.target.value ? Number(e.target.value) : '')} />
-              <TextField label="Expiry year" type="number" value={expiryYear}
-                onChange={e => setExpiryYear(e.target.value ? Number(e.target.value) : '')} />
-            </Stack>
+              {/* ── Section 2: Card Details ──────────────────────────── */}
+              <Grid size={{ xs: 12 }} sx={{ mt: 1 }}>
+                <Typography variant="caption" sx={{ fontWeight: 700, color: 'primary.main', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                  Card Details
+                </Typography>
+                <Divider sx={{ mt: 1, mb: 1 }} />
+              </Grid>
 
-            {kind === 'credit' && (
-              <TextField label="Credit limit" type="number" value={creditLimit}
-                onChange={e => setCreditLimit(e.target.value ? Number(e.target.value) : '')} fullWidth />
-            )}
+              <Grid size={{ xs: 12 }}>
+                <TextField
+                  label="Card name"
+                  value={name}
+                  onChange={e => setName(e.target.value)}
+                  fullWidth
+                  sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+                />
+              </Grid>
 
-            {error && <Typography color="error" variant="body2">{error}</Typography>}
-          </Stack>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <TextField
+                  label="Last 4 digits"
+                  value={last4}
+                  onChange={e => setLast4(e.target.value.slice(0, 4))}
+                  fullWidth
+                  sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+                />
+              </Grid>
+
+              <Grid size={{ xs: 6, sm: 3 }}>
+                <TextField
+                  label="Expiry month"
+                  type="number"
+                  value={expiryMonth}
+                  onChange={e => setExpiryMonth(e.target.value ? Number(e.target.value) : '')}
+                  fullWidth
+                  sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+                />
+              </Grid>
+
+              <Grid size={{ xs: 6, sm: 3 }}>
+                <TextField
+                  label="Expiry year"
+                  type="number"
+                  value={expiryYear}
+                  onChange={e => setExpiryYear(e.target.value ? Number(e.target.value) : '')}
+                  fullWidth
+                  sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+                />
+              </Grid>
+
+              {/* ── Section 3: Account ───────────────────────────────── */}
+              <Grid size={{ xs: 12 }} sx={{ mt: 1 }}>
+                <Typography variant="caption" sx={{ fontWeight: 700, color: 'primary.main', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                  {kind === 'debit' ? 'Linked Account' : 'Payment & Limit'}
+                </Typography>
+                <Divider sx={{ mt: 1, mb: 1 }} />
+              </Grid>
+
+              <Grid size={{ xs: 12, sm: kind === 'credit' ? 6 : 12 }}>
+                <FormControl fullWidth>
+                  <InputLabel>{kind === 'debit' ? 'Draws from account' : 'Payment account'}</InputLabel>
+                  <Select
+                    value={kind === 'debit' ? parentAccountId : paymentAccountId}
+                    label={kind === 'debit' ? 'Draws from account' : 'Payment account'}
+                    onChange={e => {
+                      const id = e.target.value as string;
+                      const acc = accounts.find(a => a.id === id);
+                      if (kind === 'debit') setParentAccountId(id);
+                      else setPaymentAccountId(id);
+                      if (acc) setCurrency(acc.currency);
+                    }}
+                    sx={{ borderRadius: '12px' }}
+                  >
+                    {depositAccounts.map(a => (
+                      <MenuItem key={a.id} value={a.id}>{a.name} ({a.currency})</MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+
+              {kind === 'credit' && (
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <TextField
+                    label="Credit limit"
+                    type="number"
+                    value={creditLimit}
+                    onChange={e => setCreditLimit(e.target.value ? Number(e.target.value) : '')}
+                    fullWidth
+                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+                  />
+                </Grid>
+              )}
+
+              {error && (
+                <Grid size={{ xs: 12 }}>
+                  <Typography color="error" variant="body2">{error}</Typography>
+                </Grid>
+              )}
+            </Grid>
+          </Box>
         )}
       </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
+      <DialogActions sx={{ px: 3, pb: 2.5 }}>
+        <Button onClick={onClose} color="inherit">Cancel</Button>
         {!isBankStep && (
           <Button variant="contained" onClick={handleSave}
-            disabled={!name.trim() || (kind === 'debit' ? !parentAccountId : !paymentAccountId)}>
+            disabled={!name.trim() || (kind === 'debit' ? !parentAccountId : !paymentAccountId)}
+            sx={{ borderRadius: '12px', boxShadow: 'none' }}>
             Save card
           </Button>
         )}
