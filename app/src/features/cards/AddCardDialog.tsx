@@ -5,7 +5,7 @@ import {
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { useAppContext } from '@/hooks/useAppContext';
-import { useAccounts, useCreateDebitCardMutation, useCreateCreditCardMutation } from '@/hooks/useFinance';
+import { useAccounts, useCreateDebitCardMutation, useCreateCreditCardMutation, useHouseholdBaseCurrency } from '@/hooks/useFinance';
 import type { Card, CardKind, CardNetwork, CurrencyCode } from '@/domain/financeTypes';
 import { getBank, getTier } from './banks/banks';
 import { BankPicker } from './BankPicker';
@@ -22,6 +22,7 @@ function AddCardDialogInner({ preselectAccountId, onClose }: { preselectAccountI
   const { data: accounts = [] } = useAccounts(householdId);
   const createDebit = useCreateDebitCardMutation();
   const createCredit = useCreateCreditCardMutation();
+  const baseCurrency = useHouseholdBaseCurrency();
 
   const preAcc = preselectAccountId ? accounts.find(a => a.id === preselectAccountId) : undefined;
   const [step, setStep] = useState<'bank' | 'details'>('bank');
@@ -33,7 +34,7 @@ function AddCardDialogInner({ preselectAccountId, onClose }: { preselectAccountI
   const [network, setNetwork] = useState<CardNetwork>('visa');
   const [expiryMonth, setExpiryMonth] = useState<number | ''>('');
   const [expiryYear, setExpiryYear] = useState<number | ''>('');
-  const [currency, setCurrency] = useState<CurrencyCode>(preAcc?.currency ?? 'EGP');
+  const [currency, setCurrency] = useState<CurrencyCode>(preAcc?.currency ?? baseCurrency);
   const [parentAccountId, setParentAccountId] = useState(preselectAccountId ?? '');
   const [creditLimit, setCreditLimit] = useState<number | ''>('');
   const [paymentAccountId, setPaymentAccountId] = useState(preselectAccountId ?? '');

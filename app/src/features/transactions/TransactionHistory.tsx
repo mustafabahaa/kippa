@@ -25,14 +25,15 @@ import SearchIcon from '@mui/icons-material/Search';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 
-import { 
-  useAccounts, 
-  useCategories, 
-  useTransactions, 
+import {
+  useAccounts,
+  useCategories,
+  useTransactions,
   useLedgerLines,
   useVoidTransactionMutation,
   useCycles,
-  useActiveCycle
+  useActiveCycle,
+  useHouseholdBaseCurrency
 } from '@/hooks/useFinance';
 import { FinanceTransaction } from '@/domain/financeTypes';
 import { useAppContext } from '@/hooks/useAppContext';
@@ -55,6 +56,7 @@ function formatTime(iso: string): string {
 export function TransactionHistory() {
   const { enqueueSnackbar } = useSnackbar();
   const { householdId } = useAppContext();
+  const baseCurrency = useHouseholdBaseCurrency();
   
   // Filter States
   const [searchTerm, setSearchTerm] = useState('');
@@ -277,7 +279,7 @@ export function TransactionHistory() {
                   const txLines = ledgerLines.filter(l => l.transactionId === tx.id);
                   const firstLine = txLines.find(l => l.signedAmount !== 0) || txLines[0];
                   const amount = firstLine ? Number(Math.abs(firstLine.signedAmount).toFixed(2)) : 0;
-                  const currency = firstLine ? firstLine.currency : 'EGP';
+                  const currency = firstLine ? firstLine.currency : baseCurrency;
                   const isIncome = tx.type === 'income' || (tx.type === 'adjustment' && (firstLine?.signedAmount || 0) >= 0);
                   const txAccount = firstLine ? accounts.find(a => a.id === firstLine.accountId) : null;
                   const isCreditCard = tx.type === 'expense' && txAccount?.type === 'credit';
@@ -297,7 +299,7 @@ export function TransactionHistory() {
                     const toAcc = accounts.find(a => a.id === toL?.accountId);
                     const fromAmt = fromL ? Number(Math.abs(fromL.signedAmount).toFixed(2)) : 0;
                     const toAmt = toL ? Number(Math.abs(toL.signedAmount).toFixed(2)) : 0;
-                    detailsText = `${fromAmt} ${fromL?.currency || 'EGP'} (${fromAcc?.name || 'Wallet'}) ➔ ${toAmt} ${toL?.currency || 'USD'} (${toAcc?.name || 'Bank'})`;
+                    detailsText = `${fromAmt} ${fromL?.currency || baseCurrency} (${fromAcc?.name || 'Wallet'}) ➔ ${toAmt} ${toL?.currency || baseCurrency} (${toAcc?.name || 'Bank'})`;
                   } else {
                     const acc = accounts.find(a => a.id === firstLine?.accountId);
                     detailsText = acc?.name || 'Account';

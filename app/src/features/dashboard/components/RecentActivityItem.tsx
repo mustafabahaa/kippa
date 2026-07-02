@@ -4,6 +4,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { FinanceTransaction, Category, LedgerLine, Account } from '@/domain/financeTypes';
 import { TransactionIcon } from '@/features/transactions/components/TransactionIcon';
+import { useHouseholdBaseCurrency } from '@/hooks/useFinance';
 
 interface RecentActivityItemProps {
   tx: FinanceTransaction;
@@ -22,13 +23,14 @@ export const RecentActivityItem: React.FC<RecentActivityItemProps> = ({
   onEdit,
   onVoid,
 }) => {
+  const baseCurrency = useHouseholdBaseCurrency();
   const cat = categories.find((c) => c.id === tx.categoryId);
 
   // Find amount and accounts from ledgerLines
   const txLines = ledgerLines.filter((l) => l.transactionId === tx.id);
   const firstLine = txLines.find((l) => l.signedAmount !== 0) || txLines[0];
   const amount = firstLine ? Number(Math.abs(firstLine.signedAmount).toFixed(2)) : 0;
-  const currency = firstLine ? firstLine.currency : 'EGP';
+  const currency = firstLine ? firstLine.currency : baseCurrency;
   const isIncome = tx.type === 'income' || (tx.type === 'adjustment' && (firstLine?.signedAmount || 0) >= 0);
   const txAccount = firstLine ? accounts.find((a) => a.id === firstLine.accountId) : null;
   const isCreditCard = tx.type === 'expense' && txAccount?.type === 'credit';

@@ -25,6 +25,7 @@ import {
   useCategories,
   useLedgerLines,
   useUpdateTransactionMutation,
+  useHouseholdBaseCurrency,
 } from '@/hooks/useFinance';
 import { useAppContext } from '@/hooks/useAppContext';
 import { FinanceTransaction, CurrencyCode } from '@/domain/financeTypes';
@@ -43,6 +44,7 @@ export const EditTransactionDialog: React.FC<EditTransactionDialogProps> = ({
 }) => {
   const { enqueueSnackbar } = useSnackbar();
   const { householdId } = useAppContext();
+  const baseCurrency = useHouseholdBaseCurrency();
   const { data: accounts = [] } = useAccounts(householdId);
   const { data: categories = [] } = useCategories(householdId);
   const { data: ledgerLines = [] } = useLedgerLines(householdId);
@@ -84,7 +86,7 @@ export const EditTransactionDialog: React.FC<EditTransactionDialogProps> = ({
 
     const txLines = ledgerLines.filter((l) => l.transactionId === transaction.id);
     const firstLine = txLines.find((l) => l.signedAmount !== 0) || txLines[0];
-    const currency = firstLine ? firstLine.currency : 'EGP';
+    const currency = firstLine ? firstLine.currency : baseCurrency;
 
     // If it's a regular transaction, it determines sign based on editType.
     // If it's a special transaction, it retains its original sign!
@@ -151,7 +153,7 @@ export const EditTransactionDialog: React.FC<EditTransactionDialogProps> = ({
                 </Typography>
                 <Stack spacing={1}>
                   <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
-                    Amount: <span style={{ fontWeight: 'normal' }}>{editAmount} {ledgerLines.find(l => l.transactionId === transaction.id)?.currency || 'EGP'}</span>
+                    Amount: <span style={{ fontWeight: 'normal' }}>{editAmount} {ledgerLines.find(l => l.transactionId === transaction.id)?.currency || baseCurrency}</span>
                   </Typography>
                   <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
                     Account: <span style={{ fontWeight: 'normal' }}>{getAccountName(editAccId)}</span>
