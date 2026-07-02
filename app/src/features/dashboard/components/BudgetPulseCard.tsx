@@ -5,11 +5,13 @@ import {
   useLedgerLines,
   useCategories,
   useCycles,
-  useUsdRate,
+  useDisplayRates,
+  useHouseholdBaseCurrency,
   useBudgetAllocations,
   useExpectedIncomes
 } from '@/hooks/useFinance';
 import { computeDashboard, DashboardData } from '@/libs/selectors';
+import { formatCurrency } from '@/libs/format';
 import { useAppContext } from '@/hooks/useAppContext';
 import { InfoTooltip } from '@/features/shared/components/InfoTooltip';
 import { metricExplanations } from '@/features/shared/constants/metricExplanations';
@@ -22,7 +24,9 @@ export function BudgetPulseCard() {
   const { data: ledgerLines } = useLedgerLines(householdId);
   const { data: categories = [] } = useCategories(householdId);
   const { data: cycles = [] } = useCycles(householdId);
-  const { data: displayRate = 50.0 } = useUsdRate();
+  const baseCurrency = useHouseholdBaseCurrency();
+  const foreignCodes = Array.from(new Set((accounts ?? []).map(a => a.currency).filter(c => c !== baseCurrency)));
+  const { data: displayRates = {} } = useDisplayRates(baseCurrency, foreignCodes);
 
   const activeCycle = cycles.find(c => c.status === 'open') || null;
   const activeCycleId = activeCycle?.id;
@@ -73,7 +77,8 @@ export function BudgetPulseCard() {
     activeCycle,
     allocations,
     expectedIncomes,
-    displayRate
+    displayRates,
+    baseCurrency
   );
 
   return (
@@ -150,7 +155,7 @@ export function BudgetPulseCard() {
                 Projected
               </Typography>
               <Typography variant="h6" sx={{ fontWeight: 'bold', color: getStatusColor(data.saving.status), lineHeight: 1.2 }}>
-                EGP {data.spending.projected.toFixed(0)}
+                {formatCurrency(data.spending.projected, baseCurrency)}
               </Typography>
             </Box>
             <Box sx={{ textAlign: 'right' }}>
@@ -158,7 +163,7 @@ export function BudgetPulseCard() {
                 Target
               </Typography>
               <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.primary', lineHeight: 1.2 }}>
-                EGP {data.spending.plannedBudget.toFixed(0)}
+                {formatCurrency(data.spending.plannedBudget, baseCurrency)}
               </Typography>
             </Box>
           </Box>
