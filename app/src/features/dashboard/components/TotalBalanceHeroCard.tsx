@@ -1,15 +1,17 @@
 import { Box, Skeleton, Stack, Typography, useTheme } from '@mui/material';
-import { 
-  useAccounts, 
-  useTransactions, 
-  useLedgerLines, 
-  useCategories, 
-  useCycles, 
-  useUsdRate, 
-  useBudgetAllocations, 
-  useExpectedIncomes 
+import {
+  useAccounts,
+  useTransactions,
+  useLedgerLines,
+  useCategories,
+  useCycles,
+  useDisplayRates,
+  useHouseholdBaseCurrency,
+  useBudgetAllocations,
+  useExpectedIncomes
 } from '@/hooks/useFinance';
 import { computeDashboard } from '@/libs/selectors';
+import { formatCurrency } from '@/libs/format';
 import { useAppContext } from '@/hooks/useAppContext';
 import { InfoTooltip } from '@/features/shared/components/InfoTooltip';
 import { metricExplanations } from '@/features/shared/constants/metricExplanations';
@@ -23,7 +25,9 @@ export function TotalBalanceHeroCard() {
   const { data: ledgerLines, isLoading: linesLoading } = useLedgerLines(householdId);
   const { data: categories = [] } = useCategories(householdId);
   const { data: cycles = [] } = useCycles(householdId);
-  const { data: displayRate = 50.0 } = useUsdRate();
+  const baseCurrency = useHouseholdBaseCurrency();
+  const foreignCodes = Array.from(new Set((accounts ?? []).map(a => a.currency).filter(c => c !== baseCurrency)));
+  const { data: displayRates = {} } = useDisplayRates(baseCurrency, foreignCodes);
 
   const activeCycle = cycles.find(c => c.status === 'open') || null;
   const activeCycleId = activeCycle?.id;
@@ -56,7 +60,8 @@ export function TotalBalanceHeroCard() {
     activeCycle,
     allocations,
     expectedIncomes,
-    displayRate
+    displayRates,
+    baseCurrency
   );
 
   return (
@@ -108,13 +113,13 @@ export function TotalBalanceHeroCard() {
           <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)', fontSize: '11px', fontWeight: 'bold', letterSpacing: '1px', textTransform: 'uppercase' }}>
             <Box component="span" sx={{ pointerEvents: 'auto' }}>
               <InfoTooltip
-                label={<span style={{ color: 'rgba(255,255,255,0.7)' }}>Total EGP Equivalent</span>}
-                text={metricExplanations.totalEgpEquivalent}
+                label={<span style={{ color: 'rgba(255,255,255,0.7)' }}>Total Balance</span>}
+                text={metricExplanations.totalBaseEquivalent}
               />
             </Box>
           </Typography>
           <Typography variant="h1" sx={{ color: 'primary.contrastText', fontSize: '32px', fontWeight: 800, mt: 0.5 }}>
-            EGP {data.totalEgpEquivalent.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+            {formatCurrency(data.totalBaseEquivalent, baseCurrency)}
           </Typography>
           
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5, mt: 1.5 }}>
@@ -135,7 +140,7 @@ export function TotalBalanceHeroCard() {
                     {acc.name}
                   </Typography>
                   <Typography sx={{ color: '#fff', fontSize: '14px', fontWeight: 800, mt: 0.5, lineHeight: 1.3 }}>
-                    {acc.currency === 'USD' ? '$' : ''}{bal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {acc.currency !== 'USD' ? acc.currency : ''}
+                    {formatCurrency(bal, acc.currency, 2)}
                   </Typography>
                 </Box>
               );

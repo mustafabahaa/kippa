@@ -1,27 +1,33 @@
 
 import { Box, Card, Skeleton, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, useTheme, Grid, LinearProgress } from '@mui/material';
 import { PieChart } from '@mui/x-charts/PieChart';
-import { 
-  useTransactions, 
-  useLedgerLines, 
-  useCategories, 
-  useCycles, 
-  useUsdRate, 
-  useBudgetAllocations 
+import {
+  useAccounts,
+  useTransactions,
+  useLedgerLines,
+  useCategories,
+  useCycles,
+  useDisplayRates,
+  useHouseholdBaseCurrency,
+  useBudgetAllocations
 } from '@/hooks/useFinance';
 import { computeDashboard } from '@/libs/selectors';
 import { useAppContext } from '@/hooks/useAppContext';
+import { formatCurrency } from '@/libs/format';
 
 export function BudgetBreakdownCard() {
   const { householdId } = useAppContext();
   const theme = useTheme();
 
   const chartColors = theme.palette.chart.colors;
+  const { data: accounts = [] } = useAccounts(householdId);
   const { data: transactions } = useTransactions(householdId);
   const { data: ledgerLines } = useLedgerLines(householdId);
   const { data: categories = [] } = useCategories(householdId);
   const { data: cycles = [] } = useCycles(householdId);
-  const { data: displayRate = 50.0 } = useUsdRate();
+  const baseCurrency = useHouseholdBaseCurrency();
+  const foreignCodes = Array.from(new Set(accounts.map(a => a.currency).filter(c => c !== baseCurrency)));
+  const { data: displayRates = {} } = useDisplayRates(baseCurrency, foreignCodes);
 
   const activeCycle = cycles.find(c => c.status === 'open') || null;
   const activeCycleId = activeCycle?.id;
@@ -47,7 +53,8 @@ export function BudgetBreakdownCard() {
     activeCycle,
     allocations || [],
     [],
-    displayRate
+    displayRates,
+    baseCurrency
   );
 
   const pieData = data.categoryStatus
@@ -174,19 +181,19 @@ export function BudgetBreakdownCard() {
                   <Box display="flex" justifyContent="space-between" alignItems="center">
                     <Typography variant="caption" sx={{ color: 'text.secondary' }}>Planned Budget</Typography>
                     <Typography variant="body2" sx={{ fontWeight: 'bold', color: 'text.primary' }}>
-                      EGP {totalPlanned.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                      {formatCurrency(totalPlanned, baseCurrency)}
                     </Typography>
                   </Box>
                   <Box display="flex" justifyContent="space-between" alignItems="center">
                     <Typography variant="caption" sx={{ color: 'text.secondary' }}>Total Spent</Typography>
                     <Typography variant="body2" sx={{ fontWeight: 'bold', color: totalSpent > totalPlanned ? 'error.main' : 'text.primary' }}>
-                      EGP {totalSpent.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                      {formatCurrency(totalSpent, baseCurrency)}
                     </Typography>
                   </Box>
                   <Box display="flex" justifyContent="space-between" alignItems="center">
                     <Typography variant="caption" sx={{ color: 'text.secondary' }}>Remaining</Typography>
                     <Typography variant="body2" sx={{ fontWeight: 'bold', color: totalRemaining < 0 ? 'error.main' : 'success.main' }}>
-                      {totalRemaining < 0 ? '-' : ''}EGP {Math.abs(totalRemaining).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                      {totalRemaining < 0 ? '-' : ''}{formatCurrency(Math.abs(totalRemaining), baseCurrency)}
                     </Typography>
                   </Box>
                 </Stack>
