@@ -8,6 +8,7 @@ import {
 } from 'firebase/auth';
 import { auth, isFirebaseConfigured, isFirebaseReady } from '@/config/firebase';
 import { dbLib } from '@/libs/db';
+import { detectBaseCurrency } from '@/libs/currencyMeta';
 import { UserProfile, Household } from '@/domain/financeTypes';
 
 const FIREBASE_REQUIRED_MSG =
@@ -128,7 +129,7 @@ export const authLib = {
     const household: Household = {
       id: householdId,
       name,
-      baseCurrency: 'EGP',
+      baseCurrency: detectBaseCurrency(),
       createdAt: now,
       createdBy: userId,
     };

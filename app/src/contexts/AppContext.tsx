@@ -2,6 +2,7 @@ import React, { createContext, useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { authLib } from '@/libs/auth';
 import { ledgerLib } from '@/libs/ledger';
+import { detectBaseCurrency } from '@/libs/currencyMeta';
 import { UserProfile, Household } from '@/domain/financeTypes';
 
 interface AppContextType {
@@ -55,7 +56,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           return info || {
             id,
             name: `Household (${id})`,
-            baseCurrency: 'EGP' as const,
+            baseCurrency: detectBaseCurrency(),
             createdAt: '',
             createdBy: ''
           };
