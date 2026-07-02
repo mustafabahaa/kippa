@@ -22,21 +22,24 @@ import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
 import SavingsIcon from '@mui/icons-material/Savings';
 import PaymentsIcon from '@mui/icons-material/Payments';
 import { isToday, format } from 'date-fns';
-import { 
-  useAccounts, 
-  useCategories, 
+import {
+  useAccounts,
+  useCategories,
   useCategoryFrequency,
-  useCycles, 
-  useCreateTransactionMutation 
+  useCycles,
+  useCreateTransactionMutation,
+  useHouseholdBaseCurrency
 } from '@/hooks/useFinance';
 import { useAppContext } from '@/hooks/useAppContext';
 import { PageHeader } from '@/features/shared/components/PageHeader';
+import { formatCurrency } from '@/libs/format';
 
 type EntryMode = 'expense' | 'income' | 'conversion' | 'transfer';
 
 export function FastEntry() {
   const { enqueueSnackbar } = useSnackbar();
   const { householdId, userProfile } = useAppContext();
+  const baseCurrency = useHouseholdBaseCurrency();
 
   const getAccountIcon = (type: string) => {
     const iconStyle = { fontSize: '14px', color: 'inherit' };
@@ -78,11 +81,11 @@ export function FastEntry() {
   const date = format(entryDate, 'yyyy-MM-dd');
   const dateLabel = isToday(entryDate) ? 'Today' : format(entryDate, 'MMM d');
 
-  // Sort accounts so EGP comes first, then cash accounts, then everything else (e.g. USD).
-  // Priority: EGP running account (0) -> cash type (1) -> other (2). Stable within each tier.
+  // Sort accounts so base-currency running accounts come first, then cash accounts, then everything else (e.g. USD).
+  // Priority: base-currency running account (0) -> cash type (1) -> other (2). Stable within each tier.
   const sortedAccounts = [...accounts].sort((a, b) => {
     const rank = (acc: typeof a) => {
-      if (acc.currency === 'EGP' && acc.type === 'running') return 0;
+      if (acc.currency === baseCurrency && acc.type === 'running') return 0;
       if (acc.type === 'cash') return 1;
       return 2;
     };
@@ -348,7 +351,7 @@ export function FastEntry() {
     }
   };
 
-  const currentCurrencySymbol = selectedAccount?.currency === 'USD' ? '$' : 'EGP';
+  const currentCurrencySymbol = selectedAccount?.currency ?? baseCurrency;
   const isSaving = createTxMutation.isPending;
 
   if (accountsLoading || categoriesLoading) {
@@ -694,7 +697,7 @@ export function FastEntry() {
               </Typography>
               <Box display="flex" alignItems="baseline" gap={0.5} sx={{ color: isKeypadForDest ? 'primary.contrastText' : 'text.secondary' }}>
                 <Typography color="inherit" sx={{ fontSize: '18px', fontWeight: 600 }}>
-                  {toAccount?.currency === 'USD' ? '$' : 'EGP'}
+                  {toAccount?.currency ?? baseCurrency}
                 </Typography>
                 <Typography color="inherit" sx={{ fontSize: '28px', fontWeight: 700 }}>
                   {toAmountStr}

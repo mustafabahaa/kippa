@@ -15,14 +15,15 @@ import {
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
 import SavingsIcon from '@mui/icons-material/Savings';
 import PaymentsIcon from '@mui/icons-material/Payments';
-import { 
-  useAccounts, 
-  useTransactions, 
-  useLedgerLines, 
-  useCycles, 
+import {
+  useAccounts,
+  useTransactions,
+  useLedgerLines,
+  useCycles,
   useReconciliationHistory,
   useCreateTransactionMutation,
-  useSaveReconciliationMutation
+  useSaveReconciliationMutation,
+  useHouseholdBaseCurrency
 } from '@/hooks/useFinance';
 import { Reconciliation as ReconModel } from '@/domain/financeTypes';
 import { useAppContext } from '@/hooks/useAppContext';
@@ -34,6 +35,7 @@ type AdjustmentReason = 'forgotten expense' | 'bank fee' | 'exchange difference'
 export function Reconciliation() {
   const { enqueueSnackbar } = useSnackbar();
   const { householdId, userProfile } = useAppContext();
+  const baseCurrency = useHouseholdBaseCurrency();
   const theme = useTheme();
 
   const getAccountIcon = (type: string, size = '14px') => {
@@ -58,10 +60,10 @@ export function Reconciliation() {
   const createTxMutation = useCreateTransactionMutation();
   const saveReconMutation = useSaveReconciliationMutation();
 
-  // Sort accounts so EGP comes first, then cash accounts, then everything else (e.g. USD).
+  // Sort accounts so base-currency accounts come first, then cash, then everything else.
   const sortedAccounts = [...accounts].sort((a, b) => {
     const rank = (acc: typeof a) => {
-      if (acc.currency === 'EGP') return 0;
+      if (acc.currency === baseCurrency) return 0;
       if (acc.type === 'cash') return 1;
       return 2;
     };

@@ -27,6 +27,7 @@ import type { Card, TransactionType } from '@/domain/financeTypes';
 import { CardBackground, BankLogo, NetworkLogo, TierLabel, CardChip, ContactlessIcon } from './CardDesign';
 import { TransactionIcon } from '@/features/transactions/components/TransactionIcon';
 import { EmptyLayout } from '@/features/shared/components/EmptyLayout';
+import { formatCurrency } from '@/libs/format';
 
 type Charge = {
   lineId: string;
@@ -156,13 +157,13 @@ export function CardDetail({ card, onClose }: { card: Card; onClose: () => void 
 
   const openPayAll = () => {
     setPayAmount(Number(totalDebt.toFixed(2)));
-    setPayLabel(`Pay all (EGP ${totalDebt.toLocaleString(undefined, { minimumFractionDigits: 2 })})`);
+    setPayLabel(`Pay all (${formatCurrency(totalDebt, card.currency, 2)})`);
     setPayOpen(true);
   };
 
   const openPayOne = (charge: Charge) => {
     setPayAmount(Number(charge.amount.toFixed(2)));
-    setPayLabel(`Pay ${charge.description ?? charge.txType} (EGP ${charge.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })})`);
+    setPayLabel(`Pay ${charge.description ?? charge.txType} (${formatCurrency(charge.amount, card.currency, 2)})`);
     setPayOpen(true);
   };
 
@@ -176,9 +177,7 @@ export function CardDetail({ card, onClose }: { card: Card; onClose: () => void 
     }
   };
 
-  const formattedBalance = card.currency === 'USD'
-    ? `$${Math.abs(accountBalance).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-    : `${Math.abs(accountBalance).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${card.currency}`;
+  const formattedBalance = formatCurrency(Math.abs(accountBalance), card.currency, 2);
 
   return (
     <>
@@ -298,7 +297,7 @@ export function CardDetail({ card, onClose }: { card: Card; onClose: () => void 
                     {isCredit ? (
                       <>
                         <Typography sx={{ fontSize: '28px', fontWeight: 800, color: '#ffffff', letterSpacing: '-0.5px', lineHeight: 1.2 }}>
-                          EGP {totalDebt.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                          {formatCurrency(totalDebt, card.currency, 2)}
                         </Typography>
                         <Typography sx={{ fontSize: '10px', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '1px', color: 'rgba(255,255,255,0.7)', mt: 0.5 }}>
                           Outstanding Balance
@@ -528,7 +527,7 @@ export function CardDetail({ card, onClose }: { card: Card; onClose: () => void 
         <DialogContent>
           <TextField
             type="number"
-            label="Amount (EGP)"
+            label={`Amount (${card.currency})`}
             value={payAmount}
             onChange={e => setPayAmount(e.target.value ? Number(e.target.value) : '')}
             autoFocus
