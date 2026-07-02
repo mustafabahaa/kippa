@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useSnackbar } from 'notistack';
 import {
   Box,
@@ -25,6 +25,7 @@ import { isToday, format } from 'date-fns';
 import { 
   useAccounts, 
   useCategories, 
+  useCategoryFrequency,
   useCycles, 
   useCreateTransactionMutation 
 } from '@/hooks/useFinance';
@@ -65,6 +66,11 @@ export function FastEntry() {
   const { data: cycles = [] } = useCycles(householdId);
   const createTxMutation = useCreateTransactionMutation();
 
+  const frequencyScores = useCategoryFrequency(
+    householdId,
+    mode === 'income' ? 'income' : 'expense'
+  );
+
   const activeCycle = cycles.find(c => c.status === 'open') || null;
   const [entryDate, setEntryDate] = useState<Date>(new Date());
   const [datePickerOpen, setDatePickerOpen] = useState(false);
@@ -104,6 +110,20 @@ export function FastEntry() {
 
   const selectedCategory = (selectedCategoryId && categories.find(c => c.id === selectedCategoryId && c.type === mode))
     || null;
+
+  const sortedCategories = useMemo(() => {
+    if (mode !== 'expense' && mode !== 'income') return [];
+    return categories
+      .filter((c) => c.type === mode)
+      .map((c) => ({
+        ...c,
+        score: frequencyScores[c.id] ?? 0,
+      }))
+      .sort((a, b) => {
+        if (b.score !== a.score) return b.score - a.score; // score DESC
+        return a.name.localeCompare(b.name); // name ASC tiebreak
+      });
+  }, [categories, mode, frequencyScores]);
 
   // Event handlers to update state and reset target/destination account if it is invalid for the chosen mode or source account.
   const handleSelectSourceAccount = (id: string | null) => {
@@ -390,7 +410,7 @@ export function FastEntry() {
                 gap: 1,
               }}
             >
-              {categories.filter(c => c.type === mode).map(cat => {
+              {sortedCategories.map((cat) => {
                 const isSelected = selectedCategory?.id === cat.id;
                 return (
                   <Chip
@@ -406,7 +426,7 @@ export function FastEntry() {
                       color: isSelected ? 'primary.contrastText' : 'text.secondary',
                       borderColor: isSelected ? 'primary.main' : 'divider',
                       fontWeight: isSelected ? 'bold' : 'normal',
-                      '&:hover': { bgcolor: isSelected ? 'primary.main' : 'action.hover' }
+                      '&:hover': { bgcolor: isSelected ? 'primary.main' : 'action.hover' },
                     }}
                   />
                 );
