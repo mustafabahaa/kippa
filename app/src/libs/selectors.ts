@@ -1,8 +1,9 @@
-import { Account, FinanceTransaction, LedgerLine, BudgetCycle, BudgetAllocation, ExpectedIncome, Category } from '@/domain/financeTypes';
+import { Account, FinanceTransaction, LedgerLine, BudgetCycle, BudgetAllocation, ExpectedIncome, Category, CurrencyCode } from '@/domain/financeTypes';
 
 export interface DashboardData {
   accountBalances: { accountId: string; balance: number }[];
-  totalEgpEquivalent: number;
+  totalBaseEquivalent: number;
+  baseCurrency: CurrencyCode;
   cycleProgress: {
     elapsedDays: number;
     totalDays: number;
@@ -46,7 +47,8 @@ export function computeDashboard(
   activeCycle: BudgetCycle | null,
   allocations: BudgetAllocation[],
   expectedIncomes: ExpectedIncome[],
-  displayUsdToEgpRate: number
+  displayRates: Record<string, number>,
+  baseCurrency: CurrencyCode
 ): DashboardData {
   // 1. Filter out voided transactions
   const activeTxIds = new Set(
@@ -72,15 +74,12 @@ export function computeDashboard(
     balance: balancesMap[acc.id] || 0,
   }));
 
-  // 3. Total EGP Equivalent
-  let totalEgpEquivalent = 0;
+  // 3. Total base-currency equivalent
+  let totalBaseEquivalent = 0;
   accounts.forEach(acc => {
     const bal = balancesMap[acc.id] || 0;
-    if (acc.currency === 'EGP') {
-      totalEgpEquivalent += bal;
-    } else if (acc.currency === 'USD') {
-      totalEgpEquivalent += bal * displayUsdToEgpRate;
-    }
+    const rate = acc.currency === baseCurrency ? 1 : (displayRates[acc.currency] ?? 1);
+    totalBaseEquivalent += bal * rate;
   });
 
   // 4. Cycle progress
@@ -129,12 +128,11 @@ export function computeDashboard(
       // Find the ledger line for this expense
       const linesForTx = cycleLines.filter(l => l.transactionId === tx.id);
       linesForTx.forEach(l => {
-        // Expense is negative, sum the absolute EGP equivalent value
-        let amountEgp = Math.abs(l.signedAmount);
-        if (l.currency === 'USD') {
-          amountEgp = amountEgp * displayUsdToEgpRate;
-        }
-        catSpent[tx.categoryId!] = (catSpent[tx.categoryId!] || 0) + amountEgp;
+        // Expense is negative, sum the absolute base-currency equivalent value
+        let amountBase = Math.abs(l.signedAmount);
+        const rate = l.currency === baseCurrency ? 1 : (displayRates[l.currency] ?? 1);
+        amountBase = amountBase * rate;
+        catSpent[tx.categoryId!] = (catSpent[tx.categoryId!] || 0) + amountBase;
       });
     }
   });
@@ -182,11 +180,10 @@ export function computeDashboard(
     if (tx.type === 'income') {
       const linesForTx = cycleLines.filter(l => l.transactionId === tx.id);
       linesForTx.forEach(l => {
-        let amountEgp = l.signedAmount;
-        if (l.currency === 'USD') {
-          amountEgp = amountEgp * displayUsdToEgpRate;
-        }
-        actualIncome += amountEgp;
+        let amountBase = l.signedAmount;
+        const rate = l.currency === baseCurrency ? 1 : (displayRates[l.currency] ?? 1);
+        amountBase = amountBase * rate;
+        actualIncome += amountBase;
       });
     }
   });
@@ -194,8 +191,8 @@ export function computeDashboard(
   const expectedIncomeSum = expectedIncomes
     .filter(i => activeCycle ? i.budgetCycleId === activeCycle.id : false)
     .reduce((acc, curr) => {
-      const rate = curr.expectedRateToBaseCurrency || displayUsdToEgpRate;
-      return acc + (curr.amount * (curr.currency === 'USD' ? rate : 1));
+      const rate = curr.expectedRateToBaseCurrency || (curr.currency === baseCurrency ? 1 : (displayRates[curr.currency] ?? 1));
+      return acc + curr.amount * rate;
     }, 0);
 
   // 9. Saving goals
@@ -246,11 +243,13 @@ export function computeDashboard(
   const remainingFlexibleBudget = Math.max(0, flexiblePlanned - flexibleSpent);
   const budgetSafeDailySpend = remainingFlexibleBudget / daysDivider;
 
-  // Cash-Safe: Available EGP bank + cash - essential budget remaining - saving target
-  let egpLiquidBalance = 0;
+  // Cash-Safe: Available base-currency bank + cash + wallet balance (foreign converted)
+  let liquidBalance = 0;
   accounts.forEach(acc => {
-    if (acc.currency === 'EGP' && (acc.type === 'running' || acc.type === 'cash' || acc.type === 'wallet')) {
-      egpLiquidBalance += balancesMap[acc.id] || 0;
+    if (acc.type === 'running' || acc.type === 'cash' || acc.type === 'wallet') {
+      const bal = balancesMap[acc.id] || 0;
+      const rate = acc.currency === baseCurrency ? 1 : (displayRates[acc.currency] ?? 1);
+      liquidBalance += bal * rate;
     }
   });
 
@@ -266,11 +265,12 @@ export function computeDashboard(
   }, 0);
   const remainingEssentialBudget = Math.max(0, essentialPlanned - essentialSpent);
 
-  const cashSafeDailySpend = Math.max(0, (egpLiquidBalance - remainingEssentialBudget) / daysDivider);
+  const cashSafeDailySpend = Math.max(0, (liquidBalance - remainingEssentialBudget) / daysDivider);
 
   return {
     accountBalances,
-    totalEgpEquivalent,
+    totalBaseEquivalent,
+    baseCurrency,
     cycleProgress,
     spending: {
       actual: actualSpending,
