@@ -21,11 +21,13 @@ import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import EditIcon from '@mui/icons-material/Edit';
-import { 
+import {
   useSaveAllocationsBatchMutation,
   useCreateCategoryMutation,
-  useUpdateCategoryMutation
+  useUpdateCategoryMutation,
+  useHouseholdBaseCurrency
 } from '@/hooks/useFinance';
+import { formatCurrency } from '@/libs/format';
 import { cyclesLib } from '@/libs/cycles';
 import { BudgetCycle, BudgetAllocation, Category } from '@/domain/financeTypes';
 
@@ -58,6 +60,7 @@ export function BudgetAllocationsConfig({
   onTotalBudgetChange
 }: BudgetAllocationsConfigProps) {
   const { enqueueSnackbar } = useSnackbar();
+  const baseCurrency = useHouseholdBaseCurrency();
   const expenseCategories = categories.filter(c => c.type === 'expense');
 
   const [rows, setRows] = useState<AllocationRow[]>(() => {
@@ -151,7 +154,7 @@ export function BudgetAllocationsConfig({
       budgetCycleId: activeCycle.id,
       categoryId: row.categoryId,
       plannedAmount: parseFloat(row.plannedAmount) || 0,
-      currency: 'EGP',
+      currency: baseCurrency,
       carryLeftover: false,
     }));
 
@@ -162,7 +165,7 @@ export function BudgetAllocationsConfig({
     });
     enqueueSnackbar('Allocations saved!', { variant: 'success' });
     if (onSave) onSave();
-  }, [rows, activeCycle.id, householdId, saveAllocationsBatchMutation, enqueueSnackbar, onSave]);
+  }, [rows, activeCycle.id, householdId, saveAllocationsBatchMutation, enqueueSnackbar, onSave, baseCurrency]);
 
   const handleCopyPreviousAllocations = async () => {
     const closedCycle = cycles.find(c => c.status === 'closed');
@@ -217,7 +220,7 @@ export function BudgetAllocationsConfig({
       {/* Header */}
       <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
         <Typography variant="body1" sx={{ fontWeight: 700, color: 'text.primary', fontSize: '15px' }}>
-          Category Budgets (EGP)
+          Category Budgets ({baseCurrency})
         </Typography>
         <Button 
           variant="text" 
@@ -320,7 +323,7 @@ export function BudgetAllocationsConfig({
             Total Budget
           </Typography>
           <Typography variant="body1" sx={{ fontWeight: 700, fontSize: '16px' }}>
-            {totalBudget.toLocaleString(undefined, { minimumFractionDigits: 0 })} EGP
+            {formatCurrency(totalBudget, baseCurrency)}
           </Typography>
         </Box>
         {!saveRef && (

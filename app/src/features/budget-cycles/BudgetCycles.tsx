@@ -29,16 +29,18 @@ import EditIcon from '@mui/icons-material/Edit';
 import EventIcon from '@mui/icons-material/Event';
 import TimerIcon from '@mui/icons-material/Timer';
 import HistoryIcon from '@mui/icons-material/History';
-import { 
-  useCategories, 
-  useCycles, 
+import {
+  useCategories,
+  useCycles,
   useBudgetAllocations,
   useCreateCycleMutation,
-  useUpdateCycleStatusMutation
+  useUpdateCycleStatusMutation,
+  useHouseholdBaseCurrency
 } from '@/hooks/useFinance';
 import { BudgetAllocationsConfig } from '@/features/budget-cycles/BudgetAllocationsConfig';
 import { CycleAnalytics } from '@/features/budget-cycles/CycleAnalytics';
 import { useAppContext } from '@/hooks/useAppContext';
+import { formatCurrency } from '@/libs/format';
 import { PageHeader } from '@/features/shared/components/PageHeader';
 import { BudgetCycle } from '@/domain/financeTypes';
 
@@ -93,6 +95,7 @@ function getStatusBgColor(status: string, theme: any) {
 export function BudgetCycles() {
   const { householdId } = useAppContext();
   const theme = useTheme();
+  const baseCurrency = useHouseholdBaseCurrency();
 
   // Cycle Creation State
   const [openCreateDialog, setOpenCreateDialog] = useState(false);
@@ -318,7 +321,7 @@ export function BudgetCycles() {
                 Total Budget
               </Typography>
               <Typography variant="body1" sx={{ fontWeight: 800, fontSize: '20px', color: 'primary.main', mt: 0.25 }}>
-                {totalBudget.toLocaleString(undefined, { minimumFractionDigits: 0 })} EGP
+                {formatCurrency(totalBudget, baseCurrency)}
               </Typography>
             </Box>
           </DialogTitle>
