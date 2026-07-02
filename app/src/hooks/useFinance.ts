@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, useSyncExternalStore } from 'react';
+import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ledgerLib } from '@/libs/ledger';
 import { cyclesLib } from '@/libs/cycles';
@@ -11,6 +11,7 @@ import { useAppContext } from '@/hooks/useAppContext';
 import { useSnackbar } from 'notistack';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { notifyOfflineAwareSuccess } from '@/lib/offlineToast';
+import { computeFrequencyScores } from '@/utils/categoryFrequency';
 import {
   Account,
   Category,
@@ -87,6 +88,22 @@ export function useTransactions(householdId: string, cycleId?: string) {
     queryFn: () => ledgerLib.getTransactions(householdId, cycleId),
     enabled: !!householdId,
   });
+}
+
+/**
+ * Returns a map of categoryId -> recency+frequency score for the given type,
+ * based on transactions in the last 30 days. For sorting category chips
+ * in Fast Entry so frequently-used categories appear first.
+ */
+export function useCategoryFrequency(
+  householdId: string,
+  type: 'income' | 'expense'
+): Record<string, number> {
+  const { data: transactions } = useTransactions(householdId);
+  return useMemo(() => {
+    const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+    return computeFrequencyScores(transactions, type, today);
+  }, [transactions, type]);
 }
 
 export function useLedgerLines(householdId: string, cycleId?: string) {

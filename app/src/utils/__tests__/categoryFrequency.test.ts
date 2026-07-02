@@ -1,8 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { computeFrequencyScores, WINDOW_DAYS } from '../categoryFrequency';
+import { computeFrequencyScores } from '../categoryFrequency';
 import type { FinanceTransaction } from '@/domain/financeTypes';
 
-const ISO = (d: string) => d; // YYYY-MM-DD matches the date field format
 const tx = (over: Partial<FinanceTransaction>): FinanceTransaction => ({
   id: over.id ?? 'x',
   householdId: 'h',
@@ -63,7 +62,3 @@ describe('computeFrequencyScores', () => {
     expect(computeFrequencyScores(txs, 'expense', '2024-01-30')).toEqual({});
   });
 });
-
-// Reference the constant so it's part of the test surface.
-void WINDOW_DAYS;
-void ISO;
