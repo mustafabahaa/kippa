@@ -17,12 +17,14 @@ import {
 import BarChartIcon from '@mui/icons-material/BarChart';
 import { BarChart } from '@mui/x-charts/BarChart';
 import { LineChart } from '@mui/x-charts/LineChart';
-import { 
-  useCycles, 
-  useTransactions, 
-  useLedgerLines, 
-  useCategories, 
-  useUsdRate,
+import {
+  useCycles,
+  useTransactions,
+  useLedgerLines,
+  useCategories,
+  useAccounts,
+  useDisplayRates,
+  useHouseholdBaseCurrency,
   useAllBudgetAllocations,
   useAllExpectedIncomes
 } from '@/hooks/useFinance';
@@ -37,7 +39,10 @@ export function CycleAnalytics() {
   const { data: transactions = [], isLoading: txsLoading } = useTransactions(householdId);
   const { data: ledgerLines = [], isLoading: linesLoading } = useLedgerLines(householdId);
   const { data: categories = [], isLoading: categoriesLoading } = useCategories(householdId);
-  const { data: displayRate = 50.0 } = useUsdRate();
+  const { data: accounts = [] } = useAccounts(householdId);
+  const baseCurrency = useHouseholdBaseCurrency();
+  const foreignCodes = Array.from(new Set(accounts.map(a => a.currency).filter(c => c !== baseCurrency)));
+  const { data: displayRates = {} } = useDisplayRates(baseCurrency, foreignCodes);
   const { data: allAllocations = [], isLoading: allocsLoading } = useAllBudgetAllocations(householdId);
   const { data: allExpectedIncomes = [], isLoading: incomesLoading } = useAllExpectedIncomes(householdId);
 
@@ -76,14 +81,13 @@ export function CycleAnalytics() {
       cycleTxs.forEach(tx => {
         const txLines = cycleLines.filter(l => l.transactionId === tx.id);
         txLines.forEach(l => {
-          let amountEgp = Math.abs(l.signedAmount);
-          if (l.currency === 'USD') {
-            amountEgp = amountEgp * displayRate;
-          }
+          let amountBase = Math.abs(l.signedAmount);
+          const rate = l.currency === baseCurrency ? 1 : (displayRates[l.currency] ?? 1);
+          amountBase = amountBase * rate;
           if (tx.type === 'income') {
-            actualIncome += amountEgp;
+            actualIncome += amountBase;
           } else if (tx.type === 'expense') {
-            actualExpense += amountEgp;
+            actualExpense += amountBase;
           }
         });
       });
@@ -95,8 +99,8 @@ export function CycleAnalytics() {
       // Find expected income
       const cycleExpectedIncomes = allExpectedIncomes.filter(i => i.budgetCycleId === cycle.id);
       const expectedIncome = cycleExpectedIncomes.reduce((acc, curr) => {
-        const rate = curr.expectedRateToBaseCurrency || displayRate;
-        return acc + (curr.amount * (curr.currency === 'USD' ? rate : 1));
+        const rate = curr.expectedRateToBaseCurrency || (displayRates[curr.currency] ?? 1);
+        return acc + (curr.amount * (curr.currency === baseCurrency ? 1 : rate));
       }, 0);
 
       return {
@@ -109,7 +113,7 @@ export function CycleAnalytics() {
         savings: Math.round(actualIncome - actualExpense)
       };
     });
-  }, [isLoading, sortedCycles, transactions, ledgerLines, allAllocations, allExpectedIncomes, displayRate]);
+  }, [isLoading, sortedCycles, transactions, ledgerLines, allAllocations, allExpectedIncomes, displayRates, baseCurrency]);
 
   // Compute category trends over cycles
   const categoryTrends = useMemo(() => {
@@ -128,11 +132,10 @@ export function CycleAnalytics() {
       cycleTxs.forEach(tx => {
         const txLines = cycleLines.filter(l => l.transactionId === tx.id);
         txLines.forEach(l => {
-          let amountEgp = Math.abs(l.signedAmount);
-          if (l.currency === 'USD') {
-            amountEgp = amountEgp * displayRate;
-          }
-          spent += amountEgp;
+          let amountBase = Math.abs(l.signedAmount);
+          const rate = l.currency === baseCurrency ? 1 : (displayRates[l.currency] ?? 1);
+          amountBase = amountBase * rate;
+          spent += amountBase;
         });
       });
 
@@ -141,7 +144,7 @@ export function CycleAnalytics() {
         spent: Math.round(spent)
       };
     });
-  }, [isLoading, sortedCycles, transactions, ledgerLines, selectedCategoryId, displayRate]);
+  }, [isLoading, sortedCycles, transactions, ledgerLines, selectedCategoryId, displayRates, baseCurrency]);
 
   const expenseCategories = useMemo(() => {
     return categories.filter(c => c.type === 'expense');
