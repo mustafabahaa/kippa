@@ -3,6 +3,7 @@ import AcUnitIcon from '@mui/icons-material/AcUnit';
 import EditIcon from '@mui/icons-material/Edit';
 import type { Card } from '@/domain/financeTypes';
 import type { CardSummary } from '@/libs/cardSelectors';
+import { formatCurrency } from '@/libs/format';
 import { CardBackground, BankLogo, NetworkLogo, TierLabel, CardChip, ContactlessIcon } from './CardDesign';
 
 export function CardTile({
@@ -24,11 +25,9 @@ export function CardTile({
   const barColor = utilizationPct == null ? 'primary' : utilizationPct > 95 ? 'error' : utilizationPct > 80 ? 'warning' : 'success';
   const isCredit = card.kind === 'credit';
 
-  const formattedBalance = parentAccountBalance != null ? (
-    card.currency === 'USD'
-      ? `$${parentAccountBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-      : `${parentAccountBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${card.currency}`
-  ) : null;
+  const formattedBalance = parentAccountBalance != null
+    ? formatCurrency(parentAccountBalance, card.currency, 2)
+    : null;
 
   return (
     <Box
@@ -131,7 +130,7 @@ export function CardTile({
                 {isCredit && summary && (
                   <Stack spacing={0.5}>
                     <Typography sx={{ fontSize: '24px', fontWeight: 800, letterSpacing: '-0.5px', lineHeight: 1.1, color: '#ffffff' }}>
-                      {card.currency === 'USD' ? '$' : ''}{summary.currentDebt.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {card.currency !== 'USD' ? card.currency : ''}
+                      {formatCurrency(summary.currentDebt, card.currency, 2)}
                     </Typography>
                     <Stack direction="row" justifyContent="space-between" alignItems="center">
                       <Typography sx={{ fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.8px', color: '#ffffff', opacity: 0.7 }}>

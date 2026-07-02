@@ -43,18 +43,22 @@ import { CardTile } from '@/features/cards/CardTile';
 import { AddCardDialog } from '@/features/cards/AddCardDialog';
 import { CardDetail } from '@/features/cards/CardDetail';
 import { computeCardSummary } from '@/libs/cardSelectors';
+import { CurrencySelect } from '@/features/shared/components/CurrencySelect';
+import { useHouseholdBaseCurrency } from '@/hooks/useFinance';
+import { formatCurrency } from '@/libs/format';
 
 export function Accounts() {
   const { householdId } = useAppContext();
+  const baseCurrency = useHouseholdBaseCurrency();
   const [newAccName, setNewAccName] = useState('');
   const [newAccType, setNewAccType] = useState<AccountType>('running');
-  const [newAccCurrency, setNewAccCurrency] = useState<CurrencyCode>('EGP');
+  const [newAccCurrency, setNewAccCurrency] = useState<CurrencyCode>(baseCurrency);
 
   // Edit Account State
   const [editingAccount, setEditingAccount] = useState<Account | null>(null);
   const [editAccName, setEditAccName] = useState('');
   const [editAccType, setEditAccType] = useState<AccountType>('running');
-  const [editAccCurrency, setEditAccCurrency] = useState<CurrencyCode>('EGP');
+  const [editAccCurrency, setEditAccCurrency] = useState<CurrencyCode>(baseCurrency);
   const [editAccIsActive, setEditAccIsActive] = useState(true);
 
   // Card UI state
@@ -203,8 +207,8 @@ export function Accounts() {
                       </Box>
                     </Box>
                     <Stack direction="row" spacing={1} alignItems="center">
-                      <Typography variant="body1" sx={{ fontWeight: 'bold', color: acc.currency === 'USD' ? 'primary.main' : 'text.primary' }}>
-                        {acc.currency === 'USD' ? '$' : ''}{bal.toLocaleString(undefined, { minimumFractionDigits: 2 })} {acc.currency !== 'USD' ? acc.currency : ''}
+                      <Typography variant="body1" sx={{ fontWeight: 'bold', color: 'text.primary' }}>
+                        {formatCurrency(bal, acc.currency, 2)}
                       </Typography>
                       <IconButton size="small" onClick={() => handleOpenEdit(acc)}>
                         <EditIcon sx={{ fontSize: '18px' }} />
@@ -256,7 +260,7 @@ export function Accounts() {
               <TextField
                 fullWidth
                 label="Account Name"
-                placeholder="e.g. CIB Bank"
+                placeholder="e.g. My Bank"
                 value={newAccName}
                 onChange={e => setNewAccName(e.target.value)}
                 sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
@@ -276,19 +280,11 @@ export function Accounts() {
                   <MenuItem value="wallet">Wallet</MenuItem>
                 </Select>
               </FormControl>
-              <FormControl fullWidth>
-                <InputLabel id="acc-currency-label">Currency</InputLabel>
-                <Select
-                  labelId="acc-currency-label"
-                  value={newAccCurrency}
-                  label="Currency"
-                  onChange={e => setNewAccCurrency(e.target.value as CurrencyCode)}
-                  sx={{ borderRadius: '12px' }}
-                >
-                  <MenuItem value="EGP">EGP (Egyptian Pound)</MenuItem>
-                  <MenuItem value="USD">USD (US Dollar)</MenuItem>
-                </Select>
-              </FormControl>
+              <CurrencySelect
+                labelId="acc-currency-label"
+                value={newAccCurrency}
+                onChange={setNewAccCurrency}
+              />
               <Button
                 fullWidth
                 variant="contained"
@@ -344,19 +340,11 @@ export function Accounts() {
                 <MenuItem value="wallet">Wallet</MenuItem>
               </Select>
             </FormControl>
-            <FormControl fullWidth>
-              <InputLabel id="edit-acc-currency-label">Currency</InputLabel>
-              <Select
-                labelId="edit-acc-currency-label"
-                value={editAccCurrency}
-                label="Currency"
-                onChange={e => setEditAccCurrency(e.target.value as CurrencyCode)}
-                sx={{ borderRadius: '12px' }}
-              >
-                <MenuItem value="EGP">EGP (Egyptian Pound)</MenuItem>
-                <MenuItem value="USD">USD (US Dollar)</MenuItem>
-              </Select>
-            </FormControl>
+            <CurrencySelect
+              labelId="edit-acc-currency-label"
+              value={editAccCurrency}
+              onChange={setEditAccCurrency}
+            />
             <FormControlLabel
               control={
                 <Checkbox

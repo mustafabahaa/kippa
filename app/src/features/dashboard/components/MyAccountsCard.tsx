@@ -14,6 +14,7 @@ import { useAppContext } from '@/hooks/useAppContext';
 import { CardTile } from '@/features/cards/CardTile';
 import { CardDetail } from '@/features/cards/CardDetail';
 import { computeCardSummary } from '@/libs/cardSelectors';
+import { formatCurrency } from '@/libs/format';
 import type { Card as CardType } from '@/domain/financeTypes';
 
 export function MyAccountsCard() {
@@ -105,8 +106,8 @@ export function MyAccountsCard() {
                     <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '11px' }}>{acc.type}</Typography>
                   </Box>
                 </Box>
-                <Typography variant="body1" sx={{ fontWeight: 'bold', color: acc.currency === 'USD' ? 'primary.main' : 'text.primary' }}>
-                  {acc.currency === 'USD' ? '$' : ''}{bal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {acc.currency !== 'USD' ? acc.currency : ''}
+                <Typography variant="body1" sx={{ fontWeight: 'bold', color: 'text.primary' }}>
+                  {formatCurrency(bal, acc.currency, 2)}
                 </Typography>
               </Box>
 
