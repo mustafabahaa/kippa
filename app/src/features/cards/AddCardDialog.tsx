@@ -141,7 +141,9 @@ function AddCardDialogInner({ preselectAccountId, onClose }: { preselectAccountI
               <CardTile card={previewCard} />
             </Box>
 
-            <FormControl fullWidth sx={{ mt: 4 }}>
+            <Box sx={{ height: 32 }} />
+
+            <FormControl fullWidth>
               <InputLabel>Card type</InputLabel>
               <Select value={kind} label="Card type" onChange={e => handleKindChange(e.target.value as CardKind)}>
                 <MenuItem value="debit">Debit</MenuItem>
