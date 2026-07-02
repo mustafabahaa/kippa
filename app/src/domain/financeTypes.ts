@@ -1,4 +1,10 @@
-export type CurrencyCode = 'EGP' | 'USD';
+/**
+ * ISO 4217 currency code as a plain string (e.g. 'EGP', 'USD', 'SAR', 'AED', 'EUR').
+ * Kept as a string alias rather than a fixed union so the app supports any
+ * currency without code changes. The curated list users pick from lives in
+ * `app/src/libs/currencyMeta.ts`.
+ */
+export type CurrencyCode = string;
 
 export type AccountType = 'running' | 'savings' | 'cash' | 'wallet' | 'credit' | 'adjustment';
 
