@@ -23,7 +23,7 @@ import DarkModeIcon from '@mui/icons-material/DarkMode';
 import SettingsBrightnessIcon from '@mui/icons-material/SettingsBrightness';
 import CheckIcon from '@mui/icons-material/Check';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
-import type { ThemeModePref } from '@/hooks/useThemeMode';
+import type { ThemeModePref } from '@/contexts/themeModeContext';
 import type { UserProfile, Household } from '@/domain/financeTypes';
 
 interface ProfileMenuProps {
