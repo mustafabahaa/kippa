@@ -32,12 +32,12 @@ export const metricExplanations: Record<string, ReactNode> = {
     'the cycle. Try to stay at or below this per day to stay on plan.',
 
   safeDailyCash:
-    'Your available EGP cash/bank balance (after essential bills) divided by the ' +
-    'days left in the cycle. The most you can actually afford per day.',
+    'Your available cash/bank balance in your base currency (after essential bills) ' +
+    'divided by the days left in the cycle. The most you can actually afford per day.',
 
-  totalEgpEquivalent:
-    'The combined balance of all your accounts, converted to EGP at today\'s ' +
-    'display rate so you can see everything in one currency.',
+  totalBaseEquivalent:
+    'The combined balance of all your accounts, converted to your base currency ' +
+    'at today\'s display rate so you can see everything in one currency.',
 
   savingStatus: {
     onTrack:
