@@ -1,26 +1,10 @@
-import React, { createContext, useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { authLib } from '@/libs/auth';
 import { ledgerLib } from '@/libs/ledger';
 import { detectBaseCurrency } from '@/libs/currencyMeta';
 import { UserProfile, Household } from '@/domain/financeTypes';
-
-interface AppContextType {
-  userProfile: UserProfile | null;
-  householdId: string;
-  isAuthLoading: boolean;
-  userHouseholds: Household[];
-  isLoadingHouseholds: boolean;
-  loginWithGoogle: () => Promise<void>;
-  logout: () => Promise<void>;
-  switchHousehold: (id: string) => Promise<void>;
-  createHousehold: (name: string) => Promise<Household>;
-  joinHousehold: (id: string) => Promise<void>;
-  leaveHousehold: (id: string) => Promise<void>;
-  updateUserProfile: (profile: UserProfile) => void;
-}
-
-export const AppContext = createContext<AppContextType | undefined>(undefined);
+import { AppContext } from '@/contexts/appContextInstance';
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);

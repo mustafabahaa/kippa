@@ -5,7 +5,7 @@ import { SnackbarProvider } from 'notistack';
 import App from '@/App';
 
 import { AppProvider } from '@/contexts/AppContext';
-import { ThemeModeProvider } from '@/hooks/useThemeMode';
+import { ThemeModeProvider } from '@/hooks/ThemeModeProvider';
 
 const queryClient = new QueryClient({
   defaultOptions: {

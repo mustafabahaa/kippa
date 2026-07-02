@@ -23,7 +23,6 @@ import {
   OtherLogo,
 } from './logos';
 import {
-  tierGradient,
   CibPattern,
   NbePattern,
   BanqueMisrPattern,
@@ -34,6 +33,7 @@ import {
   FabmisrPattern,
   EgbankPattern,
 } from './bankBackgrounds';
+import { tierGradient } from './bankGradients';
 
 export type CardTier = {
   id: string;
