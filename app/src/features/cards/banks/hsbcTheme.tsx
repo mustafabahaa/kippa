@@ -107,8 +107,7 @@ export function HsbcEmblem({ size = 28 }: { size?: number }) {
   );
 }
 
-export function HsbcLogo({ kind }: { kind: CardKind }) {
-  const isCredit = kind === 'credit';
+export function HsbcLogo({ kind: _kind }: { kind: CardKind }) {
   return (
     <Stack direction="row" alignItems="center" spacing={1.5}>
       <HsbcEmblem size={28} />
@@ -124,18 +123,6 @@ export function HsbcLogo({ kind }: { kind: CardKind }) {
           }}
         >
           HSBC
-        </Typography>
-        <Typography
-          sx={{
-            fontFamily: '"Outfit", "Inter", "Roboto", sans-serif',
-            fontWeight: 300,
-            fontSize: '13px',
-            color: '#ffffff',
-            opacity: 0.9,
-            letterSpacing: '0.2px',
-          }}
-        >
-          {isCredit ? 'Advance' : 'Premier'}
         </Typography>
       </Box>
     </Stack>
