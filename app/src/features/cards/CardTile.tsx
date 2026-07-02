@@ -38,7 +38,7 @@ export function CardTile({
         borderRadius: '20px',
         color: '#fff',
         cursor: onOpenDetail ? 'pointer' : 'default',
-        minHeight: isCredit ? 180 : 170,
+        minHeight: 190,
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'space-between',
@@ -57,7 +57,7 @@ export function CardTile({
       }}
     >
       <CardBackground bankId={card.bankId} kind={card.kind} tierId={card.tierId}>
-        <Box sx={{ p: 2.5, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: isCredit ? 180 : 170, boxSizing: 'border-box' }}>
+        <Box sx={{ p: 2.5, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: 190, boxSizing: 'border-box' }}>
           {!card.isActive && (
             <Chip
               icon={<AcUnitIcon sx={{ fontSize: 14 }} />}
