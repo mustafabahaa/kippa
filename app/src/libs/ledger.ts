@@ -1,6 +1,7 @@
 import { dbLib } from '@/libs/db';
 import { auditLogLib } from '@/libs/auditLog';
-import { Account, Category, FinanceTransaction, ConversionDetails, Household, Reconciliation, NotificationSettings } from '@/domain/financeTypes';
+import { detectBaseCurrency, currencySymbol } from '@/libs/currencyMeta';
+import { Account, Category, FinanceTransaction, ConversionDetails, Household, Reconciliation, NotificationSettings, CurrencyCode } from '@/domain/financeTypes';
 
 type AuditUser = { uid: string; displayName: string; photoURL?: string };
 
@@ -38,11 +39,12 @@ export const ledgerLib = {
     return id;
   },
 
-  async seedDefaultAccounts(householdId: string): Promise<void> {
+  async seedDefaultAccounts(householdId: string, baseCurrency?: CurrencyCode): Promise<void> {
+    const base = baseCurrency || detectBaseCurrency();
+    const symbol = currencySymbol(base);
     const defaultAccounts: Omit<Account, 'id' | 'householdId' | 'createdAt'>[] = [
-      { name: 'EGP Bank', type: 'running', currency: 'EGP', isActive: true, sortOrder: 1 },
-      { name: 'EGP Cash', type: 'cash', currency: 'EGP', isActive: true, sortOrder: 2 },
-      { name: 'USD Bank', type: 'running', currency: 'USD', isActive: true, sortOrder: 3 },
+      { name: `${symbol} Bank`, type: 'running', currency: base, isActive: true, sortOrder: 1 },
+      { name: `${symbol} Cash`, type: 'cash', currency: base, isActive: true, sortOrder: 2 },
     ];
 
     for (const acc of defaultAccounts) {
@@ -172,6 +174,15 @@ export const ledgerLib = {
     }
   },
 
+  async updateHouseholdBaseCurrency(
+    householdId: string,
+    baseCurrency: CurrencyCode
+  ): Promise<void> {
+    const info = await this.getHouseholdInfo(householdId);
+    if (!info) throw new Error('Household not found');
+    await dbLib.setDoc(householdId, 'householdInfo', 'info', { ...info, baseCurrency });
+  },
+
   async ensureHouseholdExists(householdId: string, userId: string, name: string = 'My Household'): Promise<string> {
     try {
       const data = await dbLib.getDoc(householdId, 'householdInfo', 'info');
@@ -180,7 +191,7 @@ export const ledgerLib = {
         const household: Household = {
           id: householdId,
           name,
-          baseCurrency: 'EGP',
+          baseCurrency: detectBaseCurrency(),
           createdAt: now,
           createdBy: userId,
         };

@@ -218,7 +218,7 @@ export function useUserHouseholds(userProfile: UserProfile | null) {
           return info || {
             id,
             name: `Household (${id})`,
-            baseCurrency: 'EGP' as const,
+            baseCurrency: detectBaseCurrency(),
             createdAt: '',
             createdBy: ''
           };
