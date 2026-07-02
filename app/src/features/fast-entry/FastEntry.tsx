@@ -32,7 +32,6 @@ import {
 } from '@/hooks/useFinance';
 import { useAppContext } from '@/hooks/useAppContext';
 import { PageHeader } from '@/features/shared/components/PageHeader';
-import { formatCurrency } from '@/libs/format';
 
 type EntryMode = 'expense' | 'income' | 'conversion' | 'transfer';
 
