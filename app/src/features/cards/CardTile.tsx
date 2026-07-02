@@ -56,8 +56,8 @@ export function CardTile({
         } : {},
       }}
     >
-      <CardBackground bankId={card.bankId} kind={card.kind} tierId={card.tierId}>
-        <Box sx={{ p: 2.5, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: 190, boxSizing: 'border-box' }}>
+      <CardBackground bankId={card.bankId} kind={card.kind} tierId={card.tierId} fill>
+        <Box sx={{ p: 2.5, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', height: '100%', boxSizing: 'border-box' }}>
           {!card.isActive && (
             <Chip
               icon={<AcUnitIcon sx={{ fontSize: 14 }} />}

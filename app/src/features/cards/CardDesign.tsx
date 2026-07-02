@@ -12,18 +12,21 @@ export function CardBackground({
   kind,
   tierId,
   children,
+  fill,
 }: {
   bankId: string;
   kind: CardKind;
   tierId?: string;
   children: ReactNode;
+  /** Fill the parent's height (used by tiles in a flex-stretched row). */
+  fill?: boolean;
 }) {
   const bank = getBank(bankId) ?? getBank('other')!;
   const { css, overlay } = bank.background({ kind, tierId });
   return (
-    <Box sx={{ position: 'relative', background: css, overflow: 'hidden' }}>
+    <Box sx={{ position: 'relative', background: css, overflow: 'hidden', height: fill ? '100%' : undefined, flexShrink: 0 }}>
       {overlay}
-      <Box sx={{ position: 'relative', zIndex: 1 }}>{children}</Box>
+      <Box sx={{ position: 'relative', zIndex: 1, height: fill ? '100%' : undefined }}>{children}</Box>
     </Box>
   );
 }
