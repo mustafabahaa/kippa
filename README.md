@@ -1,5 +1,7 @@
 # Household Finance Ledger PWA
 
+> ⚠️ **License:** This project is licensed under the [PolyForm Noncommercial License](./LICENSE). Free for personal and non-commercial use. For commercial use, contact mustafa.bahaa123@gmail.com.
+
 Private household finance app specification for a ledger-first PWA used by two partners across phone and PC.
 
 ## Goal
