@@ -194,7 +194,7 @@ export function Reconciliation() {
           <Typography variant="body1" sx={{ fontWeight: 'bold', color: 'text.primary', fontSize: '14px', mb: 1 }}>
             Select Account
           </Typography>
-          <Stack direction="row" spacing={1.5}>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5 }}>
             {sortedAccounts.map(acc => {
               const isSelected = selectedAccount?.id === acc.id;
               return (
@@ -205,7 +205,8 @@ export function Reconciliation() {
                     setActualBalanceInput('');
                   }}
                   sx={{
-                    flex: 1,
+                    flex: { xs: '1 1 calc(50% - 9px)', sm: '1 1 0' },
+                    minWidth: 0,
                     p: 1.5,
                     borderRadius: '16px',
                     border: '1px solid',
@@ -247,7 +248,7 @@ export function Reconciliation() {
                 </Box>
               );
             })}
-          </Stack>
+          </Box>
         </Box>
 
         {selectedAccount && (

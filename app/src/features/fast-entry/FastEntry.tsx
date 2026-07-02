@@ -427,7 +427,7 @@ export function FastEntry() {
               </Typography>
             )}
           </Box>
-          <Stack direction="row" spacing={1.5}>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5 }}>
             {sortedAccounts.map(acc => {
               const isSelected = selectedAccount?.id === acc.id;
               return (
@@ -435,7 +435,8 @@ export function FastEntry() {
                   key={acc.id}
                   onClick={() => handleSelectSourceAccount(acc.id)}
                   sx={{
-                    flex: 1,
+                    flex: { xs: '1 1 calc(50% - 9px)', sm: '1 1 0' },
+                    minWidth: 0,
                     p: 1.5,
                     borderRadius: '16px',
                     border: '1px solid',
@@ -473,7 +474,7 @@ export function FastEntry() {
                 </Box>
               );
             })}
-          </Stack>
+          </Box>
         </Box>
 
         {/* Target Account Selection (Only for transfer/conversion) */}
@@ -490,7 +491,7 @@ export function FastEntry() {
               )}
             </Box>
             {eligibleDestinationAccounts.length > 0 ? (
-              <Stack direction="row" spacing={1.5}>
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5 }}>
                 {eligibleDestinationAccounts.map(acc => {
                   const isSelected = toAccount?.id === acc.id;
                   return (
@@ -498,7 +499,8 @@ export function FastEntry() {
                       key={acc.id}
                       onClick={() => setToAccountId(acc.id)}
                       sx={{
-                        flex: 1,
+                        flex: { xs: '1 1 calc(50% - 9px)', sm: '1 1 0' },
+                        minWidth: 0,
                         p: 1.5,
                         borderRadius: '16px',
                         border: '1px solid',
@@ -536,7 +538,7 @@ export function FastEntry() {
                     </Box>
                   );
                 })}
-              </Stack>
+              </Box>
             ) : (
               <Typography variant="body2" sx={{ color: 'text.secondary', fontStyle: 'italic', fontSize: '13px', py: 1 }}>
                 {selectedAccountId 
