@@ -13,11 +13,13 @@ import {
 } from '@/hooks/useFinance';
 import { computeDashboard } from '@/libs/selectors';
 import { useAppContext } from '@/hooks/useAppContext';
-import { formatCurrency } from '@/libs/format';
+import { Money } from '@/components/Money';
+import { usePrivacyMask } from '@/hooks/usePrivacyMask';
 
 export function BudgetBreakdownCard() {
   const { householdId } = useAppContext();
   const theme = useTheme();
+  const { maskNumber } = usePrivacyMask();
 
   const chartColors = theme.palette.chart.colors;
   const { data: accounts = [] } = useAccounts(householdId);
@@ -181,19 +183,19 @@ export function BudgetBreakdownCard() {
                   <Box display="flex" justifyContent="space-between" alignItems="center">
                     <Typography variant="caption" sx={{ color: 'text.secondary' }}>Planned Budget</Typography>
                     <Typography variant="body2" sx={{ fontWeight: 'bold', color: 'text.primary' }}>
-                      {formatCurrency(totalPlanned, baseCurrency)}
+                      <Money amount={totalPlanned} code={baseCurrency} />
                     </Typography>
                   </Box>
                   <Box display="flex" justifyContent="space-between" alignItems="center">
                     <Typography variant="caption" sx={{ color: 'text.secondary' }}>Total Spent</Typography>
                     <Typography variant="body2" sx={{ fontWeight: 'bold', color: totalSpent > totalPlanned ? 'error.main' : 'text.primary' }}>
-                      {formatCurrency(totalSpent, baseCurrency)}
+                      <Money amount={totalSpent} code={baseCurrency} />
                     </Typography>
                   </Box>
                   <Box display="flex" justifyContent="space-between" alignItems="center">
                     <Typography variant="caption" sx={{ color: 'text.secondary' }}>Remaining</Typography>
                     <Typography variant="body2" sx={{ fontWeight: 'bold', color: totalRemaining < 0 ? 'error.main' : 'success.main' }}>
-                      {totalRemaining < 0 ? '-' : ''}{formatCurrency(Math.abs(totalRemaining), baseCurrency)}
+                      {totalRemaining < 0 ? '-' : ''}<Money amount={Math.abs(totalRemaining)} code={baseCurrency} />
                     </Typography>
                   </Box>
                 </Stack>
@@ -309,10 +311,10 @@ export function BudgetBreakdownCard() {
                         </TableCell>
 
                         <TableCell align="right" sx={{ fontWeight: 500 }}>
-                          {cat.planned.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                          {maskNumber(cat.planned.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 }))}
                         </TableCell>
                         <TableCell align="right" sx={{ color: cat.spent > 0 ? 'text.primary' : 'text.disabled', fontWeight: 500 }}>
-                          {cat.spent > 0 ? cat.spent.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 }) : '-'}
+                          {cat.spent > 0 ? maskNumber(cat.spent.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })) : '-'}
                         </TableCell>
                         <TableCell 
                           align="right" 
@@ -321,7 +323,7 @@ export function BudgetBreakdownCard() {
                             color: isOver ? 'error.main' : remaining > 0 ? 'success.main' : 'text.secondary' 
                           }}
                         >
-                          {isOver ? '' : '+'}{remaining.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                          {isOver ? '' : '+'}{maskNumber(remaining.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 }))}
                         </TableCell>
                       </TableRow>
                     );

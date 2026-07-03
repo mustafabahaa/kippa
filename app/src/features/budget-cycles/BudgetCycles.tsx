@@ -40,7 +40,7 @@ import {
 import { BudgetAllocationsConfig } from '@/features/budget-cycles/BudgetAllocationsConfig';
 import { CycleAnalytics } from '@/features/budget-cycles/CycleAnalytics';
 import { useAppContext } from '@/hooks/useAppContext';
-import { formatCurrency } from '@/libs/format';
+import { Money } from '@/components/Money';
 import { PageHeader } from '@/features/shared/components/PageHeader';
 import { BudgetCycle } from '@/domain/financeTypes';
 
@@ -321,7 +321,7 @@ export function BudgetCycles() {
                 Total Budget
               </Typography>
               <Typography variant="body1" sx={{ fontWeight: 800, fontSize: '20px', color: 'primary.main', mt: 0.25 }}>
-                {formatCurrency(totalBudget, baseCurrency)}
+                <Money amount={totalBudget} code={baseCurrency} />
               </Typography>
             </Box>
           </DialogTitle>

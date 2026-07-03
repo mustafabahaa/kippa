@@ -31,6 +31,7 @@ import HistoryIcon from '@mui/icons-material/History';
 import { PageHeader } from '@/features/shared/components/PageHeader';
 import { useAuditLog, useUnreadActivityCount } from '@/hooks/useFinance';
 import { useAppContext } from '@/hooks/useAppContext';
+import { usePrivacyMask } from '@/hooks/usePrivacyMask';
 import { AuditAction, AuditLogEntry } from '@/domain/financeTypes';
 import { TransactionIcon } from '@/features/transactions/components/TransactionIcon';
 
@@ -126,6 +127,7 @@ function initials(name: string): string {
 
 function AuditLogRow({ entry }: { entry: AuditLogEntry }) {
   const theme = useTheme();
+  const { maskDigits } = usePrivacyMask();
   const { Icon, color, bg } = getActionVisual(entry.action, theme);
   return (
     <ListItem
@@ -170,7 +172,7 @@ function AuditLogRow({ entry }: { entry: AuditLogEntry }) {
               wordBreak: 'break-word',
             }}
           >
-            {entry.summary}
+            {maskDigits(entry.summary)}
           </Typography>
           <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 0.75 }}>
             <Avatar

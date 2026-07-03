@@ -6,6 +6,7 @@ import App from '@/App';
 
 import { AppProvider } from '@/contexts/AppContext';
 import { ThemeModeProvider } from '@/hooks/ThemeModeProvider';
+import { PrivacyModeProvider } from '@/hooks/PrivacyModeProvider';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -22,9 +23,11 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     <QueryClientProvider client={queryClient}>
       <AppProvider>
         <ThemeModeProvider>
-          <SnackbarProvider maxSnack={3} anchorOrigin={{ vertical: 'top', horizontal: 'center' }}>
-            <App />
-          </SnackbarProvider>
+          <PrivacyModeProvider>
+            <SnackbarProvider maxSnack={3} anchorOrigin={{ vertical: 'top', horizontal: 'center' }}>
+              <App />
+            </SnackbarProvider>
+          </PrivacyModeProvider>
         </ThemeModeProvider>
       </AppProvider>
     </QueryClientProvider>

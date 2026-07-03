@@ -27,7 +27,8 @@ import {
   useUpdateCategoryMutation,
   useHouseholdBaseCurrency
 } from '@/hooks/useFinance';
-import { formatCurrency } from '@/libs/format';
+import { Money } from '@/components/Money';
+import { usePrivacyMask } from '@/hooks/usePrivacyMask';
 import { cyclesLib } from '@/libs/cycles';
 import { BudgetCycle, BudgetAllocation, Category } from '@/domain/financeTypes';
 
@@ -60,6 +61,7 @@ export function BudgetAllocationsConfig({
   onTotalBudgetChange
 }: BudgetAllocationsConfigProps) {
   const { enqueueSnackbar } = useSnackbar();
+  const { maskDigits, privacyMode } = usePrivacyMask();
   const baseCurrency = useHouseholdBaseCurrency();
   const expenseCategories = categories.filter(c => c.type === 'expense');
 
@@ -242,7 +244,7 @@ export function BudgetAllocationsConfig({
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                   <TextField
                     type="number"
-                    value={row.plannedAmount}
+                    value={privacyMode && row.plannedAmount ? maskDigits(String(row.plannedAmount)) : row.plannedAmount}
                     onChange={e => handleAmountChange(row.categoryId, e.target.value)}
                     sx={{ width: '100px' }}
                     slotProps={{ htmlInput: { style: { textAlign: 'right' } } }}
@@ -323,7 +325,7 @@ export function BudgetAllocationsConfig({
             Total Budget
           </Typography>
           <Typography variant="body1" sx={{ fontWeight: 700, fontSize: '16px' }}>
-            {formatCurrency(totalBudget, baseCurrency)}
+            <Money amount={totalBudget} code={baseCurrency} />
           </Typography>
         </Box>
         {!saveRef && (
