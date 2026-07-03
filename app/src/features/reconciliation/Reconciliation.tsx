@@ -29,6 +29,7 @@ import { Reconciliation as ReconModel } from '@/domain/financeTypes';
 import { useAppContext } from '@/hooks/useAppContext';
 import { PageHeader } from '@/features/shared/components/PageHeader';
 import { EmptyLayout } from '@/features/shared/components/EmptyLayout';
+import { usePrivacyMask } from '@/hooks/usePrivacyMask';
 
 type AdjustmentReason = 'forgotten expense' | 'bank fee' | 'exchange difference' | 'cash counting correction' | 'unknown difference';
 
@@ -37,6 +38,7 @@ export function Reconciliation() {
   const { householdId, userProfile } = useAppContext();
   const baseCurrency = useHouseholdBaseCurrency();
   const theme = useTheme();
+  const { maskDigits, privacyMode } = usePrivacyMask();
 
   const getAccountIcon = (type: string, size = '14px') => {
     const iconStyle = { fontSize: size, color: 'inherit' };
@@ -170,7 +172,9 @@ export function Reconciliation() {
         reconLog
       });
 
-      enqueueSnackbar(`Reconciliation saved! Difference of ${difference.toFixed(2)} ${selectedAccount.currency} corrected.`, { variant: 'success' });
+      enqueueSnackbar(privacyMode
+        ? 'Reconciliation saved! Difference corrected.'
+        : `Reconciliation saved! Difference of ${difference.toFixed(2)} ${selectedAccount.currency} corrected.`, { variant: 'success' });
       setActualBalanceInput('');
       setNote('');
     } catch (err: any) {
@@ -261,7 +265,7 @@ export function Reconciliation() {
                   Calculated Balance
                 </Typography>
                 <Typography variant="body1" sx={{ fontWeight: 'bold', mt: 0.5, fontSize: '15px' }}>
-                  {calculatedBalance.toLocaleString(undefined, { minimumFractionDigits: 2 })} {selectedAccount.currency}
+                  {maskDigits(`${calculatedBalance.toLocaleString(undefined, { minimumFractionDigits: 2 })} ${selectedAccount.currency}`)}
                 </Typography>
               </Box>
               <Box sx={{ p: 1.5, bgcolor: 'background.paper', borderRadius: '16px', border: '1px solid', borderColor: 'divider' }}>
@@ -269,7 +273,7 @@ export function Reconciliation() {
                   Difference
                 </Typography>
                 <Typography variant="body1" sx={{ fontWeight: 'bold', mt: 0.5, fontSize: '15px', color: Math.abs(difference) < 0.01 ? 'text.primary' : difference > 0 ? 'success.main' : 'error.main' }}>
-                  {difference > 0 ? '+' : ''}{difference.toLocaleString(undefined, { minimumFractionDigits: 2 })} {selectedAccount.currency}
+                  {difference > 0 ? '+' : ''}{maskDigits(`${difference.toLocaleString(undefined, { minimumFractionDigits: 2 })} ${selectedAccount.currency}`)}
                 </Typography>
               </Box>
             </Box>
@@ -278,7 +282,7 @@ export function Reconciliation() {
               label={`Actual ${selectedAccount.currency} Balance`}
               type="number"
               fullWidth
-              value={actualBalanceInput}
+              value={privacyMode && actualBalanceInput ? maskDigits(actualBalanceInput) : actualBalanceInput}
               onChange={e => setActualBalanceInput(e.target.value)}
               sx={{
                 '& .MuiOutlinedInput-root': {
@@ -447,7 +451,7 @@ export function Reconciliation() {
                               borderRadius: '6px'
                             }}
                           >
-                            {isDiffZero ? 'Perfect Match' : `${item.difference > 0 ? '+' : ''}${item.difference.toFixed(2)} ${item.currency}`}
+                            {isDiffZero ? 'Perfect Match' : maskDigits(`${item.difference > 0 ? '+' : ''}${item.difference.toFixed(2)} ${item.currency}`)}
                           </Typography>
                         </Box>
 
@@ -460,7 +464,7 @@ export function Reconciliation() {
                             Actual Balance:
                           </Typography>
                           <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '12px', color: 'text.primary' }}>
-                            {item.actualBalance.toLocaleString(undefined, { minimumFractionDigits: 2 })} {item.currency}
+                            {maskDigits(`${item.actualBalance.toLocaleString(undefined, { minimumFractionDigits: 2 })} ${item.currency}`)}
                           </Typography>
                         </Box>
                       </Box>

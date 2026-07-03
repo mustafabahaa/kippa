@@ -37,6 +37,7 @@ import {
 } from '@/hooks/useFinance';
 import { FinanceTransaction } from '@/domain/financeTypes';
 import { useAppContext } from '@/hooks/useAppContext';
+import { usePrivacyMask } from '@/hooks/usePrivacyMask';
 import { TransactionIcon } from './components/TransactionIcon';
 import { TransactionTypeChip } from './components/TransactionTypeChip';
 import { EditTransactionDialog } from './components/EditTransactionDialog';
@@ -57,6 +58,7 @@ export function TransactionHistory() {
   const { enqueueSnackbar } = useSnackbar();
   const { householdId } = useAppContext();
   const baseCurrency = useHouseholdBaseCurrency();
+  const { maskDigits } = usePrivacyMask();
   
   // Filter States
   const [searchTerm, setSearchTerm] = useState('');
@@ -339,7 +341,7 @@ export function TransactionHistory() {
                           </Typography>
                         ) : (
                           <Typography variant="body1" sx={{ fontWeight: 'bold', color: tx.status === 'voided' ? 'text.secondary' : isIncome ? 'success.main' : 'text.primary' }}>
-                            {isIncome ? '+' : '-'}{amount.toLocaleString()} {currency}
+                            {isIncome ? '+' : '-'}{maskDigits(`${amount.toLocaleString()} ${currency}`)}
                           </Typography>
                         )}
                       </TableCell>

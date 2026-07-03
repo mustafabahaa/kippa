@@ -45,7 +45,7 @@ import { CardDetail } from '@/features/cards/CardDetail';
 import { computeCardSummary } from '@/libs/cardSelectors';
 import { CurrencySelect } from '@/features/shared/components/CurrencySelect';
 import { useHouseholdBaseCurrency } from '@/hooks/useFinance';
-import { formatCurrency } from '@/libs/format';
+import { Money } from '@/components/Money';
 
 export function Accounts() {
   const { householdId } = useAppContext();
@@ -208,7 +208,7 @@ export function Accounts() {
                     </Box>
                     <Stack direction="row" spacing={1} alignItems="center">
                       <Typography variant="body1" sx={{ fontWeight: 'bold', color: 'text.primary' }}>
-                        {formatCurrency(bal, acc.currency, 2)}
+                        <Money amount={bal} code={acc.currency} maxDigits={2} />
                       </Typography>
                       <IconButton size="small" onClick={() => handleOpenEdit(acc)}>
                         <EditIcon sx={{ fontSize: '18px' }} />

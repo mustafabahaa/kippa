@@ -1,7 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { CardTile } from './CardTile';
+import { PrivacyModeProvider } from '@/hooks/PrivacyModeProvider';
 import type { Card } from '@/domain/financeTypes';
+
+const renderWithProvider = (ui: React.ReactElement) =>
+  render(<PrivacyModeProvider>{ui}</PrivacyModeProvider>);
 
 const baseCard = {
   id: 'c',
@@ -23,7 +27,7 @@ describe('CardTile rendering across banks', () => {
       bankId: 'hsbc',
       tierId: 'advance',
     };
-    render(<CardTile card={card} />);
+    renderWithProvider(<CardTile card={card} />);
     // Tier label appears (HSBC logo renders it inline too, so expect ≥1)
     expect(screen.getAllByText(/advance/i).length).toBeGreaterThan(0);
   });
@@ -37,7 +41,7 @@ describe('CardTile rendering across banks', () => {
       bankId: 'hsbc',
       tierId: 'premier',
     };
-    const { container } = render(<CardTile card={card} />);
+    const { container } = renderWithProvider(<CardTile card={card} />);
     // HSBC wordmark appears (from the logo function)
     expect(screen.getByText(/hsbc/i)).toBeInTheDocument();
     // last4 rendered
@@ -54,7 +58,7 @@ describe('CardTile rendering across banks', () => {
       bankId: 'cib',
       tierId: 'platinum',
     };
-    render(<CardTile card={card} />);
+    renderWithProvider(<CardTile card={card} />);
     expect(screen.getByText(/platinum/i)).toBeInTheDocument();
   });
 
@@ -66,7 +70,7 @@ describe('CardTile rendering across banks', () => {
       network: 'visa',
       bankId: 'other',
     };
-    render(<CardTile card={card} />);
+    renderWithProvider(<CardTile card={card} />);
     // No tier label for 'other' debit → falls back to "Debit" text
     expect(screen.getByText(/debit/i)).toBeInTheDocument();
     expect(screen.getByText(/1234/)).toBeInTheDocument();
@@ -80,7 +84,7 @@ describe('CardTile rendering across banks', () => {
       network: 'visa',
       bankId: 'other',
     };
-    render(<CardTile card={card} />);
+    renderWithProvider(<CardTile card={card} />);
     expect(screen.queryByText(/^debit$/i)).toBeNull();
   });
 
@@ -93,7 +97,7 @@ describe('CardTile rendering across banks', () => {
       bankId: 'nbe',
       tierId: 'classic',
     };
-    render(<CardTile card={card} />);
+    renderWithProvider(<CardTile card={card} />);
     expect(screen.getByText(/•••• •••• 1234/)).toBeInTheDocument();
   });
 });

@@ -11,7 +11,7 @@ import {
   useExpectedIncomes
 } from '@/hooks/useFinance';
 import { computeDashboard } from '@/libs/selectors';
-import { formatCurrency } from '@/libs/format';
+import { Money } from '@/components/Money';
 import { useAppContext } from '@/hooks/useAppContext';
 import { InfoTooltip } from '@/features/shared/components/InfoTooltip';
 import { metricExplanations } from '@/features/shared/constants/metricExplanations';
@@ -119,7 +119,7 @@ export function TotalBalanceHeroCard() {
             </Box>
           </Typography>
           <Typography variant="h1" sx={{ color: 'primary.contrastText', fontSize: '32px', fontWeight: 800, mt: 0.5 }}>
-            {formatCurrency(data.totalBaseEquivalent, baseCurrency)}
+            <Money amount={data.totalBaseEquivalent} code={baseCurrency} />
           </Typography>
           
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5, mt: 1.5 }}>
@@ -140,7 +140,7 @@ export function TotalBalanceHeroCard() {
                     {acc.name}
                   </Typography>
                   <Typography sx={{ color: '#fff', fontSize: '14px', fontWeight: 800, mt: 0.5, lineHeight: 1.3 }}>
-                    {formatCurrency(bal, acc.currency, 2)}
+                    <Money amount={bal} code={acc.currency} maxDigits={2} />
                   </Typography>
                 </Box>
               );

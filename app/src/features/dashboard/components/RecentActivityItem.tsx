@@ -5,6 +5,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import { FinanceTransaction, Category, LedgerLine, Account } from '@/domain/financeTypes';
 import { TransactionIcon } from '@/features/transactions/components/TransactionIcon';
 import { useHouseholdBaseCurrency } from '@/hooks/useFinance';
+import { usePrivacyMask } from '@/hooks/usePrivacyMask';
 
 interface RecentActivityItemProps {
   tx: FinanceTransaction;
@@ -31,6 +32,7 @@ export const RecentActivityItem: React.FC<RecentActivityItemProps> = ({
   const firstLine = txLines.find((l) => l.signedAmount !== 0) || txLines[0];
   const amount = firstLine ? Number(Math.abs(firstLine.signedAmount).toFixed(2)) : 0;
   const currency = firstLine ? firstLine.currency : baseCurrency;
+  const { maskDigits } = usePrivacyMask();
   const isIncome = tx.type === 'income' || (tx.type === 'adjustment' && (firstLine?.signedAmount || 0) >= 0);
   const txAccount = firstLine ? accounts.find((a) => a.id === firstLine.accountId) : null;
   const isCreditCard = tx.type === 'expense' && txAccount?.type === 'credit';
@@ -68,7 +70,7 @@ export const RecentActivityItem: React.FC<RecentActivityItemProps> = ({
               {tx.date} • {formatTime(tx.createdAt)}
             </Typography>
             <Typography variant="body1" sx={{ fontWeight: 'bold', color: 'text.primary', fontSize: '13.5px', whiteSpace: 'nowrap', mt: 0.5 }}>
-              -{amount.toLocaleString()} {currency}
+              -{maskDigits(`${amount.toLocaleString()} ${currency}`)}
             </Typography>
           </Box>
         );
@@ -86,7 +88,7 @@ export const RecentActivityItem: React.FC<RecentActivityItemProps> = ({
               Currency Exchange
             </Typography>
             <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '11px', mt: 0.25, fontWeight: 'medium' }}>
-              {fromAmt} {fromCurr} ➔ {toAmt} {toCurr}
+              {maskDigits(`${fromAmt} ${fromCurr}`)} ➔ {maskDigits(`${toAmt} ${toCurr}`)}
             </Typography>
             {tx.description && (
               <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '11px', mt: 0.25, wordBreak: 'break-word' }}>
@@ -118,7 +120,7 @@ export const RecentActivityItem: React.FC<RecentActivityItemProps> = ({
               {tx.date} • {formatTime(tx.createdAt)}
             </Typography>
             <Typography variant="body1" sx={{ fontWeight: 'bold', color: isIncome ? 'success.main' : 'error.main', fontSize: '13.5px', whiteSpace: 'nowrap', mt: 0.5 }}>
-              {isIncome ? '+' : '-'}{amount.toLocaleString()} {currency}
+              {isIncome ? '+' : '-'}{maskDigits(`${amount.toLocaleString()} ${currency}`)}
             </Typography>
           </Box>
         );
@@ -139,7 +141,7 @@ export const RecentActivityItem: React.FC<RecentActivityItemProps> = ({
               {tx.date} • {formatTime(tx.createdAt)}
             </Typography>
             <Typography variant="body1" sx={{ fontWeight: 'bold', color: 'success.main', fontSize: '13.5px', whiteSpace: 'nowrap', mt: 0.5 }}>
-              +{amount.toLocaleString()} {currency}
+              +{maskDigits(`${amount.toLocaleString()} ${currency}`)}
             </Typography>
           </Box>
         );
@@ -161,7 +163,7 @@ export const RecentActivityItem: React.FC<RecentActivityItemProps> = ({
               {tx.date} • {formatTime(tx.createdAt)}
             </Typography>
             <Typography variant="body1" sx={{ fontWeight: 'bold', color: 'text.primary', fontSize: '13.5px', whiteSpace: 'nowrap', mt: 0.5 }}>
-              -{amount.toLocaleString()} {currency}
+              -{maskDigits(`${amount.toLocaleString()} ${currency}`)}
             </Typography>
           </Box>
         );

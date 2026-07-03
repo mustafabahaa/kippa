@@ -23,8 +23,11 @@ import DarkModeIcon from '@mui/icons-material/DarkMode';
 import SettingsBrightnessIcon from '@mui/icons-material/SettingsBrightness';
 import CheckIcon from '@mui/icons-material/Check';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import type { ThemeModePref } from '@/contexts/themeModeContext';
 import type { UserProfile, Household } from '@/domain/financeTypes';
+import { usePrivacyMode } from '@/hooks/usePrivacyMode';
 
 interface ProfileMenuProps {
   anchorEl: HTMLElement | null;
@@ -77,6 +80,7 @@ export function ProfileMenu({
   logout,
 }: ProfileMenuProps) {
   const navigate = useNavigate();
+  const { privacyMode, setPrivacyMode } = usePrivacyMode();
 
   const handleClose = () => {
     onClose();
@@ -290,6 +294,23 @@ export function ProfileMenu({
           </MenuItem>
         );
       })}
+
+      <Divider sx={{ my: 1 }} />
+
+      {/* Privacy mode — mask monetary values for screen sharing / demos */}
+      <MenuItem
+        onClick={() => { setPrivacyMode(!privacyMode); handleClose(); }}
+        sx={{ ...menuItemStyle, py: 0.75 }}
+      >
+        <ListItemIcon>
+          {privacyMode ? <VisibilityOffIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
+        </ListItemIcon>
+        <ListItemText
+          primary={privacyMode ? 'Privacy Mode On' : 'Privacy Mode'}
+          secondary="Hide balances"
+        />
+        {privacyMode && <CheckIcon fontSize="small" sx={{ color: 'primary.main', ml: 'auto' }} />}
+      </MenuItem>
 
       <Divider sx={{ my: 1 }} />
 

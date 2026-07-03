@@ -27,7 +27,9 @@ import type { Card, TransactionType } from '@/domain/financeTypes';
 import { CardBackground, BankLogo, NetworkLogo, TierLabel, CardChip, ContactlessIcon } from './CardDesign';
 import { TransactionIcon } from '@/features/transactions/components/TransactionIcon';
 import { EmptyLayout } from '@/features/shared/components/EmptyLayout';
-import { formatCurrency } from '@/libs/format';
+import { Money } from '@/components/Money';
+import { useFormattedMoney } from '@/hooks/useFormattedMoney';
+import { usePrivacyMask } from '@/hooks/usePrivacyMask';
 
 type Charge = {
   lineId: string;
@@ -54,6 +56,8 @@ function formatDateRange(startDate: string, endDate?: string | null): string {
 
 export function CardDetail({ card, onClose }: { card: Card; onClose: () => void }) {
   const { householdId } = useAppContext();
+  const formatMoney = useFormattedMoney();
+  const { maskText, maskDigits } = usePrivacyMask();
   const { data: allTransactions = [] } = useTransactions(householdId);
   const { data: allLines = [] } = useLedgerLines(householdId);
   const payCard = usePayCardMutation();
@@ -157,13 +161,13 @@ export function CardDetail({ card, onClose }: { card: Card; onClose: () => void 
 
   const openPayAll = () => {
     setPayAmount(Number(totalDebt.toFixed(2)));
-    setPayLabel(`Pay all (${formatCurrency(totalDebt, card.currency, 2)})`);
+    setPayLabel(`Pay all (${formatMoney(totalDebt, card.currency, 2)})`);
     setPayOpen(true);
   };
 
   const openPayOne = (charge: Charge) => {
     setPayAmount(Number(charge.amount.toFixed(2)));
-    setPayLabel(`Pay ${charge.description ?? charge.txType} (${formatCurrency(charge.amount, card.currency, 2)})`);
+    setPayLabel(`Pay ${charge.description ?? charge.txType} (${formatMoney(charge.amount, card.currency, 2)})`);
     setPayOpen(true);
   };
 
@@ -177,7 +181,7 @@ export function CardDetail({ card, onClose }: { card: Card; onClose: () => void 
     }
   };
 
-  const formattedBalance = formatCurrency(Math.abs(accountBalance), card.currency, 2);
+  const formattedBalance = formatMoney(Math.abs(accountBalance), card.currency, 2);
 
   return (
     <>
@@ -268,7 +272,7 @@ export function CardDetail({ card, onClose }: { card: Card; onClose: () => void 
                     textShadow: '0 1px 2px rgba(0,0,0,0.3)',
                   }}
                 >
-                  •••• •••• {card.last4 ?? '----'}
+                  •••• •••• {maskText(card.last4 ?? '----')}
                 </Typography>
 
                 {card.expiryMonth && card.expiryYear && (
@@ -284,7 +288,7 @@ export function CardDetail({ card, onClose }: { card: Card; onClose: () => void 
                         color: '#ffffff',
                       }}
                     >
-                      {String(card.expiryMonth).padStart(2, '0')}/{String(card.expiryYear).slice(-2)}
+                      {maskDigits(`${String(card.expiryMonth).padStart(2, '0')}/${String(card.expiryYear).slice(-2)}`)}
                     </Typography>
                   </Stack>
                 )}
@@ -297,7 +301,7 @@ export function CardDetail({ card, onClose }: { card: Card; onClose: () => void 
                     {isCredit ? (
                       <>
                         <Typography sx={{ fontSize: '28px', fontWeight: 800, color: '#ffffff', letterSpacing: '-0.5px', lineHeight: 1.2 }}>
-                          {formatCurrency(totalDebt, card.currency, 2)}
+                          <Money amount={totalDebt} code={card.currency} maxDigits={2} />
                         </Typography>
                         <Typography sx={{ fontSize: '10px', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '1px', color: 'rgba(255,255,255,0.7)', mt: 0.5 }}>
                           Outstanding Balance
@@ -323,7 +327,7 @@ export function CardDetail({ card, onClose }: { card: Card; onClose: () => void 
                               </Typography>
                               {card.creditLimit != null && (
                                 <Typography sx={{ fontSize: '9px', color: 'rgba(255,255,255,0.7)' }}>
-                                  Limit: {card.currency} {card.creditLimit.toLocaleString()}
+                                  Limit: {maskDigits(`${card.currency} ${card.creditLimit.toLocaleString()}`)}
                                 </Typography>
                               )}
                             </Stack>
@@ -461,7 +465,7 @@ export function CardDetail({ card, onClose }: { card: Card; onClose: () => void 
                                     textDecoration: 'line-through',
                                   }}
                                 >
-                                  −{currency} {c.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                  −{maskDigits(`${currency} ${c.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}`)}
                                 </Typography>
                                 <CheckCircleIcon sx={{ fontSize: 18, color: 'success.main' }} />
                               </>
@@ -471,7 +475,7 @@ export function CardDetail({ card, onClose }: { card: Card; onClose: () => void 
                                   variant="body1"
                                   sx={{ fontWeight: 700, fontSize: '13.5px', color: 'text.primary' }}
                                 >
-                                  −{currency} {c.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                  −{maskDigits(`${currency} ${c.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}`)}
                                 </Typography>
                                 {isCredit && (
                                   <Button
@@ -528,7 +532,7 @@ export function CardDetail({ card, onClose }: { card: Card; onClose: () => void 
           <TextField
             type="number"
             label={`Amount (${card.currency})`}
-            value={payAmount}
+            value={typeof payAmount === 'number' ? maskDigits(String(payAmount)) : payAmount}
             onChange={e => setPayAmount(e.target.value ? Number(e.target.value) : '')}
             autoFocus
             fullWidth

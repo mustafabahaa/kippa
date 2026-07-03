@@ -11,7 +11,7 @@ import {
   useExpectedIncomes
 } from '@/hooks/useFinance';
 import { computeDashboard, DashboardData } from '@/libs/selectors';
-import { formatCurrency } from '@/libs/format';
+import { Money } from '@/components/Money';
 import { useAppContext } from '@/hooks/useAppContext';
 import { InfoTooltip } from '@/features/shared/components/InfoTooltip';
 import { metricExplanations } from '@/features/shared/constants/metricExplanations';
@@ -155,7 +155,7 @@ export function BudgetPulseCard() {
                 Projected
               </Typography>
               <Typography variant="h6" sx={{ fontWeight: 'bold', color: getStatusColor(data.saving.status), lineHeight: 1.2 }}>
-                {formatCurrency(data.spending.projected, baseCurrency)}
+                <Money amount={data.spending.projected} code={baseCurrency} />
               </Typography>
             </Box>
             <Box sx={{ textAlign: 'right' }}>
@@ -163,7 +163,7 @@ export function BudgetPulseCard() {
                 Target
               </Typography>
               <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.primary', lineHeight: 1.2 }}>
-                {formatCurrency(data.spending.plannedBudget, baseCurrency)}
+                <Money amount={data.spending.plannedBudget} code={baseCurrency} />
               </Typography>
             </Box>
           </Box>

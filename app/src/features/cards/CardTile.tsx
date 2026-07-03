@@ -3,7 +3,9 @@ import AcUnitIcon from '@mui/icons-material/AcUnit';
 import EditIcon from '@mui/icons-material/Edit';
 import type { Card } from '@/domain/financeTypes';
 import type { CardSummary } from '@/libs/cardSelectors';
-import { formatCurrency } from '@/libs/format';
+import { Money } from '@/components/Money';
+import { useFormattedMoney } from '@/hooks/useFormattedMoney';
+import { usePrivacyMask } from '@/hooks/usePrivacyMask';
 import { CardBackground, BankLogo, NetworkLogo, TierLabel, CardChip, ContactlessIcon } from './CardDesign';
 
 export function CardTile({
@@ -25,8 +27,10 @@ export function CardTile({
   const barColor = utilizationPct == null ? 'primary' : utilizationPct > 95 ? 'error' : utilizationPct > 80 ? 'warning' : 'success';
   const isCredit = card.kind === 'credit';
 
+  const formatMoney = useFormattedMoney();
+  const { maskText, maskDigits } = usePrivacyMask();
   const formattedBalance = parentAccountBalance != null
-    ? formatCurrency(parentAccountBalance, card.currency, 2)
+    ? formatMoney(parentAccountBalance, card.currency, 2)
     : null;
 
   return (
@@ -102,7 +106,7 @@ export function CardTile({
                 textShadow: '0 1px 2px rgba(0,0,0,0.3)',
               }}
             >
-              •••• •••• {card.last4 ?? '----'}
+              •••• •••• {maskText(card.last4 ?? '----')}
             </Typography>
 
             {card.expiryMonth && card.expiryYear && (
@@ -118,7 +122,7 @@ export function CardTile({
                     color: '#ffffff',
                   }}
                 >
-                  {String(card.expiryMonth).padStart(2, '0')}/{String(card.expiryYear).slice(-2)}
+                  {maskDigits(`${String(card.expiryMonth).padStart(2, '0')}/${String(card.expiryYear).slice(-2)}`)}
                 </Typography>
               </Stack>
             )}
@@ -130,7 +134,7 @@ export function CardTile({
                 {isCredit && summary && (
                   <Stack spacing={0.5}>
                     <Typography sx={{ fontSize: '24px', fontWeight: 800, letterSpacing: '-0.5px', lineHeight: 1.1, color: '#ffffff' }}>
-                      {formatCurrency(summary.currentDebt, card.currency, 2)}
+                      <Money amount={summary.currentDebt} code={card.currency} maxDigits={2} />
                     </Typography>
                     <Stack direction="row" justifyContent="space-between" alignItems="center">
                       <Typography sx={{ fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.8px', color: '#ffffff', opacity: 0.7 }}>
@@ -160,7 +164,7 @@ export function CardTile({
                           </Typography>
                           {card.creditLimit != null && (
                             <Typography sx={{ fontSize: '8px', color: '#ffffff', opacity: 0.7 }}>
-                              Limit: {card.currency} {card.creditLimit.toLocaleString()}
+                              Limit: {maskDigits(`${card.currency} ${card.creditLimit.toLocaleString()}`)}
                             </Typography>
                           )}
                         </Stack>
