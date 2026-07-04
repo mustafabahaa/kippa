@@ -32,6 +32,7 @@ import {
 } from '@/hooks/useFinance';
 import { useAppContext } from '@/hooks/useAppContext';
 import { PageHeader } from '@/features/shared/components/PageHeader';
+import { EmptyLayout } from '@/features/shared/components/EmptyLayout';
 
 type EntryMode = 'expense' | 'income' | 'conversion' | 'transfer';
 
@@ -365,6 +366,20 @@ export function FastEntry() {
     );
   }
 
+  if (accounts.length === 0) {
+    return (
+      <Container maxWidth="md" sx={{ py: 1, px: { xs: 2, sm: 3 } }}>
+        <Stack spacing={3}>
+          <PageHeader title="Fast Entry" subtitle="Log expenses, income, conversions & transfers" />
+          <EmptyLayout
+            title="No accounts to log entries against"
+            description="Add an account first — you'll need one to record expenses, income, transfers, or conversions."
+          />
+        </Stack>
+      </Container>
+    );
+  }
+
   return (
     <Container maxWidth="md" sx={{ py: 1, px: { xs: 2, sm: 3 } }}>
       <Stack spacing={2.5}>
@@ -405,35 +420,42 @@ export function FastEntry() {
                 Category
               </Typography>
             </Box>
-            <Box
-              sx={{
-                display: 'flex',
-                flexWrap: 'wrap',
-                gap: 1,
-              }}
-            >
-              {sortedCategories.map((cat) => {
-                const isSelected = selectedCategory?.id === cat.id;
-                return (
-                  <Chip
-                    key={cat.id}
-                    label={cat.name}
-                    onClick={() => setSelectedCategoryId(cat.id)}
-                    variant={isSelected ? 'filled' : 'outlined'}
-                    sx={{
-                      fontSize: '13px',
-                      height: 36,
-                      borderRadius: '12px',
-                      bgcolor: isSelected ? 'primary.main' : 'background.paper',
-                      color: isSelected ? 'primary.contrastText' : 'text.secondary',
-                      borderColor: isSelected ? 'primary.main' : 'divider',
-                      fontWeight: isSelected ? 'bold' : 'normal',
-                      '&:hover': { bgcolor: isSelected ? 'primary.main' : 'action.hover' },
-                    }}
-                  />
-                );
-              })}
-            </Box>
+            {sortedCategories.length === 0 ? (
+              <EmptyLayout
+                title={`No ${mode} categories yet`}
+                description={`Create ${mode} categories first to tag your ${mode} entries.`}
+              />
+            ) : (
+              <Box
+                sx={{
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  gap: 1,
+                }}
+              >
+                {sortedCategories.map((cat) => {
+                  const isSelected = selectedCategory?.id === cat.id;
+                  return (
+                    <Chip
+                      key={cat.id}
+                      label={cat.name}
+                      onClick={() => setSelectedCategoryId(cat.id)}
+                      variant={isSelected ? 'filled' : 'outlined'}
+                      sx={{
+                        fontSize: '13px',
+                        height: 36,
+                        borderRadius: '12px',
+                        bgcolor: isSelected ? 'primary.main' : 'background.paper',
+                        color: isSelected ? 'primary.contrastText' : 'text.secondary',
+                        borderColor: isSelected ? 'primary.main' : 'divider',
+                        fontWeight: isSelected ? 'bold' : 'normal',
+                        '&:hover': { bgcolor: isSelected ? 'primary.main' : 'action.hover' },
+                      }}
+                    />
+                  );
+                })}
+              </Box>
+            )}
           </Box>
         )}
 

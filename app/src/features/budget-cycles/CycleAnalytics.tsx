@@ -29,6 +29,7 @@ import {
   useAllExpectedIncomes
 } from '@/hooks/useFinance';
 import { useAppContext } from '@/hooks/useAppContext';
+import { EmptyLayout } from '@/features/shared/components/EmptyLayout';
 
 export function CycleAnalytics() {
   const { householdId } = useAppContext();
@@ -161,7 +162,18 @@ export function CycleAnalytics() {
     );
   }
 
-  if (cycleData.length === 0) return null;
+  if (cycleData.length === 0) {
+    return (
+      <Card sx={{ mb: 3 }}>
+        <CardContent sx={{ p: 2.5 }}>
+          <EmptyLayout
+            title="No analytics data yet"
+            description="Once you have at least one completed budget cycle with transactions, trends and insights will appear here."
+          />
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card sx={{ mb: 3, overflow: 'hidden' }}>
