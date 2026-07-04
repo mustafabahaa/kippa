@@ -49,6 +49,7 @@ export interface NotificationSettings {
   dailyReminderEnabled: boolean;
   categoryWarningEnabled: boolean;
   cardExpiryWarningEnabled: boolean;
+  joinRequestEnabled: boolean;
 }
 
 export interface FcmToken {
@@ -89,4 +90,17 @@ export interface UserProfile {
   householdId: string | null;
   householdIds?: string[];
   role: 'owner' | 'member';
+}
+
+export type JoinStatus = 'pending' | 'approved' | 'rejected';
+
+export interface JoinRequest {
+  uid: string;
+  displayName: string;
+  email: string;
+  photoURL?: string | null;
+  status: JoinStatus;
+  requestedAt: number;
+  decidedAt?: number;
+  decidedBy?: string;
 }
