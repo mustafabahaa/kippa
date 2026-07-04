@@ -2,32 +2,82 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /households/{householdId} {
-      allow read, write: if isHouseholdMember(householdId);
 
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isHouseholdMember(householdId) {
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.householdId == householdId;
+    }
+
+    function isHouseholdOwner(householdId) {
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/households/$(householdId)/householdInfo/info)
+        && get(/databases/$(database)/documents/households/$(householdId)/householdInfo/info).data.createdBy == request.auth.uid;
+    }
+
+    match /households/{householdId} {
+      // Default: only members can read/write household data.
+      // (notificationSettings, fcmTokens, accounts, transactions, etc.)
+      match /{document=**} {
+        allow read, write: if isHouseholdMember(householdId);
+      }
+
+      // Household info is readable by any signed-in user (so joiners can
+      // verify an id exists), creatable only by the user who will own it,
+      // and editable/deletable by members.
       match /householdInfo/info {
-        allow read: if request.auth != null;
-        allow create: if request.auth != null && request.resource.data.createdBy == request.auth.uid;
+        allow read: if isSignedIn();
+        allow create: if isSignedIn()
+          && request.resource.data.createdBy == request.auth.uid;
         allow update, delete: if isHouseholdMember(householdId);
       }
 
-      match /{document=**} {
-        allow read, write: if isHouseholdMember(householdId);
+      // Join requests: a signed-in user may create their own pending request.
+      // Only the owner may list/read all requests; a requester may read their own.
+      // Status updates are server-only (Admin SDK bypasses rules).
+      match /joinRequests/{requesterUid} {
+        allow read: if isSignedIn()
+          && (request.auth.uid == requesterUid || isHouseholdOwner(householdId));
+        allow create: if isSignedIn()
+          && request.auth.uid == requesterUid
+          && request.resource.data.uid == requesterUid
+          && request.resource.data.status == 'pending';
+        allow update, delete: if false;
       }
     }
 
     match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      // A user can read their own doc, create it on signup, and edit profile
+      // fields. The membership fields (householdId, householdIds, role) are
+      // server-only — EXCEPT the client may switch its active householdId to a
+      // value that is already present in its own householdIds. householdIds
+      // and role are immutable from the client (they must equal their prior
+      // server value).
+      allow read: if isSignedIn() && request.auth.uid == userId;
+      allow create: if isSignedIn()
+        && request.auth.uid == userId
+        && request.resource.data.householdId == null
+        && (!('householdIds' in request.resource.data)
+            || request.resource.data.householdIds.size() == 0);
+      allow update: if isSignedIn()
+        && request.auth.uid == userId
+        && request.resource.data.role == resource.data.role
+        && request.resource.data.householdIds == resource.data.householdIds
+        && (
+          request.resource.data.householdId == resource.data.householdId
+          || (
+            'householdIds' in request.resource.data
+            && request.resource.data.householdId in request.resource.data.householdIds
+          )
+        );
 
       match /{document=**} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
+        allow read, write: if isSignedIn() && request.auth.uid == userId;
       }
-    }
-
-    function isHouseholdMember(householdId) {
-      return request.auth != null
-        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
-        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.householdId == householdId;
     }
   }
 }
