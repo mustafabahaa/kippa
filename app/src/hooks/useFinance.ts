@@ -679,14 +679,14 @@ export function useCreateHouseholdMutation() {
   });
 }
 
-export function useJoinHouseholdMutation() {
+export function useRequestToJoinHouseholdMutation() {
   const queryClient = useQueryClient();
   const notifyOfflineSuccess = useOfflineSuccessNotifier();
   return useMutation({
     mutationFn: (data: {
       userId: string;
       householdId: string;
-    }) => authLib.joinHousehold(data.userId, data.householdId),
+    }) => authLib.requestToJoinHousehold(data.userId, data.householdId),
     onSuccess: () => {
       notifyOfflineSuccess();
       queryClient.invalidateQueries({ queryKey: ['userHouseholds'] });

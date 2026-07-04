@@ -131,7 +131,7 @@ export const authLib = {
    * Request to join a household. Creates a pending joinRequest the owner must
    * approve — does NOT grant membership.
    */
-  async requestToJoinHousehold(userId: string, householdId: string): Promise<JoinStatus> {
+  async requestToJoinHousehold(_userId: string, householdId: string): Promise<JoinStatus> {
     requireAuth();
     const requestFn = httpsCallable<
       { householdId: string },
@@ -145,7 +145,7 @@ export const authLib = {
    * Owner approves or rejects a pending join request.
    */
   async decideJoinRequest(
-    userId: string,
+    _userId: string,
     householdId: string,
     requesterUid: string,
     decision: 'approve' | 'reject',
