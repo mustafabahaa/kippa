@@ -17,6 +17,7 @@ import {
   ListItem,
   ListItemText,
   IconButton,
+  Avatar,
   CircularProgress,
   Dialog,
   DialogTitle,
@@ -324,6 +325,12 @@ export function Household() {
                       <Box key={m.uid}>
                         {idx > 0 && <Divider />}
                         <ListItem sx={{ px: 0, py: 1 }}>
+                          <Avatar
+                            src={m.photoURL || undefined}
+                            sx={{ width: 36, height: 36, mr: 1.5, bgcolor: 'primary.light' }}
+                          >
+                            {m.displayName?.charAt(0)?.toUpperCase() || '?'}
+                          </Avatar>
                           <ListItemText
                             primary={
                               <Typography sx={{ fontWeight: m.isOwner ? 'bold' : 500, fontSize: '14px' }}>
@@ -356,18 +363,26 @@ export function Household() {
                         <Box key={req.uid}>
                           {idx > 0 && <Divider />}
                           <ListItem sx={{ px: 0, py: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <ListItemText
-                              primary={
-                                <Typography sx={{ fontWeight: 500, fontSize: '14px' }}>
-                                  {req.displayName}
-                                </Typography>
-                              }
-                              secondary={
-                                <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '11px' }}>
-                                  {req.email}
-                                </Typography>
-                              }
-                            />
+                            <Box sx={{ display: 'flex', alignItems: 'center', flex: 1, minWidth: 0 }}>
+                              <Avatar
+                                src={req.photoURL || undefined}
+                                sx={{ width: 36, height: 36, mr: 1.5, bgcolor: 'action.selected' }}
+                              >
+                                {req.displayName?.charAt(0)?.toUpperCase() || '?'}
+                              </Avatar>
+                              <ListItemText
+                                primary={
+                                  <Typography sx={{ fontWeight: 500, fontSize: '14px' }}>
+                                    {req.displayName}
+                                  </Typography>
+                                }
+                                secondary={
+                                  <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '11px' }}>
+                                    {req.email}
+                                  </Typography>
+                                }
+                              />
+                            </Box>
                             <Stack direction="row" spacing={1}>
                               <Button
                                 size="small"
