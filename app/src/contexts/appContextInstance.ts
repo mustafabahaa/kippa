@@ -17,6 +17,7 @@ export interface AppContextType {
   updateUserProfile: (profile: UserProfile) => void;
   pendingRequests: JoinRequest[];
   householdMembers: HouseholdMember[];
+  isMembersLoading: boolean;
 }
 
 export const AppContext = createContext<AppContextType | undefined>(undefined);

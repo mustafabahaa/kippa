@@ -43,13 +43,11 @@ import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
 import type { Household, CurrencyCode, JoinStatus, JoinRequest } from '@/domain/financeTypes';
 import { db as firestoreDb } from '@/config/firebase';
 import { useAppContext } from '@/hooks/useAppContext';
-import { useThemeMode } from '@/hooks/useThemeMode';
 import { CurrencySelect } from '@/features/shared/components/CurrencySelect';
 import { ledgerLib } from '@/libs/ledger';
 
 export function Household() {
   const { enqueueSnackbar } = useSnackbar();
-  const { resolvedMode } = useThemeMode();
   const {
     userProfile,
     householdId,
@@ -62,6 +60,7 @@ export function Household() {
     leaveHousehold,
     pendingRequests,
     householdMembers,
+    isMembersLoading,
   } = useAppContext();
 
   // Leave Confirmation Dialog
@@ -312,7 +311,9 @@ export function Household() {
                 </Typography>
                 {householdMembers.length === 0 ? (
                   <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '13px' }}>
-                    Loading members…
+                    {isMembersLoading
+                      ? 'Loading members…'
+                      : 'No other members yet. Invite someone or approve a join request to share this household.'}
                   </Typography>
                 ) : (
                   <List sx={{ p: 0 }}>

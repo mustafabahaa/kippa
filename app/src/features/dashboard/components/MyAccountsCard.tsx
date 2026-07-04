@@ -11,6 +11,7 @@ import {
   useCards,
 } from '@/hooks/useFinance';
 import { useAppContext } from '@/hooks/useAppContext';
+import { EmptyLayout } from '@/features/shared/components/EmptyLayout';
 import { CardTile } from '@/features/cards/CardTile';
 import { CardDetail } from '@/features/cards/CardDetail';
 import { computeCardSummary } from '@/libs/cardSelectors';
@@ -90,7 +91,12 @@ export function MyAccountsCard() {
       </Box>
 
       <Stack spacing={1}>
-        {visibleAccounts.map(acc => {
+        {visibleAccounts.length === 0 ? (
+          <EmptyLayout
+            title="No accounts yet"
+            description="Add an account to start tracking your balances."
+          />
+        ) : visibleAccounts.map(acc => {
           const bal = balancesMap[acc.id] || 0;
           const linked = cards.filter(c =>
             c.parentAccountId === acc.id || c.paymentAccountId === acc.id);

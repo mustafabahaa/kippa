@@ -81,7 +81,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   // Member list (owner view) — via Callable because rules restrict users/{uid}
   // reads to the doc owner.
-  const { data: householdMembers = [] } = useQuery({
+  const { data: householdMembers = [], isLoading: isMembersLoading } = useQuery({
     queryKey: ['householdMembers', householdId],
     queryFn: async () => {
       if (!householdId || !userProfile) return [];
@@ -162,6 +162,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         updateUserProfile,
         pendingRequests,
         householdMembers,
+        isMembersLoading,
       }}
     >
       {children}

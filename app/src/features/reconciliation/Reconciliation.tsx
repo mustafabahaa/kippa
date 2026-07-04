@@ -201,8 +201,14 @@ export function Reconciliation() {
           <Typography variant="body1" sx={{ fontWeight: 'bold', color: 'text.primary', fontSize: '14px', mb: 1 }}>
             Select Account
           </Typography>
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5 }}>
-            {sortedAccounts.map(acc => {
+          {sortedAccounts.length === 0 ? (
+            <EmptyLayout
+              title="No accounts to reconcile"
+              description="Create an account first, then come back here to balance-check it."
+            />
+          ) : (
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5 }}>
+              {sortedAccounts.map(acc => {
               const isSelected = selectedAccount?.id === acc.id;
               return (
                 <Box
@@ -255,7 +261,8 @@ export function Reconciliation() {
                 </Box>
               );
             })}
-          </Box>
+            </Box>
+          )}
         </Box>
 
         {selectedAccount && (

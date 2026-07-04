@@ -406,6 +406,7 @@ export function createAppTheme(mode: 'light' | 'dark'): Theme {
         styleOverrides: {
           root: {
             background: cardBg,
+            border: cardEdge,
             borderRadius: designTokens.radius.card,       // 20px
             boxShadow: `${cardHighlight}, ${cardShadow}`,
             transition: 'box-shadow 0.25s ease, transform 0.25s ease',

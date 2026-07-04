@@ -69,11 +69,15 @@ export function Categories() {
               [1, 2].map(i => (
                 <Skeleton key={i} variant="rectangular" width={80} height={32} sx={{ borderRadius: '8px' }} />
               ))
+            ) : categories.filter(c => c.type === 'income').length === 0 ? (
+              <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '13px', fontStyle: 'italic' }}>
+                No income categories yet — add one below.
+              </Typography>
             ) : (
               categories.filter(c => c.type === 'income').map(cat => (
-                <Chip 
-                  key={cat.id} 
-                  label={cat.name} 
+                <Chip
+                  key={cat.id}
+                  label={cat.name}
                   variant="outlined"
                   sx={{ borderRadius: '8px', fontWeight: 500 }}
                 />
@@ -91,11 +95,15 @@ export function Categories() {
               [1, 2, 3, 4].map(i => (
                 <Skeleton key={i} variant="rectangular" width={80} height={32} sx={{ borderRadius: '8px' }} />
               ))
+            ) : categories.filter(c => c.type === 'expense').length === 0 ? (
+              <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '13px', fontStyle: 'italic' }}>
+                No expense categories yet — add one below.
+              </Typography>
             ) : (
               categories.filter(c => c.type === 'expense').map(cat => (
-                <Chip 
-                  key={cat.id} 
-                  label={cat.name} 
+                <Chip
+                  key={cat.id}
+                  label={cat.name}
                   variant="outlined"
                   sx={{ borderRadius: '8px', fontWeight: 500 }}
                 />
