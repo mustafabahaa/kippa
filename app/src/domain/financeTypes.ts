@@ -34,6 +34,19 @@ export type Household = {
   createdBy: string;
 };
 
+export type JoinStatus = 'pending' | 'approved' | 'rejected';
+
+export type JoinRequest = {
+  uid: string;
+  displayName: string;
+  email: string;
+  photoURL?: string | null;
+  status: JoinStatus;
+  requestedAt: number;
+  decidedAt?: number;
+  decidedBy?: string;
+};
+
 export type Account = {
   id: string;
   householdId: string;
@@ -198,6 +211,7 @@ export type NotificationSettings = {
   dailyReminderEnabled: boolean;
   categoryWarningEnabled: boolean;
   cardExpiryWarningEnabled: boolean;
+  joinRequestEnabled: boolean;
 };
 
 export type AuditAction =
