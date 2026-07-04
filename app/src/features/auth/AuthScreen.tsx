@@ -32,7 +32,7 @@ export function AuthScreen() {
     loginWithGoogle,
     logout,
     createHousehold,
-    joinHousehold
+    requestToJoinHousehold
   } = useAppContext();
 
   const [loading, setLoading] = useState(false);
@@ -76,9 +76,10 @@ export function AuthScreen() {
     }
     setLoading(true);
     try {
-      await joinHousehold(householdIdToJoin.trim());
+      await requestToJoinHousehold(householdIdToJoin.trim());
+      enqueueSnackbar('Request sent — the household owner will review it.', { variant: 'success' });
     } catch (err: any) {
-      enqueueSnackbar(err.message || 'Failed to join household. Make sure the ID is correct.', { variant: 'error' });
+      enqueueSnackbar(err.message || 'Failed to request join. Make sure the ID is correct.', { variant: 'error' });
     } finally {
       setLoading(false);
     }
