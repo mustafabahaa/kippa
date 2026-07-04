@@ -5,6 +5,7 @@ import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
 import AddIcon from '@mui/icons-material/Add';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useState, useEffect, useRef } from 'react';
 import type { ReactNode } from 'react';
 
 interface NavItem {
@@ -30,6 +31,21 @@ export function BottomNav() {
 
   const isEntry = pathname === '/entry';
   const isDark = theme.palette.mode === 'dark';
+
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [size, setSize] = useState({ width: 0, height: 64 });
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const rect = entry.target.getBoundingClientRect();
+        setSize({ width: rect.width, height: rect.height });
+      }
+    });
+    observer.observe(containerRef.current);
+    return () => observer.disconnect();
+  }, []);
 
   const renderNavItem = (item: NavItem) => {
     const isActive = pathname === item.path;
@@ -74,8 +90,44 @@ export function BottomNav() {
     );
   };
 
+  // Generate notched path dynamically
+  const getPathData = () => {
+    const W = size.width;
+    const H = size.height;
+    if (W === 0) return '';
+
+    const R = 32; // Corner radius of the pill
+    const cX = W / 2;
+    const depth = 34; // Depth of the notch dip
+    const notchWidth = 48; // Width from center to start of curve
+
+    const x0 = cX - notchWidth;
+    const x1 = x0 + 20;
+    const x2 = cX - 20;
+    const x3 = cX + notchWidth;
+    const x4 = cX + 20;
+    const x5 = x3 - 20;
+
+    return `
+      M ${R},0
+      L ${x0},0
+      C ${x1},0 ${x2},${depth} ${cX},${depth}
+      C ${x4},${depth} ${x5},0 ${x3},0
+      L ${W - R},0
+      A ${R},${R} 0 0 1 ${W},${R}
+      L ${W},${H - R}
+      A ${R},${R} 0 0 1 ${W - R},${H}
+      L ${R},${H}
+      A ${R},${R} 0 0 1 0,${H - R}
+      L 0,${R}
+      A ${R},${R} 0 0 1 ${R},0
+      Z
+    `.replace(/\s+/g, ' ').trim();
+  };
+
   return (
     <Paper
+      ref={containerRef}
       elevation={0}
       sx={{
         position: 'fixed',
@@ -83,11 +135,8 @@ export function BottomNav() {
         left: '50%',
         transform: 'translateX(-50%)',
         zIndex: 1000,
-        bgcolor: 'background.paper',
-        borderRadius: '32px',
-        border: '1px solid',
-        borderColor: alpha(theme.palette.primary.main, 0.25),
-        boxShadow: `0 0 16px ${alpha(theme.palette.primary.main, 0.15)}, 0 0 40px ${alpha(theme.palette.primary.main, 0.08)}`,
+        bgcolor: 'transparent',
+        boxShadow: 'none',
         padding: '6px',
         maxWidth: 'calc(100vw - 24px)',
         overflow: 'visible',
@@ -98,6 +147,29 @@ export function BottomNav() {
         },
       }}
     >
+      {size.width > 0 && (
+        <svg
+          width={size.width}
+          height={size.height}
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            zIndex: -1,
+            pointerEvents: 'none',
+            overflow: 'visible',
+            filter: `drop-shadow(0 0 16px ${alpha(theme.palette.primary.main, 0.15)}) drop-shadow(0 0 40px ${alpha(theme.palette.primary.main, 0.08)})`,
+          }}
+        >
+          <path
+            d={getPathData()}
+            fill={theme.palette.background.paper}
+            stroke={alpha(theme.palette.primary.main, 0.25)}
+            strokeWidth={1}
+          />
+        </svg>
+      )}
+
       <Box
         sx={{
           display: 'flex',
