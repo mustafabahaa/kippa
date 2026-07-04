@@ -7,6 +7,7 @@ import {
   Firestore,
 } from 'firebase/firestore';
 import { getMessaging, Messaging, isSupported } from 'firebase/messaging';
+import { getFunctions, Functions } from 'firebase/functions';
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -28,6 +29,7 @@ export const isFirebaseConfigured = !!(
 let firebaseApp: FirebaseApp | undefined;
 let auth: Auth | undefined;
 let db: Firestore | undefined;
+let functions: Functions | undefined;
 
 if (isFirebaseConfigured) {
   try {
@@ -42,6 +44,7 @@ if (isFirebaseConfigured) {
       }),
       ignoreUndefinedProperties: true,
     });
+    functions = getFunctions(firebaseApp);
   } catch (error) {
     console.error('Firebase initialization failed:', error);
   }
@@ -78,4 +81,4 @@ export async function getMessagingAsync(): Promise<Messaging | null> {
   }
 }
 
-export { firebaseApp, auth, db, messaging, vapidKey };
+export { firebaseApp, auth, db, functions, messaging, vapidKey };
