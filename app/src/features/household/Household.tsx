@@ -326,7 +326,7 @@ export function Household() {
                         <ListItem sx={{ px: 0, py: 1 }}>
                           <ListItemText
                             primary={
-                              <Typography sx={{ fontWeight: m.uid === activeHh?.createdBy ? 'bold' : 500, fontSize: '14px' }}>
+                              <Typography sx={{ fontWeight: m.isOwner ? 'bold' : 500, fontSize: '14px' }}>
                                 {m.displayName}
                               </Typography>
                             }
@@ -336,7 +336,7 @@ export function Household() {
                               </Typography>
                             }
                           />
-                          {m.uid === activeHh?.createdBy && (
+                          {m.isOwner && (
                             <Chip label="Owner" size="small" color="primary" variant="outlined" />
                           )}
                         </ListItem>

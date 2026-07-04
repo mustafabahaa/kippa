@@ -9,4 +9,5 @@ export {
   requestToJoinHousehold,
   decideJoinRequest,
   leaveHousehold,
+  listHouseholdMembers,
 } from './householdMemberships.js';
