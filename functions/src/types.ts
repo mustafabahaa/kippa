@@ -90,6 +90,17 @@ export interface UserProfile {
   householdId: string | null;
   householdIds?: string[];
   role: 'owner' | 'member';
+  createdAt?: string;
+  photoURL?: string | null;
+  lastSeenActivities?: Record<string, string>;
+}
+
+export interface Household {
+  id: string;
+  name: string;
+  baseCurrency: string;
+  createdAt: string;
+  createdBy: string;
 }
 
 export type JoinStatus = 'pending' | 'approved' | 'rejected';
