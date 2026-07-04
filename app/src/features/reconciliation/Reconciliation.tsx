@@ -224,15 +224,15 @@ export function Reconciliation() {
                     borderRadius: '16px',
                     border: '1px solid',
                     borderColor: isSelected ? 'primary.main' : 'divider',
-                    bgcolor: isSelected ? 'info.light' : 'background.paper',
+                    bgcolor: isSelected ? 'action.selected' : 'background.paper',
                     cursor: 'pointer',
                     transition: 'all 0.2s ease-in-out',
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'flex-start',
                     '&:hover': {
-                      borderColor: isSelected ? 'primary.main' : 'primary.light',
-                      bgcolor: isSelected ? 'info.light' : 'action.hover',
+                      borderColor: 'primary.main',
+                      bgcolor: 'action.selected',
                       transform: 'translateY(-1px)',
                     }
                   }}

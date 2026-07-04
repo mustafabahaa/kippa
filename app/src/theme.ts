@@ -261,8 +261,8 @@ export function createAppTheme(mode: 'light' | 'dark'): Theme {
       action: {
         // Subtle teal-tinted hover so interactive elements warm slightly on
         // hover instead of flashing grey (light) or bright (dark).
-        hover: alpha(c.primaryContainer, isDark ? 0.12 : 0.06),
-        selected: alpha(c.primaryContainer, isDark ? 0.18 : 0.1),
+        hover: alpha(c.primaryContainer, isDark ? 0.14 : 0.06),
+        selected: alpha(c.primaryContainer, isDark ? 0.32 : 0.1),
       },
       chart: {
         colors: [
