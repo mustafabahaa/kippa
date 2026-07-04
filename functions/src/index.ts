@@ -4,3 +4,9 @@ initializeApp();
 
 export { onTransactionCreated } from './onTransactionCreated.js';
 export { dailyReminderCron } from './dailyReminderCron.js';
+export {
+  createHousehold,
+  requestToJoinHousehold,
+  decideJoinRequest,
+  leaveHousehold,
+} from './householdMemberships.js';
