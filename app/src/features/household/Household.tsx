@@ -175,6 +175,8 @@ export function Household() {
   useEffect(() => {
     const id = householdIdToJoin.trim();
     if (!id || !userProfile?.uid || !firestoreDb) {
+      // Clear stale request status when the input is empty.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setOutgoingStatus(null);
       return;
     }
