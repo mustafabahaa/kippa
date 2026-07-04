@@ -39,4 +39,14 @@ describe('buildMessagePayload', () => {
     });
     expect(payload.data.type).toBe('daily_reminder');
   });
+
+  it('builds a household_join payload', () => {
+    const payload = buildMessagePayload({
+      type: 'household_join',
+      title: 'Join request',
+      body: 'Ahmed requested to join your household',
+      householdId: 'hh1',
+    });
+    expect(payload.data.type).toBe('household_join');
+  });
 });

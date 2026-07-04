@@ -6,7 +6,8 @@ export type NotificationType =
   | 'transaction'
   | 'category_warning'
   | 'daily_reminder'
-  | 'card_expiry';
+  | 'card_expiry'
+  | 'household_join';
 
 export interface PayloadInput {
   type: NotificationType;
