@@ -128,6 +128,8 @@ The SDK config output above includes `messagingSenderId`. Note it.
 
 ## 4. Enable Firebase services
 
+> ⚠️ **Blaze plan required (must-do before this step).** Kippa uses Cloud Functions for cron reminders, FCM fanout, and derived data, plus a scheduled (`dailyReminderCron`) function. **Cloud Functions and Cloud Scheduler are only available on the Firebase Blaze (pay-as-you-go) plan — the free Spark plan will not work.** Upgrade now in Firebase Console → *Build → Functions* (or ⚙️ → *Usage and billing*) before continuing, otherwise the `gcloud services enable cloudfunctions.googleapis.com cloudscheduler.googleapis.com` step and any `firebase deploy --only functions` will fail.
+
 The app needs Auth, Firestore, Hosting, and Cloud Functions. Enable everything up front so deploys don't fail later.
 
 ```bash

@@ -62,6 +62,8 @@
 
 ## 🚀 Quick start
 
+> ⚠️ **Firebase Blaze plan required.** Kippa relies on Cloud Functions (cron reminders, FCM fanout, derived data) and scheduled functions, which are **only available on the Firebase Blaze (pay-as-you-go) plan**. The free Spark plan will *not* work — deploys of `functions/` will fail. Upgrade in Firebase Console → *Build → Functions → Upgrade project* (or Console → ⚙️ → Usage and billing). See [GETTING_STARTED.md §4](./GETTING_STARTED.md#4-enable-firebase-services) for details.
+
 **New here?** Follow the complete, step-by-step guide: **[GETTING_STARTED.md](./GETTING_STARTED.md)** — it covers installing the Firebase CLI and `gcloud`, creating a project, getting config values, enabling services, and deploying. Written so a human *or* an AI agent can get the app running and hosted in minutes.
 
 ### TL;DR
