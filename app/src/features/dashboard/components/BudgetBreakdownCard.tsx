@@ -206,7 +206,6 @@ export function BudgetBreakdownCard() {
           >
             <Table 
               size="medium" 
-              stickyHeader 
               aria-label="budget breakdown table" 
               sx={{
                 '& .MuiTableCell-body': { borderBottom: '1px solid', borderColor: 'divider' }

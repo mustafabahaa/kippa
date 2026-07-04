@@ -3,7 +3,6 @@ import { Box, CircularProgress } from '@mui/material';
 import { Outlet, useLocation } from 'react-router-dom';
 import { OfflineBanner } from '@/components/OfflineBanner';
 import { TopBar } from '@/components/app-shell/TopBar';
-import { FloatingActionButton } from '@/components/app-shell/FloatingActionButton';
 import { BottomNav } from '@/components/app-shell/BottomNav';
 import { useAppContext } from '@/hooks/useAppContext';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
@@ -66,7 +65,6 @@ export function AppShell() {
           </Suspense>
         </Box>
 
-        <FloatingActionButton />
         <BottomNav />
       </Box>
     </>
