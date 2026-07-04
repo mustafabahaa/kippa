@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSnackbar } from 'notistack';
 import { useQueryClient } from '@tanstack/react-query';
+import { doc as fsDoc, onSnapshot } from 'firebase/firestore';
 import {
   Box,
   Card,
@@ -25,7 +26,8 @@ import {
   Tooltip,
   Grid,
   Tabs,
-  Tab
+  Tab,
+  Alert
 } from '@mui/material';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import HomeIcon from '@mui/icons-material/Home';
@@ -35,8 +37,10 @@ import AddHomeIcon from '@mui/icons-material/AddHome';
 import GroupAddIcon from '@mui/icons-material/GroupAdd';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CheckIcon from '@mui/icons-material/Check';
+import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
 
-import type { Household, CurrencyCode } from '@/domain/financeTypes';
+import type { Household, CurrencyCode, JoinStatus, JoinRequest } from '@/domain/financeTypes';
+import { db as firestoreDb } from '@/config/firebase';
 import { useAppContext } from '@/hooks/useAppContext';
 import { useThemeMode } from '@/hooks/useThemeMode';
 import { CurrencySelect } from '@/features/shared/components/CurrencySelect';
@@ -52,8 +56,11 @@ export function Household() {
     isLoadingHouseholds: householdsLoading,
     switchHousehold,
     createHousehold,
-    joinHousehold,
-    leaveHousehold
+    requestToJoinHousehold,
+    decideJoinRequest,
+    leaveHousehold,
+    pendingRequests,
+    householdMembers,
   } = useAppContext();
 
   // Leave Confirmation Dialog
@@ -113,11 +120,23 @@ export function Household() {
     }
     setActionLoading(true);
     try {
-      await joinHousehold(householdIdToJoin.trim());
-      setHouseholdIdToJoin('');
-      enqueueSnackbar('Joined new household successfully!', { variant: 'success' });
+      await requestToJoinHousehold(householdIdToJoin.trim());
+      enqueueSnackbar('Request sent — the household owner will review it.', { variant: 'success' });
     } catch (err: any) {
-      enqueueSnackbar(err.message || 'Failed to join household. Make sure the ID is correct.', { variant: 'error' });
+      enqueueSnackbar(err.message || 'Failed to request join. Make sure the ID is correct.', { variant: 'error' });
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleDecide = async (requesterUid: string, decision: 'approve' | 'reject') => {
+    if (!householdId) return;
+    setActionLoading(true);
+    try {
+      await decideJoinRequest(householdId, requesterUid, decision);
+      enqueueSnackbar(decision === 'approve' ? 'Request approved.' : 'Request rejected.', { variant: 'success' });
+    } catch (err: any) {
+      enqueueSnackbar(err.message || 'Failed to decide request.', { variant: 'error' });
     } finally {
       setActionLoading(false);
     }
@@ -149,6 +168,24 @@ export function Household() {
 
   // Find active household info
   const activeHh = householdsList.find(h => h.id === householdId);
+  const isOwner = activeHh ? activeHh.createdBy === userProfile?.uid : false;
+
+  // Outgoing request status for the id currently in the join box.
+  const [outgoingStatus, setOutgoingStatus] = useState<JoinStatus | null>(null);
+  useEffect(() => {
+    const id = householdIdToJoin.trim();
+    if (!id || !userProfile?.uid || !firestoreDb) {
+      setOutgoingStatus(null);
+      return;
+    }
+    const unsub = onSnapshot(
+      fsDoc(firestoreDb, `households/${id}/joinRequests/${userProfile.uid}`),
+      (snap) => {
+        setOutgoingStatus(snap.exists() ? (snap.data() as JoinRequest).status : null);
+      },
+    );
+    return () => unsub();
+  }, [householdIdToJoin, userProfile?.uid]);
 
   const handleBaseCurrencyChange = async (newCurrency: CurrencyCode) => {
     if (!activeHh || newCurrency === activeHh.baseCurrency) return;
@@ -172,13 +209,13 @@ export function Household() {
             Households
           </Typography>
           <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '13px', mt: 0.5 }}>
-            Switch between existing households, create different containers, or join shared invites.
+            Switch between existing households, create different containers, or request to join shared invites.
           </Typography>
         </Box>
 
         {/* Current Household Spotlight */}
         {activeHh && (
-          <Card sx={{ 
+          <Card sx={{
             borderColor: 'primary.light',
             background: resolvedMode === 'dark'
               ? 'linear-gradient(135deg, rgba(0, 92, 85, 0.06) 0%, rgba(0, 92, 85, 0.02) 100%)'
@@ -200,12 +237,12 @@ export function Household() {
                       </Typography>
                     </Box>
                   </Box>
-                  <Chip 
-                    label="Active" 
-                    color="primary" 
-                    size="small" 
+                  <Chip
+                    label="Active"
+                    color="primary"
+                    size="small"
                     icon={<CheckCircleIcon sx={{ fontSize: '14px !important' }} />}
-                    sx={{ fontWeight: 'bold', borderRadius: '8px' }} 
+                    sx={{ fontWeight: 'bold', borderRadius: '8px' }}
                   />
                 </Box>
 
@@ -231,6 +268,9 @@ export function Household() {
                 <Stack spacing={1}>
                   <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                     Household Invite ID
+                  </Typography>
+                  <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '11px' }}>
+                    Share this ID with someone. They'll request to join, and you approve them.
                   </Typography>
                   <Box sx={{
                     display: 'flex',
@@ -264,6 +304,99 @@ export function Household() {
           </Card>
         )}
 
+        {/* Members + Pending Requests — owner only */}
+        {isOwner && (
+          <Card sx={{ border: '1px solid', borderColor: 'divider', borderRadius: '20px', boxShadow: 'none' }}>
+            <CardContent sx={{ p: 2.5 }}>
+              <Stack spacing={2}>
+                <Typography variant="h3" sx={{ fontSize: '14px', fontWeight: 600, color: 'text.secondary', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  Members ({householdMembers.length})
+                </Typography>
+                {householdMembers.length === 0 ? (
+                  <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '13px' }}>
+                    Loading members…
+                  </Typography>
+                ) : (
+                  <List sx={{ p: 0 }}>
+                    {householdMembers.map((m, idx) => (
+                      <Box key={m.uid}>
+                        {idx > 0 && <Divider />}
+                        <ListItem sx={{ px: 0, py: 1 }}>
+                          <ListItemText
+                            primary={
+                              <Typography sx={{ fontWeight: m.uid === activeHh?.createdBy ? 'bold' : 500, fontSize: '14px' }}>
+                                {m.displayName}
+                              </Typography>
+                            }
+                            secondary={
+                              <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '11px' }}>
+                                {m.email}
+                              </Typography>
+                            }
+                          />
+                          {m.uid === activeHh?.createdBy && (
+                            <Chip label="Owner" size="small" color="primary" variant="outlined" />
+                          )}
+                        </ListItem>
+                      </Box>
+                    ))}
+                  </List>
+                )}
+
+                {pendingRequests.length > 0 && (
+                  <>
+                    <Divider sx={{ my: 1 }} />
+                    <Typography variant="h3" sx={{ fontSize: '14px', fontWeight: 600, color: 'text.secondary', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                      Pending Requests ({pendingRequests.length})
+                    </Typography>
+                    <List sx={{ p: 0 }}>
+                      {pendingRequests.map((req, idx) => (
+                        <Box key={req.uid}>
+                          {idx > 0 && <Divider />}
+                          <ListItem sx={{ px: 0, py: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <ListItemText
+                              primary={
+                                <Typography sx={{ fontWeight: 500, fontSize: '14px' }}>
+                                  {req.displayName}
+                                </Typography>
+                              }
+                              secondary={
+                                <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '11px' }}>
+                                  {req.email}
+                                </Typography>
+                              }
+                            />
+                            <Stack direction="row" spacing={1}>
+                              <Button
+                                size="small"
+                                variant="contained"
+                                color="success"
+                                onClick={() => handleDecide(req.uid, 'approve')}
+                                disabled={actionLoading}
+                              >
+                                Approve
+                              </Button>
+                              <Button
+                                size="small"
+                                variant="outlined"
+                                color="error"
+                                onClick={() => handleDecide(req.uid, 'reject')}
+                                disabled={actionLoading}
+                              >
+                                Reject
+                              </Button>
+                            </Stack>
+                          </ListItem>
+                        </Box>
+                      ))}
+                    </List>
+                  </>
+                )}
+              </Stack>
+            </CardContent>
+          </Card>
+        )}
+
         <Grid container spacing={3}>
           {/* Left Column: Your Households List */}
           <Grid size={{ xs: 12, md: 6 }}>
@@ -279,7 +412,7 @@ export function Household() {
                 ) : householdsList.length === 0 ? (
                   <Box p={3} textAlign="center">
                     <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                      No households found. Please create or join one below.
+                      No households found. Please create or request to join one below.
                     </Typography>
                   </Box>
                 ) : (
@@ -372,7 +505,7 @@ export function Household() {
                         fullWidth
                         variant="contained"
                         onClick={handleCreateHousehold}
-                        loading={actionLoading}
+                        disabled={actionLoading}
                         sx={{ boxShadow: 'none' }}
                       >
                         Create
@@ -382,7 +515,7 @@ export function Household() {
                   {tabValue === 1 && (
                     <Stack spacing={2}>
                       <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '12px' }}>
-                        Paste an Invite ID from a family member to access their ledger.
+                        Paste an Invite ID from a household owner. They'll need to approve your request before you can join.
                       </Typography>
                       <TextField
                         fullWidth
@@ -392,14 +525,51 @@ export function Household() {
                         onChange={e => setHouseholdIdToJoin(e.target.value)}
                         disabled={actionLoading}
                       />
-                      <Button
-                        fullWidth
-                        variant="outlined"
-                        onClick={handleJoinHousehold}
-                        loading={actionLoading}
-                      >
-                        Join
-                      </Button>
+                      {outgoingStatus === null && (
+                        <Button
+                          fullWidth
+                          variant="outlined"
+                          onClick={handleJoinHousehold}
+                          disabled={actionLoading}
+                        >
+                          Request to Join
+                        </Button>
+                      )}
+                      {outgoingStatus === 'pending' && (
+                        <Alert severity="info" icon={<HourglassEmptyIcon />}>
+                          Request pending — waiting for the owner to approve.
+                        </Alert>
+                      )}
+                      {outgoingStatus === 'rejected' && (
+                        <>
+                          <Alert severity="error">
+                            Your request was declined by the owner.
+                          </Alert>
+                          <Button
+                            fullWidth
+                            variant="outlined"
+                            onClick={handleJoinHousehold}
+                            disabled={actionLoading}
+                          >
+                            Request Again
+                          </Button>
+                        </>
+                      )}
+                      {outgoingStatus === 'approved' && (
+                        <>
+                          <Alert severity="success" icon={<CheckCircleIcon />}>
+                            You're approved!
+                          </Alert>
+                          <Button
+                            fullWidth
+                            variant="contained"
+                            onClick={() => handleSwitchHousehold(householdIdToJoin.trim())}
+                            disabled={householdIdToJoin.trim() === householdId || actionLoading}
+                          >
+                            Switch to this Household
+                          </Button>
+                        </>
+                      )}
                     </Stack>
                   )}
                 </CardContent>
@@ -426,14 +596,14 @@ export function Household() {
         </DialogTitle>
         <DialogContent>
           <DialogContentText id="leave-dialog-description">
-            Are you sure you want to leave the household <strong>{householdToLeave?.name}</strong>? You will no longer be able to access its transactions and ledger details. You can only rejoin if someone gives you the Invite ID again.
+            Are you sure you want to leave the household <strong>{householdToLeave?.name}</strong>? You will no longer be able to access its transactions and ledger details. You can only rejoin if the owner approves a new request.
           </DialogContentText>
         </DialogContent>
         <DialogActions sx={{ px: 2.5, pb: 2 }}>
           <Button onClick={handleCloseLeaveConfirm} variant="outlined">
             Cancel
           </Button>
-          <Button onClick={handleLeaveHousehold} color="error" variant="contained" loading={actionLoading} autoFocus>
+          <Button onClick={handleLeaveHousehold} color="error" variant="contained" disabled={actionLoading} autoFocus>
             Leave Household
           </Button>
         </DialogActions>
