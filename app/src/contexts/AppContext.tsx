@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { collection, query as fsQuery, where, onSnapshot, doc as fsDoc } from 'firebase/firestore';
+import { collection, query as fsQuery, where, onSnapshot } from 'firebase/firestore';
 import { authLib } from '@/libs/auth';
 import { ledgerLib } from '@/libs/ledger';
 import { dbLib } from '@/libs/db';
@@ -62,6 +62,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [pendingRequests, setPendingRequests] = useState<JoinRequest[]>([]);
   useEffect(() => {
     if (!householdId || !isOwner || !firestoreDb) {
+      // Clear stale pending list when the user is no longer an owner of an
+      // active household. Synchronous clear is intentional here.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setPendingRequests([]);
       return;
     }

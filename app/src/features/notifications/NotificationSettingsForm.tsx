@@ -197,6 +197,16 @@ export function NotificationSettingsForm({
                 label="Budget Warn Alerts (Category warning)"
               />
 
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={notifSettings.joinRequestEnabled}
+                    onChange={e => setNotifSettings({ ...notifSettings, joinRequestEnabled: e.target.checked })}
+                  />
+                }
+                label="Join-Request Notifications (notify on household join requests and decisions)"
+              />
+
               <Button
                 variant="contained"
                 onClick={handleSaveNotifications}
