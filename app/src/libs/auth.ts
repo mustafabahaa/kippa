@@ -10,7 +10,7 @@ import { httpsCallable } from 'firebase/functions';
 import { auth, functions, isFirebaseConfigured, isFirebaseReady } from '@/config/firebase';
 import { dbLib } from '@/libs/db';
 import { detectBaseCurrency } from '@/libs/currencyMeta';
-import { UserProfile, Household, JoinStatus } from '@/domain/financeTypes';
+import { UserProfile, Household, JoinStatus, HouseholdMember } from '@/domain/financeTypes';
 
 const FIREBASE_REQUIRED_MSG =
   'Firebase is not configured. Copy .env.example to .env and set VITE_FIREBASE_* credentials.';
@@ -205,6 +205,21 @@ export const authLib = {
     const updated = await dbLib.getDoc('system', 'users', userId) as UserProfile | null;
     if (!updated) throw new Error('User profile not found after leave');
     return updated;
+  },
+
+  /**
+   * Lists the members of a household via the listHouseholdMembers Callable.
+   * Server-side because Firestore rules restrict users/{uid} reads to the doc
+   * owner — a client-side query across members would be denied.
+   */
+  async listHouseholdMembers(_userId: string, householdId: string): Promise<HouseholdMember[]> {
+    requireAuth();
+    const listFn = httpsCallable<
+      { householdId: string },
+      { members: HouseholdMember[] }
+    >(functions!, 'listHouseholdMembers');
+    const res = await listFn({ householdId });
+    return res.data.members;
   },
 
   async getUserProfile(userId: string): Promise<UserProfile | null> {

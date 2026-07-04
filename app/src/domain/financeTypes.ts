@@ -47,6 +47,18 @@ export type JoinRequest = {
   decidedBy?: string;
 };
 
+/**
+ * Slim member shape returned by the listHouseholdMembers Callable.
+ * Server returns only what the UI needs (no secrets).
+ */
+export type HouseholdMember = {
+  uid: string;
+  displayName: string;
+  email: string;
+  photoURL?: string | null;
+  isOwner: boolean;
+};
+
 export type Account = {
   id: string;
   householdId: string;

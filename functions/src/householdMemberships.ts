@@ -189,9 +189,51 @@ export const decideJoinRequest = onCall(async (req) => {
 });
 
 /**
- * Self-service leave. Removes the household from the caller's householdIds
- * and resets the active householdId if it was the one being left.
+ * Lists the members of a household. Callable because the Firestore rules
+ * restrict users/{uid} reads to the owner of the doc — so the household owner
+ * cannot run a client-side query across all members. Server-side query here.
+ * Returns only what the UI needs (no secrets).
  */
+export const listHouseholdMembers = onCall(async (req) => {
+  const db = getFirestore();
+  const callerUid = req.auth?.uid;
+  if (!callerUid) {
+    throw new HttpsError('unauthenticated', 'Sign in required.');
+  }
+  const householdId = (req.data as { householdId?: string })?.householdId?.trim();
+  if (!householdId) {
+    throw new HttpsError('invalid-argument', 'householdId is required.');
+  }
+
+  // Any member can list the members of a household they belong to.
+  const callerSnap = await db.doc(`users/${callerUid}`).get();
+  const caller = callerSnap.data() as Partial<UserProfile> | undefined;
+  if (!caller?.householdIds?.includes(householdId)) {
+    throw new HttpsError('permission-denied', 'You are not a member of this household.');
+  }
+
+  const membersSnap = await db
+    .collection('users')
+    .where('householdIds', 'array-contains', householdId)
+    .get();
+
+  const hhSnap = await db.doc(`households/${householdId}/householdInfo/info`).get();
+  const household = hhSnap.data() as Partial<Household> | undefined;
+  const ownerUid = household?.createdBy;
+
+  return {
+    members: membersSnap.docs.map((d) => {
+      const u = d.data() as Partial<UserProfile>;
+      return {
+        uid: d.id,
+        displayName: u.displayName ?? 'Unknown',
+        email: u.email ?? '',
+        photoURL: u.photoURL ?? null,
+        isOwner: d.id === ownerUid,
+      };
+    }),
+  };
+});
 export const leaveHousehold = onCall(async (req) => {
   const db = getFirestore();
   const uid = req.auth?.uid;

@@ -3,7 +3,6 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { collection, query as fsQuery, where, onSnapshot } from 'firebase/firestore';
 import { authLib } from '@/libs/auth';
 import { ledgerLib } from '@/libs/ledger';
-import { dbLib } from '@/libs/db';
 import { db as firestoreDb } from '@/config/firebase';
 import { detectBaseCurrency } from '@/libs/currencyMeta';
 import { UserProfile, Household, JoinStatus, JoinRequest } from '@/domain/financeTypes';
@@ -80,17 +79,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     return () => unsub();
   }, [householdId, isOwner]);
 
-  // Member list (owner view)
+  // Member list (owner view) — via Callable because rules restrict users/{uid}
+  // reads to the doc owner.
   const { data: householdMembers = [] } = useQuery({
     queryKey: ['householdMembers', householdId],
     queryFn: async () => {
-      if (!householdId) return [];
-      const members = await dbLib.getDocs('system', 'users', [
-        { field: 'householdIds', op: 'array-contains', value: householdId },
-      ]);
-      return members as UserProfile[];
+      if (!householdId || !userProfile) return [];
+      return authLib.listHouseholdMembers(userProfile.uid, householdId);
     },
-    enabled: !!householdId && isOwner,
+    enabled: !!householdId && isOwner && !!userProfile,
   });
 
   const loginWithGoogle = async () => {
