@@ -587,11 +587,11 @@ export function FastEntry() {
                 borderRadius: '16px',
                 border: '1px solid',
                 borderColor: 'divider',
-                bgcolor: 'background.paper',
+                bgcolor: 'action.hover',
                 color: 'text.secondary',
                 fontSize: '13.5px',
                 height: 48,
-                '&:hover': { bgcolor: 'action.hover', borderColor: 'divider' }
+                '&:hover': { bgcolor: 'action.selected', borderColor: 'divider' }
               }}
             >
               <Box display="flex" alignItems="center" gap={1}>
@@ -780,14 +780,14 @@ function DateButtonField({ dateLabel, setOpen }: { dateLabel?: string; setOpen?:
         justifyContent: 'center',
         border: '1px solid',
         borderColor: 'divider',
+        bgcolor: 'action.hover',
         borderRadius: '16px',
-        bgcolor: 'background.paper',
         color: 'text.secondary',
         fontSize: '13.5px',
         gap: 0.5,
         cursor: 'pointer',
         userSelect: 'none',
-        '&:hover': { bgcolor: 'action.hover' },
+        '&:hover': { bgcolor: 'action.selected' },
       }}
     >
       <CalendarTodayIcon sx={{ fontSize: '16px' }} />

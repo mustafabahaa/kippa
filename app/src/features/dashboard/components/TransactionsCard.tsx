@@ -18,10 +18,10 @@ import {
 } from '@/hooks/useFinance';
 import { FinanceTransaction } from '@/domain/financeTypes';
 import { useAppContext } from '@/hooks/useAppContext';
-import { RecentActivityItem } from './RecentActivityItem';
+import { TransactionsListItem } from './TransactionsListItem';
 import { EditTransactionDialog } from '@/features/transactions/components/EditTransactionDialog';
 
-export function RecentActivityCard() {
+export function TransactionsCard() {
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
   const { householdId } = useAppContext();
@@ -59,7 +59,7 @@ export function RecentActivityCard() {
     <Stack spacing={1.5}>
       <Box display="flex" justifyContent="space-between" alignItems="center">
         <Typography variant="h3" sx={{ fontSize: '18px', fontWeight: 700, color: 'text.primary' }}>
-          Recent Activity
+          Recent Transactions
         </Typography>
         <Typography 
           variant="body2" 
@@ -70,7 +70,7 @@ export function RecentActivityCard() {
         </Typography>
       </Box>
 
-      <Card sx={{ borderRadius: '20px', border: '1px solid', borderColor: 'divider', boxShadow: 'none' }}>
+      <Card>
         {transactions.length === 0 ? (
           <Typography variant="body2" color="text.secondary" align="center" sx={{ py: 4 }}>
             No recent activity recorded.
@@ -78,7 +78,7 @@ export function RecentActivityCard() {
         ) : (
           <Stack divider={<Divider />}>
             {transactions.slice(0, 5).map(tx => (
-              <RecentActivityItem
+              <TransactionsListItem
                 key={tx.id}
                 tx={tx}
                 categories={categories}

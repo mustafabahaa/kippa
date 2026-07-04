@@ -1,4 +1,4 @@
-import { Box, Skeleton, Stack, Typography, useTheme } from '@mui/material';
+import { Box, Skeleton, Stack, Typography, useTheme, alpha } from '@mui/material';
 import {
   useAccounts,
   useTransactions,
@@ -35,6 +35,8 @@ export function TotalBalanceHeroCard() {
   const { data: allocations = [] } = useBudgetAllocations(householdId, activeCycleId);
   const { data: expectedIncomes = [] } = useExpectedIncomes(householdId, activeCycleId);
 
+  const isDark = theme.palette.mode === 'dark';
+
   const isLoading = accountsLoading || txsLoading || linesLoading;
 
   if (isLoading || !accounts || !transactions || !ledgerLines) {
@@ -65,26 +67,33 @@ export function TotalBalanceHeroCard() {
   );
 
   return (
-    <Box 
-      sx={{ 
-        bgcolor: 'primary.dark', 
-        p: 2.5, 
-        borderRadius: '24px', 
-        boxShadow: '0px 4px 12px rgba(0,0,0,0.08)', 
-        position: 'relative', 
-        overflow: 'hidden' 
+    <Box
+      sx={{
+        // Theme-only: primary.dark fill in light mode; in dark mode a layered
+        // primary tint so the hero reads as a calm teal surface instead of a
+        // harsh saturated block against near-black.
+        bgcolor: isDark ? alpha(theme.palette.primary.dark, 0.7) : 'primary.dark',
+        p: 2.5,
+        borderRadius: '24px',
+        boxShadow: isDark
+          ? `0px 4px 16px ${alpha(theme.palette.common.black, 0.4)}`
+          : '0px 4px 12px rgba(0,0,0,0.08)',
+        position: 'relative',
+        overflow: 'hidden'
       }}
     >
-      <Box 
-        sx={{ 
-          position: 'absolute', 
-          top: 0, 
-          left: 0, 
-          right: 0, 
-          bottom: 0, 
+      <Box
+        sx={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
           zIndex: 0,
           pointerEvents: 'auto',
-          opacity: 0.2
+          // Faint enough that it reads as ambient texture behind the numbers
+          // without competing with them for attention.
+          opacity: isDark ? 0.08 : 0.12
         }}
       >
         <PixelBlast
@@ -110,10 +119,10 @@ export function TotalBalanceHeroCard() {
 
       <Box sx={{ zIndex: 1, position: 'relative', pointerEvents: 'none' }}>
         <Box>
-          <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)', fontSize: '11px', fontWeight: 'bold', letterSpacing: '1px', textTransform: 'uppercase' }}>
+          <Typography variant="body2" sx={{ color: alpha(theme.palette.common.white, 0.95), fontSize: '11px', fontWeight: 'bold', letterSpacing: '1px', textTransform: 'uppercase' }}>
             <Box component="span" sx={{ pointerEvents: 'auto' }}>
               <InfoTooltip
-                label={<span style={{ color: 'rgba(255,255,255,0.7)' }}>Total Balance</span>}
+                label={<span style={{ color: alpha(theme.palette.common.white, 0.95) }}>Total Balance</span>}
                 text={metricExplanations.totalBaseEquivalent}
               />
             </Box>
@@ -130,16 +139,17 @@ export function TotalBalanceHeroCard() {
                 <Box
                   key={acc.id}
                   sx={{
-                    bgcolor: 'rgba(255,255,255,0.22)',
+                    // Dark pills so white text/numbers have strong contrast.
+                    bgcolor: alpha(theme.palette.common.black, 0.28),
                     px: 2,
                     py: 1.25,
                     borderRadius: '12px',
                   }}
                 >
-                  <Typography sx={{ color: 'rgba(255,255,255,0.75)', fontSize: '10px', fontWeight: 700, letterSpacing: '0.5px', textTransform: 'uppercase', lineHeight: 1 }}>
+                  <Typography sx={{ color: alpha(theme.palette.common.white, 0.7), fontSize: '10px', fontWeight: 700, letterSpacing: '0.5px', textTransform: 'uppercase', lineHeight: 1 }}>
                     {acc.name}
                   </Typography>
-                  <Typography sx={{ color: '#fff', fontSize: '14px', fontWeight: 800, mt: 0.5, lineHeight: 1.3 }}>
+                  <Typography sx={{ color: theme.palette.common.white, fontSize: '15px', fontWeight: 800, mt: 0.5, lineHeight: 1.3 }}>
                     <Money amount={bal} code={acc.currency} maxDigits={2} />
                   </Typography>
                 </Box>

@@ -152,7 +152,7 @@ export function CycleAnalytics() {
 
   if (isLoading) {
     return (
-      <Card sx={{ borderRadius: '20px', border: '1px solid', borderColor: 'divider', boxShadow: 'none', mb: 3 }}>
+      <Card sx={{ mb: 3 }}>
         <CardContent sx={{ p: 2.5 }}>
           <Skeleton variant="text" width="40%" height={28} animation="wave" />
           <Skeleton variant="rectangular" width="100%" height={200} sx={{ borderRadius: '12px', mt: 2 }} animation="wave" />
@@ -164,16 +164,7 @@ export function CycleAnalytics() {
   if (cycleData.length === 0) return null;
 
   return (
-    <Card 
-      sx={{ 
-        borderRadius: '20px', 
-        border: '1px solid', 
-        borderColor: 'divider', 
-        boxShadow: 'none', 
-        mb: 3,
-        overflow: 'hidden'
-      }}
-    >
+    <Card sx={{ mb: 3, overflow: 'hidden' }}>
       <CardContent sx={{ p: 2.5 }}>
         {/* Header & Tabs */}
         <Stack 

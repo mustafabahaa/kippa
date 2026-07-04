@@ -253,9 +253,9 @@ export function TransactionHistory() {
           </Stack>
 
         {/* Table Container */}
-        <TableContainer component={Card} sx={{ borderRadius: '20px', border: '1px solid', borderColor: 'divider', boxShadow: 'none' }}>
+        <TableContainer component={Card}>
           <Table>
-            <TableHead sx={{ bgcolor: 'action.hover' }}>
+            <TableHead>
               <TableRow>
                 <TableCell align="center" sx={{ width: 60, fontWeight: 'bold' }}>Type</TableCell>
                 <TableCell sx={{ fontWeight: 'bold' }}>Transaction</TableCell>

@@ -229,7 +229,7 @@ export function useUserHouseholds(userProfile: UserProfile | null) {
   });
 }
 
-export function useAuditLog(householdId: string, count: number = 50) {
+export function useAuditLog(householdId: string, count: number = 200) {
   const [entries, setEntries] = useState<AuditLogEntry[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(!!householdId);
   const [error, setError] = useState<Error | null>(null);
@@ -329,7 +329,7 @@ function useLastSeen(householdId: string, userId: string | undefined): [string, 
  * the current user last viewed the activity feed. Used to drive the bell badge.
  */
 export function useUnreadActivityCount(householdId: string, userId: string | undefined) {
-  const { entries } = useAuditLog(householdId, 50);
+  const { entries } = useAuditLog(householdId, 200);
   const [lastSeen, setLastSeen] = useLastSeen(householdId, userId);
 
   const unreadCount = entries.filter(

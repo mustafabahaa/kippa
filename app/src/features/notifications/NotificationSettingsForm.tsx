@@ -82,7 +82,7 @@ export function NotificationSettingsForm({
         {notifStatus === 'ios-not-installed' && <IosInstallBanner />}
 
         {notifStatus === 'unsupported' && (
-          <Card sx={{ border: '1px solid', borderColor: 'divider', borderRadius: '20px', boxShadow: 'none' }}>
+          <Card>
             <CardContent sx={{ p: 2.5 }}>
               <Typography color="text.secondary" sx={{ fontSize: '14px' }}>
                 Push notifications aren't supported in this browser. For iPhone, add Kippa to your
@@ -93,7 +93,7 @@ export function NotificationSettingsForm({
         )}
 
         {notifStatus === 'permission-denied' && (
-          <Card sx={{ border: '1px solid', borderColor: 'divider', borderRadius: '20px', boxShadow: 'none' }}>
+          <Card>
             <CardContent sx={{ p: 2.5 }}>
               <Typography color="text.secondary" sx={{ fontSize: '14px' }}>
                 Notifications are blocked. Enable them in your device/browser settings, then reopen
@@ -104,7 +104,7 @@ export function NotificationSettingsForm({
         )}
 
         {notifStatus === 'checking' && (
-          <Card sx={{ border: '1px solid', borderColor: 'divider', borderRadius: '20px', boxShadow: 'none' }}>
+          <Card>
             <CardContent sx={{ p: 2.5 }}>
               <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap" useFlexGap>
                 <Box sx={{ flex: 1 }}>
@@ -126,7 +126,7 @@ export function NotificationSettingsForm({
         )}
 
         {(notifStatus === 'pending' || notifStatus === 'enabled') && (
-          <Card sx={{ border: '1px solid', borderColor: 'divider', borderRadius: '20px', boxShadow: 'none' }}>
+          <Card>
             <CardContent sx={{ p: 2.5 }}>
               <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap" useFlexGap>
                 <Box>
@@ -174,7 +174,7 @@ export function NotificationSettingsForm({
           </Card>
         )}
 
-        <Card sx={{ border: '1px solid', borderColor: 'divider', borderRadius: '20px', boxShadow: 'none' }}>
+        <Card>
           <CardContent sx={{ p: 2.5 }}>
             <Stack spacing={2.5}>
               <FormControlLabel

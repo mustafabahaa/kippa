@@ -7,7 +7,7 @@ import { TransactionIcon } from '@/features/transactions/components/TransactionI
 import { useHouseholdBaseCurrency } from '@/hooks/useFinance';
 import { usePrivacyMask } from '@/hooks/usePrivacyMask';
 
-interface RecentActivityItemProps {
+interface TransactionsListItemProps {
   tx: FinanceTransaction;
   categories: Category[];
   ledgerLines: LedgerLine[];
@@ -16,7 +16,7 @@ interface RecentActivityItemProps {
   onVoid: (txId: string) => void;
 }
 
-export const RecentActivityItem: React.FC<RecentActivityItemProps> = ({
+export const TransactionsListItem: React.FC<TransactionsListItemProps> = ({
   tx,
   categories,
   ledgerLines,
@@ -179,7 +179,6 @@ export const RecentActivityItem: React.FC<RecentActivityItemProps> = ({
         alignItems: 'flex-start',
         justifyContent: 'space-between',
         gap: 1.5,
-        bgcolor: 'background.paper',
         '&:hover': { bgcolor: 'action.hover' },
         opacity: tx.status === 'voided' ? 0.5 : 1,
       }}

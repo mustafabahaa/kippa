@@ -107,7 +107,7 @@ export function Categories() {
         <Divider />
 
         {/* Create Category Card */}
-        <Card sx={{ border: '1px solid', borderColor: 'divider', borderRadius: '20px', boxShadow: 'none' }}>
+        <Card>
           <CardContent sx={{ p: 2.5 }}>
             <Typography variant="h3" sx={{ fontSize: '16px', fontWeight: 700, color: 'text.primary', mb: 2 }}>
               Add New Category

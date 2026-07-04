@@ -35,14 +35,14 @@ export default function AppBackground() {
           height: '100vh',
           zIndex: 0,
           pointerEvents: 'none',
-          opacity: 0.55,
+          opacity: 0.5,
         }}
       >
         <LightVeil
           colors={[
-            alpha('#0f766e', 0.5),
-            alpha('#14b8a6', 0.42),
-            alpha('#5eead4', 0.38),
+            alpha('#0f766e', 0.32),
+            alpha('#14b8a6', 0.26),
+            alpha('#5eead4', 0.22),
           ]}
         />
       </Box>
