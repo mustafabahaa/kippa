@@ -9,14 +9,13 @@ import type {
 } from './types.js';
 import { buildMessagePayload, getTokensForUsers, sendToMany } from './sendToMany.js';
 
-const db = getFirestore();
-
 /**
  * Creates a new household and makes the caller the owner.
  * Replaces the client-side createHousehold — the membership write
  * must happen server-side now that rules lock users/{uid}.
  */
 export const createHousehold = onCall(async (req) => {
+  const db = getFirestore();
   const uid = req.auth?.uid;
   if (!uid) {
     throw new HttpsError('unauthenticated', 'Sign in required.');
@@ -60,6 +59,7 @@ export const createHousehold = onCall(async (req) => {
  * Does NOT touch users/{uid} — only the owner's approval can do that.
  */
 export const requestToJoinHousehold = onCall(async (req) => {
+  const db = getFirestore();
   const uid = req.auth?.uid;
   if (!uid) {
     throw new HttpsError('unauthenticated', 'Sign in required.');
@@ -108,6 +108,7 @@ export const requestToJoinHousehold = onCall(async (req) => {
  * On approve, union the householdId into the requester's householdIds.
  */
 export const decideJoinRequest = onCall(async (req) => {
+  const db = getFirestore();
   const callerUid = req.auth?.uid;
   if (!callerUid) {
     throw new HttpsError('unauthenticated', 'Sign in required.');
@@ -192,6 +193,7 @@ export const decideJoinRequest = onCall(async (req) => {
  * and resets the active householdId if it was the one being left.
  */
 export const leaveHousehold = onCall(async (req) => {
+  const db = getFirestore();
   const uid = req.auth?.uid;
   if (!uid) {
     throw new HttpsError('unauthenticated', 'Sign in required.');
@@ -244,6 +246,7 @@ async function maybeNotifyOwner(
   ownerUid: string,
   requesterName: string,
 ): Promise<void> {
+  const db = getFirestore();
   try {
     const settingsSnap = await db
       .doc(`households/${householdId}/notificationSettings/${ownerUid}`)
@@ -275,6 +278,7 @@ async function maybeNotifyRequester(
   approved: boolean,
   householdName: string,
 ): Promise<void> {
+  const db = getFirestore();
   try {
     const settingsSnap = await db
       .doc(`households/${householdId}/notificationSettings/${requesterUid}`)
