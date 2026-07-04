@@ -9,6 +9,7 @@ import {
   Button,
   TextField,
   Chip,
+  Divider,
   Skeleton,
   useTheme,
   alpha
@@ -16,6 +17,7 @@ import {
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
 import SavingsIcon from '@mui/icons-material/Savings';
 import PaymentsIcon from '@mui/icons-material/Payments';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import {
   useAccounts,
   useTransactions,
@@ -267,37 +269,98 @@ export function Reconciliation() {
 
         {selectedAccount && (
           <Stack spacing={2.5}>
-            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
-              <Box sx={{ p: 1.5, bgcolor: 'action.hover', borderRadius: '16px', border: '1px solid', borderColor: 'divider' }}>
-                <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '11px', fontWeight: 500 }}>
-                  Calculated Balance
-                </Typography>
-                <Typography variant="body1" sx={{ fontWeight: 'bold', mt: 0.5, fontSize: '15px' }}>
-                  {maskDigits(`${calculatedBalance.toLocaleString(undefined, { minimumFractionDigits: 2 })} ${selectedAccount.currency}`)}
-                </Typography>
-              </Box>
-              <Box sx={{ p: 1.5, bgcolor: 'action.hover', borderRadius: '16px' }}>
-                <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '11px', fontWeight: 500 }}>
-                  Difference
-                </Typography>
-                <Typography variant="body1" sx={{ fontWeight: 'bold', mt: 0.5, fontSize: '15px', color: Math.abs(difference) < 0.01 ? 'text.primary' : difference > 0 ? 'success.main' : 'error.main' }}>
-                  {difference > 0 ? '+' : ''}{maskDigits(`${difference.toLocaleString(undefined, { minimumFractionDigits: 2 })} ${selectedAccount.currency}`)}
-                </Typography>
-              </Box>
-            </Box>
-
-            <TextField
-              label={`Actual ${selectedAccount.currency} Balance`}
-              type="number"
-              fullWidth
-              value={privacyMode && actualBalanceInput ? maskDigits(actualBalanceInput) : actualBalanceInput}
-              onChange={e => setActualBalanceInput(e.target.value)}
+            {/* Balance comparison: Calculated → Actual = Difference */}
+            <Box
               sx={{
-                '& .MuiOutlinedInput-root': {
-                  borderRadius: '16px',
-                }
+                p: 2,
+                borderRadius: '20px',
+                bgcolor: 'background.paper',
+                border: '1px solid',
+                borderColor: 'divider',
               }}
-            />
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                {/* Calculated */}
+                <Box sx={{ flex: 1, minWidth: 0 }}>
+                  <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '11px', fontWeight: 500, mb: 0.5 }}>
+                    Calculated
+                  </Typography>
+                  <Typography variant="body1" sx={{ fontWeight: 'bold', fontSize: '15px', color: 'text.primary' }}>
+                    {maskDigits(`${calculatedBalance.toLocaleString(undefined, { minimumFractionDigits: 2 })}`)}
+                  </Typography>
+                  <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '10px' }}>
+                    {selectedAccount.currency}
+                  </Typography>
+                </Box>
+
+                <Typography sx={{ color: 'text.disabled', fontSize: '20px', fontWeight: 300, px: 0.5 }}>
+                  −
+                </Typography>
+
+                {/* Actual input */}
+                <Box sx={{ flex: 1, minWidth: 0 }}>
+                  <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '11px', fontWeight: 500, mb: 0.5 }}>
+                    Actual
+                  </Typography>
+                  <TextField
+                    type="number"
+                    variant="standard"
+                    placeholder="0.00"
+                    fullWidth
+                    value={privacyMode && actualBalanceInput ? maskDigits(actualBalanceInput) : actualBalanceInput}
+                    onChange={e => setActualBalanceInput(e.target.value)}
+                    sx={{
+                      '& .MuiInput-root': {
+                        fontSize: '15px',
+                        fontWeight: 'bold',
+                        color: 'text.primary',
+                        '&:before': { display: 'none' },
+                        '&:after': { display: 'none' },
+                      },
+                      '& .MuiInput-input': { py: 0, px: 0 },
+                    }}
+                  />
+                  <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '10px' }}>
+                    {selectedAccount.currency}
+                  </Typography>
+                </Box>
+
+                <Typography sx={{ color: 'text.disabled', fontSize: '20px', fontWeight: 300, px: 0.5 }}>
+                  =
+                </Typography>
+
+                {/* Difference */}
+                <Box sx={{ flex: 1, minWidth: 0 }}>
+                  <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '11px', fontWeight: 500, mb: 0.5 }}>
+                    Difference
+                  </Typography>
+                  <Typography
+                    variant="body1"
+                    sx={{
+                      fontWeight: 'bold',
+                      fontSize: '15px',
+                      color: Math.abs(difference) < 0.01
+                        ? 'text.primary'
+                        : difference > 0 ? 'success.main' : 'error.main',
+                    }}
+                  >
+                    {difference > 0 ? '+' : ''}{maskDigits(`${difference.toLocaleString(undefined, { minimumFractionDigits: 2 })}`)}
+                  </Typography>
+                  <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '10px' }}>
+                    {selectedAccount.currency}
+                  </Typography>
+                </Box>
+              </Box>
+
+              {Math.abs(difference) < 0.01 && actualBalanceInput !== '' && (
+                <Box sx={{ mt: 1.5, display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                  <CheckCircleIcon sx={{ fontSize: '14px', color: 'success.main' }} />
+                  <Typography variant="body2" sx={{ color: 'success.main', fontSize: '11px', fontWeight: 600 }}>
+                    Perfect match — records are aligned.
+                  </Typography>
+                </Box>
+              )}
+            </Box>
 
             {Math.abs(difference) > 0.001 && (
               <Stack spacing={2.5}>
@@ -305,26 +368,30 @@ export function Reconciliation() {
                   <Typography variant="body1" sx={{ fontWeight: 'bold', color: 'text.primary', fontSize: '14px', mb: 1 }}>
                     Reason for Adjustment
                   </Typography>
-                  <Stack direction="row" spacing={1} sx={{ overflowX: 'auto', pb: 0.5, '&::-webkit-scrollbar': { display: 'none' }, msOverflowStyle: 'none', scrollbarWidth: 'none' }}>
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                     {(['forgotten expense', 'bank fee', 'exchange difference', 'cash counting correction'] as AdjustmentReason[]).map(r => {
                       const isSel = reason === r;
                       return (
                         <Chip
                           key={r}
-                          label={r.toUpperCase()}
+                          label={r}
                           onClick={() => setReason(r)}
                           variant={isSel ? 'filled' : 'outlined'}
                           sx={{
-                            fontSize: '11px',
-                            height: 28,
+                            fontSize: '13px',
+                            height: 36,
+                            borderRadius: '12px',
                             bgcolor: isSel ? 'primary.main' : 'background.paper',
                             color: isSel ? 'primary.contrastText' : 'text.secondary',
-                            borderColor: isSel ? 'primary.main' : 'divider'
+                            borderColor: isSel ? 'primary.main' : 'divider',
+                            fontWeight: isSel ? 'bold' : 'normal',
+                            textTransform: 'capitalize',
+                            '&:hover': { bgcolor: isSel ? 'primary.main' : 'action.hover' },
                           }}
                         />
                       );
                     })}
-                  </Stack>
+                  </Box>
                 </Box>
 
                 <TextField
@@ -364,132 +431,113 @@ export function Reconciliation() {
           <Typography variant="h3" sx={{ fontSize: '18px', fontWeight: 700, color: 'text.primary' }}>
             Audit History
           </Typography>
-          <Stack spacing={1.5}>
-            {sortedHistory.length === 0 ? (
-              <EmptyLayout 
-                title="No past reconciliation logs found" 
-                description="Manual adjustments will appear here after reconciling your accounts." 
-              />
-            ) : (
-              sortedHistory.map(item => {
+          <Card>
+            <Stack spacing={0}>
+              {sortedHistory.length === 0 ? (
+                <Box sx={{ p: 2 }}>
+                  <EmptyLayout
+                    title="No past reconciliation logs found"
+                    description="Manual adjustments will appear here after reconciling your accounts."
+                  />
+                </Box>
+              ) : (
+                sortedHistory.map((item, idx) => (
+                <Box key={item.id}>
+                  {idx > 0 && <Divider sx={{ borderColor: 'divider' }} />}
+                {(() => {
                 const acc = accounts.find(a => a.id === item.accountId);
                 const isDiffZero = Math.abs(item.difference) < 0.001;
-                const diffColor = isDiffZero 
-                  ? 'text.secondary' 
-                  : item.difference > 0 
-                    ? theme.palette.success.main 
-                    : theme.palette.error.main;
-                const diffBg = isDiffZero 
-                  ? 'rgba(73, 81, 103, 0.08)' 
-                  : item.difference > 0 
-                    ? alpha(theme.palette.success.main, 0.08) 
-                    : alpha(theme.palette.error.main, 0.08);
+                const diffColor = isDiffZero
+                  ? 'text.secondary'
+                  : item.difference > 0
+                    ? 'success.main'
+                    : 'error.main';
+                const diffBg = isDiffZero
+                  ? alpha(theme.palette.text.secondary, 0.08)
+                  : item.difference > 0
+                    ? alpha(theme.palette.success.main, 0.1)
+                    : alpha(theme.palette.error.main, 0.1);
 
                 // Safe parsing of YYYY-MM-DD to avoid local timezone offset shift
                 const formatDateString = (dateStr: string) => {
                   const [year, month, day] = dateStr.split('-');
                   const date = new Date(Number(year), Number(month) - 1, Number(day));
-                  return date.toLocaleDateString(undefined, { 
-                    month: 'short', 
-                    day: 'numeric', 
-                    year: 'numeric' 
+                  return date.toLocaleDateString(undefined, {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric'
                   });
                 };
 
                 return (
-                  <Card
+                  <Box
                     key={item.id}
                     sx={{
                       p: 2,
                       display: 'flex',
                       alignItems: 'flex-start',
                       gap: 2,
-                      '&:hover': {
-                        bgcolor: 'action.hover',
-                      },
+                      '&:hover': { bgcolor: 'action.hover' },
                     }}
                   >
+                    {/* Circular tinted icon — matches TransactionIcon pattern */}
                     <Box
                       sx={{
                         width: 40,
                         height: 40,
-                        borderRadius: '12px',
+                        borderRadius: '50%',
                         bgcolor: diffBg,
                         color: diffColor,
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        flexShrink: 0
+                        flexShrink: 0,
                       }}
                     >
-                      {acc ? getAccountIcon(acc.type, '20px') : <AccountBalanceIcon sx={{ fontSize: '20px' }} />}
+                      {isDiffZero
+                        ? <CheckCircleIcon sx={{ fontSize: '18px', color: 'success.main' }} />
+                        : acc ? getAccountIcon(acc.type, '18px') : <AccountBalanceIcon sx={{ fontSize: '18px' }} />}
                     </Box>
 
+                    {/* Details */}
                     <Box sx={{ flex: 1, minWidth: 0 }}>
-                      <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 0.75 }}>
-                        <Typography variant="subtitle1" sx={{ fontWeight: 600, fontSize: '14px', color: 'text.primary' }}>
-                          {acc?.name || 'Unknown Account'}
-                        </Typography>
-                        <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '12px' }}>
-                          {formatDateString(item.date)}
-                        </Typography>
-                      </Box>
-
-                      <Box display="flex" flexWrap="wrap" gap={1.5} alignItems="center">
-                        <Box display="flex" alignItems="center" gap={0.5}>
-                          <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '12px' }}>
-                            Correction:
-                          </Typography>
-                          <Typography 
-                            variant="body2" 
-                            sx={{ 
-                              color: isDiffZero ? 'text.secondary' : diffColor, 
-                              fontWeight: 600, 
-                              fontSize: '12.25px',
-                              bgcolor: diffBg,
-                              px: 1,
-                              py: 0.25,
-                              borderRadius: '6px'
-                            }}
-                          >
-                            {isDiffZero ? 'Perfect Match' : maskDigits(`${item.difference > 0 ? '+' : ''}${item.difference.toFixed(2)} ${item.currency}`)}
-                          </Typography>
-                        </Box>
-
-                        <Typography variant="body2" sx={{ color: 'divider', fontSize: '12px' }}>
-                          |
-                        </Typography>
-                        
-                        <Box display="flex" alignItems="center" gap={0.5}>
-                          <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '12px' }}>
-                            Actual Balance:
-                          </Typography>
-                          <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '12px', color: 'text.primary' }}>
-                            {maskDigits(`${item.actualBalance.toLocaleString(undefined, { minimumFractionDigits: 2 })} ${item.currency}`)}
-                          </Typography>
-                        </Box>
-                      </Box>
-
+                      <Typography variant="body1" sx={{ fontWeight: 'bold', fontSize: '13.5px', color: 'text.primary' }}>
+                        {acc?.name || 'Unknown Account'}
+                      </Typography>
                       {item.note && (
-                        <Box sx={{
-                          mt: 1.25,
-                          p: 1.25,
-                          bgcolor: 'action.hover',
-                          borderRadius: '8px',
-                          borderLeft: '3px solid',
-                          borderColor: isDiffZero ? 'text.disabled' : diffColor,
-                        }}>
-                          <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '11.5px', fontStyle: 'italic' }}>
-                            "{item.note}"
-                          </Typography>
-                        </Box>
+                        <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '11px', mt: 0.25, wordBreak: 'break-word' }}>
+                          {item.note}
+                        </Typography>
                       )}
+                      <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', fontSize: '10px', mt: 0.25, opacity: 0.8 }}>
+                        {formatDateString(item.date)} · Actual {maskDigits(`${item.actualBalance.toLocaleString(undefined, { minimumFractionDigits: 2 })} ${item.currency}`)}
+                      </Typography>
                     </Box>
-                  </Card>
+
+                    {/* Amount — matches transaction list right-aligned style */}
+                    <Typography
+                      variant="body1"
+                      sx={{
+                        fontWeight: 'bold',
+                        color: diffColor,
+                        fontSize: '13.5px',
+                        whiteSpace: 'nowrap',
+                        flexShrink: 0,
+                        mt: 0.5,
+                      }}
+                    >
+                      {isDiffZero
+                        ? 'Matched'
+                        : `${item.difference > 0 ? '+' : ''}${maskDigits(`${item.difference.toFixed(2)} ${item.currency}`)}`}
+                    </Typography>
+                  </Box>
                 );
-              })
+                })()}
+                </Box>
+              ))
             )}
-          </Stack>
+            </Stack>
+          </Card>
         </Stack>
       </Stack>
     </Container>
