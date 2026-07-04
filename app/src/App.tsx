@@ -3,7 +3,7 @@ import { Routes, Route, BrowserRouter } from 'react-router-dom';
 import { Box, ThemeProvider, CssBaseline } from '@mui/material';
 import { createAppTheme } from '@/theme';
 import { useThemeMode } from '@/hooks/useThemeMode';
-import { DotGridBackground } from '@/features/shared/components/DotGrid';
+import { AppBackground } from '@/features/shared/components/AppBackground';
 import { useAppContext } from '@/hooks/useAppContext';
 import { AppLoadingScreen } from '@/components/app-shell/AppLoadingScreen';
 import { AppShell } from '@/components/app-shell/AppShell';
@@ -39,7 +39,7 @@ export default function App() {
     return (
       <ThemeProvider theme={theme}>
         <CssBaseline />
-        <DotGridBackground />
+        <AppBackground />
         <Box sx={{ position: 'relative', zIndex: 1 }}>
           <Suspense fallback={<AppLoadingScreen theme={theme} />}>
             <AuthScreen />
@@ -52,7 +52,7 @@ export default function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <DotGridBackground />
+      <AppBackground />
       <BrowserRouter>
         <Suspense fallback={<AppLoadingScreen theme={theme} />}>
           <Routes>
