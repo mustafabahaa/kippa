@@ -33,9 +33,9 @@ export const dbLib = {
   },
 
   async getDocs(
-    householdId: string, 
-    collectionName: string, 
-    filters?: { field: string; op: '==' | 'in'; value: any }[]
+    householdId: string,
+    collectionName: string,
+    filters?: { field: string; op: '==' | 'in' | 'array-contains'; value: any }[]
   ): Promise<any[]> {
     const firestore = requireFirestore();
     const path = householdId === 'system'
