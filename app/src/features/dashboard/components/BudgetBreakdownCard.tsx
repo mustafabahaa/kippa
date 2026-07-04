@@ -81,15 +81,7 @@ export function BudgetBreakdownCard() {
     : [theme.palette.action.disabledBackground || theme.palette.divider];
 
   return (
-    <Card 
-      sx={{ 
-        borderRadius: '20px', 
-        border: '1px solid', 
-        borderColor: 'divider', 
-        boxShadow: 'none',
-        overflow: 'hidden'
-      }}
-    >
+    <Card sx={{ overflow: 'hidden' }}>
       <Box sx={{ p: 2.5, borderBottom: '1px solid', borderColor: 'divider', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Typography variant="h3" sx={{ fontSize: '18px', fontWeight: 700, color: 'text.primary' }}>
           Budget Breakdown
@@ -205,13 +197,10 @@ export function BudgetBreakdownCard() {
 
           {/* Bottom Section: Breakdown Table (Full Width) */}
           <TableContainer 
-            sx={{ 
+            sx={{
               overflowX: 'auto',
               maxHeight: 380,
-              border: '1px solid',
-              borderColor: 'divider',
               borderRadius: '16px',
-              bgcolor: 'background.paper',
               overflowY: 'auto'
             }}
           >
@@ -219,8 +208,7 @@ export function BudgetBreakdownCard() {
               size="medium" 
               stickyHeader 
               aria-label="budget breakdown table" 
-              sx={{ 
-                '& .MuiTableCell-head': { bgcolor: 'action.hover', borderBottom: '1px solid', borderColor: 'divider' },
+              sx={{
                 '& .MuiTableCell-body': { borderBottom: '1px solid', borderColor: 'divider' }
               }}
             >

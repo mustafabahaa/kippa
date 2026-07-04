@@ -1,18 +1,19 @@
 import { useState, useMemo, useRef } from 'react';
-import { 
-  Box, 
-  Container, 
-  Stack, 
-  Typography, 
-  Button, 
-  TextField, 
-  Dialog, 
-  DialogTitle, 
-  DialogContent, 
-  DialogActions, 
-  FormControlLabel, 
-  Checkbox, 
-  Grid, 
+import {
+  Box,
+  Card,
+  Container,
+  Stack,
+  Typography,
+  Button,
+  TextField,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  FormControlLabel,
+  Checkbox,
+  Grid,
   Skeleton,
   Chip,
   IconButton,
@@ -551,14 +552,9 @@ interface ActiveCycleCardProps {
 
 function ActiveCycleCard({ cycle, daysInfo, onCloseCycle, isEditingBudget, onToggleBudget }: ActiveCycleCardProps) {
   return (
-    <Box
+    <Card
       sx={{
-        bgcolor: 'background.paper',
         p: 3,
-        borderRadius: '24px',
-        border: '1px solid',
-        borderColor: 'divider',
-        boxShadow: '0px 4px 12px rgba(0,0,0,0.02)',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'space-between',
@@ -677,7 +673,7 @@ function ActiveCycleCard({ cycle, daysInfo, onCloseCycle, isEditingBudget, onTog
           </Button>
         </Stack>
       </Box>
-    </Box>
+    </Card>
   );
 }
 
@@ -695,20 +691,11 @@ function CycleHistoryCard({ cycle, isEditing, onToggleBudget }: CycleHistoryCard
   const statusBg = getStatusBgColor(cycle.status, theme);
 
   return (
-    <Box
+    <Card
       sx={{
         p: 2.5,
-        bgcolor: 'background.paper',
-        borderRadius: '20px',
-        border: '1px solid',
-        borderColor: isEditing ? 'primary.main' : 'divider',
-        boxShadow: isEditing ? '0px 4px 12px rgba(0, 92, 85, 0.05)' : 'none',
+        borderColor: isEditing ? 'primary.main' : undefined,
         transition: 'all 0.2s ease-in-out',
-        '&:hover': {
-          borderColor: isEditing ? 'primary.main' : 'primary.light',
-          boxShadow: '0px 6px 18px rgba(0,0,0,0.03)',
-          transform: 'translateY(-1px)',
-        }
       }}
     >
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -775,6 +762,6 @@ function CycleHistoryCard({ cycle, isEditing, onToggleBudget }: CycleHistoryCard
       >
         {isEditing ? 'Hide Budget' : 'Edit Budget'}
       </Button>
-    </Box>
+    </Card>
   );
 }

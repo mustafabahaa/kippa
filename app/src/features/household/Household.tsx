@@ -218,12 +218,7 @@ export function Household() {
 
         {/* Current Household Spotlight */}
         {activeHh && (
-          <Card sx={{
-            borderColor: 'primary.light',
-            background: resolvedMode === 'dark'
-              ? 'linear-gradient(135deg, rgba(0, 92, 85, 0.06) 0%, rgba(0, 92, 85, 0.02) 100%)'
-              : 'linear-gradient(135deg, rgba(0, 92, 85, 0.02) 0%, rgba(0, 92, 85, 0.005) 100%)',
-          }}>
+          <Card sx={{ borderColor: 'primary.light' }}>
             <CardContent sx={{ p: 2.5 }}>
               <Stack spacing={2.5}>
                 <Box display="flex" alignItems="center" justifyContent="space-between" gap={2}>
@@ -309,7 +304,7 @@ export function Household() {
 
         {/* Members + Pending Requests — owner only */}
         {isOwner && (
-          <Card sx={{ border: '1px solid', borderColor: 'divider', borderRadius: '20px', boxShadow: 'none' }}>
+          <Card>
             <CardContent sx={{ p: 2.5 }}>
               <Stack spacing={2}>
                 <Typography variant="h3" sx={{ fontSize: '14px', fontWeight: 600, color: 'text.secondary', textTransform: 'uppercase', letterSpacing: '0.5px' }}>

@@ -93,23 +93,23 @@ export const designTokens = {
 
   // ── Dark-mode surface/text/border overrides ──────────────────────────
   dark: {
-    surface:               '#090a0f',  // deep rich navy-black
-    surfacePure:           '#121420',  // rich navy-slate card surface
-    surfaceOffWhite:       '#1a1d2d',
-    surfaceContainerLow:   '#141725',
-    surfaceContainer:      '#171a2a',
-    surfaceContainerHigh:  '#1d2134',
-    surfaceContainerHighest:'#24293f',
-    infoAccent:            '#0c2122',
+    surface:               '#070908',  // near-black with a green whisper
+    surfacePure:           '#0e1110',  // dark (neutral-black) card surface — subtle green undertone
+    surfaceOffWhite:       '#16191a',
+    surfaceContainerLow:   '#101312',
+    surfaceContainer:      '#141817',
+    surfaceContainerHigh:  '#191e1d',
+    surfaceContainerHighest:'#1f2423',
+    infoAccent:            '#0c1a18',
 
     textPrimary:    '#f1f0f5', // brighter white for high-end feel
     textSecondary:  '#c5c2cf', // brighter text secondary
     textTertiary:   '#9e9bb0', // brighter text tertiary
     disabled:       '#6a6b7d',
 
-    borderGray:     '#23273a', // slate-navy border
+    borderGray:     '#1f2423', // dark neutral border with green whisper
     outline:        '#0f766e', // primary container teal outline
-    outlineVariant: '#23273a',
+    outlineVariant: '#1f2423',
 
     onSurface:        '#f1f0f5',
     onSurfaceVariant: '#c5c2cf',
@@ -198,6 +198,32 @@ export function createAppTheme(mode: 'light' | 'dark'): Theme {
   const c = designTokens.color;
   const t = tokensForMode(mode);
 
+  // Glassy card surface — translucent fill (lets the background veil tint
+  // read through) + a top-inner highlight for the "lit edge" + a soft drop
+  // shadow. No backdrop-filter (perf cost); this is plain alpha compositing.
+  const isDark = mode === 'dark';
+  // Glassy-but-readable surface. Alpha is high enough that the card reads as
+  // a solid surface (the background veil only reads through subtly, not as a
+  // "window"). Lower alphas disappear over the veil and look fully transparent.
+  const cardBg = isDark
+    ? 'linear-gradient(180deg, rgba(20,24,23,0.9) 0%, rgba(14,17,16,0.92) 100%)'
+    : 'linear-gradient(180deg, rgba(255,255,255,0.92) 0%, rgba(244,247,246,0.9) 100%)';
+  const paperBg = isDark
+    ? 'rgba(14,17,16,0.92)'
+    : 'rgba(255,255,255,0.92)';
+  const cardEdge = isDark
+    ? '1px solid rgba(255,255,255,0.08)'
+    : `1px solid ${alpha(c.primaryContainer, 0.12)}`;
+  const cardHighlight = isDark
+    ? 'inset 0 1px 0 rgba(255,255,255,0.06)'
+    : 'inset 0 1px 0 rgba(255,255,255,0.95)';
+  const cardShadow = isDark
+    ? '0 2px 8px rgba(0,0,0,0.45), 0 1px 2px rgba(0,0,0,0.3)'
+    : '0 1px 2px rgba(15,23,42,0.04), 0 4px 12px rgba(15,23,42,0.06)';
+  const cardShadowHover = isDark
+    ? '0 10px 28px rgba(0,0,0,0.55), 0 4px 10px rgba(15,118,110,0.12)'
+    : '0 2px 6px rgba(15,23,42,0.06), 0 12px 28px rgba(15,118,110,0.1)';
+
   return createTheme({
     palette: {
       mode,
@@ -233,7 +259,10 @@ export function createAppTheme(mode: 'light' | 'dark'): Theme {
       },
       divider: t.borderGray,
       action: {
-        hover: t.surfaceOffWhite,
+        // Subtle teal-tinted hover so interactive elements warm slightly on
+        // hover instead of flashing grey (light) or bright (dark).
+        hover: alpha(c.primaryContainer, isDark ? 0.12 : 0.06),
+        selected: alpha(c.primaryContainer, isDark ? 0.18 : 0.1),
       },
       chart: {
         colors: [
@@ -327,20 +356,25 @@ export function createAppTheme(mode: 'light' | 'dark'): Theme {
         `,
       },
       // ── Paper & Dialog Backgrounds ──────────────────────────────────
+      // Glassy at ~50% — same treatment as cards so tables, menus, and other
+      // Paper surfaces match. No backdrop-filter (perf); plain alpha.
       MuiPaper: {
         styleOverrides: {
           root: {
-            backgroundImage: 'none !important',
+            backgroundColor: paperBg,
           },
         },
       },
       MuiDialog: {
         styleOverrides: {
           paper: {
+            // Dialogs need to be more opaque than cards — they sit above a
+            // scrim and must read as a clean, focused surface. Use the solid
+            // surface tokens rather than the glassy translucent fills.
             backgroundColor: t.surfacePure,
             backgroundImage: 'none !important',
             borderRadius: '20px',
-            border: `1px solid ${t.borderGray}`,
+            boxShadow: `${cardHighlight}, ${cardShadow}`,
           },
         },
       },
@@ -360,24 +394,23 @@ export function createAppTheme(mode: 'light' | 'dark'): Theme {
         },
       },
 
-      // ── Card (Bordered Card from Stitch) ─────────────────────────────
+      // ── Card (Glassy) ─────────────────────────────────────────────────
+      // Translucent fill so the background veil reads through subtly, plus a
+      // top inner-highlight ("lit edge") and a soft drop shadow in place of
+      // an opaque border. Deliberately no backdrop-filter: alpha compositing
+      // gives the glassy look at near-zero cost.
       MuiCard: {
         defaultProps: {
           elevation: 0,
         },
         styleOverrides: {
           root: {
-            background: t.surfacePure,
-            border: `1px solid ${t.borderGray}`,
+            background: cardBg,
             borderRadius: designTokens.radius.card,       // 20px
-            boxShadow: mode === 'dark'
-              ? 'rgba(0, 0, 0, 0.4) 0px 4px 20px -2px'
-              : '0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.06)',
-            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+            boxShadow: `${cardHighlight}, ${cardShadow}`,
+            transition: 'box-shadow 0.25s ease, transform 0.25s ease',
             '&:hover': {
-              boxShadow: mode === 'dark'
-                ? 'rgba(15, 118, 110, 0.15) 0px 12px 30px -4px, rgba(0, 0, 0, 0.5) 0px 8px 24px -4px'
-                : 'rgba(0, 0, 0, 0.05) 0px 8px 24px 0px',
+              boxShadow: `${cardHighlight}, ${cardShadowHover}`,
               transform: 'translateY(-2px)',
             },
           },
@@ -557,6 +590,7 @@ export function createAppTheme(mode: 'light' | 'dark'): Theme {
           root: {
             padding: '14px 16px',
             borderBottom: `1px solid ${t.borderGray}`,
+            backgroundColor: 'transparent',
           },
           // Override MUI's dense variant, which strips horizontal padding.
           // This key has higher specificity than `root`, so it's what the
@@ -565,8 +599,12 @@ export function createAppTheme(mode: 'light' | 'dark'): Theme {
             padding: '10px 16px',
           },
           head: {
+            // Header matches the body's background (no tinted strip) but sits
+            // a bit taller so it reads as a distinct row.
             fontWeight: 700,
             color: t.textPrimary,
+            backgroundColor: 'transparent',
+            padding: '20px 16px',
           },
         },
       },

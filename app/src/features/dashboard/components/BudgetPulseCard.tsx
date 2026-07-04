@@ -56,7 +56,7 @@ export function BudgetPulseCard() {
 
   if (isLoading) {
     return (
-      <Card sx={{ borderRadius: '20px', border: '1px solid', borderColor: 'divider', boxShadow: 'none' }}>
+      <Card>
         <CardContent sx={{ p: 2 }}>
           <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1.5 }}>
             <Skeleton variant="text" width="35%" height={24} animation="wave" />
@@ -82,7 +82,7 @@ export function BudgetPulseCard() {
   );
 
   return (
-    <Card sx={{ borderRadius: '20px', border: '1px solid', borderColor: 'divider', boxShadow: 'none' }}>
+    <Card>
       <CardContent sx={{ p: 2.5 }}>
         <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 1.5 }}>
           <Typography variant="body1" sx={{ fontWeight: 'bold', color: 'text.primary' }}>

@@ -44,7 +44,7 @@ export function MyAccountsCard() {
         <Skeleton variant="text" width="30%" height={24} animation="wave" sx={{ mb: 1.5 }} />
         <Stack spacing={1}>
           {[1, 2].map(i => (
-            <Card key={i} sx={{ borderRadius: '16px', border: '1px solid', borderColor: 'divider', boxShadow: 'none' }}>
+            <Card key={i} sx={{ borderRadius: '16px' }}>
               <CardContent sx={{ p: 1.5, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <Stack direction="row" spacing={1.5} alignItems="center" sx={{ width: '60%' }}>
                   <Skeleton variant="circular" width={40} height={40} animation="wave" />
@@ -95,7 +95,7 @@ export function MyAccountsCard() {
           const linked = cards.filter(c =>
             c.parentAccountId === acc.id || c.paymentAccountId === acc.id);
           return (
-            <Box key={acc.id} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: '20px', bgcolor: 'background.paper', overflow: 'hidden' }}>
+            <Card key={acc.id} sx={{ borderRadius: '16px', overflow: 'hidden' }}>
               <Box sx={{ p: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <Box display="flex" alignItems="center" gap={2}>
                   <Box sx={{ width: 44, height: 44, borderRadius: '12px', bgcolor: 'action.hover', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -126,7 +126,7 @@ export function MyAccountsCard() {
                   </Box>
                 </Box>
               )}
-            </Box>
+            </Card>
           );
         })}
       </Stack>

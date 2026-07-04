@@ -4,7 +4,7 @@ import { TotalBalanceHeroCard } from '@/features/dashboard/components/TotalBalan
 import { BudgetPulseCard } from '@/features/dashboard/components/BudgetPulseCard';
 import { BudgetBreakdownCard } from '@/features/dashboard/components/BudgetBreakdownCard';
 import { MyAccountsCard } from '@/features/dashboard/components/MyAccountsCard';
-import { RecentActivityCard } from '@/features/dashboard/components/RecentActivityCard';
+import { TransactionsCard } from '@/features/dashboard/components/TransactionsCard';
 
 export function Dashboard() {
   return (
@@ -34,7 +34,7 @@ export function Dashboard() {
           <Grid size={{ xs: 12, md: 4 }}>
             <Stack spacing={3}>
               <MyAccountsCard />
-              <RecentActivityCard />
+              <TransactionsCard />
             </Stack>
           </Grid>
         </Grid>

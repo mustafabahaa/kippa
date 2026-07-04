@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useSnackbar } from 'notistack';
 import {
   Box,
+  Card,
   Container,
   Stack,
   Typography,
@@ -268,7 +269,7 @@ export function Reconciliation() {
                   {maskDigits(`${calculatedBalance.toLocaleString(undefined, { minimumFractionDigits: 2 })} ${selectedAccount.currency}`)}
                 </Typography>
               </Box>
-              <Box sx={{ p: 1.5, bgcolor: 'background.paper', borderRadius: '16px', border: '1px solid', borderColor: 'divider' }}>
+              <Box sx={{ p: 1.5, bgcolor: 'action.hover', borderRadius: '16px' }}>
                 <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '11px', fontWeight: 500 }}>
                   Difference
                 </Typography>
@@ -389,23 +390,16 @@ export function Reconciliation() {
                 };
 
                 return (
-                  <Box 
-                    key={item.id} 
-                    sx={{ 
-                      p: 2, 
-                      bgcolor: 'background.paper', 
-                      borderRadius: '16px', 
-                      border: '1px solid', 
-                      borderColor: 'divider',
+                  <Card
+                    key={item.id}
+                    sx={{
+                      p: 2,
                       display: 'flex',
                       alignItems: 'flex-start',
                       gap: 2,
                       '&:hover': {
-                        borderColor: 'primary.main',
-                        transform: 'translateY(-1px)',
-                        boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
+                        bgcolor: 'action.hover',
                       },
-                      transition: 'all 0.2s ease-in-out'
                     }}
                   >
                     <Box
@@ -484,7 +478,7 @@ export function Reconciliation() {
                         </Box>
                       )}
                     </Box>
-                  </Box>
+                  </Card>
                 );
               })
             )}

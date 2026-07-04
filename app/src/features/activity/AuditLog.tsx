@@ -1,14 +1,20 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Avatar,
   Box,
+  Button,
   Card,
   Container,
   Divider,
+  FormControl,
+  InputLabel,
   List,
   ListItem,
+  MenuItem,
+  Select,
   Skeleton,
   Stack,
+  TextField,
   Typography,
   useTheme,
   alpha
@@ -27,6 +33,7 @@ import SyncAltIcon from '@mui/icons-material/SyncAlt';
 import NotificationsActiveIcon from '@mui/icons-material/NotificationsActive';
 import HomeIcon from '@mui/icons-material/Home';
 import HistoryIcon from '@mui/icons-material/History';
+import SearchIcon from '@mui/icons-material/Search';
 
 import { PageHeader } from '@/features/shared/components/PageHeader';
 import { useAuditLog, useUnreadActivityCount } from '@/hooks/useFinance';
@@ -76,6 +83,21 @@ function getActionVisual(action: AuditAction, theme: any): ActionVisual {
       return { Icon: HistoryIcon, color: theme.palette.text.secondary, bg: theme.palette.action.hover };
   }
 }
+
+/**
+ * Groups raw AuditAction values into the filter options shown in the UI.
+ * Mirrors the per-case icon mapping in getActionVisual above.
+ */
+const ACTION_GROUPS: { label: string; actions: AuditAction[] }[] = [
+  { label: 'Transactions', actions: ['transaction_created', 'transaction_updated', 'transaction_voided'] },
+  { label: 'Accounts', actions: ['account_created', 'account_updated'] },
+  { label: 'Categories', actions: ['category_created', 'category_updated'] },
+  { label: 'Budget Cycles', actions: ['cycle_created', 'cycle_status_changed'] },
+  { label: 'Allocations', actions: ['allocation_saved', 'allocations_batch_saved', 'expected_income_saved'] },
+  { label: 'Reconciliation', actions: ['reconciliation_created'] },
+  { label: 'Household', actions: ['household_joined', 'household_left'] },
+  { label: 'Settings', actions: ['notification_settings_updated'] },
+];
 
 function isToday(date: Date): boolean {
   const now = new Date();
@@ -202,8 +224,22 @@ function AuditLogRow({ entry }: { entry: AuditLogEntry }) {
 
 export function AuditLog() {
   const { householdId, userProfile } = useAppContext();
-  const { entries, isLoading } = useAuditLog(householdId, 50);
+  const { entries, isLoading } = useAuditLog(householdId, 200);
   const { markSeen } = useUnreadActivityCount(householdId, userProfile?.uid);
+
+  // Filter States
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedAction, setSelectedAction] = useState('all');
+  const [selectedMember, setSelectedMember] = useState('all');
+
+  const handleSearch = (value: string) => { setSearchTerm(value); resetPage(); };
+  const handleActionChange = (value: string) => { setSelectedAction(value); resetPage(); };
+  const handleMemberChange = (value: string) => { setSelectedMember(value); resetPage(); };
+
+  // Pagination State
+  const PAGE_SIZE = 25;
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const resetPage = () => setVisibleCount(PAGE_SIZE);
 
   // Clear the unread badge as soon as the feed is opened.
   useEffect(() => {
@@ -211,17 +247,53 @@ export function AuditLog() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Group entries by calendar day (already sorted desc by the subscription query).
+  // Unique members, derived from loaded entries (no extra query needed).
+  const members = useMemo(() => {
+    const map = new Map<string, { userId: string; userDisplayName: string }>();
+    for (const e of entries) {
+      if (e.userId && !map.has(e.userId)) {
+        map.set(e.userId, { userId: e.userId, userDisplayName: e.userDisplayName });
+      }
+    }
+    return Array.from(map.values());
+  }, [entries]);
+
+  // Apply current filters.
+  const filteredEntries = useMemo(() => {
+    return entries.filter((entry) => {
+      // 1. Text search over summary
+      const searchMatch = (entry.summary || '').toLowerCase().includes(searchTerm.toLowerCase());
+
+      // 2. Action group
+      let actionMatch = true;
+      if (selectedAction !== 'all') {
+        const group = ACTION_GROUPS.find((g) => g.label === selectedAction);
+        actionMatch = !!group && group.actions.includes(entry.action);
+      }
+
+      // 3. Member
+      let memberMatch = true;
+      if (selectedMember !== 'all') {
+        memberMatch = entry.userId === selectedMember;
+      }
+
+      return searchMatch && actionMatch && memberMatch;
+    });
+  }, [entries, searchTerm, selectedAction, selectedMember]);
+
+  const visibleEntries = filteredEntries.slice(0, visibleCount);
+
+  // Group visible entries by calendar day (already sorted desc by the subscription query).
   const grouped = useMemo(() => {
     const map = new Map<string, AuditLogEntry[]>();
-    for (const entry of entries) {
+    for (const entry of visibleEntries) {
       const key = dayKey(entry);
       const bucket = map.get(key);
       if (bucket) bucket.push(entry);
       else map.set(key, [entry]);
     }
     return Array.from(map.entries()); // [dayKey, entries][]
-  }, [entries]);
+  }, [visibleEntries]);
 
   return (
     <Container maxWidth="md" sx={{ py: 2 }}>
@@ -271,36 +343,106 @@ export function AuditLog() {
             </Typography>
           </Card>
         ) : (
-          <Stack spacing={2.5}>
-            {grouped.map(([key, dayEntries]) => (
-              <Box key={key}>
-                <Typography
-                  variant="body2"
-                  sx={{
-                    color: 'text.secondary',
-                    fontSize: '11px',
-                    fontWeight: 700,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.06em',
-                    mb: 1,
-                    px: 0.5,
-                  }}
+          <>
+            {/* Filter Bar — mirrors TransactionHistory styling */}
+            <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} alignItems="center">
+              <TextField
+                placeholder="Search activity..."
+                value={searchTerm}
+                onChange={(e) => handleSearch(e.target.value)}
+                fullWidth
+                slotProps={{
+                  input: {
+                    startAdornment: <SearchIcon sx={{ color: 'text.secondary', mr: 1, fontSize: '20px' }} />,
+                  },
+                }}
+                sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+              />
+
+              <FormControl sx={{ minWidth: 160, width: { xs: '100%', md: 'auto' } }}>
+                <InputLabel id="activity-action-label">Action</InputLabel>
+                <Select
+                  labelId="activity-action-label"
+                  value={selectedAction}
+                  label="Action"
+                  onChange={(e) => handleActionChange(e.target.value)}
+                  sx={{ borderRadius: '12px' }}
                 >
-                  {dayLabel(key)}
+                  <MenuItem value="all">All Actions</MenuItem>
+                  {ACTION_GROUPS.map((g) => (
+                    <MenuItem key={g.label} value={g.label}>{g.label}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+
+              <FormControl sx={{ minWidth: 160, width: { xs: '100%', md: 'auto' } }}>
+                <InputLabel id="activity-member-label">Member</InputLabel>
+                <Select
+                  labelId="activity-member-label"
+                  value={selectedMember}
+                  label="Member"
+                  onChange={(e) => handleMemberChange(e.target.value)}
+                  sx={{ borderRadius: '12px' }}
+                >
+                  <MenuItem value="all">All Members</MenuItem>
+                  {members.map((m) => (
+                    <MenuItem key={m.userId} value={m.userId}>{m.userDisplayName}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Stack>
+
+            {filteredEntries.length === 0 ? (
+              <Card sx={{ p: 5, textAlign: 'center' }}>
+                <Typography variant="body1" sx={{ color: 'text.secondary', fontSize: '13px' }}>
+                  No activity matches the selected filters.
                 </Typography>
-                <Card sx={{ p: 0, overflow: 'hidden' }}>
-                  <List disablePadding>
-                    {dayEntries.map((entry, idx) => (
-                      <Box key={entry.id}>
-                        <AuditLogRow entry={entry} />
-                        {idx < dayEntries.length - 1 && <Divider />}
-                      </Box>
-                    ))}
-                  </List>
-                </Card>
-              </Box>
-            ))}
-          </Stack>
+              </Card>
+            ) : (
+              <Stack spacing={2.5}>
+                {grouped.map(([key, dayEntries]) => (
+                  <Box key={key}>
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        color: 'text.secondary',
+                        fontSize: '11px',
+                        fontWeight: 700,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.06em',
+                        mb: 1,
+                        px: 0.5,
+                      }}
+                    >
+                      {dayLabel(key)}
+                    </Typography>
+                    <Card sx={{ p: 0, overflow: 'hidden' }}>
+                      <List disablePadding>
+                        {dayEntries.map((entry, idx) => (
+                          <Box key={entry.id}>
+                            <AuditLogRow entry={entry} />
+                            {idx < dayEntries.length - 1 && <Divider />}
+                          </Box>
+                        ))}
+                      </List>
+                    </Card>
+                  </Box>
+                ))}
+
+                {visibleCount < filteredEntries.length && (
+                  <Box sx={{ textAlign: 'center', py: 1.5 }}>
+                    <Button
+                      size="small"
+                      onClick={() => setVisibleCount((prev) => prev + PAGE_SIZE)}
+                      sx={{ borderRadius: '12px' }}
+                    >
+                      Load more ({filteredEntries.length - visibleCount} remaining)
+                    </Button>
+                  </Box>
+                )}
+              </Stack>
+            )}
+          </>
         )}
       </Stack>
     </Container>

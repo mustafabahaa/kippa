@@ -10,15 +10,15 @@
 .lightveil__blob {
   position: absolute;
   border-radius: 50%;
-  filter: blur(60px);
+  filter: blur(80px);
   will-change: transform;
 }
 
 .lightveil__blob--a {
-  width: 60vw;
-  height: 60vw;
-  top: -20vw;
-  left: -10vw;
+  width: 55vw;
+  height: 55vw;
+  top: -25vw;
+  left: -20vw;
   background: radial-gradient(circle at center, var(--lv-a) 0%, transparent 70%);
   animation: lightveil-drift-a 24s ease-in-out infinite alternate;
 }
@@ -26,34 +26,34 @@
 .lightveil__blob--b {
   width: 55vw;
   height: 55vw;
-  bottom: -15vw;
-  right: -10vw;
+  bottom: -25vw;
+  right: -20vw;
   background: radial-gradient(circle at center, var(--lv-b) 0%, transparent 70%);
   animation: lightveil-drift-b 30s ease-in-out infinite alternate;
 }
 
 .lightveil__blob--c {
-  width: 40vw;
-  height: 40vw;
-  top: 30%;
-  left: 40%;
+  width: 50vw;
+  height: 50vw;
+  bottom: -23vw;
+  left: -20vw;
   background: radial-gradient(circle at center, var(--lv-c) 0%, transparent 70%);
   animation: lightveil-drift-c 36s ease-in-out infinite alternate;
 }
 
 @keyframes lightveil-drift-a {
   0%   { transform: translate(0, 0) scale(1); }
-  100% { transform: translate(8vw, 6vh) scale(1.15); }
+  100% { transform: translate(6vw, 4vh) scale(1.1); }
 }
 
 @keyframes lightveil-drift-b {
   0%   { transform: translate(0, 0) scale(1); }
-  100% { transform: translate(-7vw, -5vh) scale(1.1); }
+  100% { transform: translate(-5vw, -4vh) scale(1.1); }
 }
 
 @keyframes lightveil-drift-c {
   0%   { transform: translate(0, 0) scale(1); }
-  100% { transform: translate(-5vw, 8vh) scale(1.2); }
+  100% { transform: translate(8vw, -6vh) scale(1.15); }
 }
 
 @media (prefers-reduced-motion: reduce) {

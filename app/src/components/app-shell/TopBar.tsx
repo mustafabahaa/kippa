@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { AppBar, Toolbar, Stack, Typography, IconButton, Tooltip, Avatar } from '@mui/material';
+import ExploreIcon from '@mui/icons-material/Explore';
 import { useNavigate } from 'react-router-dom';
 import { ActivityBell } from '@/features/activity/ActivityBell';
 import { ProfileMenu } from '@/components/app-shell/ProfileMenu';
+import { QuickNavMenu } from '@/components/app-shell/QuickNavMenu';
 import type { ThemeModePref } from '@/contexts/themeModeContext';
 import type { UserProfile, Household } from '@/domain/financeTypes';
 
@@ -30,6 +32,8 @@ export function TopBar({
   const navigate = useNavigate();
   const [profileAnchorEl, setProfileAnchorEl] = useState<null | HTMLElement>(null);
   const isProfileMenuOpen = Boolean(profileAnchorEl);
+  const [navAnchorEl, setNavAnchorEl] = useState<null | HTMLElement>(null);
+  const isNavMenuOpen = Boolean(navAnchorEl);
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -48,7 +52,7 @@ export function TopBar({
         color="transparent"
         elevation={scrolled ? 1 : 0}
         sx={{
-          py: 1,
+          py: 0.5,
           bgcolor: scrolled ? 'background.default' : 'transparent',
           backdropFilter: scrolled ? 'blur(12px)' : 'none',
           WebkitBackdropFilter: scrolled ? 'blur(12px)' : 'none',
@@ -64,15 +68,26 @@ export function TopBar({
             onClick={() => navigate('/')}
             sx={{ cursor: 'pointer', userSelect: 'none' }}
           >
-            <img src={logoSrc} alt="Kippa Logo" style={{ height: 28, width: 'auto' }} />
+            <img src={logoSrc} alt="Kippa Logo" style={{ height: 32, width: 'auto' }} />
             <Typography variant="h3" sx={{ fontWeight: 'bold', letterSpacing: '0.05em', color: 'primary.main' }}>
               Kippa
             </Typography>
           </Stack>
 
-          {/* Right: Activity Bell & Profile */}
+          {/* Right: Activity Bell, Quick Nav & Profile */}
           <Stack direction="row" spacing={1} alignItems="center">
             <ActivityBell onClick={() => navigate('/activity')} />
+            <Tooltip title="Navigate">
+              <IconButton
+                onClick={(e) => setNavAnchorEl(e.currentTarget)}
+                aria-label="navigation menu"
+                aria-controls="quick-nav-menu"
+                aria-haspopup="true"
+                sx={{ p: 0.5, width: 40, height: 40, border: '1px solid', borderColor: 'divider' }}
+              >
+                <ExploreIcon sx={{ color: 'primary.main' }} />
+              </IconButton>
+            </Tooltip>
             <Tooltip title="Account Menu">
               <IconButton
                 onClick={(e) => setProfileAnchorEl(e.currentTarget)}
@@ -105,6 +120,12 @@ export function TopBar({
         householdName={householdName}
         switchHousehold={switchHousehold}
         logout={logout}
+      />
+
+      <QuickNavMenu
+        anchorEl={navAnchorEl}
+        open={isNavMenuOpen}
+        onClose={() => setNavAnchorEl(null)}
       />
     </>
   );

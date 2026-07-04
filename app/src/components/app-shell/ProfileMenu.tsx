@@ -11,12 +11,7 @@ import {
   Tooltip,
   IconButton,
 } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
 import HomeIcon from '@mui/icons-material/Home';
-import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
-import CategoryIcon from '@mui/icons-material/Category';
-import NotificationsActiveIcon from '@mui/icons-material/NotificationsActive';
-import HistoryIcon from '@mui/icons-material/History';
 import LogoutIcon from '@mui/icons-material/Logout';
 import LightModeIcon from '@mui/icons-material/LightMode';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
@@ -79,7 +74,6 @@ export function ProfileMenu({
   switchHousehold,
   logout,
 }: ProfileMenuProps) {
-  const navigate = useNavigate();
   const { privacyMode, setPrivacyMode } = usePrivacyMode();
 
   const handleClose = () => {
@@ -310,34 +304,6 @@ export function ProfileMenu({
           secondary="Hide balances"
         />
         {privacyMode && <CheckIcon fontSize="small" sx={{ color: 'primary.main', ml: 'auto' }} />}
-      </MenuItem>
-
-      <Divider sx={{ my: 1 }} />
-
-      {/* Shortcuts */}
-      <MenuItem onClick={() => { handleClose(); navigate('/accounts'); }} sx={menuItemStyle}>
-        <ListItemIcon><AccountBalanceIcon fontSize="small" /></ListItemIcon>
-        <ListItemText primary="Bank Accounts" />
-      </MenuItem>
-
-      <MenuItem onClick={() => { handleClose(); navigate('/household'); }} sx={menuItemStyle}>
-        <ListItemIcon><HomeIcon fontSize="small" /></ListItemIcon>
-        <ListItemText primary="Household Sharing" />
-      </MenuItem>
-
-      <MenuItem onClick={() => { handleClose(); navigate('/categories'); }} sx={menuItemStyle}>
-        <ListItemIcon><CategoryIcon fontSize="small" /></ListItemIcon>
-        <ListItemText primary="Categories Settings" />
-      </MenuItem>
-
-      <MenuItem onClick={() => { handleClose(); navigate('/notifications'); }} sx={menuItemStyle}>
-        <ListItemIcon><NotificationsActiveIcon fontSize="small" /></ListItemIcon>
-        <ListItemText primary="Reminders & Alerts" />
-      </MenuItem>
-
-      <MenuItem onClick={() => { handleClose(); navigate('/activity'); }} sx={menuItemStyle}>
-        <ListItemIcon><HistoryIcon fontSize="small" /></ListItemIcon>
-        <ListItemText primary="Activity Log" />
       </MenuItem>
 
       <Divider sx={{ my: 1 }} />
