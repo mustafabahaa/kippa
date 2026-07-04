@@ -1,5 +1,5 @@
 import { createContext } from 'react';
-import { UserProfile, Household } from '@/domain/financeTypes';
+import { UserProfile, Household, JoinStatus, JoinRequest } from '@/domain/financeTypes';
 
 export interface AppContextType {
   userProfile: UserProfile | null;
@@ -11,9 +11,12 @@ export interface AppContextType {
   logout: () => Promise<void>;
   switchHousehold: (id: string) => Promise<void>;
   createHousehold: (name: string) => Promise<Household>;
-  joinHousehold: (id: string) => Promise<void>;
+  requestToJoinHousehold: (id: string) => Promise<JoinStatus>;
+  decideJoinRequest: (householdId: string, requesterUid: string, decision: 'approve' | 'reject') => Promise<void>;
   leaveHousehold: (id: string) => Promise<void>;
   updateUserProfile: (profile: UserProfile) => void;
+  pendingRequests: JoinRequest[];
+  householdMembers: UserProfile[];
 }
 
 export const AppContext = createContext<AppContextType | undefined>(undefined);
