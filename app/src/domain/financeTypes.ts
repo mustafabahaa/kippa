@@ -122,6 +122,10 @@ export type FinanceTransaction = {
   updatedAt: string;
   status: 'draft' | 'posted' | 'voided';
   revisionOf?: string | null;
+  // For card-payment transfers only: the expense transaction id(s) this payment
+  // settles on the credit account. Lets the UI show a charge as "paid" as a
+  // recorded fact instead of guessing via FIFO amount allocation.
+  settlesChargeIds?: string[] | null;
 };
 
 export type LedgerLine = {

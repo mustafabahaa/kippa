@@ -50,22 +50,18 @@ export const TransactionsListItem: React.FC<TransactionsListItemProps> = ({
   const renderItemDetails = () => {
     switch (tx.type) {
       case 'transfer': {
-        const destLine = txLines.find((l) => l.id !== firstLine?.id);
-        const fromAcc = firstLine ? firstLine.accountId.replace('-egp', '').toUpperCase() : '';
-        const toAcc = destLine ? destLine.accountId.replace('-egp', '').toUpperCase() : '';
+        const fromLine = txLines.find((l) => l.signedAmount < 0);
+        const toLine = txLines.find((l) => l.signedAmount > 0);
+        const fromAcc = accounts.find((a) => a.id === fromLine?.accountId);
+        const toAcc = accounts.find((a) => a.id === toLine?.accountId);
         return (
           <Box sx={{ minWidth: 0, flex: 1 }}>
             <Typography variant="body1" sx={{ fontWeight: 'bold', fontSize: '13.5px', color: 'text.primary' }}>
-              Transfer
+              {tx.description || 'Transfer'}
             </Typography>
             <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '11px', mt: 0.25, fontWeight: 'medium' }}>
-              {fromAcc} ➔ {toAcc}
+              {fromAcc?.name || 'Wallet'} ➔ {toAcc?.name || 'Bank'}
             </Typography>
-            {tx.description && (
-              <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '11px', mt: 0.25, wordBreak: 'break-word' }}>
-                {tx.description}
-              </Typography>
-            )}
             <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', fontSize: '10px', mt: 0.25, opacity: 0.8 }}>
               {tx.date} • {formatTime(tx.createdAt)}
             </Typography>

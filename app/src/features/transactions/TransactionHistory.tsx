@@ -315,18 +315,18 @@ export function TransactionHistory() {
                       <TableCell>
                         <Stack direction="row" spacing={1} alignItems="center">
                           <Typography variant="body1" sx={{ fontWeight: 'bold', fontSize: '13.5px' }}>
-                            {tx.type === 'transfer' 
-                              ? 'Transfer' 
-                              : tx.type === 'conversion' 
-                              ? 'Currency Exchange' 
-                              : tx.type === 'adjustment' 
-                              ? 'Reconciliation' 
+                            {tx.type === 'transfer'
+                              ? (tx.description || 'Transfer')
+                              : tx.type === 'conversion'
+                              ? 'Currency Exchange'
+                              : tx.type === 'adjustment'
+                              ? 'Reconciliation'
                               : (cat?.name || 'General')}
                           </Typography>
                           <TransactionTypeChip type={tx.type} />
                         </Stack>
                         <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '11px', mt: 0.25 }}>
-                          {[tx.description, `${tx.date} • ${formatTime(tx.createdAt)}`].filter(Boolean).join(' • ')} {tx.status === 'voided' && '• (VOIDED)'}
+                          {tx.date} • {formatTime(tx.createdAt)}{tx.status === 'voided' ? ' • (VOIDED)' : ''}
                         </Typography>
                       </TableCell>
                       <TableCell>

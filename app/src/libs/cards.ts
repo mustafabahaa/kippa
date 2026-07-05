@@ -147,22 +147,52 @@ export const cardsLib = {
    * Pay the card — creates a transfer paymentAccount → creditAccount.
    * No statement required. Works for any amount (a single charge, several, or all).
    * The credit account balance simply drops by the paid amount.
+   *
+   * `settlesChargeIds` (optional) records which expense transaction(s) this
+   * payment settles, so the UI can mark those charges as paid exactly instead
+   * of guessing via FIFO allocation.
+   *
+   * `budgetCycleId` (optional) tags the transfer with the active cycle so it
+   * appears in the cycle-filtered "View All" transactions page. Other transfer
+   * entry points (FastEntry) set this; card payments must too.
+   *
+   * `settlesDescriptions` (optional) — names of the settled charge(s) (e.g.
+   * "Netflix", "Apple Music"). When provided, the transfer description names
+   * what was paid instead of the generic "Card payment — <card>" label, so the
+   * user can identify it in the transaction list.
    */
   async payCard(
     householdId: string,
     card: Card,
     amount: number,
-    auditUser?: AuditUser
+    auditUser?: AuditUser,
+    settlesChargeIds?: string[],
+    budgetCycleId?: string | null,
+    settlesDescriptions?: string[]
   ): Promise<string> {
     if (amount <= 0) throw new Error('Payment amount must be greater than 0.');
     if (!card.paymentAccountId) throw new Error('Card has no paymentAccountId.');
+
+    // Build a human-readable description: name the charge(s) when we know them.
+    // e.g. "Card payment — Netflix", "Card payment — Netflix +2 more", or the
+    // generic "Card payment — HSBC Credit Card" fallback for legacy callers.
+    let description = `Card payment — ${card.name}`;
+    if (settlesDescriptions && settlesDescriptions.length > 0) {
+      const first = settlesDescriptions[0];
+      const extra = settlesDescriptions.length - 1;
+      const named = extra > 0 ? `${first} +${extra} more` : first;
+      description = `Card payment — ${named}`;
+    }
+
     return transactionsLib.createTransaction(
       householdId,
       {
         type: 'transfer',
         date: new Date().toISOString().slice(0, 10),
-        description: `Card payment — ${card.name}`,
+        description,
         createdBy: auditUser?.uid ?? 'system',
+        budgetCycleId: budgetCycleId ?? null,
+        settlesChargeIds: settlesChargeIds && settlesChargeIds.length > 0 ? settlesChargeIds : null,
       },
       [
         { accountId: card.paymentAccountId, signedAmount: -amount, currency: card.currency },

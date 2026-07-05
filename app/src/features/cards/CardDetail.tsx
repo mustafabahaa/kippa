@@ -63,10 +63,13 @@ export function CardDetail({ card, onClose }: { card: Card; onClose: () => void 
   const payCard = usePayCardMutation();
   const { data: categories = [] } = useCategories(householdId);
   const { data: allCycles = [] } = useCycles(householdId);
+  const activeCycle = allCycles.find(c => c.status === 'open') || null;
 
   const [payOpen, setPayOpen] = useState(false);
   const [payAmount, setPayAmount] = useState<number | ''>('');
   const [payLabel, setPayLabel] = useState('Pay');
+  const [paySettlesChargeIds, setPaySettlesChargeIds] = useState<string[] | undefined>(undefined);
+  const [paySettlesDescriptions, setPaySettlesDescriptions] = useState<string[] | undefined>(undefined);
 
   const isCredit = card.kind === 'credit';
   const creditAccountId = card.parentAccountId;
@@ -81,31 +84,61 @@ export function CardDetail({ card, onClose }: { card: Card; onClose: () => void 
       return (ta?.date ?? '').localeCompare(tb?.date ?? '');
     });
 
-  // Purchases oldest-first; payments settle oldest unpaid first.
+  // Map every charge txId → settled status.
+  // Preferred source of truth: a card-payment transfer that explicitly lists
+  // the charge id in `settlesChargeIds`. Only if a payment has no such link
+  // (legacy "Pay all" lump sums) do we fall back to FIFO allocation, AND only
+  // within the same budget cycle — a payment can never mark a charge paid in a
+  // different cycle, which was the bug that silently crossed month boundaries.
+  const chargeTxIds = new Set(
+    cardLines.filter(l => l.signedAmount < 0).map(l => l.transactionId)
+  );
+  const explicitlySettled = new Set<string>();
+  for (const l of cardLines) {
+    if (l.signedAmount <= 0) continue; // only payment lines (inflows)
+    const tx = allTransactions.find(t => t.id === l.transactionId);
+    if (tx?.settlesChargeIds) {
+      for (const cid of tx.settlesChargeIds) {
+        if (chargeTxIds.has(cid)) explicitlySettled.add(cid);
+      }
+    }
+  }
+
+  // FIFO fallback, scoped per budget cycle so a lump "Pay all" can't bleed
+  // into a later cycle and hide the Pay buttons there.
+  const cycleRemaining = new Map<string, number>();
+  for (const l of cardLines) {
+    if (l.signedAmount <= 0) continue;
+    const tx = allTransactions.find(t => t.id === l.transactionId);
+    if (tx?.settlesChargeIds && tx.settlesChargeIds.length > 0) continue; // already attributed
+    const key = tx?.budgetCycleId ?? 'uncategorized';
+    cycleRemaining.set(key, (cycleRemaining.get(key) ?? 0) + l.signedAmount);
+  }
+
   const charges: Charge[] = [];
-  let remainingPayments = 0;
   for (const line of cardLines) {
     const tx = allTransactions.find(t => t.id === line.transactionId);
     if (!tx) continue;
-    if (line.signedAmount < 0) {
-      charges.push({
-        lineId: line.id, txId: tx.id, date: tx.date,
-        description: tx.description ?? null,
-        amount: Math.abs(line.signedAmount),
-        paid: false,
-        txType: tx.type,
-        categoryId: tx.categoryId ?? null,
-        budgetCycleId: tx.budgetCycleId ?? null,
-      });
-    } else {
-      remainingPayments += line.signedAmount;
+    if (line.signedAmount >= 0) continue; // charges only (outflows)
+    const key = tx.budgetCycleId ?? 'uncategorized';
+    let paid = explicitlySettled.has(tx.id);
+    if (!paid) {
+      const remaining = cycleRemaining.get(key) ?? 0;
+      const amount = Math.abs(line.signedAmount);
+      if (remaining >= amount) {
+        paid = true;
+        cycleRemaining.set(key, remaining - amount);
+      }
     }
-  }
-  for (const c of charges) {
-    if (remainingPayments >= c.amount) {
-      c.paid = true;
-      remainingPayments -= c.amount;
-    }
+    charges.push({
+      lineId: line.id, txId: tx.id, date: tx.date,
+      description: tx.description ?? null,
+      amount: Math.abs(line.signedAmount),
+      paid,
+      txType: tx.type,
+      categoryId: tx.categoryId ?? null,
+      budgetCycleId: tx.budgetCycleId ?? null,
+    });
   }
 
   const unpaidCharges = charges.filter(c => !c.paid);
@@ -160,21 +193,37 @@ export function CardDetail({ card, onClose }: { card: Card; onClose: () => void 
     });
 
   const openPayAll = () => {
+    // Record every currently-unpaid charge this lump payment will settle, so
+    // the UI can mark them paid as a fact instead of guessing by FIFO later.
+    const unpaid = charges.filter(c => !c.paid);
+    const settlesIds = unpaid.map(c => c.txId);
+    const descriptions = unpaid.map(c => c.description ?? c.txType);
     setPayAmount(Number(totalDebt.toFixed(2)));
     setPayLabel(`Pay all (${formatMoney(totalDebt, card.currency, 2)})`);
+    setPaySettlesChargeIds(settlesIds);
+    setPaySettlesDescriptions(descriptions);
     setPayOpen(true);
   };
 
   const openPayOne = (charge: Charge) => {
+    const desc = charge.description ?? charge.txType;
     setPayAmount(Number(charge.amount.toFixed(2)));
-    setPayLabel(`Pay ${charge.description ?? charge.txType} (${formatMoney(charge.amount, card.currency, 2)})`);
+    setPayLabel(`Pay ${desc} (${formatMoney(charge.amount, card.currency, 2)})`);
+    setPaySettlesChargeIds([charge.txId]);
+    setPaySettlesDescriptions([desc]);
     setPayOpen(true);
   };
 
   const handlePay = async () => {
     if (payAmount === '' || payAmount <= 0) return;
     try {
-      await payCard.mutateAsync({ householdId, card, amount: Number(payAmount) });
+      await payCard.mutateAsync({
+        householdId, card,
+        amount: Number(payAmount),
+        settlesChargeIds: paySettlesChargeIds,
+        settlesDescriptions: paySettlesDescriptions,
+        budgetCycleId: activeCycle?.id ?? null,
+      });
       setPayOpen(false);
     } catch (e: any) {
       alert(e.message);
