@@ -502,8 +502,8 @@ export function usePayCardMutation() {
   const auditUser = useAuditUser();
   const notifyOfflineSuccess = useOfflineSuccessNotifier();
   return useMutation({
-    mutationFn: (data: { householdId: string; card: Card; amount: number }) =>
-      cardsLib.payCard(data.householdId, data.card, data.amount, auditUser),
+    mutationFn: (data: { householdId: string; card: Card; amount: number; settlesChargeIds?: string[]; settlesDescriptions?: string[]; budgetCycleId?: string | null }) =>
+      cardsLib.payCard(data.householdId, data.card, data.amount, auditUser, data.settlesChargeIds, data.budgetCycleId, data.settlesDescriptions),
     onSuccess: (_, variables) => {
       notifyOfflineSuccess();
       queryClient.invalidateQueries({ queryKey: ['transactions', variables.householdId] });
