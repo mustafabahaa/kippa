@@ -246,7 +246,6 @@ export function TransactionHistory() {
                 <MenuItem value="expense">Expense</MenuItem>
                 <MenuItem value="income">Income</MenuItem>
                 <MenuItem value="transfer">Transfer</MenuItem>
-                <MenuItem value="conversion">Exchange</MenuItem>
                 <MenuItem value="adjustment">Reconciliation</MenuItem>
               </Select>
             </FormControl>
@@ -291,17 +290,18 @@ export function TransactionHistory() {
                   if (tx.type === 'transfer') {
                     const fromL = txLines.find(l => l.signedAmount < 0);
                     const toL = txLines.find(l => l.signedAmount > 0);
-                    const fromAcc = accounts.find(a => a.id === fromL?.accountId);
-                    const toAcc = accounts.find(a => a.id === toL?.accountId);
-                    detailsText = `${fromAcc?.name || 'Wallet'} ➔ ${toAcc?.name || 'Bank'}`;
-                  } else if (tx.type === 'conversion') {
-                    const fromL = txLines.find(l => l.signedAmount < 0);
-                    const toL = txLines.find(l => l.signedAmount > 0);
-                    const fromAcc = accounts.find(a => a.id === fromL?.accountId);
-                    const toAcc = accounts.find(a => a.id === toL?.accountId);
-                    const fromAmt = fromL ? Number(Math.abs(fromL.signedAmount).toFixed(2)) : 0;
-                    const toAmt = toL ? Number(Math.abs(toL.signedAmount).toFixed(2)) : 0;
-                    detailsText = `${fromAmt} ${fromL?.currency || baseCurrency} (${fromAcc?.name || 'Wallet'}) ➔ ${toAmt} ${toL?.currency || baseCurrency} (${toAcc?.name || 'Bank'})`;
+                    const crossCurrency = !!fromL && !!toL && fromL.currency !== toL.currency;
+                    if (crossCurrency) {
+                      const fromAcc = accounts.find(a => a.id === fromL?.accountId);
+                      const toAcc = accounts.find(a => a.id === toL?.accountId);
+                      const fromAmt = fromL ? Number(Math.abs(fromL.signedAmount).toFixed(2)) : 0;
+                      const toAmt = toL ? Number(Math.abs(toL.signedAmount).toFixed(2)) : 0;
+                      detailsText = `${fromAmt} ${fromL?.currency || baseCurrency} (${fromAcc?.name || 'Wallet'}) ➔ ${toAmt} ${toL?.currency || baseCurrency} (${toAcc?.name || 'Bank'})`;
+                    } else {
+                      const fromAcc = accounts.find(a => a.id === fromL?.accountId);
+                      const toAcc = accounts.find(a => a.id === toL?.accountId);
+                      detailsText = `${fromAcc?.name || 'Wallet'} ➔ ${toAcc?.name || 'Bank'}`;
+                    }
                   } else {
                     const acc = accounts.find(a => a.id === firstLine?.accountId);
                     detailsText = acc?.name || 'Account';
@@ -317,8 +317,6 @@ export function TransactionHistory() {
                           <Typography variant="body1" sx={{ fontWeight: 'bold', fontSize: '13.5px' }}>
                             {tx.type === 'transfer'
                               ? (tx.description || 'Transfer')
-                              : tx.type === 'conversion'
-                              ? 'Currency Exchange'
                               : tx.type === 'adjustment'
                               ? 'Reconciliation'
                               : (cat?.name || 'General')}
@@ -335,9 +333,13 @@ export function TransactionHistory() {
                         </Typography>
                       </TableCell>
                       <TableCell align="right">
-                        {tx.type === 'conversion' ? (
+                        {tx.type === 'transfer' && (() => {
+                          const fromL = txLines.find(l => l.signedAmount < 0);
+                          const toL = txLines.find(l => l.signedAmount > 0);
+                          return !!fromL && !!toL && fromL.currency !== toL.currency;
+                        })() ? (
                           <Typography variant="body1" sx={{ fontWeight: 'bold', color: tx.status === 'voided' ? 'text.secondary' : 'text.primary' }}>
-                            Exchange Completed
+                            Transfer Completed
                           </Typography>
                         ) : (
                           <Typography variant="body1" sx={{ fontWeight: 'bold', color: tx.status === 'voided' ? 'text.secondary' : isIncome ? 'success.main' : 'text.primary' }}>
