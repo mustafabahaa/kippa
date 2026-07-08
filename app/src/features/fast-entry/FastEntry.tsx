@@ -34,7 +34,7 @@ import { useAppContext } from '@/hooks/useAppContext';
 import { PageHeader } from '@/features/shared/components/PageHeader';
 import { EmptyLayout } from '@/features/shared/components/EmptyLayout';
 
-type EntryMode = 'expense' | 'income' | 'conversion' | 'transfer';
+type EntryMode = 'expense' | 'income' | 'transfer';
 
 export function FastEntry() {
   const { enqueueSnackbar } = useSnackbar();
@@ -58,7 +58,7 @@ export function FastEntry() {
   const [description, setDescription] = useState('');
   const [showNoteField, setShowNoteField] = useState(false);
 
-  // Conversion / Transfer Specific States
+  // Transfer Specific States
   const [toAccountId, setToAccountId] = useState<string | null>(null);
   const [toAmountStr, setToAmountStr] = useState('0');
   const [isKeypadForDest, setIsKeypadForDest] = useState(false); // Controls which amount input the keypad controls
@@ -102,14 +102,18 @@ export function FastEntry() {
   const eligibleDestinationAccounts = sortedAccounts.filter(acc => {
     if (acc.id === selectedAccountId) return false;
     if (!selectedAccount) return true;
-    if (mode === 'conversion') {
-      return acc.currency !== selectedAccount.currency;
-    }
-    if (mode === 'transfer') {
-      return acc.currency === selectedAccount.currency;
-    }
+    // Transfer accepts any other account — same or different currency.
+    if (mode === 'transfer') return true;
     return true;
   });
+
+  // True when the user is making a cross-currency transfer (needs a destination
+  // amount + a derived rate). False for same-currency transfers and other modes.
+  const isCrossCurrency =
+    mode === 'transfer' &&
+    !!selectedAccount &&
+    !!toAccount &&
+    toAccount.currency !== selectedAccount.currency;
 
   const selectedCategory = (selectedCategoryId && categories.find(c => c.id === selectedCategoryId && c.type === mode))
     || null;
@@ -141,11 +145,8 @@ export function FastEntry() {
       return;
     }
 
-    if (mode === 'conversion' && toAcc.currency === sourceAcc.currency) {
-      setToAccountId(null);
-    } else if (mode === 'transfer' && toAcc.currency !== sourceAcc.currency) {
-      setToAccountId(null);
-    }
+    // Transfer accepts any currency; only clear if it equals the source.
+    // (Equality already handled by the `toAccountId === id` check above.)
   };
 
   const handleSelectMode = (m: EntryMode) => {
@@ -157,11 +158,8 @@ export function FastEntry() {
     const toAcc = accounts.find(a => a.id === toAccountId);
     if (!sourceAcc || !toAcc) return;
 
-    if (m === 'conversion' && toAcc.currency === sourceAcc.currency) {
-      setToAccountId(null);
-    } else if (m === 'transfer' && toAcc.currency !== sourceAcc.currency) {
-      setToAccountId(null);
-    }
+    // No currency-based clearing needed: transfer accepts any currency,
+    // and other modes don't use a destination account.
   };
 
   // Keypad controls
@@ -250,61 +248,6 @@ export function FastEntry() {
         setSelectedCategoryId(null);
         setShowNoteField(false);
       } 
-      else if (mode === 'conversion') {
-        if (!toAccount) {
-          enqueueSnackbar('Please select a Destination Account', { variant: 'warning' });
-          return;
-        }
-        if (toAccount.id === selectedAccount.id) {
-          enqueueSnackbar('Source and Destination accounts must be different', { variant: 'warning' });
-          return;
-        }
-        if (toAccount.currency === selectedAccount.currency) {
-          enqueueSnackbar('Source and Destination currencies must be different for a conversion', { variant: 'warning' });
-          return;
-        }
-        const toAmount = parseFloat(toAmountStr);
-        if (isNaN(toAmount) || toAmount <= 0) {
-          enqueueSnackbar('Please enter a valid destination amount', { variant: 'warning' });
-          return;
-        }
-
-        await createTxMutation.mutateAsync({
-          householdId,
-          transaction: {
-            type: 'conversion',
-            date,
-            description: description || `${selectedAccount.currency} to ${toAccount.currency} Conversion`,
-            budgetCycleId: activeCycle?.id || null,
-            createdBy: userProfile!.uid,
-          },
-          lines: [
-            {
-              accountId: selectedAccount.id,
-              signedAmount: -amount,
-              currency: selectedAccount.currency,
-            },
-            {
-              accountId: toAccount.id,
-              signedAmount: toAmount,
-              currency: toAccount.currency,
-            }
-          ],
-          conversionDetails: {
-            fromCurrency: selectedAccount.currency,
-            toCurrency: toAccount.currency,
-            fromAmount: amount,
-            toAmount: toAmount,
-            effectiveRate: toAmount / amount,
-            rateSource: 'manual',
-          }
-        });
-        enqueueSnackbar('Saved conversion!', { variant: 'success' });
-        setAmountStr('0');
-        setToAmountStr('0');
-        setDescription('');
-        setShowNoteField(false);
-      }
       else if (mode === 'transfer') {
         if (!toAccount) {
           enqueueSnackbar('Please select a Destination Account', { variant: 'warning' });
@@ -314,9 +257,15 @@ export function FastEntry() {
           enqueueSnackbar('Source and Destination accounts must be different', { variant: 'warning' });
           return;
         }
-        if (toAccount.currency !== selectedAccount.currency) {
-          enqueueSnackbar('Source and Destination currencies must be the same for a transfer. Use Conversion instead.', { variant: 'warning' });
-          return;
+
+        const crossCurrency = toAccount.currency !== selectedAccount.currency;
+        let toAmount = 0;
+        if (crossCurrency) {
+          toAmount = parseFloat(toAmountStr);
+          if (isNaN(toAmount) || toAmount <= 0) {
+            enqueueSnackbar('Please enter a valid destination amount', { variant: 'warning' });
+            return;
+          }
         }
 
         await createTxMutation.mutateAsync({
@@ -324,7 +273,9 @@ export function FastEntry() {
           transaction: {
             type: 'transfer',
             date,
-            description: description || `Transfer`,
+            description: description || (crossCurrency
+              ? `${selectedAccount.currency} to ${toAccount.currency} Transfer`
+              : 'Transfer'),
             budgetCycleId: activeCycle?.id || null,
             createdBy: userProfile!.uid,
           },
@@ -336,13 +287,24 @@ export function FastEntry() {
             },
             {
               accountId: toAccount.id,
-              signedAmount: amount,
+              signedAmount: crossCurrency ? toAmount : amount,
               currency: toAccount.currency,
             }
-          ]
+          ],
+          ...(crossCurrency ? {
+            conversionDetails: {
+              fromCurrency: selectedAccount.currency,
+              toCurrency: toAccount.currency,
+              fromAmount: amount,
+              toAmount: toAmount,
+              effectiveRate: toAmount / amount,
+              rateSource: 'manual' as const,
+            }
+          } : {}),
         });
         enqueueSnackbar('Saved transfer!', { variant: 'success' });
         setAmountStr('0');
+        setToAmountStr('0');
         setDescription('');
         setShowNoteField(false);
       }
@@ -358,7 +320,7 @@ export function FastEntry() {
     return (
       <Container maxWidth="md" sx={{ py: 1, px: { xs: 2, sm: 3 } }}>
         <Stack spacing={3}>
-          <PageHeader title="Fast Entry" subtitle="Log expenses, income, conversions & transfers" />
+          <PageHeader title="Fast Entry" subtitle="Log expenses, income & transfers" />
           <Skeleton variant="rectangular" width="100%" height={100} sx={{ borderRadius: '20px' }} />
           <Skeleton variant="rectangular" width="100%" height={250} sx={{ borderRadius: '20px' }} />
         </Stack>
@@ -370,10 +332,10 @@ export function FastEntry() {
     return (
       <Container maxWidth="md" sx={{ py: 1, px: { xs: 2, sm: 3 } }}>
         <Stack spacing={3}>
-          <PageHeader title="Fast Entry" subtitle="Log expenses, income, conversions & transfers" />
+          <PageHeader title="Fast Entry" subtitle="Log expenses, income & transfers" />
           <EmptyLayout
             title="No accounts to log entries against"
-            description="Add an account first — you'll need one to record expenses, income, transfers, or conversions."
+            description="Add an account first — you'll need one to record expenses, income, or transfers."
           />
         </Stack>
       </Container>
@@ -385,11 +347,11 @@ export function FastEntry() {
       <Stack spacing={2.5}>
         
         {/* Page Header */}
-        <PageHeader title="Fast Entry" subtitle="Log expenses, income, conversions & transfers" />
+        <PageHeader title="Fast Entry" subtitle="Log expenses, income & transfers" />
 
         {/* Mode Selector */}
         <Stack direction="row" spacing={1} sx={{ mt: 1 }}>
-          {(['expense', 'income', 'conversion', 'transfer'] as EntryMode[]).map(m => (
+          {(['expense', 'income', 'transfer'] as EntryMode[]).map(m => (
             <Button
               key={m}
               onClick={() => handleSelectMode(m)}
@@ -463,7 +425,7 @@ export function FastEntry() {
         <Box sx={{ width: '100%' }}>
           <Box display="flex" alignItems="center" justifyContent="space-between" sx={{ mb: 1 }}>
             <Typography variant="body1" sx={{ fontWeight: 'bold', color: 'text.primary', fontSize: '14px' }}>
-              {mode === 'transfer' || mode === 'conversion' ? 'Source Account' : 'From Account'}
+              {mode === 'transfer' ? 'Source Account' : 'From Account'}
             </Typography>
             {!selectedAccount && (
               <Typography variant="caption" sx={{ color: 'error.main', fontSize: '11px', fontWeight: 600 }}>
@@ -521,8 +483,8 @@ export function FastEntry() {
           </Box>
         </Box>
 
-        {/* Target Account Selection (Only for transfer/conversion) */}
-        {(mode === 'transfer' || mode === 'conversion') && (
+        {/* Target Account Selection (Only for transfer) */}
+        {mode === 'transfer' && (
           <Box sx={{ width: '100%' }}>
             <Box display="flex" alignItems="center" justifyContent="space-between" sx={{ mb: 1 }}>
               <Typography variant="body1" sx={{ fontWeight: 'bold', color: 'text.primary', fontSize: '14px' }}>
@@ -585,10 +547,8 @@ export function FastEntry() {
               </Box>
             ) : (
               <Typography variant="body2" sx={{ color: 'text.secondary', fontStyle: 'italic', fontSize: '13px', py: 1 }}>
-                {selectedAccountId 
-                  ? (mode === 'conversion' 
-                      ? 'No accounts with a different currency available.' 
-                      : 'No other accounts with the same currency available.')
+                {selectedAccountId
+                  ? 'No other accounts available.'
                   : 'Please select a Source Account first.'}
               </Typography>
             )}
@@ -661,7 +621,7 @@ export function FastEntry() {
           {/* Amount display lives directly above the keypad so the value being
               entered is always visible while typing (mobile UX). */}
           <Box
-            onClick={() => mode === 'conversion' && setIsKeypadForDest(false)}
+            onClick={() => isCrossCurrency && setIsKeypadForDest(false)}
             sx={{
               display: 'flex',
               flexDirection: 'column',
@@ -669,20 +629,20 @@ export function FastEntry() {
               justifyContent: 'center',
               py: 2,
               mb: 1.5,
-              bgcolor: (!isKeypadForDest || mode !== 'conversion') ? 'primary.dark' : 'background.paper',
-              color: (!isKeypadForDest || mode !== 'conversion') ? 'primary.contrastText' : 'text.secondary',
+              bgcolor: (!isKeypadForDest || !isCrossCurrency) ? 'primary.dark' : 'background.paper',
+              color: (!isKeypadForDest || !isCrossCurrency) ? 'primary.contrastText' : 'text.secondary',
               borderRadius: '24px',
               border: '1px solid',
-              borderColor: (!isKeypadForDest || mode !== 'conversion') ? 'transparent' : 'divider',
-              boxShadow: (!isKeypadForDest || mode !== 'conversion') ? '0px 4px 12px rgba(0,0,0,0.08)' : 'none',
-              cursor: mode === 'conversion' ? 'pointer' : 'default',
+              borderColor: (!isKeypadForDest || !isCrossCurrency) ? 'transparent' : 'divider',
+              boxShadow: (!isKeypadForDest || !isCrossCurrency) ? '0px 4px 12px rgba(0,0,0,0.08)' : 'none',
+              cursor: isCrossCurrency ? 'pointer' : 'default',
               transition: 'all 0.2s',
             }}
           >
-            <Typography variant="body2" sx={{ color: (!isKeypadForDest || mode !== 'conversion') ? 'rgba(255,255,255,0.7)' : 'text.secondary', fontSize: '12px', fontWeight: 500, mb: 0.5 }}>
-              {mode === 'conversion' ? 'Source Amount' : 'Amount to Log'}
+            <Typography variant="body2" sx={{ color: (!isKeypadForDest || !isCrossCurrency) ? 'rgba(255,255,255,0.7)' : 'text.secondary', fontSize: '12px', fontWeight: 500, mb: 0.5 }}>
+              {mode === 'transfer' ? 'Source Amount' : 'Amount to Log'}
             </Typography>
-            <Box display="flex" alignItems="baseline" gap={0.5} sx={{ color: (!isKeypadForDest || mode !== 'conversion') ? 'primary.contrastText' : 'text.secondary' }}>
+            <Box display="flex" alignItems="baseline" gap={0.5} sx={{ color: (!isKeypadForDest || !isCrossCurrency) ? 'primary.contrastText' : 'text.secondary' }}>
               <Typography color="inherit" sx={{ fontSize: '20px', fontWeight: 600 }}>
                 {currentCurrencySymbol}
               </Typography>
@@ -692,8 +652,8 @@ export function FastEntry() {
             </Box>
           </Box>
 
-          {/* Destination amount (conversion mode only) */}
-          {mode === 'conversion' && (
+          {/* Destination amount (cross-currency transfer only) */}
+          {isCrossCurrency && (
             <Box
               onClick={() => setIsKeypadForDest(true)}
               sx={{
@@ -726,6 +686,17 @@ export function FastEntry() {
               </Box>
             </Box>
           )}
+          {isCrossCurrency && (() => {
+            const fromAmt = parseFloat(amountStr);
+            const destAmt = parseFloat(toAmountStr);
+            if (isNaN(fromAmt) || fromAmt <= 0 || isNaN(destAmt) || destAmt <= 0) return null;
+            const rate = destAmt / fromAmt;
+            return (
+              <Typography variant="body2" align="center" sx={{ color: 'text.secondary', fontSize: '12px', mb: 1.5 }}>
+                Rate: 1 {selectedAccount?.currency} = {rate.toFixed(2)} {toAccount?.currency}
+              </Typography>
+            );
+          })()}
           <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1 }}>
             {['1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '0', 'back'].map(k => {
               const isBack = k === 'back';
