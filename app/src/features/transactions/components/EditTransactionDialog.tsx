@@ -149,7 +149,7 @@ export const EditTransactionDialog: React.FC<EditTransactionDialogProps> = ({
                 }}
               >
                 <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic', mb: 1.5 }}>
-                  For ledger integrity, the type, accounts, and amount of a {transaction.type === 'adjustment' ? 'Reconciliation' : transaction.type === 'conversion' ? 'Currency Exchange' : transaction.type} transaction cannot be modified.
+                  For ledger integrity, the type, accounts, and amount of a {transaction.type === 'adjustment' ? 'Reconciliation' : transaction.type} transaction cannot be modified.
                 </Typography>
                 <Stack spacing={1}>
                   <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
