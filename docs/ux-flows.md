@@ -61,7 +61,7 @@ Amount USD -> Account -> Salary Date -> Save
 
 If an expected salary exists for the open/planned cycle, allow linking it to the actual salary.
 
-## Currency Conversion
+## Cross-currency Transfer
 
 Flow:
 
@@ -107,7 +107,7 @@ Before closing a cycle, show checklist:
 
 - latest bank balance checked
 - latest cash balance checked
-- USD conversions recorded
+- USD transfers recorded
 - salary recorded if received
 - unexplained differences resolved or accepted
 
@@ -116,7 +116,7 @@ Close summary:
 - opening balances
 - income
 - expenses
-- conversions
+- cross-currency transfers
 - ending balances
 - saving result
 - categories over budget

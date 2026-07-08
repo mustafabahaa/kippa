@@ -63,7 +63,7 @@ Examples:
 
 - Salary: `+3000 USD` to USD account
 - Expense: `-250 EGP` from EGP cash
-- Conversion: `-500 USD` from USD account and `+24000 EGP` to EGP bank
+- Cross-currency Transfer: `-500 USD` from USD account and `+24000 EGP` to EGP bank
 
 ### Budget Cycle
 
@@ -121,13 +121,13 @@ Before salary arrives, forecasting may use expected salary and expected exchange
 
 After salary arrives, actual received values should be locked as historical facts.
 
-### 4. Currency Conversion
+### 4. Cross-currency Transfers
 
-USD to EGP conversion must be treated as a transfer.
+USD to EGP transfers are modeled as transfers (cross-currency).
 
 It should not increase income and should not count as expense.
 
-Each conversion stores:
+Each cross-currency transfer stores:
 
 - USD amount
 - EGP amount
@@ -214,8 +214,8 @@ Home dashboard should answer:
 - Store raw facts. Compute dashboards.
 - Do not store UI dashboard results as source data.
 - Transfers are not expenses.
-- Conversions are not income.
-- Old conversion rates should not be silently recalculated.
+- Cross-currency transfers are not income.
+- Old transfer rates should not be silently recalculated.
 - Closed cycles should be protected with audit/revision behavior.
 - Manual corrections should be explicit and explainable.
 

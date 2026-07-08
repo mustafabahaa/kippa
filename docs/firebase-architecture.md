@@ -45,7 +45,7 @@ Transaction creation should be atomic:
 
 - create transaction
 - create all ledger lines
-- optionally create conversion details
+- optionally create conversionDetails (cross-currency transfer rate)
 - update lightweight metadata if required
 
 Use Firestore batched writes or transactions.
