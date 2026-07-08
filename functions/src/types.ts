@@ -4,7 +4,7 @@
 export interface FinanceTransaction {
   id: string;
   householdId: string;
-  type: 'income' | 'expense' | 'transfer' | 'conversion' | 'adjustment';
+  type: 'income' | 'expense' | 'transfer' | 'adjustment';
   date: string; // YYYY-MM-DD
   description?: string;
   categoryId?: string;
