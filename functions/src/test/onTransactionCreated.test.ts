@@ -24,12 +24,12 @@ describe('getAmountString', () => {
     expect(getAmountString('transfer', lines)).toBe('1000 USD');
   });
 
-  it('formats conversion correctly', () => {
+  it('formats cross-currency transfer with both amounts', () => {
     const lines = [
       { signedAmount: -100, currency: 'USD' },
       { signedAmount: 3100, currency: 'EGP' }
     ];
-    expect(getAmountString('conversion', lines)).toBe('100 USD to 3100 EGP');
+    expect(getAmountString('transfer', lines)).toBe('100 USD to 3100 EGP');
   });
 });
 
