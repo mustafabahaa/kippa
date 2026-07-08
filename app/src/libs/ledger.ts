@@ -1,7 +1,7 @@
 import { dbLib } from '@/libs/db';
 import { auditLogLib } from '@/libs/auditLog';
 import { detectBaseCurrency, currencySymbol } from '@/libs/currencyMeta';
-import { Account, Category, FinanceTransaction, ConversionDetails, Household, Reconciliation, NotificationSettings, CurrencyCode } from '@/domain/financeTypes';
+import { Account, Category, FinanceTransaction, Household, Reconciliation, NotificationSettings, CurrencyCode } from '@/domain/financeTypes';
 
 type AuditUser = { uid: string; displayName: string; photoURL?: string };
 
@@ -147,10 +147,6 @@ export const ledgerLib = {
     const list = await dbLib.getDocs(householdId, 'transactions', filters);
     return (list as FinanceTransaction[])
       .sort((a, b) => b.date.localeCompare(a.date) || (b.createdAt || '').localeCompare(a.createdAt || ''));
-  },
-
-  async getConversionDetails(householdId: string): Promise<ConversionDetails[]> {
-    return dbLib.getDocs(householdId, 'conversionDetails');
   },
 
   async getHouseholdName(householdId: string): Promise<string> {
