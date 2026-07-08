@@ -293,22 +293,17 @@ export function getAmountString(
   type: FinanceTransaction['type'],
   lines: Pick<LedgerLine, 'signedAmount' | 'currency'>[]
 ): string {
-  if (type === 'conversion') {
+  if (type === 'transfer') {
     const debitLine = lines.find((l) => l.signedAmount < 0);
     const creditLine = lines.find((l) => l.signedAmount > 0);
-    if (debitLine && creditLine) {
+    if (debitLine && creditLine && debitLine.currency !== creditLine.currency) {
+      // Cross-currency transfer — show both amounts.
       return `${Math.abs(debitLine.signedAmount)} ${debitLine.currency} to ${creditLine.signedAmount} ${creditLine.currency}`;
-    } else if (lines.length > 0) {
-      return lines
-        .map((l) => `${l.signedAmount > 0 ? '+' : ''}${l.signedAmount} ${l.currency}`)
-        .join(', ');
     }
-  } else if (type === 'transfer') {
-    const debitLine = lines.find((l) => l.signedAmount < 0);
-    const creditLine = lines.find((l) => l.signedAmount > 0);
     if (debitLine) {
       return `${Math.abs(debitLine.signedAmount)} ${debitLine.currency}`;
-    } else if (creditLine) {
+    }
+    if (creditLine) {
       return `${creditLine.signedAmount} ${creditLine.currency}`;
     }
   } else {
