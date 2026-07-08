@@ -8,7 +8,7 @@ export type CurrencyCode = string;
 
 export type AccountType = 'running' | 'savings' | 'cash' | 'wallet' | 'credit' | 'adjustment';
 
-export type TransactionType = 'income' | 'expense' | 'transfer' | 'conversion' | 'adjustment';
+export type TransactionType = 'income' | 'expense' | 'transfer' | 'adjustment';
 
 export type BudgetCycleStatus = 'planned' | 'open' | 'closed';
 
