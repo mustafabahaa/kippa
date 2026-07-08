@@ -3,7 +3,6 @@ import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
 import CreditCardIcon from '@mui/icons-material/CreditCard';
 import WorkIcon from '@mui/icons-material/Work';
 import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
-import CurrencyExchangeIcon from '@mui/icons-material/CurrencyExchange';
 import TuneIcon from '@mui/icons-material/Tune';
 import { TransactionType } from '@/domain/financeTypes';
 
@@ -26,11 +25,6 @@ export const TransactionIcon: React.FC<TransactionIconProps> = ({ type, size = 4
         return {
           icon: <SwapHorizIcon sx={{ fontSize: size * 0.45, color: 'info.main' }} />,
           bg: (theme: any) => alpha(theme.palette.info.main, 0.1),
-        };
-      case 'conversion':
-        return {
-          icon: <CurrencyExchangeIcon sx={{ fontSize: size * 0.45, color: 'warning.main' }} />,
-          bg: (theme: any) => alpha(theme.palette.warning.main, 0.1),
         };
       case 'adjustment':
         return {

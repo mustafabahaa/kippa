@@ -14,8 +14,6 @@ export const TransactionTypeChip: React.FC<TransactionTypeChipProps> = ({ type, 
         return { label: 'Income', color: 'success' as const };
       case 'transfer':
         return { label: 'Transfer', color: 'primary' as const };
-      case 'conversion':
-        return { label: 'Exchange', color: 'warning' as const };
       case 'adjustment':
         return { label: 'Reconciliation', color: 'info' as const };
       case 'expense':
