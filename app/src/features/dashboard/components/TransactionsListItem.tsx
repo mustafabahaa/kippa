@@ -54,6 +54,27 @@ export const TransactionsListItem: React.FC<TransactionsListItemProps> = ({
         const toLine = txLines.find((l) => l.signedAmount > 0);
         const fromAcc = accounts.find((a) => a.id === fromLine?.accountId);
         const toAcc = accounts.find((a) => a.id === toLine?.accountId);
+        const crossCurrency = !!fromLine && !!toLine && fromLine.currency !== toLine.currency;
+        if (crossCurrency) {
+          const fromAmt = fromLine ? Number(Math.abs(fromLine.signedAmount).toFixed(2)) : 0;
+          const toAmt = toLine ? Number(Math.abs(toLine.signedAmount).toFixed(2)) : 0;
+          return (
+            <Box sx={{ minWidth: 0, flex: 1 }}>
+              <Typography variant="body1" sx={{ fontWeight: 'bold', fontSize: '13.5px', color: 'text.primary' }}>
+                {tx.description || 'Transfer'}
+              </Typography>
+              <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '11px', mt: 0.25, fontWeight: 'medium' }}>
+                {maskDigits(`${fromAmt} ${fromLine?.currency}`)} ➔ {maskDigits(`${toAmt} ${toLine?.currency}`)}
+              </Typography>
+              <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', fontSize: '10px', mt: 0.25, opacity: 0.8 }}>
+                {tx.date} • {formatTime(tx.createdAt)}
+              </Typography>
+              <Typography variant="body1" sx={{ fontWeight: 'bold', color: 'text.primary', fontSize: '13.5px', whiteSpace: 'nowrap', mt: 0.5 }}>
+                Transfer Completed
+              </Typography>
+            </Box>
+          );
+        }
         return (
           <Box sx={{ minWidth: 0, flex: 1 }}>
             <Typography variant="body1" sx={{ fontWeight: 'bold', fontSize: '13.5px', color: 'text.primary' }}>
@@ -67,35 +88,6 @@ export const TransactionsListItem: React.FC<TransactionsListItemProps> = ({
             </Typography>
             <Typography variant="body1" sx={{ fontWeight: 'bold', color: 'text.primary', fontSize: '13.5px', whiteSpace: 'nowrap', mt: 0.5 }}>
               -{maskDigits(`${amount.toLocaleString()} ${currency}`)}
-            </Typography>
-          </Box>
-        );
-      }
-
-      case 'conversion': {
-        const destLine = txLines.find((l) => l.id !== firstLine?.id);
-        const fromAmt = amount;
-        const toAmt = destLine ? Number(Math.abs(destLine.signedAmount).toFixed(2)) : 0;
-        const fromCurr = currency;
-        const toCurr = destLine ? destLine.currency : 'USD';
-        return (
-          <Box sx={{ minWidth: 0, flex: 1 }}>
-            <Typography variant="body1" sx={{ fontWeight: 'bold', fontSize: '13.5px', color: 'text.primary' }}>
-              Currency Exchange
-            </Typography>
-            <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '11px', mt: 0.25, fontWeight: 'medium' }}>
-              {maskDigits(`${fromAmt} ${fromCurr}`)} ➔ {maskDigits(`${toAmt} ${toCurr}`)}
-            </Typography>
-            {tx.description && (
-              <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '11px', mt: 0.25, wordBreak: 'break-word' }}>
-                {tx.description}
-              </Typography>
-            )}
-            <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', fontSize: '10px', mt: 0.25, opacity: 0.8 }}>
-              {tx.date} • {formatTime(tx.createdAt)}
-            </Typography>
-            <Typography variant="body1" sx={{ fontWeight: 'bold', color: 'text.primary', fontSize: '13.5px', whiteSpace: 'nowrap', mt: 0.5 }}>
-              Exchange Completed
             </Typography>
           </Box>
         );
