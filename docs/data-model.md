@@ -60,7 +60,7 @@ Financial events.
 Fields:
 
 - householdId
-- type: income, expense, transfer, conversion, adjustment
+- type: income, expense, transfer, adjustment
 - date
 - description
 - categoryId, optional
@@ -115,7 +115,7 @@ Expense:
 ]
 ```
 
-Conversion:
+Cross-currency Transfer:
 
 ```json
 [
@@ -126,7 +126,7 @@ Conversion:
 
 ### conversionDetails
 
-Extra metadata for currency conversion transactions.
+Extra metadata for cross-currency transfers (rate side-table).
 
 Fields:
 
@@ -216,7 +216,7 @@ Fields:
 - source: manual, bank, api, expected
 - createdAt
 
-Historical conversion transactions should store their actual effective rate separately.
+Historical cross-currency transfers should store their actual effective rate separately.
 
 ### reconciliations
 

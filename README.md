@@ -31,7 +31,7 @@
 
 - **Ledger-first architecture.** Store raw financial events; balances, projections, and reports are derived — never hardcoded into the data model.
 - **Fast expense entry.** Recording an expense takes seconds, with smart category chips ordered by your recency and frequency.
-- **Multi-currency.** First-class support for USD and EGP. USD→EGP conversion is modeled as a transfer, not income.
+- **Multi-currency.** First-class support for USD and EGP. USD→EGP transfers are modeled as transfers (not income).
 - **Salary-cycle budgeting.** Budget around salary cycles (which may land on the 25th, 26th, or 27th) instead of rigid calendar months.
 - **Real-time sync.** Cloud Firestore keeps two partners in sync across phone and PC, with offline persistence.
 - **Budget pulse.** A clear answer to *“Am I on track or overspending?”* and *“Can I safely spend at this pace until next salary?”*

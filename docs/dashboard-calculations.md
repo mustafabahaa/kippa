@@ -24,9 +24,9 @@ totalEgpEquivalent =
   + USD balances * selectedDisplayUsdToEgpRate
 ```
 
-Use a display rate, not a historical conversion rate.
+Use a display rate, not a historical cross-currency transfer rate.
 
-Historical conversions keep their own effective rate.
+Historical cross-currency transfers keep their own effective rate.
 
 ## Cycle Spending
 
@@ -36,7 +36,7 @@ For expense transactions in cycle:
 cycleSpending = sum(abs(expense ledger lines in EGP equivalent))
 ```
 
-Transfers and conversions are excluded.
+Transfers are excluded.
 
 ## Cycle Income
 
@@ -48,7 +48,7 @@ cycleIncome = sum(income in base currency equivalent)
 
 USD salary can be shown as original USD plus base-currency equivalent.
 
-Do not count USD-to-EGP conversions as income.
+Do not count USD-to-EGP transfers as income.
 
 ## Saving
 
