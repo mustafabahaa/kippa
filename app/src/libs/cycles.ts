@@ -1,6 +1,7 @@
 import { dbLib } from '@/libs/db';
 import { auditLogLib } from '@/libs/auditLog';
 import { BudgetCycle, BudgetAllocation, ExpectedIncome } from '@/domain/financeTypes';
+import { allocationDocId, dedupeAllocations } from '@/libs/allocations';
 
 type AuditUser = { uid: string; displayName: string; photoURL?: string };
 
@@ -74,7 +75,11 @@ export const cyclesLib = {
   // Allocations
   async getBudgetAllocations(householdId: string, cycleId: string): Promise<BudgetAllocation[]> {
     const allAllocations = await dbLib.getDocs(householdId, 'budgetAllocations');
-    return (allAllocations as BudgetAllocation[]).filter(a => a.budgetCycleId === cycleId);
+    const filtered = (allAllocations as BudgetAllocation[]).filter(a => a.budgetCycleId === cycleId);
+    // Defensive: stale duplicate allocation docs (from before the canonical-id
+    // write fix) would otherwise render as duplicate category rows. Collapse
+    // to one doc per (cycle, category).
+    return dedupeAllocations(filtered);
   },
 
   async saveBudgetAllocation(
@@ -84,7 +89,7 @@ export const cyclesLib = {
   ): Promise<string> {
     // Canonical id keyed on (cycle, category) so re-saving upserts the same doc
     // instead of creating duplicates.
-    const id = `${allocation.budgetCycleId}_${allocation.categoryId}`;
+    const id = allocationDocId(allocation.budgetCycleId, allocation.categoryId);
     const newAlloc: BudgetAllocation = {
       ...allocation,
       id,
@@ -113,7 +118,7 @@ export const cyclesLib = {
     const ops = allocations.map(a => {
       // Canonical id keyed on (cycle, category) so re-saving upserts the same
       // doc instead of creating duplicates.
-      const id = `${a.budgetCycleId}_${a.categoryId}`;
+      const id = allocationDocId(a.budgetCycleId, a.categoryId);
       return {
         type: 'set' as const,
         collectionName: 'budgetAllocations',
@@ -174,7 +179,8 @@ export const cyclesLib = {
 
   async getAllBudgetAllocations(householdId: string): Promise<BudgetAllocation[]> {
     const list = await dbLib.getDocs(householdId, 'budgetAllocations');
-    return list as BudgetAllocation[];
+    // Collapse any stale duplicate docs (see getBudgetAllocations).
+    return dedupeAllocations(list as BudgetAllocation[]);
   },
 
   async getAllExpectedIncomes(householdId: string): Promise<ExpectedIncome[]> {
