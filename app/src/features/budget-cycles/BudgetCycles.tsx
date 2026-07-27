@@ -1,4 +1,5 @@
 import { useState, useMemo, useRef } from 'react';
+import { useSnackbar } from 'notistack';
 import {
   Box,
   Card,
@@ -95,12 +96,14 @@ function getStatusBgColor(status: string, theme: any) {
 
 export function BudgetCycles() {
   const { householdId } = useAppContext();
+  const { enqueueSnackbar } = useSnackbar();
   const theme = useTheme();
   const baseCurrency = useHouseholdBaseCurrency();
 
   // Cycle Creation State
   const [openCreateDialog, setOpenCreateDialog] = useState(false);
   const [newCycleNameState, setNewCycleNameState] = useState('');
+  const [newCycleNameError, setNewCycleNameError] = useState(false);
   const [newCycleStart, setNewCycleStart] = useState(new Date().toISOString().split('T')[0]);
   const [newCycleEnd, setNewCycleEnd] = useState('');
   const [newCycleStatus, setNewCycleStatus] = useState<'open' | 'planned'>('open');
@@ -145,31 +148,42 @@ export function BudgetCycles() {
   }, [cycles]);
 
   const handleCreateCycle = async () => {
-    if (!newCycleNameState.trim()) return;
-
-    if (newCycleStatus === 'open' && activeCycle) {
-      await updateCycleStatusMutation.mutateAsync({
-        householdId,
-        cycleId: activeCycle.id,
-        status: 'closed',
-        extra: {
-          endDate: new Date().toISOString().split('T')[0]
-        }
-      });
+    const name = newCycleNameState.trim();
+    if (!name) {
+      setNewCycleNameError(true);
+      enqueueSnackbar('Please enter a cycle name.', { variant: 'warning' });
+      return;
     }
 
-    await createCycleMutation.mutateAsync({
-      householdId,
-      cycle: {
-        name: newCycleNameState,
-        startDate: newCycleStart,
-        endDate: newCycleEnd || null,
-        status: newCycleStatus,
+    try {
+      if (newCycleStatus === 'open' && activeCycle) {
+        await updateCycleStatusMutation.mutateAsync({
+          householdId,
+          cycleId: activeCycle.id,
+          status: 'closed',
+          extra: {
+            endDate: new Date().toISOString().split('T')[0]
+          }
+        });
       }
-    });
 
-    setOpenCreateDialog(false);
-    setNewCycleNameState('');
+      await createCycleMutation.mutateAsync({
+        householdId,
+        cycle: {
+          name,
+          startDate: newCycleStart,
+          endDate: newCycleEnd || null,
+          status: newCycleStatus,
+        }
+      });
+
+      setOpenCreateDialog(false);
+      setNewCycleNameState('');
+      setNewCycleNameError(false);
+      enqueueSnackbar('Budget cycle created.', { variant: 'success' });
+    } catch (err: any) {
+      enqueueSnackbar(err?.message || 'Failed to create budget cycle.', { variant: 'error' });
+    }
   };
 
   const handleCloseCycle = async () => {
@@ -424,7 +438,12 @@ export function BudgetCycles() {
               label="Cycle Name"
               placeholder="e.g. July 2026"
               value={newCycleNameState}
-              onChange={e => setNewCycleNameState(e.target.value)}
+              onChange={e => {
+                setNewCycleNameState(e.target.value);
+                if (newCycleNameError) setNewCycleNameError(false);
+              }}
+              error={newCycleNameError}
+              helperText={newCycleNameError ? 'A cycle name is required.' : undefined}
               sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }}
             />
             <Grid container spacing={2}>
@@ -473,7 +492,7 @@ export function BudgetCycles() {
           <Button 
             onClick={handleCreateCycle} 
             variant="contained"
-            loading={createCycleMutation.isPending}
+            loading={createCycleMutation.isPending || updateCycleStatusMutation.isPending}
             sx={{ borderRadius: '12px', textTransform: 'none', fontWeight: 'bold', bgcolor: 'primary.dark' }}
           >
             Create
