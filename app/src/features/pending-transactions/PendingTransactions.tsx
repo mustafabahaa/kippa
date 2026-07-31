@@ -172,6 +172,16 @@ export function PendingTransactions() {
     }
   };
 
+  const revokeConnection = async (credentialId: string) => {
+    try {
+      await messageIngestionLib.revokeCredential(credentialId);
+      setCredentials(await messageIngestionLib.listCredentials(householdId));
+      enqueueSnackbar('Connection revoked', { variant: 'info' });
+    } catch (error) {
+      enqueueSnackbar(error instanceof Error ? error.message : 'Could not revoke the connection', { variant: 'error' });
+    }
+  };
+
   const copy = async (value: string, label: string) => {
     await navigator.clipboard.writeText(value);
     enqueueSnackbar(`${label} copied`, { variant: 'success' });
@@ -350,6 +360,31 @@ export function PendingTransactions() {
         </DialogTitle>
         <DialogContent dividers>
           <Stack spacing={2.5} sx={{ py: 1 }}>
+            {credentials.length > 0 && (
+              <Box>
+                <Typography sx={{ fontSize: 12, fontWeight: 700, color: 'text.secondary', textTransform: 'uppercase', letterSpacing: 0.5 }}>Existing connections</Typography>
+                <Typography sx={{ fontSize: 11, color: 'text.secondary', mb: 1.5 }}>Active credentials the Shortcut can use to send messages.</Typography>
+                <Stack spacing={1}>
+                  {credentials.map((cred) => (
+                    <Box key={cred.id} sx={{ p: 1.5, borderRadius: 'control', bgcolor: 'action.hover', display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                      <KeyIcon sx={{ fontSize: 18, color: cred.enabled ? 'primary.main' : 'text.disabled' }} />
+                      <Box sx={{ flex: 1, minWidth: 0 }}>
+                        <Typography sx={{ fontSize: 12.5, fontWeight: 700 }}>{cred.label}</Typography>
+                        <Typography sx={{ fontSize: 11, color: 'text.secondary' }}>
+                          {cred.lastUsedAt ? `Used ${new Date(cred.lastUsedAt).toLocaleDateString()}` : 'Never used'}
+                        </Typography>
+                      </Box>
+                      <Chip label={cred.enabled ? 'Active' : 'Disabled'} size="small" color={cred.enabled ? 'success' : 'default'} variant="outlined" />
+                      {cred.enabled && (
+                        <IconButton aria-label={`Revoke ${cred.label}`} size="small" onClick={() => revokeConnection(cred.id)}>
+                          <DeleteIcon fontSize="small" />
+                        </IconButton>
+                      )}
+                    </Box>
+                  ))}
+                </Stack>
+              </Box>
+            )}
             <Box>
               <Typography sx={{ fontSize: 12, fontWeight: 700, color: 'text.secondary', textTransform: 'uppercase', letterSpacing: 0.5 }}>Connection</Typography>
               <Typography sx={{ fontSize: 11, color: 'text.secondary', mb: 1.5 }}>The secret is shown once and never stored in readable form.</Typography>
