@@ -30,15 +30,15 @@ import {
   Tab,
   Alert
 } from '@mui/material';
-import ContentCopyIcon from '@mui/icons-material/ContentCopy';
-import HomeIcon from '@mui/icons-material/Home';
-import SwitchAccountIcon from '@mui/icons-material/SwitchAccount';
-import LogoutIcon from '@mui/icons-material/Logout';
-import AddHomeIcon from '@mui/icons-material/AddHome';
-import GroupAddIcon from '@mui/icons-material/GroupAdd';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import CheckIcon from '@mui/icons-material/Check';
-import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
+import { ContentCopyIcon } from '@/components/AppIcon';
+import { HomeIcon } from '@/components/AppIcon';
+import { SwitchAccountIcon } from '@/components/AppIcon';
+import { LogoutIcon } from '@/components/AppIcon';
+import { AddHomeIcon } from '@/components/AppIcon';
+import { GroupAddIcon } from '@/components/AppIcon';
+import { CheckCircleIcon } from '@/components/AppIcon';
+import { CheckIcon } from '@/components/AppIcon';
+import { HourglassEmptyIcon } from '@/components/AppIcon';
 
 import type { Household, CurrencyCode, JoinStatus, JoinRequest } from '@/domain/financeTypes';
 import { db as firestoreDb } from '@/config/firebase';

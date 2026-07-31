@@ -14,12 +14,12 @@ import {
   InputAdornment
 } from '@mui/material';
 import { alpha } from '@mui/material/styles';
-import HomeIcon from '@mui/icons-material/Home';
-import GroupAddIcon from '@mui/icons-material/GroupAdd';
-import AddHomeIcon from '@mui/icons-material/AddHome';
-import LogoutIcon from '@mui/icons-material/Logout';
-import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
-import KeyIcon from '@mui/icons-material/Key';
+import { HomeIcon } from '@/components/AppIcon';
+import { GroupAddIcon } from '@/components/AppIcon';
+import { AddHomeIcon } from '@/components/AppIcon';
+import { LogoutIcon } from '@/components/AppIcon';
+import { InfoOutlinedIcon } from '@/components/AppIcon';
+import { KeyIcon } from '@/components/AppIcon';
 import { isFirebaseReady } from '@/libs/auth';
 import { useAppContext } from '@/hooks/useAppContext';
 

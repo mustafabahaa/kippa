@@ -17,10 +17,10 @@ import {
   DialogActions,
   Chip
 } from '@mui/material';
-import ContentCopyIcon from '@mui/icons-material/ContentCopy';
-import AddIcon from '@mui/icons-material/Add';
-import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
-import EditIcon from '@mui/icons-material/Edit';
+import { ContentCopyIcon } from '@/components/AppIcon';
+import { AddIcon } from '@/components/AppIcon';
+import { DeleteOutlineIcon } from '@/components/AppIcon';
+import { EditIcon } from '@/components/AppIcon';
 import {
   useSaveAllocationsBatchMutation,
   useCreateCategoryMutation,

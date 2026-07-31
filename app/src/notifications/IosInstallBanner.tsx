@@ -1,5 +1,5 @@
 import { Alert, AlertTitle, Button, Stack } from '@mui/material';
-import IosShareIcon from '@mui/icons-material/IosShare';
+import { IosShareIcon } from '@/components/AppIcon';
 
 interface Props {
   onClose?: () => void;

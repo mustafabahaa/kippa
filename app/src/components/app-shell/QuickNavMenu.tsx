@@ -7,12 +7,12 @@ import {
   Typography,
 } from '@mui/material';
 import { useNavigate, useLocation } from 'react-router-dom';
-import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
-import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
-import CategoryIcon from '@mui/icons-material/Category';
-import HomeIcon from '@mui/icons-material/Home';
-import NotificationsActiveIcon from '@mui/icons-material/NotificationsActive';
-import HistoryIcon from '@mui/icons-material/History';
+import { AccountBalanceIcon } from '@/components/AppIcon';
+import { ReceiptLongIcon } from '@/components/AppIcon';
+import { CategoryIcon } from '@/components/AppIcon';
+import { HomeIcon } from '@/components/AppIcon';
+import { NotificationsActiveIcon } from '@/components/AppIcon';
+import { HistoryIcon } from '@/components/AppIcon';
 
 interface QuickNavMenuProps {
   anchorEl: HTMLElement | null;

@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { Box, Card, CardContent, Skeleton, Stack, Typography } from '@mui/material';
-import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
-import SavingsIcon from '@mui/icons-material/Savings';
-import PaymentsIcon from '@mui/icons-material/Payments';
-import CreditCardIcon from '@mui/icons-material/CreditCard';
+import { AccountBalanceIcon } from '@/components/AppIcon';
+import { SavingsIcon } from '@/components/AppIcon';
+import { PaymentsIcon } from '@/components/AppIcon';
+import { CreditCardIcon } from '@/components/AppIcon';
 import {
   useAccounts,
   useTransactions,

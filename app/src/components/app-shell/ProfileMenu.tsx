@@ -11,15 +11,15 @@ import {
   Tooltip,
   IconButton,
 } from '@mui/material';
-import HomeIcon from '@mui/icons-material/Home';
-import LogoutIcon from '@mui/icons-material/Logout';
-import LightModeIcon from '@mui/icons-material/LightMode';
-import DarkModeIcon from '@mui/icons-material/DarkMode';
-import SettingsBrightnessIcon from '@mui/icons-material/SettingsBrightness';
-import CheckIcon from '@mui/icons-material/Check';
-import ContentCopyIcon from '@mui/icons-material/ContentCopy';
-import VisibilityIcon from '@mui/icons-material/Visibility';
-import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
+import { HomeIcon } from '@/components/AppIcon';
+import { LogoutIcon } from '@/components/AppIcon';
+import { LightModeIcon } from '@/components/AppIcon';
+import { DarkModeIcon } from '@/components/AppIcon';
+import { SettingsBrightnessIcon } from '@/components/AppIcon';
+import { CheckIcon } from '@/components/AppIcon';
+import { ContentCopyIcon } from '@/components/AppIcon';
+import { VisibilityIcon } from '@/components/AppIcon';
+import { VisibilityOffIcon } from '@/components/AppIcon';
 import type { ThemeModePref } from '@/contexts/themeModeContext';
 import type { UserProfile, Household } from '@/domain/financeTypes';
 import { usePrivacyMode } from '@/hooks/usePrivacyMode';

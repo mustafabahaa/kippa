@@ -1,9 +1,9 @@
 import { Paper, Box, Typography, useTheme, alpha } from '@mui/material';
-import DashboardIcon from '@mui/icons-material/Dashboard';
-import SyncAltIcon from '@mui/icons-material/SyncAlt';
-import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
-import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
-import AddIcon from '@mui/icons-material/Add';
+import { DashboardIcon } from '@/components/AppIcon';
+import { SyncAltIcon } from '@/components/AppIcon';
+import { CalendarMonthIcon } from '@/components/AppIcon';
+import { ReceiptLongIcon } from '@/components/AppIcon';
+import { AddIcon } from '@/components/AppIcon';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useState, useEffect, useRef } from 'react';
 import type { ReactNode } from 'react';

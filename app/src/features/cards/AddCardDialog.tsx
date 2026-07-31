@@ -3,7 +3,7 @@ import {
   Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Select, MenuItem,
   FormControl, InputLabel, Typography, Box, IconButton, Grid, Divider, ToggleButton, ToggleButtonGroup,
 } from '@mui/material';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import { ArrowBackIcon } from '@/components/AppIcon';
 import { useAppContext } from '@/hooks/useAppContext';
 import { useAccounts, useCreateDebitCardMutation, useCreateCreditCardMutation, useHouseholdBaseCurrency } from '@/hooks/useFinance';
 import type { Card, CardKind, CardNetwork, CurrencyCode } from '@/domain/financeTypes';

@@ -13,8 +13,8 @@ import {
   IconButton,
   LinearProgress,
 } from '@mui/material';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import CloseIcon from '@mui/icons-material/Close';
+import { CheckCircleIcon } from '@/components/AppIcon';
+import { CloseIcon } from '@/components/AppIcon';
 import { useAppContext } from '@/hooks/useAppContext';
 import {
   useTransactions,

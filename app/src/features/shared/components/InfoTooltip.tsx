@@ -1,6 +1,6 @@
 import { Box, Tooltip, SxProps, Theme } from '@mui/material';
 import { ReactNode } from 'react';
-import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
+import { InfoOutlinedIcon } from '@/components/AppIcon';
 
 interface InfoTooltipProps {
   /** Plain-text explanation shown inside the tooltip popover. */

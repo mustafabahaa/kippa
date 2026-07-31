@@ -14,10 +14,10 @@ import {
   useTheme,
   alpha
 } from '@mui/material';
-import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
-import SavingsIcon from '@mui/icons-material/Savings';
-import PaymentsIcon from '@mui/icons-material/Payments';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import { AccountBalanceIcon } from '@/components/AppIcon';
+import { SavingsIcon } from '@/components/AppIcon';
+import { PaymentsIcon } from '@/components/AppIcon';
+import { CheckCircleIcon } from '@/components/AppIcon';
 import {
   useAccounts,
   useTransactions,

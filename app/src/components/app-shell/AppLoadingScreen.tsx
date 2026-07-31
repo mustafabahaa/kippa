@@ -24,8 +24,8 @@ export function AppLoadingScreen({ theme }: AppLoadingScreenProps) {
           alignItems: 'center',
           justifyContent: 'center',
           background: isDark
-            ? `radial-gradient(circle at center, ${theme.palette.primary.dark}33 0%, ${theme.palette.background.default} 100%)`
-            : `radial-gradient(circle at center, ${theme.palette.primary.light}22 0%, ${theme.palette.background.default} 100%)`,
+            ? `radial-gradient(circle at 50% 42%, ${theme.palette.primary.dark} 0%, ${theme.palette.background.default} 62%)`
+            : `radial-gradient(circle at 50% 42%, ${theme.palette.primary.light}55 0%, ${theme.palette.background.default} 62%)`,
           transition: 'background 0.3s ease',
         }}
       >
@@ -40,8 +40,15 @@ export function AppLoadingScreen({ theme }: AppLoadingScreenProps) {
         >
           <Box
             sx={{
-              width: 80,
-              height: 80,
+              width: 96,
+              height: 96,
+              p: 2.25,
+              boxSizing: 'border-box',
+              borderRadius: '30px',
+              border: '1px solid',
+              borderColor: isDark ? 'rgba(156,242,232,.2)' : 'rgba(15,118,110,.16)',
+              bgcolor: isDark ? 'rgba(10,26,24,.54)' : 'rgba(255,255,255,.72)',
+              boxShadow: isDark ? '0 20px 48px rgba(0,0,0,.24), inset 0 1px 0 rgba(255,255,255,.08)' : '0 20px 48px rgba(15,118,110,.1)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -63,7 +70,7 @@ export function AppLoadingScreen({ theme }: AppLoadingScreenProps) {
 
           <Box
             sx={{
-              marginTop: '24px',
+              marginTop: '28px',
               textAlign: 'center',
               opacity: 0,
               animation: 'splashFadeIn 0.8s ease-out 0.4s forwards',
@@ -72,11 +79,10 @@ export function AppLoadingScreen({ theme }: AppLoadingScreenProps) {
             <Box
               component="h1"
               sx={{
-                fontSize: '24px',
+                fontSize: '30px',
                 fontWeight: 700,
-                letterSpacing: '2px',
+                letterSpacing: '-1.2px',
                 margin: 0,
-                textTransform: 'uppercase',
                 color: theme.palette.text.primary,
                 fontFamily: "'Plus Jakarta Sans', system-ui, -apple-system, sans-serif",
               }}
@@ -86,17 +92,18 @@ export function AppLoadingScreen({ theme }: AppLoadingScreenProps) {
             <Box
               component="p"
               sx={{
-                fontSize: '13px',
+                fontSize: '11px',
                 fontWeight: 500,
-                marginTop: '6px',
+                marginTop: '8px',
                 marginBottom: 0,
                 opacity: 0.7,
-                fontStyle: 'italic',
+                letterSpacing: '1.2px',
+                textTransform: 'uppercase',
                 color: theme.palette.text.secondary,
                 fontFamily: "'Plus Jakarta Sans', system-ui, -apple-system, sans-serif",
               }}
             >
-              Private Household Finance
+              Your household ledger
             </Box>
           </Box>
         </Box>
@@ -104,9 +111,9 @@ export function AppLoadingScreen({ theme }: AppLoadingScreenProps) {
         <Box
           sx={{
             position: 'absolute',
-            bottom: '60px',
-            width: '120px',
-            height: '3px',
+            bottom: '52px',
+            width: '144px',
+            height: '2px',
             backgroundColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
             borderRadius: '4px',
             overflow: 'hidden',
@@ -155,4 +162,3 @@ export function AppLoadingScreen({ theme }: AppLoadingScreenProps) {
     </ThemeProvider>
   );
 }
-

@@ -14,7 +14,7 @@ import {
   Tab,
   useTheme
 } from '@mui/material';
-import BarChartIcon from '@mui/icons-material/BarChart';
+import { BarChartIcon } from '@/components/AppIcon';
 import { BarChart } from '@mui/x-charts/BarChart';
 import { LineChart } from '@mui/x-charts/LineChart';
 import {

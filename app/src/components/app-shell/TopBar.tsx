@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { AppBar, Toolbar, Stack, Typography, IconButton, Tooltip, Avatar } from '@mui/material';
-import ExploreIcon from '@mui/icons-material/Explore';
+import { ExploreIcon } from '@/components/AppIcon';
 import { useNavigate } from 'react-router-dom';
 import { ActivityBell } from '@/features/activity/ActivityBell';
 import { ProfileMenu } from '@/components/app-shell/ProfileMenu';

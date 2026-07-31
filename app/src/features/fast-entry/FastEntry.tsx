@@ -13,14 +13,14 @@ import {
 import { MobileDatePicker } from '@mui/x-date-pickers/MobileDatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
-import BackspaceIcon from '@mui/icons-material/Backspace';
-import NotesIcon from '@mui/icons-material/Notes';
-import AddIcon from '@mui/icons-material/Add';
-import RemoveIcon from '@mui/icons-material/Remove';
-import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
-import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
-import SavingsIcon from '@mui/icons-material/Savings';
-import PaymentsIcon from '@mui/icons-material/Payments';
+import { BackspaceIcon } from '@/components/AppIcon';
+import { NotesIcon } from '@/components/AppIcon';
+import { AddIcon } from '@/components/AppIcon';
+import { RemoveIcon } from '@/components/AppIcon';
+import { CalendarTodayIcon } from '@/components/AppIcon';
+import { AccountBalanceIcon } from '@/components/AppIcon';
+import { SavingsIcon } from '@/components/AppIcon';
+import { PaymentsIcon } from '@/components/AppIcon';
 import { isToday, format } from 'date-fns';
 import {
   useAccounts,

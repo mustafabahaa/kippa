@@ -1,5 +1,5 @@
 import { IconButton, Badge, Tooltip } from '@mui/material';
-import NotificationsIcon from '@mui/icons-material/Notifications';
+import { NotificationsIcon } from '@/components/AppIcon';
 
 import { useUnreadActivityCount } from '@/hooks/useFinance';
 import { useAppContext } from '@/hooks/useAppContext';

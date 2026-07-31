@@ -52,22 +52,32 @@
         z-index: 9999;
         font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
         transition: background 0.3s ease;
+        overflow: hidden;
       }
+      #splash-screen::before { content: ''; position: absolute; width: min(76vw, 580px); aspect-ratio: 1; border: 1px solid rgba(45, 212, 191, 0.16); border-radius: 50%; box-shadow: 0 0 0 72px rgba(45, 212, 191, 0.025), 0 0 0 144px rgba(45, 212, 191, 0.018); transform: translateY(-2%); }
+      #splash-screen::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(circle at 50% 44%, rgba(45, 212, 191, 0.13), transparent 24rem); }
       
       /* Theme Gradients */
       html.theme-dark #splash-screen {
-        background: radial-gradient(circle at center, #112d2a 0%, #090a0f 100%);
+        background: radial-gradient(circle at 50% 42%, #163b36 0%, #070908 62%);
         color: #f1f0f5;
       }
       html.theme-light #splash-screen {
-        background: radial-gradient(circle at center, #f0fdfa 0%, #f8fafc 100%);
+        background: radial-gradient(circle at 50% 42%, #e2f5f1 0%, #f4f5f7 62%);
         color: #131b2e;
       }
 
       /* Logo and glow */
       .splash-logo-container {
-        width: 80px;
-        height: 80px;
+        width: 96px;
+        height: 96px;
+        padding: 18px;
+        box-sizing: border-box;
+        border-radius: 30px;
+        border: 1px solid rgba(156, 242, 232, 0.2);
+        background: rgba(10, 26, 24, 0.54);
+        box-shadow: 0 20px 48px rgba(0, 0, 0, 0.24), inset 0 1px 0 rgba(255,255,255,.08);
+        z-index: 1;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -80,6 +90,8 @@
         filter: drop-shadow(0 0 25px rgba(15, 118, 110, 0.45));
       }
       html.theme-light .splash-logo-container {
+        background: rgba(255,255,255,.72);
+        border-color: rgba(15,118,110,.16);
         filter: drop-shadow(0 0 20px rgba(15, 118, 110, 0.15));
       }
 
@@ -91,27 +103,28 @@
 
       /* Brand Text */
       .splash-brand {
-        margin-top: 24px;
+        margin-top: 28px;
         text-align: center;
         opacity: 0;
         animation: splashFadeIn 0.8s ease-out 0.4s forwards;
       }
 
       .splash-title {
-        font-size: 24px;
+        font-size: 30px;
         font-weight: 700;
-        letter-spacing: 2px;
+        letter-spacing: -1.2px;
         margin: 0;
-        text-transform: uppercase;
+        text-transform: none;
       }
 
       .splash-subtitle {
-        font-size: 13px;
+        font-size: 11px;
         font-weight: 500;
-        margin-top: 6px;
+        margin-top: 8px;
         margin-bottom: 0;
-        opacity: 0.7;
-        font-style: italic;
+        opacity: 0.72;
+        letter-spacing: 1.2px;
+        text-transform: uppercase;
       }
       
       html.theme-dark .splash-subtitle {
@@ -124,9 +137,10 @@
       /* Sleek progress line */
       .splash-progress-container {
         position: absolute;
-        bottom: 60px;
-        width: 120px;
-        height: 3px;
+        bottom: 52px;
+        width: 144px;
+        height: 2px;
+        z-index: 1;
         background: rgba(0, 0, 0, 0.05);
         border-radius: 4px;
         overflow: hidden;
@@ -181,7 +195,7 @@
         </div>
         <div class="splash-brand">
           <h1 class="splash-title">Kippa</h1>
-          <p class="splash-subtitle">Private Household Finance</p>
+          <p class="splash-subtitle">Your household ledger</p>
         </div>
         <div class="splash-progress-container">
           <div class="splash-progress-bar"></div>
@@ -203,4 +217,3 @@
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
-

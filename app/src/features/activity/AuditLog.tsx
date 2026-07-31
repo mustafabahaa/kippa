@@ -21,19 +21,19 @@ import {
 } from '@mui/material';
 
 // Action icons
-import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
-import CancelIcon from '@mui/icons-material/Cancel';
-import EditIcon from '@mui/icons-material/Edit';
-import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
-import CategoryIcon from '@mui/icons-material/Category';
-import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
-import PieChartIcon from '@mui/icons-material/PieChart';
-import SavingsIcon from '@mui/icons-material/Savings';
-import SyncAltIcon from '@mui/icons-material/SyncAlt';
-import NotificationsActiveIcon from '@mui/icons-material/NotificationsActive';
-import HomeIcon from '@mui/icons-material/Home';
-import HistoryIcon from '@mui/icons-material/History';
-import SearchIcon from '@mui/icons-material/Search';
+import { ShoppingCartIcon } from '@/components/AppIcon';
+import { CancelIcon } from '@/components/AppIcon';
+import { EditIcon } from '@/components/AppIcon';
+import { AccountBalanceIcon } from '@/components/AppIcon';
+import { CategoryIcon } from '@/components/AppIcon';
+import { CalendarMonthIcon } from '@/components/AppIcon';
+import { PieChartIcon } from '@/components/AppIcon';
+import { SavingsIcon } from '@/components/AppIcon';
+import { SyncAltIcon } from '@/components/AppIcon';
+import { NotificationsActiveIcon } from '@/components/AppIcon';
+import { HomeIcon } from '@/components/AppIcon';
+import { HistoryIcon } from '@/components/AppIcon';
+import { SearchIcon } from '@/components/AppIcon';
 
 import { PageHeader } from '@/features/shared/components/PageHeader';
 import { useAuditLog, useUnreadActivityCount } from '@/hooks/useFinance';

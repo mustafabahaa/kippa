@@ -23,14 +23,14 @@ import {
   useTheme
 } from '@mui/material';
 import { EmptyLayout } from '@/features/shared/components/EmptyLayout';
-import AddIcon from '@mui/icons-material/Add';
-import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
-import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
-import ExpandLessIcon from '@mui/icons-material/ExpandLess';
-import EditIcon from '@mui/icons-material/Edit';
-import EventIcon from '@mui/icons-material/Event';
-import TimerIcon from '@mui/icons-material/Timer';
-import HistoryIcon from '@mui/icons-material/History';
+import { AddIcon } from '@/components/AppIcon';
+import { CheckCircleOutlineIcon } from '@/components/AppIcon';
+import { CalendarTodayIcon } from '@/components/AppIcon';
+import { ExpandLessIcon } from '@/components/AppIcon';
+import { EditIcon } from '@/components/AppIcon';
+import { EventIcon } from '@/components/AppIcon';
+import { TimerIcon } from '@/components/AppIcon';
+import { HistoryIcon } from '@/components/AppIcon';
 import {
   useCategories,
   useCycles,

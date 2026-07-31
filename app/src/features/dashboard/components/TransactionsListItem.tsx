@@ -1,7 +1,7 @@
 import React from 'react';
 import { Box, Typography, Stack, IconButton } from '@mui/material';
-import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
+import { EditIcon } from '@/components/AppIcon';
+import { DeleteIcon } from '@/components/AppIcon';
 import { FinanceTransaction, Category, LedgerLine, Account } from '@/domain/financeTypes';
 import { TransactionIcon } from '@/features/transactions/components/TransactionIcon';
 import { useHouseholdBaseCurrency } from '@/hooks/useFinance';

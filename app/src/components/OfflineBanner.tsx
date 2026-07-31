@@ -1,5 +1,5 @@
 import { AppBar, Toolbar, Typography } from '@mui/material';
-import CloudOffIcon from '@mui/icons-material/CloudOff';
+import { CloudOffIcon } from '@/components/AppIcon';
 
 export interface OfflineBannerProps {
   isOnline: boolean;

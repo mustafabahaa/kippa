@@ -21,12 +21,12 @@ import {
   Checkbox,
   Skeleton
 } from '@mui/material';
-import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
-import SavingsIcon from '@mui/icons-material/Savings';
-import PaymentsIcon from '@mui/icons-material/Payments';
-import CreditCardIcon from '@mui/icons-material/CreditCard';
-import EditIcon from '@mui/icons-material/Edit';
-import AddIcon from '@mui/icons-material/Add';
+import { AccountBalanceIcon } from '@/components/AppIcon';
+import { SavingsIcon } from '@/components/AppIcon';
+import { PaymentsIcon } from '@/components/AppIcon';
+import { CreditCardIcon } from '@/components/AppIcon';
+import { EditIcon } from '@/components/AppIcon';
+import { AddIcon } from '@/components/AppIcon';
 import {
   useAccounts,
   useCreateAccountMutation,

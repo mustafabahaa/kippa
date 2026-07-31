@@ -1,9 +1,9 @@
 import { Box, alpha } from '@mui/material';
-import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
-import CreditCardIcon from '@mui/icons-material/CreditCard';
-import WorkIcon from '@mui/icons-material/Work';
-import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
-import TuneIcon from '@mui/icons-material/Tune';
+import { ReceiptLongIcon } from '@/components/AppIcon';
+import { CreditCardIcon } from '@/components/AppIcon';
+import { WorkIcon } from '@/components/AppIcon';
+import { SwapHorizIcon } from '@/components/AppIcon';
+import { TuneIcon } from '@/components/AppIcon';
 import { TransactionType } from '@/domain/financeTypes';
 
 interface TransactionIconProps {

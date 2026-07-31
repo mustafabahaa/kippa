@@ -1,6 +1,6 @@
 import { Box, Typography, LinearProgress, Stack, IconButton, Chip } from '@mui/material';
-import AcUnitIcon from '@mui/icons-material/AcUnit';
-import EditIcon from '@mui/icons-material/Edit';
+import { AcUnitIcon } from '@/components/AppIcon';
+import { EditIcon } from '@/components/AppIcon';
 import type { Card } from '@/domain/financeTypes';
 import type { CardSummary } from '@/libs/cardSelectors';
 import { Money } from '@/components/Money';
