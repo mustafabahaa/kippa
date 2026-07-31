@@ -106,7 +106,7 @@ export function FinancialOverviewCard({ variant }: { variant: 'income' | 'expens
             <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(24, 1fr)', gap: '4px' }}>
               {Array.from({ length: 24 }, (_, index) => {
                 const active = index < Math.round((meterPercent / 100) * 24);
-                return <Box key={index} sx={{ height: 64, minWidth: 4, borderRadius: '999px', bgcolor: active ? 'primary.main' : alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.14 : 0.075) }} />;
+                return <Box key={index} sx={{ height: 64, minWidth: 4, borderRadius: '999px', bgcolor: active ? 'secondary.main' : alpha(theme.palette.secondary.main, theme.palette.mode === 'dark' ? 0.15 : 0.12) }} />;
               })}
             </Box>
             <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mt: 1.5 }}>

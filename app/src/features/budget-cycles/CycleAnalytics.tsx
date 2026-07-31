@@ -246,8 +246,8 @@ export function CycleAnalytics() {
               sx={{ minHeight: 44, mb: 0.5 }}
             >
               {[
-                { label: 'Spent', color: theme.palette.primary.dark },
-                { label: 'Retained', color: theme.palette.primary.light },
+                { label: 'Spent', color: theme.palette.secondary.main },
+                { label: 'Retained', color: theme.palette.primary.dark },
                 { label: 'Plan space', color: alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.22 : 0.1) },
               ].map(item => (
                 <Stack key={item.label} direction="row" spacing={0.75} alignItems="center">
@@ -343,7 +343,7 @@ export function CycleAnalytics() {
                             bottom: 0,
                             height: `${spendHeight}%`,
                             minHeight: 4,
-                            bgcolor: 'primary.light',
+                            bgcolor: 'secondary.main',
                             borderRadius: '14px 14px 10px 10px',
                             transition: 'height 300ms ease',
                           }}

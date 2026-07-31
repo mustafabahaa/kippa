@@ -84,7 +84,7 @@ export function BudgetBreakdownCard() {
 
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
             {[
-              { label: 'Planned budget', value: totalPlanned, valueColor: 'text.primary', accent: theme.palette.primary.main, meta: `${data.categoryStatus.length} category allocations`, Icon: PaymentsIcon },
+              { label: 'Planned budget', value: totalPlanned, valueColor: 'text.primary', accent: theme.palette.secondary.main, meta: `${data.categoryStatus.length} category allocations`, Icon: PaymentsIcon },
               { label: 'Total spent', value: totalSpent, valueColor: totalSpent > totalPlanned ? 'error.main' : 'text.primary', accent: totalSpent > totalPlanned ? theme.palette.error.main : theme.palette.primary.main, meta: `${spentPercent}% of the cycle plan`, Icon: BarChartIcon },
               { label: totalRemaining < 0 ? 'Over budget' : 'Remaining', value: Math.abs(totalRemaining), valueColor: totalRemaining < 0 ? 'error.main' : 'success.main', accent: totalRemaining < 0 ? theme.palette.error.main : theme.palette.success.main, meta: totalRemaining < 0 ? 'Requires budget attention' : 'Available to spend', Icon: SavingsIcon },
             ].map(metric => (

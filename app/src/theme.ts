@@ -276,7 +276,6 @@ export function createAppTheme(mode: 'light' | 'dark'): Theme {
         lineHeight: '64px',
         fontWeight: 700,
         letterSpacing: '0px',
-        color: t.textPrimary,
       },
       h2: {
         fontFamily,
@@ -284,7 +283,6 @@ export function createAppTheme(mode: 'light' | 'dark'): Theme {
         lineHeight: '50px',
         fontWeight: 500,
         letterSpacing: '0px',
-        color: t.textPrimary,
       },
       h3: {
         fontFamily,
@@ -292,7 +290,6 @@ export function createAppTheme(mode: 'light' | 'dark'): Theme {
         lineHeight: '28px',
         fontWeight: 500,
         letterSpacing: '0px',
-        color: t.textPrimary,
       },
       body1: {
         fontFamily,
@@ -300,7 +297,6 @@ export function createAppTheme(mode: 'light' | 'dark'): Theme {
         lineHeight: '22px',
         fontWeight: 400,
         letterSpacing: '0px',
-        color: t.textSecondary,
       },
       body2: {
         fontFamily,
@@ -308,7 +304,6 @@ export function createAppTheme(mode: 'light' | 'dark'): Theme {
         lineHeight: '19px',
         fontWeight: 500,
         letterSpacing: '0px',
-        color: t.disabled,
       },
       button: {
         fontFamily,
@@ -325,6 +320,16 @@ export function createAppTheme(mode: 'light' | 'dark'): Theme {
     },
 
     components: {
+      // Typography must inherit the foreground of its surface. Hardcoding text
+      // colors per variant breaks contrast inside primary/error/secondary fills.
+      // Muted copy opts in explicitly with color="text.secondary" instead.
+      MuiTypography: {
+        styleOverrides: {
+          root: {
+            color: 'inherit',
+          },
+        },
+      },
       MuiCssBaseline: {
         styleOverrides: `
           html {

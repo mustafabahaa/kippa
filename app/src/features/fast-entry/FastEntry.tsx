@@ -10,6 +10,7 @@ import {
   Divider,
   Fab,
   InputAdornment,
+  Portal,
   Stack,
   Typography,
   Chip,
@@ -28,6 +29,7 @@ import { AccountBalanceIcon } from '@/components/AppIcon';
 import { SavingsIcon } from '@/components/AppIcon';
 import { PaymentsIcon } from '@/components/AppIcon';
 import { CheckCircleIcon } from '@/components/AppIcon';
+import { ReceiptLongIcon } from '@/components/AppIcon';
 import { SearchIcon } from '@/components/AppIcon';
 import { isToday, format } from 'date-fns';
 import {
@@ -48,6 +50,8 @@ export function FastEntry() {
   const { enqueueSnackbar } = useSnackbar();
   const { householdId, userProfile } = useAppContext();
   const baseCurrency = useHouseholdBaseCurrency();
+  const isSaveAnimationPreview = import.meta.env.DEV
+    && new URLSearchParams(window.location.search).get('preview-save-animation') === '1';
 
   const getAccountIcon = (type: string) => {
     const iconStyle = { fontSize: '14px', color: 'inherit' };
@@ -67,16 +71,23 @@ export function FastEntry() {
   const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
   const [categorySearch, setCategorySearch] = useState('');
   const [showSaveFeedback, setShowSaveFeedback] = useState(false);
+  const [saveFeedbackContent, setSaveFeedbackContent] = useState({
+    title: 'Entry logged',
+    amount: '',
+    category: '',
+    account: '',
+  });
   const saveFeedbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => () => {
     if (saveFeedbackTimerRef.current) clearTimeout(saveFeedbackTimerRef.current);
   }, []);
 
-  const triggerSaveFeedback = () => {
+  const triggerSaveFeedback = (title: string, amount: string, category: string, account: string) => {
     if (saveFeedbackTimerRef.current) clearTimeout(saveFeedbackTimerRef.current);
+    setSaveFeedbackContent({ title, amount, category, account });
     setShowSaveFeedback(true);
-    saveFeedbackTimerRef.current = setTimeout(() => setShowSaveFeedback(false), 620);
+    saveFeedbackTimerRef.current = setTimeout(() => setShowSaveFeedback(false), 1650);
   };
 
   // Transfer Specific States
@@ -220,6 +231,20 @@ export function FastEntry() {
   };
 
   const handleSave = async () => {
+    // Development-only visual QA: preview the success motion without validation
+    // or any transaction mutation. This branch is compiled out in production.
+    if (isSaveAnimationPreview) {
+      triggerSaveFeedback(
+        mode === 'expense' ? 'Expense logged' : mode === 'income' ? 'Income logged' : 'Transfer sent',
+        `${amountStr === '0' ? '250' : amountStr} ${selectedAccount?.currency ?? baseCurrency}`,
+        mode === 'transfer' ? 'Transfer' : selectedCategory?.name ?? 'Food & dining',
+        mode === 'transfer'
+          ? `${selectedAccount?.name ?? 'EGP Cash'} → ${toAccount?.name ?? 'EGP Bank'}`
+          : selectedAccount?.name ?? 'EGP Cash',
+      );
+      return;
+    }
+
     const amount = parseFloat(amountStr);
 
     if (isNaN(amount) || amount <= 0) {
@@ -257,7 +282,12 @@ export function FastEntry() {
             }
           ]
         });
-        triggerSaveFeedback();
+        triggerSaveFeedback(
+          'Expense logged',
+          `${amount} ${selectedAccount.currency}`,
+          selectedCategory?.name ?? 'Expense',
+          selectedAccount.name,
+        );
         localStorage.setItem('ledger_last_used_account', selectedAccount.id);
         enqueueSnackbar(`Saved! Logged expense of ${amount} ${selectedAccount.currency}`, { variant: 'success' });
         setAmountStr('0');
@@ -283,7 +313,12 @@ export function FastEntry() {
             }
           ]
         });
-        triggerSaveFeedback();
+        triggerSaveFeedback(
+          'Income logged',
+          `${amount} ${selectedAccount.currency}`,
+          selectedCategory?.name ?? 'Income',
+          selectedAccount.name,
+        );
         enqueueSnackbar(`Saved! Logged income of ${amount} ${selectedAccount.currency}`, { variant: 'success' });
         setAmountStr('0');
         setDescription('');
@@ -343,7 +378,12 @@ export function FastEntry() {
             }
           } : {}),
         });
-        triggerSaveFeedback();
+        triggerSaveFeedback(
+          'Transfer sent',
+          `${amount} ${selectedAccount.currency}`,
+          'Transfer',
+          `${selectedAccount.name} → ${toAccount.name}`,
+        );
         enqueueSnackbar('Saved transfer!', { variant: 'success' });
         setAmountStr('0');
         setToAmountStr('0');
@@ -704,31 +744,6 @@ export function FastEntry() {
                 {amountStr}
               </Typography>
             </Box>
-            {showSaveFeedback && (
-              <Stack
-                direction="row"
-                alignItems="center"
-                justifyContent="center"
-                spacing={1}
-                sx={{
-                  position: 'absolute',
-                  inset: 0,
-                  bgcolor: 'primary.main',
-                  color: 'primary.contrastText',
-                  pointerEvents: 'none',
-                  animation: 'fastEntrySaved 620ms ease-out both',
-                  '@keyframes fastEntrySaved': {
-                    '0%': { opacity: 0, transform: 'scale(0.96)' },
-                    '18%': { opacity: 1, transform: 'scale(1)' },
-                    '72%': { opacity: 1, transform: 'scale(1)' },
-                    '100%': { opacity: 0, transform: 'scale(1.02)' },
-                  },
-                }}
-              >
-                <CheckCircleIcon />
-                <Typography sx={{ fontSize: 16, fontWeight: 800 }}>Saved</Typography>
-              </Stack>
-            )}
           </Box>
 
           {/* Destination amount (cross-currency transfer only) */}
@@ -934,6 +949,214 @@ export function FastEntry() {
             </Button>
           </DialogActions>
         </Dialog>
+
+        <Portal>
+          {showSaveFeedback && (
+            <Box
+              role="status"
+              aria-live="polite"
+              aria-label="Entry saved"
+              onClick={() => setShowSaveFeedback(false)}
+              sx={{
+                '--save-origin-x': '50%',
+                '--save-origin-y': { xs: 'calc(100% - 122px)', lg: 'calc(100% - 96px)' },
+                position: 'fixed',
+                inset: 0,
+                zIndex: theme => theme.zIndex.modal + 2,
+                background: theme => `
+                  radial-gradient(circle at 50% 28%, ${alpha(theme.palette.common.white, 0.12)} 0%, transparent 38%),
+                  linear-gradient(155deg, ${theme.palette.primary.dark} 0%, ${theme.palette.primary.main} 100%)
+                `,
+                color: 'common.white',
+                pointerEvents: 'auto',
+                cursor: 'pointer',
+                overflow: 'hidden',
+                animation: 'fastEntrySendCover 1600ms cubic-bezier(0.22, 1, 0.36, 1) both',
+                '@keyframes fastEntrySendCover': {
+                  '0%': {
+                    opacity: 1,
+                    clipPath: 'circle(0 at var(--save-origin-x) var(--save-origin-y))',
+                  },
+                  '22%': {
+                    opacity: 1,
+                    clipPath: 'circle(150vmax at var(--save-origin-x) var(--save-origin-y))',
+                  },
+                  '90%': {
+                    opacity: 1,
+                    clipPath: 'circle(150vmax at var(--save-origin-x) var(--save-origin-y))',
+                  },
+                  '100%': {
+                    opacity: 0,
+                    clipPath: 'circle(150vmax at var(--save-origin-x) var(--save-origin-y))',
+                  },
+                },
+              }}
+            >
+              {[0, 1].map(ring => (
+                <Box
+                  key={ring}
+                  sx={{
+                    position: 'absolute',
+                    left: '50%',
+                    top: '50%',
+                    width: { xs: 220, sm: 320 },
+                    aspectRatio: '1',
+                    borderRadius: '50%',
+                    border: '1px solid',
+                    borderColor: theme => alpha(theme.palette.common.white, 0.2),
+                    animation: `fastEntryRing 720ms ${100 + ring * 90}ms ease-out both`,
+                    '@keyframes fastEntryRing': {
+                      '0%': { opacity: 0, transform: 'translate(-50%, -50%) scale(0.25)' },
+                      '22%': { opacity: 1 },
+                      '100%': { opacity: 0, transform: 'translate(-50%, -50%) scale(2.6)' },
+                    },
+                  }}
+                />
+              ))}
+
+              <Stack
+                alignItems="center"
+                spacing={0.5}
+                sx={{
+                  color: theme => theme.palette.common.white,
+                  position: 'absolute',
+                  left: '50%',
+                  top: '54%',
+                  width: 'min(84vw, 440px)',
+                  textAlign: 'center',
+                  animation: 'fastEntryCopy 1600ms cubic-bezier(0.22, 1, 0.36, 1) both',
+                  '@keyframes fastEntryCopy': {
+                    '0%': { transform: 'translate(-50%, 22px) scale(0.96)' },
+                    '32%': { transform: 'translate(-50%, 0) scale(1)' },
+                    '88%': { transform: 'translate(-50%, -4px) scale(1)' },
+                    '100%': { transform: 'translate(-50%, -18px) scale(0.98)' },
+                  },
+                }}
+              >
+                <Typography
+                  sx={{
+                    color: theme => theme.palette.common.white,
+                    fontSize: 14,
+                    lineHeight: 1.4,
+                    fontWeight: 700,
+                    textShadow: theme => `0 2px 18px ${alpha(theme.palette.common.white, 0.16)}`,
+                  }}
+                >
+                  {saveFeedbackContent.title}
+                </Typography>
+                <Typography
+                  sx={{
+                    color: theme => theme.palette.common.white,
+                    fontSize: { xs: 38, sm: 48 },
+                    lineHeight: 1.1,
+                    fontWeight: 800,
+                    letterSpacing: '-0.04em',
+                  }}
+                >
+                  {saveFeedbackContent.amount}
+                </Typography>
+                <Stack
+                  direction="row"
+                  alignItems="center"
+                  justifyContent="center"
+                  spacing={1}
+                  sx={{ width: '100%', pt: 0.5, color: theme => theme.palette.common.white }}
+                >
+                  <Typography noWrap sx={{ maxWidth: '42%', fontSize: 13, fontWeight: 650 }}>
+                    {saveFeedbackContent.category}
+                  </Typography>
+                  <Typography aria-hidden sx={{ fontSize: 12 }}>•</Typography>
+                  <Typography noWrap sx={{ maxWidth: '50%', fontSize: 13, fontWeight: 650 }}>
+                    {saveFeedbackContent.account}
+                  </Typography>
+                </Stack>
+                <Typography sx={{ pt: 1, fontSize: 11, fontWeight: 600, color: theme => theme.palette.common.white }}>
+                  Tap anywhere to continue
+                </Typography>
+              </Stack>
+
+              <Stack
+                alignItems="center"
+                sx={{
+                  position: 'absolute',
+                  left: 'var(--save-origin-x)',
+                  top: 'var(--save-origin-y)',
+                  animation: 'fastEntrySendIcon 1100ms cubic-bezier(0.22, 1, 0.36, 1) both',
+                  '@keyframes fastEntrySendIcon': {
+                    '0%': { opacity: 0, transform: 'translate(-50%, -50%) scale(0.42) rotate(10deg)' },
+                    '14%': { opacity: 1, transform: 'translate(-50%, -50%) scale(1) rotate(0deg)' },
+                    '62%': { opacity: 1, transform: 'translate(-50%, calc(-50% - 52vh)) scale(1.04) rotate(-4deg)' },
+                    '82%': { opacity: 1, transform: 'translate(-50%, calc(-50% - 58vh)) scale(0.92) rotate(0deg)' },
+                    '100%': { opacity: 0, transform: 'translate(-50%, calc(-50% - 64vh)) scale(0.72)' },
+                  },
+                }}
+              >
+                {[0, 1, 2].map(trail => (
+                  <Box
+                    key={trail}
+                    sx={{
+                      position: 'absolute',
+                      top: 124 + trail * 22,
+                      width: 11 - trail,
+                      height: 11 - trail,
+                      borderRadius: '50%',
+                      bgcolor: 'secondary.main',
+                      opacity: 0.68 - trail * 0.16,
+                      animation: `fastEntryTrail 260ms ${trail * 45}ms ease-in-out infinite alternate`,
+                      '@keyframes fastEntryTrail': {
+                        from: { transform: 'translateY(0) scale(0.75)' },
+                        to: { transform: 'translateY(8px) scale(1)' },
+                      },
+                    }}
+                  />
+                ))}
+                <Box
+                  sx={{
+                    width: { xs: 120, sm: 132 },
+                    height: { xs: 120, sm: 132 },
+                    borderRadius: '50%',
+                    display: 'grid',
+                    placeItems: 'center',
+                    bgcolor: 'secondary.main',
+                    color: 'secondary.contrastText',
+                    position: 'relative',
+                  }}
+                >
+                  <ReceiptLongIcon
+                    fontSize="inherit"
+                    sx={{
+                      fontSize: { xs: 72, sm: 80 },
+                      position: 'absolute',
+                      '& path, & circle, & rect, & line, & polyline': {
+                        strokeWidth: 1,
+                      },
+                      animation: 'fastEntryReceiptOut 1100ms ease-out both',
+                      '@keyframes fastEntryReceiptOut': {
+                        '0%, 45%': { opacity: 1, transform: 'scale(1) rotate(0deg)' },
+                        '62%, 100%': { opacity: 0, transform: 'scale(0.55) rotate(-18deg)' },
+                      },
+                    }}
+                  />
+                  <CheckCircleIcon
+                    fontSize="inherit"
+                    sx={{
+                      fontSize: { xs: 72, sm: 80 },
+                      position: 'absolute',
+                      '& path, & circle, & rect, & line, & polyline': {
+                        strokeWidth: 1,
+                      },
+                      animation: 'fastEntryCheckIn 1100ms cubic-bezier(0.22, 1, 0.36, 1) both',
+                      '@keyframes fastEntryCheckIn': {
+                        '0%, 48%': { opacity: 0, transform: 'scale(0.35) rotate(18deg)' },
+                        '68%, 100%': { opacity: 1, transform: 'scale(1) rotate(0deg)' },
+                      },
+                    }}
+                  />
+                </Box>
+              </Stack>
+            </Box>
+          )}
+        </Portal>
 
       </Stack>
     </Box>
