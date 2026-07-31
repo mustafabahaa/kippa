@@ -129,7 +129,6 @@ export function PendingTransactions() {
         accountId,
         destinationAccountId: selected.kind === 'transfer' ? destinationAccountId : undefined,
       });
-      enqueueSnackbar('Approved and added to your transactions', { variant: 'success' });
       setSelected(null);
       setConfirmDiscard(false);
     } catch (error) {
@@ -151,7 +150,7 @@ export function PendingTransactions() {
     }
     try {
       await discardMutation.mutateAsync({ householdId, pendingId: selected.id });
-      enqueueSnackbar('Pending item discarded', { variant: 'info' });
+      enqueueSnackbar('Pending item discarded', { variant: 'success' });
       setSelected(null);
       setConfirmDiscard(false);
     } catch (error) {
@@ -274,30 +273,28 @@ export function PendingTransactions() {
       )}
 
       <Dialog open={!!selected} onClose={closeReview} fullWidth maxWidth="xs">
-        <DialogTitle>
+        <DialogTitle sx={{ fontWeight: 'bold' }}>
           Review detected {selected?.kind}
           <Typography component="span" sx={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'text.secondary', mt: 0.5 }}>
             Nothing enters your ledger until you approve.
           </Typography>
         </DialogTitle>
-        <DialogContent dividers>
+        <DialogContent sx={{ pt: 1.5 }}>
           {selected && (
-            <Stack spacing={2.5} sx={{ py: 1 }}>
+            <Stack spacing={2.5}>
               <Box>
-                <Typography sx={{ fontSize: 12, fontWeight: 700, color: 'text.secondary', textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                  Detected amount
-                </Typography>
-                <Typography sx={{ fontSize: 34, lineHeight: 1.25, fontWeight: 800, mt: 0.5 }}>
+                <Typography sx={{ fontSize: 34, lineHeight: 1.25, fontWeight: 800 }}>
                   <Money amount={selected.amount} code={selected.currency} />
                 </Typography>
                 <Typography sx={{ fontSize: 13, color: 'text.secondary', mt: 0.5 }}>{selected.description}</Typography>
               </Box>
 
+              <Divider />
               <Box>
-                <Typography sx={{ fontSize: 12, fontWeight: 700, color: 'text.secondary', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                <Typography sx={{ fontSize: 12, fontWeight: 700, color: 'primary.main', textTransform: 'uppercase', letterSpacing: 1 }}>
                   Classification
                 </Typography>
-                <Typography sx={{ fontSize: 11, color: 'text.secondary', mb: 1.5 }}>
+                <Typography sx={{ fontSize: 11, color: 'text.secondary', mb: 1 }}>
                   A category is required. This is never guessed from the message.
                 </Typography>
                 <Stack spacing={2}>
@@ -324,11 +321,12 @@ export function PendingTransactions() {
                 </Stack>
               </Box>
 
+              <Divider />
               <Box>
-                <Typography sx={{ fontSize: 12, fontWeight: 700, color: 'text.secondary', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                <Typography sx={{ fontSize: 12, fontWeight: 700, color: 'primary.main', textTransform: 'uppercase', letterSpacing: 1 }}>
                   Bank message
                 </Typography>
-                <Typography sx={{ fontSize: 11, color: 'text.secondary', mb: 1.5 }}>Sensitive balances and references are removed.</Typography>
+                <Typography sx={{ fontSize: 11, color: 'text.secondary', mb: 1 }}>Sensitive balances and references are removed.</Typography>
                 <Typography sx={{ p: 1.5, borderRadius: 'control', bgcolor: 'action.hover', fontSize: 12, lineHeight: 1.6, color: 'text.secondary' }}>
                   {selected.messagePreview}
                 </Typography>
@@ -336,12 +334,13 @@ export function PendingTransactions() {
             </Stack>
           )}
         </DialogContent>
-        <DialogActions sx={{ justifyContent: 'space-between' }}>
-          <Button color="error" startIcon={<DeleteIcon />} onClick={discard} disabled={discardMutation.isPending}>
+        <DialogActions sx={{ px: 3, pb: 2.5 }}>
+          <Button color="inherit" startIcon={<DeleteIcon />} onClick={discard} disabled={discardMutation.isPending}>
             {confirmDiscard ? 'Discard permanently' : 'Discard'}
           </Button>
           <Button
             variant="contained"
+            sx={{ borderRadius: 12, boxShadow: 'none' }}
             startIcon={<CheckCircleIcon />}
             onClick={approve}
             disabled={!categoryId || !accountId || (selected?.kind === 'transfer' && !destinationAccountId) || approveMutation.isPending}
@@ -352,18 +351,19 @@ export function PendingTransactions() {
       </Dialog>
 
       <Dialog open={setupOpen} onClose={() => !setupBusy && setSetupOpen(false)} fullWidth maxWidth="xs">
-        <DialogTitle>
+        <DialogTitle sx={{ fontWeight: 'bold' }}>
           Connect iPhone messages
           <Typography component="span" sx={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'text.secondary', mt: 0.5 }}>
             Create a private, revocable connection for the Shortcut.
           </Typography>
         </DialogTitle>
-        <DialogContent dividers>
-          <Stack spacing={2.5} sx={{ py: 1 }}>
+        <DialogContent sx={{ pt: 1.5 }}>
+          <Stack spacing={2.5}>
             {credentials.length > 0 && (
               <Box>
-                <Typography sx={{ fontSize: 12, fontWeight: 700, color: 'text.secondary', textTransform: 'uppercase', letterSpacing: 0.5 }}>Existing connections</Typography>
-                <Typography sx={{ fontSize: 11, color: 'text.secondary', mb: 1.5 }}>Active credentials the Shortcut can use to send messages.</Typography>
+                <Typography sx={{ fontSize: 12, fontWeight: 700, color: 'primary.main', textTransform: 'uppercase', letterSpacing: 1 }}>Existing connections</Typography>
+                <Divider sx={{ mt: 1, mb: 1.5 }} />
+                <Typography sx={{ fontSize: 11, color: 'text.secondary', mb: 1 }}>Active credentials the Shortcut can use to send messages.</Typography>
                 <Stack spacing={1}>
                   {credentials.map((cred) => (
                     <Box key={cred.id} sx={{ p: 1.5, borderRadius: 'control', bgcolor: 'action.hover', display: 'flex', alignItems: 'center', gap: 1.5 }}>
@@ -386,8 +386,9 @@ export function PendingTransactions() {
               </Box>
             )}
             <Box>
-              <Typography sx={{ fontSize: 12, fontWeight: 700, color: 'text.secondary', textTransform: 'uppercase', letterSpacing: 0.5 }}>Connection</Typography>
-              <Typography sx={{ fontSize: 11, color: 'text.secondary', mb: 1.5 }}>The secret is shown once and never stored in readable form.</Typography>
+              <Typography sx={{ fontSize: 12, fontWeight: 700, color: 'primary.main', textTransform: 'uppercase', letterSpacing: 1 }}>Connection</Typography>
+              <Divider sx={{ mt: 1, mb: 1.5 }} />
+              <Typography sx={{ fontSize: 11, color: 'text.secondary', mb: 1 }}>The secret is shown once and never stored in readable form.</Typography>
               {generated ? (
                 <Stack spacing={1.5}>
                   {[
@@ -406,21 +407,22 @@ export function PendingTransactions() {
                   ))}
                 </Stack>
               ) : (
-                <Button variant="contained" onClick={createConnection} disabled={setupBusy}>
+                <Button variant="contained" sx={{ borderRadius: 12, boxShadow: 'none' }} onClick={createConnection} disabled={setupBusy}>
                   {setupBusy ? 'Creating…' : 'Create secure connection'}
                 </Button>
               )}
             </Box>
             <Box>
-              <Typography sx={{ fontSize: 12, fontWeight: 700, color: 'text.secondary', textTransform: 'uppercase', letterSpacing: 0.5 }}>Shortcut request</Typography>
-              <Typography sx={{ fontSize: 11, color: 'text.secondary', mb: 1.5 }}>POST JSON using the endpoint and Bearer token above.</Typography>
+              <Typography sx={{ fontSize: 12, fontWeight: 700, color: 'primary.main', textTransform: 'uppercase', letterSpacing: 1 }}>Shortcut request</Typography>
+              <Divider sx={{ mt: 1, mb: 1.5 }} />
+              <Typography sx={{ fontSize: 11, color: 'text.secondary', mb: 1 }}>POST JSON using the endpoint and Bearer token above.</Typography>
               <Typography component="pre" sx={{ m: 0, p: 1.5, borderRadius: 'control', bgcolor: 'action.hover', fontSize: 11, whiteSpace: 'pre-wrap' }}>
                 {'{\n  "message": "Shortcut Input",\n  "source": "ios-shortcut"\n}'}
               </Typography>
             </Box>
           </Stack>
         </DialogContent>
-        <DialogActions>
+        <DialogActions sx={{ px: 3, pb: 2.5 }}>
           <Button onClick={() => setSetupOpen(false)}>Close</Button>
         </DialogActions>
       </Dialog>
