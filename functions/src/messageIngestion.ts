@@ -1,0 +1,453 @@
+import { createHash, randomBytes, randomUUID, timingSafeEqual } from 'node:crypto';
+import { FieldValue, getFirestore } from 'firebase-admin/firestore';
+import { HttpsError, onCall, onRequest } from 'firebase-functions/v2/https';
+import type { Account, Card, Category, PendingFinancialMessage, UserProfile } from './types.js';
+import { buildMessagePreview, parseFinancialMessage, type ParsedFinancialMessage } from './messageIngestion/parser.js';
+import { buildMessagePayload, getTokensForUsers, sendToMany } from './sendToMany.js';
+
+type IngestionCredential = {
+  id: string;
+  ownerUid: string;
+  householdId: string;
+  label: string;
+  secretHash: string;
+  enabled: boolean;
+  createdAt: string;
+  lastUsedAt?: string | null;
+};
+
+type IngestionReceipt = {
+  id: string;
+  credentialId: string;
+  householdId: string;
+  state: 'pending' | 'approved' | 'discarded' | 'ignored';
+  pendingId?: string;
+  transactionId?: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+type IngestBody = {
+  message?: unknown;
+  source?: unknown;
+  idempotencyKey?: unknown;
+  receivedAt?: unknown;
+};
+
+const MAX_MESSAGE_LENGTH = 5_000;
+
+function sha256(value: string): string {
+  return createHash('sha256').update(value).digest('hex');
+}
+
+function cleanSource(value: unknown): string {
+  if (typeof value !== 'string') return 'ios-shortcut';
+  const cleaned = value.trim().toLowerCase().replace(/[^a-z0-9._-]/g, '-').slice(0, 64);
+  return cleaned || 'ios-shortcut';
+}
+
+function assertString(value: unknown, label: string, maxLength = 200): string {
+  if (typeof value !== 'string' || !value.trim()) {
+    throw new HttpsError('invalid-argument', `${label} is required.`);
+  }
+  if (value.length > maxLength) {
+    throw new HttpsError('invalid-argument', `${label} is too long.`);
+  }
+  return value.trim();
+}
+
+async function requireHouseholdMember(uid: string, householdId: string): Promise<UserProfile> {
+  const snapshot = await getFirestore().doc(`users/${uid}`).get();
+  const profile = snapshot.data() as UserProfile | undefined;
+  const memberships = profile?.householdIds ?? (profile?.householdId ? [profile.householdId] : []);
+  if (!profile || !memberships.includes(householdId)) {
+    throw new HttpsError('permission-denied', 'You are not a member of this household.');
+  }
+  return profile;
+}
+
+function credentialMatches(credential: IngestionCredential, suppliedSecret: string): boolean {
+  const expected = Buffer.from(credential.secretHash, 'hex');
+  const supplied = Buffer.from(sha256(suppliedSecret), 'hex');
+  return expected.length === supplied.length && timingSafeEqual(expected, supplied);
+}
+
+async function resolveSuggestions(
+  householdId: string,
+  parsed: ParsedFinancialMessage,
+): Promise<{ accountId?: string; destinationAccountId?: string }> {
+  const db = getFirestore();
+  const [accountsSnapshot, cardsSnapshot] = await Promise.all([
+    db.collection(`households/${householdId}/accounts`).get(),
+    db.collection(`households/${householdId}/cards`).get(),
+  ]);
+  const accounts = accountsSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as Account);
+  const cards = cardsSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as Card);
+  const activeAccounts = accounts.filter((account) => account.isActive && account.currency === parsed.currency);
+
+  const cardAccount = (hint: string | undefined, kind?: 'credit' | 'debit') => {
+    const card = cards.find((candidate) => candidate.isActive
+      && (!kind || candidate.kind === kind)
+      && !!hint
+      && candidate.last4 === hint);
+    return card?.parentAccountId;
+  };
+
+  let accountId: string | undefined;
+  if (parsed.accountKind === 'credit-card') {
+    accountId = cardAccount(parsed.accountHintLast4, 'credit');
+  } else {
+    accountId = cardAccount(parsed.accountHintLast4, 'debit');
+    if (!accountId) {
+      const running = activeAccounts.filter((account) => account.type === 'running');
+      if (running.length === 1) accountId = running[0].id;
+    }
+  }
+
+  let destinationAccountId: string | undefined;
+  if (parsed.destinationKind === 'cash') {
+    const cashAccounts = activeAccounts.filter((account) => account.type === 'cash');
+    if (cashAccounts.length === 1) destinationAccountId = cashAccounts[0].id;
+  } else if (parsed.destinationKind === 'credit-card') {
+    destinationAccountId = cardAccount(parsed.destinationHintLast4, 'credit');
+  }
+
+  return { accountId, destinationAccountId };
+}
+
+export const createMessageIngestionCredential = onCall(async (request) => {
+  const uid = request.auth?.uid;
+  if (!uid) throw new HttpsError('unauthenticated', 'Sign in required.');
+  const householdId = assertString((request.data as { householdId?: unknown })?.householdId, 'householdId');
+  const label = typeof (request.data as { label?: unknown })?.label === 'string'
+    ? (request.data as { label: string }).label.trim().slice(0, 80) || 'iPhone Shortcut'
+    : 'iPhone Shortcut';
+  await requireHouseholdMember(uid, householdId);
+
+  const id = randomUUID();
+  const secret = randomBytes(32).toString('base64url');
+  const now = new Date().toISOString();
+  const credential: IngestionCredential = {
+    id,
+    ownerUid: uid,
+    householdId,
+    label,
+    secretHash: sha256(secret),
+    enabled: true,
+    createdAt: now,
+    lastUsedAt: null,
+  };
+  await getFirestore().doc(`messageIngestionCredentials/${id}`).set(credential);
+
+  return {
+    credentialId: id,
+    token: `${id}.${secret}`,
+    endpoint: 'https://us-central1-YOUR_FIREBASE_PROJECT_ID.cloudfunctions.net/ingestFinancialMessage',
+  };
+});
+
+export const listMessageIngestionCredentials = onCall(async (request) => {
+  const uid = request.auth?.uid;
+  if (!uid) throw new HttpsError('unauthenticated', 'Sign in required.');
+  const householdId = assertString((request.data as { householdId?: unknown })?.householdId, 'householdId');
+  await requireHouseholdMember(uid, householdId);
+  const snapshot = await getFirestore().collection('messageIngestionCredentials')
+    .where('ownerUid', '==', uid)
+    .get();
+  return {
+    credentials: snapshot.docs.filter((doc) => {
+      const credential = doc.data() as IngestionCredential;
+      return credential.householdId === householdId;
+    }).map((doc) => {
+      const credential = doc.data() as IngestionCredential;
+      return {
+        id: credential.id,
+        label: credential.label,
+        enabled: credential.enabled,
+        createdAt: credential.createdAt,
+        lastUsedAt: credential.lastUsedAt ?? null,
+      };
+    }),
+  };
+});
+
+export const revokeMessageIngestionCredential = onCall(async (request) => {
+  const uid = request.auth?.uid;
+  if (!uid) throw new HttpsError('unauthenticated', 'Sign in required.');
+  const credentialId = assertString((request.data as { credentialId?: unknown })?.credentialId, 'credentialId');
+  const ref = getFirestore().doc(`messageIngestionCredentials/${credentialId}`);
+  const snapshot = await ref.get();
+  const credential = snapshot.data() as IngestionCredential | undefined;
+  if (!credential || credential.ownerUid !== uid) throw new HttpsError('not-found', 'Connection not found.');
+  await ref.set({ enabled: false, revokedAt: new Date().toISOString() }, { merge: true });
+  return { revoked: true };
+});
+
+export const ingestFinancialMessage = onRequest(
+  { cors: false, maxInstances: 10, timeoutSeconds: 30 },
+  async (request, response) => {
+    if (request.method !== 'POST') {
+      response.set('Allow', 'POST').status(405).json({ error: 'method_not_allowed' });
+      return;
+    }
+    const authHeader = request.get('authorization') ?? '';
+    const token = authHeader.match(/^Bearer\s+(.+)$/i)?.[1];
+    const [credentialId, suppliedSecret] = token?.split('.', 2) ?? [];
+    if (!credentialId || !suppliedSecret) {
+      response.status(401).json({ error: 'unauthorized' });
+      return;
+    }
+
+    const db = getFirestore();
+    const credentialRef = db.doc(`messageIngestionCredentials/${credentialId}`);
+    const credentialSnapshot = await credentialRef.get();
+    const credential = credentialSnapshot.data() as IngestionCredential | undefined;
+    if (!credential || !credential.enabled || !credentialMatches(credential, suppliedSecret)) {
+      response.status(401).json({ error: 'unauthorized' });
+      return;
+    }
+
+    try {
+      await requireHouseholdMember(credential.ownerUid, credential.householdId);
+    } catch {
+      response.status(403).json({ error: 'membership_revoked' });
+      return;
+    }
+
+    const body = (request.body ?? {}) as IngestBody;
+    if (typeof body.message !== 'string' || !body.message.trim() || body.message.length > MAX_MESSAGE_LENGTH) {
+      response.status(400).json({ error: 'invalid_message' });
+      return;
+    }
+    const source = cleanSource(body.source);
+    const parsedResult = parseFinancialMessage(body.message, source);
+    const dedupeMaterial = typeof body.idempotencyKey === 'string' && body.idempotencyKey.trim()
+      ? body.idempotencyKey.trim().slice(0, 256)
+      : body.message.replace(/\s+/g, ' ').trim();
+    const receiptId = sha256(`${credentialId}\0${dedupeMaterial}`);
+    const receiptRef = db.doc(`messageIngestionReceipts/${receiptId}`);
+    const existingReceipt = await receiptRef.get();
+    if (existingReceipt.exists) {
+      const existing = existingReceipt.data() as IngestionReceipt;
+      response.status(200).json({ accepted: existing.state === 'pending', duplicate: true, state: existing.state, pendingId: existing.pendingId ?? null });
+      return;
+    }
+
+    const now = new Date().toISOString();
+    if (parsedResult.outcome === 'notification') {
+      const receipt: IngestionReceipt = {
+        id: receiptId,
+        credentialId,
+        householdId: credential.householdId,
+        state: 'ignored',
+        createdAt: now,
+        updatedAt: now,
+      };
+      await Promise.all([
+        receiptRef.set(receipt),
+        credentialRef.set({ lastUsedAt: now }, { merge: true }),
+      ]);
+      const tokens = await getTokensForUsers(credential.householdId, [credential.ownerUid]);
+      await sendToMany(
+        credential.householdId,
+        tokens,
+        buildMessagePayload({
+          type: 'card_payment_detected',
+          title: parsedResult.title,
+          body: parsedResult.message,
+          householdId: credential.householdId,
+          deepLink: parsedResult.deepLink,
+        }),
+      ).catch((error) => console.error('Could not send card-payment notification', error));
+      response.status(200).json({ accepted: false, notificationSent: true });
+      return;
+    }
+
+    if (parsedResult.outcome !== 'matched') {
+      const receipt: IngestionReceipt = {
+        id: receiptId,
+        credentialId,
+        householdId: credential.householdId,
+        state: 'ignored',
+        createdAt: now,
+        updatedAt: now,
+      };
+      await Promise.all([
+        receiptRef.set(receipt),
+        credentialRef.set({ lastUsedAt: now }, { merge: true }),
+      ]);
+      response.status(200).json({ accepted: false, ignored: true, reason: parsedResult.reason });
+      return;
+    }
+
+    const suggestions = await resolveSuggestions(credential.householdId, parsedResult.parsed);
+    const pending: PendingFinancialMessage = {
+      id: receiptId,
+      householdId: credential.householdId,
+      receivedBy: credential.ownerUid,
+      kind: parsedResult.parsed.kind,
+      source,
+      provider: parsedResult.parsed.provider,
+      amount: parsedResult.parsed.amount,
+      currency: parsedResult.parsed.currency,
+      date: parsedResult.parsed.date,
+      description: parsedResult.parsed.description,
+      counterparty: parsedResult.parsed.counterparty ?? null,
+      messagePreview: buildMessagePreview(body.message),
+      accountHintLast4: parsedResult.parsed.accountHintLast4 ?? null,
+      destinationHintLast4: parsedResult.parsed.destinationHintLast4 ?? null,
+      suggestedAccountId: suggestions.accountId ?? null,
+      suggestedDestinationAccountId: suggestions.destinationAccountId ?? null,
+      createdAt: now,
+      status: 'pending',
+    };
+    const receipt: IngestionReceipt = {
+      id: receiptId,
+      credentialId,
+      householdId: credential.householdId,
+      state: 'pending',
+      pendingId: receiptId,
+      createdAt: now,
+      updatedAt: now,
+    };
+    const batch = db.batch();
+    batch.create(receiptRef, receipt);
+    batch.create(db.doc(`households/${credential.householdId}/pendingFinancialMessages/${receiptId}`), pending);
+    batch.set(credentialRef, { lastUsedAt: now }, { merge: true });
+    await batch.commit();
+    const tokens = await getTokensForUsers(credential.householdId, [credential.ownerUid]);
+    await sendToMany(
+      credential.householdId,
+      tokens,
+      buildMessagePayload({
+        type: 'pending_financial_message',
+        title: `Review ${pending.kind}`,
+        body: `${pending.amount} ${pending.currency} · ${pending.description}`,
+        householdId: credential.householdId,
+        deepLink: '/pending',
+      }),
+    ).catch((error) => console.error('Could not send pending-message notification', error));
+    response.status(202).json({ accepted: true, pendingId: receiptId, kind: pending.kind });
+  },
+);
+
+export const approvePendingFinancialMessage = onCall(async (request) => {
+  const uid = request.auth?.uid;
+  if (!uid) throw new HttpsError('unauthenticated', 'Sign in required.');
+  const data = request.data as {
+    householdId?: unknown;
+    pendingId?: unknown;
+    categoryId?: unknown;
+    accountId?: unknown;
+    destinationAccountId?: unknown;
+  };
+  const householdId = assertString(data.householdId, 'householdId');
+  const pendingId = assertString(data.pendingId, 'pendingId');
+  const categoryId = assertString(data.categoryId, 'categoryId');
+  const accountId = assertString(data.accountId, 'accountId');
+  const destinationAccountId = typeof data.destinationAccountId === 'string' ? data.destinationAccountId.trim() : '';
+  const profile = await requireHouseholdMember(uid, householdId);
+  const db = getFirestore();
+  const pendingRef = db.doc(`households/${householdId}/pendingFinancialMessages/${pendingId}`);
+  const transactionId = `import_${pendingId}`;
+  const transactionRef = db.doc(`households/${householdId}/transactions/${transactionId}`);
+
+  const cycleSnapshot = await db.collection(`households/${householdId}/budgetCycles`)
+    .where('status', '==', 'open').limit(1).get();
+  const activeCycleId = cycleSnapshot.empty ? null : cycleSnapshot.docs[0].id;
+
+  await db.runTransaction(async (transaction) => {
+    const [pendingSnapshot, categorySnapshot, accountSnapshot, existingTransaction] = await Promise.all([
+      transaction.get(pendingRef),
+      transaction.get(db.doc(`households/${householdId}/categories/${categoryId}`)),
+      transaction.get(db.doc(`households/${householdId}/accounts/${accountId}`)),
+      transaction.get(transactionRef),
+    ]);
+    if (existingTransaction.exists) return;
+    if (!pendingSnapshot.exists) throw new HttpsError('not-found', 'Pending item not found.');
+    const pending = pendingSnapshot.data() as PendingFinancialMessage;
+    const category = categorySnapshot.data() as Category | undefined;
+    const account = accountSnapshot.data() as Account | undefined;
+    if (!category?.isActive) throw new HttpsError('failed-precondition', 'Choose an active category.');
+    if (pending.kind !== 'transfer' && category.type !== pending.kind) {
+      throw new HttpsError('failed-precondition', `Choose an ${pending.kind} category.`);
+    }
+    if (!account?.isActive || account.currency !== pending.currency) {
+      throw new HttpsError('failed-precondition', 'Choose an active account in the message currency.');
+    }
+
+    let destinationAccount: Account | undefined;
+    if (pending.kind === 'transfer') {
+      if (!destinationAccountId) throw new HttpsError('invalid-argument', 'Destination account is required.');
+      const destinationSnapshot = await transaction.get(db.doc(`households/${householdId}/accounts/${destinationAccountId}`));
+      destinationAccount = destinationSnapshot.data() as Account | undefined;
+      if (!destinationAccount?.isActive || destinationAccount.currency !== pending.currency || destinationAccount.id === account.id) {
+        throw new HttpsError('failed-precondition', 'Choose a different active destination account in the same currency.');
+      }
+    }
+
+    const now = new Date().toISOString();
+    transaction.create(transactionRef, {
+      id: transactionId,
+      householdId,
+      type: pending.kind,
+      date: pending.date,
+      description: pending.description,
+      categoryId,
+      budgetCycleId: activeCycleId,
+      createdBy: uid,
+      createdAt: now,
+      updatedAt: now,
+      status: 'posted',
+      importedFrom: { kind: 'financial-message', pendingId, provider: pending.provider, source: pending.source },
+    });
+    transaction.create(db.doc(`households/${householdId}/ledgerLines/${transactionId}_source`), {
+      id: `${transactionId}_source`, householdId, transactionId, accountId,
+      signedAmount: pending.kind === 'income' ? pending.amount : -pending.amount,
+      currency: pending.currency, createdAt: now,
+    });
+    if (pending.kind === 'transfer' && destinationAccount) {
+      transaction.create(db.doc(`households/${householdId}/ledgerLines/${transactionId}_destination`), {
+        id: `${transactionId}_destination`, householdId, transactionId,
+        accountId: destinationAccount.id, signedAmount: pending.amount,
+        currency: pending.currency, createdAt: now,
+      });
+    }
+    transaction.create(db.doc(`households/${householdId}/auditLog/${transactionId}`), {
+      id: transactionId,
+      householdId,
+      userId: uid,
+      userDisplayName: profile.displayName || 'User',
+      userPhotoURL: profile.photoURL ?? null,
+      action: 'transaction_created',
+      summary: `${profile.displayName || 'User'} approved imported ${pending.kind}: ${pending.amount} ${pending.currency} - ${pending.description}`,
+      details: { transactionId, type: pending.kind, amount: pending.amount, currency: pending.currency, imported: true },
+      createdAt: now,
+    });
+    transaction.set(db.doc(`messageIngestionReceipts/${pendingId}`), {
+      state: 'approved', transactionId, updatedAt: now,
+    }, { merge: true });
+    transaction.delete(pendingRef);
+  });
+
+  return { transactionId };
+});
+
+export const discardPendingFinancialMessage = onCall(async (request) => {
+  const uid = request.auth?.uid;
+  if (!uid) throw new HttpsError('unauthenticated', 'Sign in required.');
+  const householdId = assertString((request.data as { householdId?: unknown })?.householdId, 'householdId');
+  const pendingId = assertString((request.data as { pendingId?: unknown })?.pendingId, 'pendingId');
+  await requireHouseholdMember(uid, householdId);
+  const db = getFirestore();
+  const pendingRef = db.doc(`households/${householdId}/pendingFinancialMessages/${pendingId}`);
+  await db.runTransaction(async (transaction) => {
+    const pending = await transaction.get(pendingRef);
+    if (!pending.exists) return;
+    transaction.delete(pendingRef);
+    transaction.set(db.doc(`messageIngestionReceipts/${pendingId}`), {
+      state: 'discarded', updatedAt: new Date().toISOString(), rawMessage: FieldValue.delete(),
+    }, { merge: true });
+  });
+  return { discarded: true };
+});

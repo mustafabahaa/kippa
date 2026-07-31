@@ -103,6 +103,26 @@ export interface Household {
   createdBy: string;
 }
 
+export interface Account {
+  id: string;
+  householdId: string;
+  name: string;
+  type: 'running' | 'savings' | 'cash' | 'wallet' | 'credit' | 'adjustment';
+  currency: string;
+  isActive: boolean;
+  sortOrder: number;
+  createdAt: string;
+}
+
+export interface Category {
+  id: string;
+  householdId: string;
+  name: string;
+  type: 'income' | 'expense';
+  isActive: boolean;
+  createdAt: string;
+}
+
 export type JoinStatus = 'pending' | 'approved' | 'rejected';
 
 export interface JoinRequest {
@@ -114,4 +134,27 @@ export interface JoinRequest {
   requestedAt: number;
   decidedAt?: number;
   decidedBy?: string;
+}
+
+export type PendingTransactionKind = 'expense' | 'income' | 'transfer';
+
+export interface PendingFinancialMessage {
+  id: string;
+  householdId: string;
+  receivedBy: string;
+  kind: PendingTransactionKind;
+  source: string;
+  provider: string;
+  amount: number;
+  currency: string;
+  date: string;
+  description: string;
+  counterparty?: string | null;
+  messagePreview: string;
+  accountHintLast4?: string | null;
+  destinationHintLast4?: string | null;
+  suggestedAccountId?: string | null;
+  suggestedDestinationAccountId?: string | null;
+  createdAt: string;
+  status: 'pending';
 }

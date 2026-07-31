@@ -7,7 +7,9 @@ export type NotificationType =
   | 'category_warning'
   | 'daily_reminder'
   | 'card_expiry'
-  | 'household_join';
+  | 'household_join'
+  | 'pending_financial_message'
+  | 'card_payment_detected';
 
 export interface PayloadInput {
   type: NotificationType;

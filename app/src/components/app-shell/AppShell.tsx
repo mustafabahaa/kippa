@@ -15,6 +15,7 @@ const PAGE_TITLES: Record<string, string> = {
   '/reconciliation': 'Reconciliation',
   '/cycles': 'Budget Cycles',
   '/transactions': 'Transactions',
+  '/pending': 'Pending Review',
   '/activity': 'Activity Log',
   '/accounts': 'Bank Accounts',
   '/household': 'Household',

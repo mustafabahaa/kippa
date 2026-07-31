@@ -22,8 +22,17 @@ service cloud.firestore {
     match /households/{householdId} {
       // Default: only members can read/write household data.
       // (notificationSettings, fcmTokens, accounts, transactions, etc.)
-      match /{document=**} {
-        allow read, write: if isHouseholdMember(householdId);
+      match /pendingFinancialMessages/{pendingId} {
+        allow read: if isHouseholdMember(householdId);
+        allow write: if false;
+      }
+
+      // Direct household collections remain member-managed. Pending message
+      // records are excluded because approval must be server-validated and
+      // ledger writes must be atomic.
+      match /{collectionName}/{documentId} {
+        allow read, write: if collectionName != 'pendingFinancialMessages'
+          && isHouseholdMember(householdId);
       }
 
       // Household info is readable by any signed-in user (so joiners can
@@ -48,6 +57,16 @@ service cloud.firestore {
           && request.resource.data.status == 'pending';
         allow update, delete: if false;
       }
+    }
+
+    // Shortcut credentials and deduplication receipts are server-only. The
+    // client sees only redacted credential summaries through callable functions.
+    match /messageIngestionCredentials/{credentialId} {
+      allow read, write: if false;
+    }
+
+    match /messageIngestionReceipts/{receiptId} {
+      allow read, write: if false;
     }
 
     match /users/{userId} {

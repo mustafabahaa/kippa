@@ -259,3 +259,32 @@ export type AuditLogEntry = {
   details?: Record<string, any>;
   createdAt: string;
 };
+
+export type PendingFinancialMessage = {
+  id: string;
+  householdId: string;
+  receivedBy: string;
+  kind: 'expense' | 'income' | 'transfer';
+  source: string;
+  provider: string;
+  amount: number;
+  currency: CurrencyCode;
+  date: string;
+  description: string;
+  counterparty?: string | null;
+  messagePreview: string;
+  accountHintLast4?: string | null;
+  destinationHintLast4?: string | null;
+  suggestedAccountId?: string | null;
+  suggestedDestinationAccountId?: string | null;
+  createdAt: string;
+  status: 'pending';
+};
+
+export type MessageIngestionCredential = {
+  id: string;
+  label: string;
+  enabled: boolean;
+  createdAt: string;
+  lastUsedAt?: string | null;
+};

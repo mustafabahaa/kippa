@@ -11,3 +11,11 @@ export {
   leaveHousehold,
   listHouseholdMembers,
 } from './householdMemberships.js';
+export {
+  approvePendingFinancialMessage,
+  createMessageIngestionCredential,
+  discardPendingFinancialMessage,
+  ingestFinancialMessage,
+  listMessageIngestionCredentials,
+  revokeMessageIngestionCredential,
+} from './messageIngestion.js';

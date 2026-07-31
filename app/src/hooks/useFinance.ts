@@ -5,6 +5,7 @@ import { cyclesLib } from '@/libs/cycles';
 import { transactionsLib } from '@/libs/transactions';
 import { cardsLib, type CardInput } from '@/libs/cards';
 import { auditLogLib } from '@/libs/auditLog';
+import { messageIngestionLib } from '@/libs/messageIngestion';
 import { authLib } from '@/libs/auth';
 import { currencyLib } from '@/libs/currency';
 import { detectBaseCurrency } from '@/libs/currencyMeta';
@@ -88,6 +89,38 @@ export function useTransactions(householdId: string, cycleId?: string) {
     queryKey: ['transactions', householdId, cycleId],
     queryFn: () => ledgerLib.getTransactions(householdId, cycleId),
     enabled: !!householdId,
+  });
+}
+
+export function usePendingFinancialMessages(householdId: string) {
+  return useQuery({
+    queryKey: ['pendingFinancialMessages', householdId],
+    queryFn: () => messageIngestionLib.getPending(householdId),
+    enabled: !!householdId,
+    refetchInterval: 30_000,
+  });
+}
+
+export function useApprovePendingFinancialMessageMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: messageIngestionLib.approve,
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['pendingFinancialMessages', variables.householdId] });
+      queryClient.invalidateQueries({ queryKey: ['transactions', variables.householdId] });
+      queryClient.invalidateQueries({ queryKey: ['ledgerLines', variables.householdId] });
+    },
+  });
+}
+
+export function useDiscardPendingFinancialMessageMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ householdId, pendingId }: { householdId: string; pendingId: string }) =>
+      messageIngestionLib.discard(householdId, pendingId),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['pendingFinancialMessages', variables.householdId] });
+    },
   });
 }
 

@@ -1,0 +1,162 @@
+export type ParsedFinancialMessage = {
+  kind: 'expense' | 'income' | 'transfer';
+  provider: string;
+  amount: number;
+  currency: string;
+  date: string;
+  description: string;
+  counterparty?: string;
+  accountHintLast4?: string;
+  destinationHintLast4?: string;
+  accountKind: 'bank' | 'credit-card';
+  destinationKind?: 'cash' | 'credit-card';
+};
+
+export type ParseResult =
+  | { outcome: 'matched'; parsed: ParsedFinancialMessage }
+  | { outcome: 'notification'; title: string; message: string; deepLink: string }
+  | { outcome: 'ignored'; reason: string }
+  | { outcome: 'unsupported'; reason: string };
+
+const MONTHS: Record<string, string> = {
+  JAN: '01', FEB: '02', MAR: '03', APR: '04', MAY: '05', JUN: '06',
+  JUL: '07', AUG: '08', SEP: '09', OCT: '10', NOV: '11', DEC: '12',
+};
+
+function amount(value: string): number {
+  return Number(value.replace(/,/g, ''));
+}
+
+function compactDate(value: string): string {
+  const match = value.toUpperCase().match(/^(\d{2})([A-Z]{3})(\d{2})$/);
+  if (!match || !MONTHS[match[2]]) return new Date().toISOString().slice(0, 10);
+  return `20${match[3]}-${MONTHS[match[2]]}-${match[1]}`;
+}
+
+function numericDate(value: string): string {
+  const match = value.match(/^(\d{2})[-/](\d{2})[-/](\d{4})$/);
+  return match ? `${match[3]}-${match[2]}-${match[1]}` : new Date().toISOString().slice(0, 10);
+}
+
+function last4(value?: string): string | undefined {
+  return value?.replace(/\D/g, '').slice(-4) || undefined;
+}
+
+function cleanParty(value: string): string {
+  return value.replace(/\s+/g, ' ').replace(/[.\s]+$/, '').trim();
+}
+
+/**
+ * Removes balances, references and exact account numbers from the copy shown
+ * in the review UI. The complete message is parsed in memory but is never
+ * persisted.
+ */
+export function buildMessagePreview(raw: string): string {
+  return raw
+    .replace(/\b\d{3}-\d{3}\*{2,}-\d{3}\b/g, '••• account')
+    .replace(/\*{3,}\d{3,4}/g, '••••')
+    .replace(/(?:Your available (?:balance|limit) is|with reference)\s+[^.]+\.?/gi, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 280);
+}
+
+export function parseFinancialMessage(raw: string, source = 'sms'): ParseResult {
+  const text = raw.replace(/[\u2013\u2014]/g, '-').replace(/\s+/g, ' ').trim();
+  if (!text) return { outcome: 'unsupported', reason: 'Message is empty.' };
+
+  if (/statement date|minimum amount due|min\.?\s*amt due|total amt due/i.test(text)) {
+    return { outcome: 'ignored', reason: 'Card statement alerts do not create transactions.' };
+  }
+
+  const provider = /HSBC/i.test(text) ? 'hsbc' : source.toLowerCase();
+
+  const debitPurchase = text.match(
+    /From HSBC:\s*(\d{2}[A-Z]{3}\d{2})\s+(.+?)\s+Purchase from\s+([^\s]+)\s+([A-Z]{3})\s+([\d,]+(?:\.\d{1,2})?)-/i,
+  );
+  if (debitPurchase) {
+    return {
+      outcome: 'matched',
+      parsed: {
+        kind: 'expense', provider, date: compactDate(debitPurchase[1]),
+        description: cleanParty(debitPurchase[2]), counterparty: cleanParty(debitPurchase[2]),
+        accountHintLast4: last4(debitPurchase[3]), accountKind: 'bank',
+        currency: debitPurchase[4].toUpperCase(), amount: amount(debitPurchase[5]),
+      },
+    };
+  }
+
+  const atmWithdrawal = text.match(
+    /From HSBC:\s*(\d{2}[A-Z]{3}\d{2})\s+ATM Cash Withdrawal from\s+([^\s]+)\s+([A-Z]{3})\s+([\d,]+(?:\.\d{1,2})?)-/i,
+  );
+  if (atmWithdrawal) {
+    return {
+      outcome: 'matched',
+      parsed: {
+        kind: 'transfer', provider, date: compactDate(atmWithdrawal[1]),
+        description: 'ATM cash withdrawal', counterparty: 'Cash',
+        accountHintLast4: last4(atmWithdrawal[2]), accountKind: 'bank', destinationKind: 'cash',
+        currency: atmWithdrawal[3].toUpperCase(), amount: amount(atmWithdrawal[4]),
+      },
+    };
+  }
+
+  const creditPurchase = text.match(
+    /(?:Your|HSBC) Credit Card ending (?:with\s*)?\*{3}\s*(\d{4}).*?used for\s+([A-Z]{3})\s+([\d,]+(?:\.\d{1,2})?)\s+on\s+(\d{2}\/\d{2}\/\d{4})\s+at\s+(.+?)(?:\.\s*Your available limit|$)/i,
+  );
+  if (creditPurchase) {
+    return {
+      outcome: 'matched',
+      parsed: {
+        kind: 'expense', provider, accountKind: 'credit-card', accountHintLast4: creditPurchase[1],
+        currency: creditPurchase[2].toUpperCase(), amount: amount(creditPurchase[3]),
+        date: numericDate(creditPurchase[4]), description: cleanParty(creditPurchase[5]),
+        counterparty: cleanParty(creditPurchase[5]),
+      },
+    };
+  }
+
+  const ipnInward = text.match(
+    /(?:HSBC Account\s*)?\*+(\d{4})\s+was credited with IPN inward transfer for\s+([A-Z]{3})\s+([\d,]+(?:\.\d{1,2})?)\s+on\s+(\d{2}-\d{2}-\d{4})(?:\s+\d{2}:\d{2})?\s+from\s+(.+?)\s+with reference/i,
+  );
+  if (ipnInward) {
+    return {
+      outcome: 'matched',
+      parsed: {
+        kind: 'income', provider, accountKind: 'bank', accountHintLast4: ipnInward[1],
+        currency: ipnInward[2].toUpperCase(), amount: amount(ipnInward[3]),
+        date: numericDate(ipnInward[4]), description: `Transfer from ${cleanParty(ipnInward[5])}`,
+        counterparty: cleanParty(ipnInward[5]),
+      },
+    };
+  }
+
+  const ipnOutward = text.match(
+    /(?:Your\s+)?HSBC Account\s*\*+(\d{4})\s+was debited with IPN outward transfer for\s+([A-Z]{3})\s+([\d,]+(?:\.\d{1,2})?)\s+on\s+(\d{2}-\d{2}-\d{4})(?:\s+\d{2}:\d{2})?\s+to\s+(.+?)\s+with reference/i,
+  );
+  if (ipnOutward) {
+    return {
+      outcome: 'matched',
+      parsed: {
+        kind: 'expense', provider, accountKind: 'bank', accountHintLast4: ipnOutward[1],
+        currency: ipnOutward[2].toUpperCase(), amount: amount(ipnOutward[3]),
+        date: numericDate(ipnOutward[4]), description: `Transfer to ${cleanParty(ipnOutward[5])}`,
+        counterparty: cleanParty(ipnOutward[5]),
+      },
+    };
+  }
+
+  const cardPayment = text.match(
+    /Credit Card ending (?:with\s*)?\*{3}\s*(\d{4}).*?(?:credited with|payment (?:of )?(?:was )?received)\s+([A-Z]{3})\s+([\d,]+(?:\.\d{1,2})?)/i,
+  );
+  if (cardPayment) {
+    return {
+      outcome: 'notification',
+      title: 'Credit-card payment detected',
+      message: `${amount(cardPayment[3])} ${cardPayment[2].toUpperCase()} reached card •${cardPayment[1]}. Match it to the charges you paid.`,
+      deepLink: '/accounts',
+    };
+  }
+
+  return { outcome: 'unsupported', reason: 'No supported financial transaction was found.' };
+}

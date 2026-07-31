@@ -43,6 +43,7 @@ const menuItems: NavItem[] = [
     icon: ReceiptLongIcon,
     children: [
       { label: 'All transactions', path: '/transactions' },
+      { label: 'Pending review', path: '/pending' },
       { label: 'Expenses', path: '/transactions?type=expense' },
       { label: 'Income', path: '/transactions?type=income' },
       { label: 'Transfers', path: '/transactions?type=transfer' },
