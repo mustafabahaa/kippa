@@ -20,7 +20,7 @@ export default function AppBackground() {
           inset: 0,
           zIndex: 0,
           pointerEvents: 'none',
-          opacity: 0.5,
+          opacity: 0.12,
         }}
       >
         <LightVeil
@@ -42,7 +42,7 @@ export default function AppBackground() {
         inset: 0,
         zIndex: 0,
         pointerEvents: 'none',
-        opacity: 0.38,
+        opacity: 0.12,
       }}
     >
       <Aurora

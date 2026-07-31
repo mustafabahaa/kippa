@@ -170,9 +170,9 @@ function AddCardDialogInner({ preselectAccountId, onClose }: { preselectAccountI
                       py: 1.25,
                       color: 'text.secondary',
                       '&.Mui-selected': {
-                        bgcolor: 'primary.main',
-                        color: '#fff',
-                        borderColor: 'primary.main',
+                        bgcolor: 'secondary.main',
+                        color: 'secondary.contrastText',
+                        borderColor: 'secondary.main',
                         '&:hover': { bgcolor: 'primary.dark' },
                       },
                     },

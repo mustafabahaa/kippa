@@ -10,8 +10,8 @@ export function HeaderSection() {
 
   return (
     <PageHeader
-      title="Household Dashboard"
-      subtitle={`${householdName} • Cycle: ${activeCycle ? activeCycle.name : 'No active cycle'}`}
+      title="Dashboard"
+      subtitle={`Keep track of ${householdName}${activeCycle ? ` · ${activeCycle.name}` : ''}`}
     />
   );
 }

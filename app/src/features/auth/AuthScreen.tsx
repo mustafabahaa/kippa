@@ -319,58 +319,49 @@ export function AuthScreen() {
     );
   }
 
-  // Google Sign In Card
+  // Welcome / Google sign in screen — follows the supplied finance-app
+  // reference while retaining the existing authentication flow.
   return (
-    <Box sx={{ 
-      minHeight: '100vh', 
-      display: 'flex', 
-      flexDirection: 'column',
-      alignItems: 'center', 
-      justifyContent: 'center',
-      bgcolor: 'background.paper',
-      p: 3
-    }}>
-      <Container maxWidth="xs" sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-        <Stack spacing={4} alignItems="center" sx={{ w: '100%' }}>
-          
-          {/* Brand Identity Section */}
-          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1.5, mb: 1 }}>
-            <Box sx={{ width: 64, height: 64, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <img src={logoSrc} alt="Kippa Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-            </Box>
-            <Typography variant="h3" sx={{ fontWeight: 'bold', color: 'text.primary', fontSize: '20px', tracking: '-0.5px' }}>
-              Kippa
-            </Typography>
+    <Box
+      sx={{
+        minHeight: '100dvh',
+        bgcolor: 'primary.dark',
+        color: 'primary.contrastText',
+        display: 'grid',
+        placeItems: 'center',
+        px: { xs: 3, sm: 5 },
+      }}
+    >
+      <Box sx={{ width: '100%', maxWidth: 470, minHeight: { xs: '100dvh', sm: 720 }, py: { xs: 5, sm: 7 }, display: 'flex', flexDirection: 'column' }}>
+        <Stack direction="row" spacing={1.25} alignItems="center">
+          <Box sx={{ width: 42, height: 42, borderRadius: 2.5, bgcolor: alpha(theme.palette.primary.contrastText, 0.96), display: 'grid', placeItems: 'center' }}>
+            <img src={logoSrc} alt="Kippa Logo" style={{ width: 26, height: 26, objectFit: 'contain' }} />
           </Box>
+          <Typography sx={{ fontSize: 22, fontWeight: 800, letterSpacing: '-0.05em', color: 'primary.contrastText' }}>Kippa</Typography>
+        </Stack>
 
-          {/* Sign In Header */}
-          <Box sx={{ textAlign: 'center', w: '100%' }}>
-            <Typography variant="h2" sx={{ fontSize: '28px', fontWeight: 500, color: 'text.primary' }}>
-              Sign in
-            </Typography>
-            <Typography variant="body1" sx={{ color: 'text.secondary', mt: 0.5, fontSize: '14px' }}>
-              to continue to Kippa
-            </Typography>
-          </Box>
+        <Box sx={{ mt: 'auto', mb: { xs: 5, sm: 2 } }}>
+          <Typography sx={{ fontSize: { xs: '3rem', sm: '4rem' }, lineHeight: 1.05, fontWeight: 500, letterSpacing: '-0.065em', maxWidth: 430, textWrap: 'balance', color: 'primary.contrastText' }}>
+            Track your spending effortlessly
+          </Typography>
+          <Typography sx={{ mt: 2.5, mb: 4.5, color: alpha(theme.palette.primary.contrastText, 0.78), fontSize: { xs: 15, sm: 17 }, lineHeight: 1.55, maxWidth: 420 }}>
+            Manage your household finances, follow every expense, and keep your goals in sight.
+          </Typography>
 
-          {/* Google Sign In Button */}
-          <Box sx={{ width: '100%', py: 1 }}>
+          <Box sx={{ width: '100%' }}>
             <Button
               fullWidth
-              variant="outlined"
+              variant="contained"
               onClick={handleGoogleSignIn}
               loading={loading}
               sx={{
-                py: 1.5,
-                borderRadius: '8px',
-                borderColor: 'divider',
-                bgcolor: 'background.paper',
+                height: 62,
+                borderRadius: 999,
+                bgcolor: 'primary.contrastText',
+                color: 'primary.dark',
                 textTransform: 'none',
-                height: 48,
-                '&:hover': {
-                  bgcolor: 'action.hover',
-                  borderColor: 'text.secondary'
-                }
+                fontSize: 16,
+                '&:hover': { bgcolor: alpha(theme.palette.primary.contrastText, 0.9), transform: 'translateY(-1px)' },
               }}
             >
               <Stack direction="row" spacing={1.5} alignItems="center" justifyContent="center">
@@ -380,15 +371,17 @@ export function AuthScreen() {
                   <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"></path>
                   <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"></path>
                 </svg>
-                <Typography variant="body1" sx={{ fontWeight: 'bold', color: 'text.primary', fontSize: '14px' }}>
-                  Sign in with Google
+                <Typography variant="body1" sx={{ fontWeight: 700, color: 'inherit', fontSize: '15px' }}>
+                  Get started with Google
                 </Typography>
               </Stack>
             </Button>
           </Box>
-
-        </Stack>
-      </Container>
+          <Typography sx={{ mt: 2.5, textAlign: 'center', color: alpha(theme.palette.primary.contrastText, 0.72), fontSize: 13 }}>
+            Secure sign-in · Your financial data stays private
+          </Typography>
+        </Box>
+      </Box>
     </Box>
   );
 }

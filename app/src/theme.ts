@@ -33,16 +33,16 @@ export const designTokens = {
   color: {
     // Primary
     primary:           '#005c55',
-    primaryContainer:  '#0f766e',  // Teal primary color fill
+    primaryContainer:  '#0f766e',
     onPrimary:         '#ffffff',
     primaryFixed:      '#9cf2e8',
     primaryFixedDim:   '#80d5cb',
     inversePrimary:    '#80d5cb',
 
     // Secondary
-    secondary:          '#006a61',
-    secondaryContainer: '#86f2e4',
-    onSecondary:        '#ffffff',
+    secondary:          '#A6E32B',
+    secondaryContainer: '#E7F8BE',
+    onSecondary:        '#183200',
 
     // Tertiary (accent)
     tertiary:          '#495167',
@@ -59,7 +59,7 @@ export const designTokens = {
     // visually stand out. Container hierarchy stays subtle.
     surface:               '#f4f5f7',
     surfaceBright:         '#ffffff',
-    surfaceContainer:      '#fbfbfc',
+    surfaceContainer:      '#fbfcf9',
     surfaceContainerHigh:  '#f7f7f9',
     surfaceContainerHighest:'#f2f2f4',
     surfaceContainerLow:   '#f8f9fa',
@@ -93,8 +93,8 @@ export const designTokens = {
 
   // ── Dark-mode surface/text/border overrides ──────────────────────────
   dark: {
-    surface:               '#070908',  // near-black with a green whisper
-    surfacePure:           '#0e1110',  // dark (neutral-black) card surface — subtle green undertone
+    surface:               '#070908',
+    surfacePure:           '#0e1110',
     surfaceOffWhite:       '#16191a',
     surfaceContainerLow:   '#101312',
     surfaceContainer:      '#141817',
@@ -102,17 +102,17 @@ export const designTokens = {
     surfaceContainerHighest:'#1f2423',
     infoAccent:            '#0c1a18',
 
-    textPrimary:    '#f1f0f5', // brighter white for high-end feel
-    textSecondary:  '#c5c2cf', // brighter text secondary
-    textTertiary:   '#9e9bb0', // brighter text tertiary
-    disabled:       '#6a6b7d',
+    textPrimary:    '#f4f7f2',
+    textSecondary:  '#b8c1b9',
+    textTertiary:   '#929d94',
+    disabled:       '#687169',
 
-    borderGray:     '#1f2423', // dark neutral border with green whisper
-    outline:        '#0f766e', // primary container teal outline
-    outlineVariant: '#1f2423',
+    borderGray:     '#252b29',
+    outline:        '#80d5cb',
+    outlineVariant: '#252b29',
 
-    onSurface:        '#f1f0f5',
-    onSurfaceVariant: '#c5c2cf',
+    onSurface:        '#f4f7f2',
+    onSurfaceVariant: '#b8c1b9',
   },
 
   // ── Stitch Elevation Shadows ─────────────────────────────────────────
@@ -137,6 +137,7 @@ export const designTokens = {
     none:    0,
     subtle:  4,
     moderate:8,
+    control:12,
     card:   20,
     pill:   48,
   },
@@ -198,39 +199,26 @@ export function createAppTheme(mode: 'light' | 'dark'): Theme {
   const c = designTokens.color;
   const t = tokensForMode(mode);
 
-  // Glassy card surface — translucent fill (lets the background veil tint
-  // read through) + a top-inner highlight for the "lit edge" + a soft drop
-  // shadow. No backdrop-filter (perf cost); this is plain alpha compositing.
+  // Cards are deliberately quiet. The app background carries the atmosphere;
+  // surfaces should provide a calm, highly legible layer above it.
   const isDark = mode === 'dark';
-  // Glassy-but-readable surface. Alpha is high enough that the card reads as
-  // a solid surface (the background veil only reads through subtly, not as a
-  // "window"). Lower alphas disappear over the veil and look fully transparent.
-  const cardBg = isDark
-    ? 'linear-gradient(180deg, rgba(20,24,23,0.9) 0%, rgba(14,17,16,0.92) 100%)'
-    : 'linear-gradient(180deg, rgba(255,255,255,0.92) 0%, rgba(244,247,246,0.9) 100%)';
+  const cardBg = isDark ? t.surfacePure : t.surfacePure;
   const paperBg = isDark
-    ? 'rgba(14,17,16,0.92)'
+    ? 'rgba(14,17,16,0.96)'
     : 'rgba(255,255,255,0.92)';
-  const cardEdge = isDark
-    ? '1px solid rgba(255,255,255,0.08)'
-    : `1px solid ${alpha(c.primaryContainer, 0.12)}`;
+  const cardEdge = `1px solid ${t.borderGray}`;
   const cardHighlight = isDark
-    ? 'inset 0 1px 0 rgba(255,255,255,0.06)'
-    : 'inset 0 1px 0 rgba(255,255,255,0.95)';
-  const cardShadow = isDark
-    ? '0 2px 8px rgba(0,0,0,0.45), 0 1px 2px rgba(0,0,0,0.3)'
-    : '0 1px 2px rgba(15,23,42,0.04), 0 4px 12px rgba(15,23,42,0.06)';
-  const cardShadowHover = isDark
-    ? '0 10px 28px rgba(0,0,0,0.55), 0 4px 10px rgba(15,118,110,0.12)'
-    : '0 2px 6px rgba(15,23,42,0.06), 0 12px 28px rgba(15,118,110,0.1)';
-
+    ? 'inset 0 1px 0 rgba(255,255,255,0.045)'
+    : 'inset 0 1px 0 rgba(255,255,255,0.9)';
+  const cardShadow = isDark ? '0 12px 28px rgba(0,0,0,0.16)' : '0 10px 26px rgba(24,53,34,0.035)';
   return createTheme({
     palette: {
       mode,
       primary: {
-        main: c.primaryContainer,   // teal CTA
-        dark: c.primary,            // hover/active
-        light: c.primaryFixed,
+        // Kippa teal remains the single brand accent in both color modes.
+        main: c.primaryContainer,
+        dark: c.primary,
+        light: c.primaryFixedDim,
         contrastText: c.onPrimary,
       },
       secondary: {
@@ -238,14 +226,14 @@ export function createAppTheme(mode: 'light' | 'dark'): Theme {
         light: c.secondaryContainer,
         contrastText: c.onSecondary,
       },
-      success: { main: c.success },
-      warning: { main: c.warning },
+      success: { main: isDark ? '#72d9b3' : c.success },
+      warning: { main: isDark ? '#ffbf5b' : c.warning },
       error: {
-        main: c.error,
+        main: isDark ? '#ff6b6b' : c.error,
         contrastText: c.onError,
       },
       info: {
-        main: c.primaryContainer,
+        main: isDark ? c.primaryFixedDim : c.primary,
         light: t.infoAccent,
       },
       background: {
@@ -259,10 +247,8 @@ export function createAppTheme(mode: 'light' | 'dark'): Theme {
       },
       divider: t.borderGray,
       action: {
-        // Subtle teal-tinted hover so interactive elements warm slightly on
-        // hover instead of flashing grey (light) or bright (dark).
-        hover: alpha(c.primaryContainer, isDark ? 0.14 : 0.06),
-        selected: alpha(c.primaryContainer, isDark ? 0.32 : 0.1),
+        hover: alpha(c.primaryContainer, isDark ? 0.12 : 0.06),
+        selected: alpha(c.primaryContainer, isDark ? 0.2 : 0.1),
       },
       chart: {
         colors: [
@@ -394,11 +380,9 @@ export function createAppTheme(mode: 'light' | 'dark'): Theme {
         },
       },
 
-      // ── Card (Glassy) ─────────────────────────────────────────────────
-      // Translucent fill so the background veil reads through subtly, plus a
-      // top inner-highlight ("lit edge") and a soft drop shadow in place of
-      // an opaque border. Deliberately no backdrop-filter: alpha compositing
-      // gives the glassy look at near-zero cost.
+      // ── Card ───────────────────────────────────────────────────────────
+      // A restrained elevated surface. Components opt into interactive motion
+      // individually so static dashboard panels do not float on hover.
       MuiCard: {
         defaultProps: {
           elevation: 0,
@@ -407,13 +391,9 @@ export function createAppTheme(mode: 'light' | 'dark'): Theme {
           root: {
             background: cardBg,
             border: cardEdge,
-            borderRadius: designTokens.radius.card,       // 20px
+            borderRadius: '20px',
             boxShadow: `${cardHighlight}, ${cardShadow}`,
-            transition: 'box-shadow 0.25s ease, transform 0.25s ease',
-            '&:hover': {
-              boxShadow: `${cardHighlight}, ${cardShadowHover}`,
-              transform: 'translateY(-2px)',
-            },
+            transition: 'box-shadow 0.2s ease, border-color 0.2s ease',
           },
         },
       },
@@ -442,15 +422,15 @@ export function createAppTheme(mode: 'light' | 'dark'): Theme {
             },
           },
           containedPrimary: {
-            background: c.primaryContainer,  // teal CTA
+            background: c.primaryContainer,
             color: c.onPrimary,
             borderRadius: designTokens.radius.pill,            // 48px
             padding: '12px 24px',
             '&:hover': {
-              background: c.primary,
+              background: c.primaryFixedDim,
             },
             '&:active': {
-              background: c.primary,
+              background: c.primaryFixedDim,
             },
           },
           outlined: {
@@ -492,7 +472,7 @@ export function createAppTheme(mode: 'light' | 'dark'): Theme {
       MuiOutlinedInput: {
         styleOverrides: {
           root: {
-            borderRadius: designTokens.radius.subtle,    // 4px
+            borderRadius: designTokens.radius.control,   // 12px — shared field/select shape
             backgroundColor: t.surfacePure,
             fontSize: '16px',
             '& .MuiOutlinedInput-notchedOutline': {
@@ -545,8 +525,21 @@ export function createAppTheme(mode: 'light' | 'dark'): Theme {
       MuiChip: {
         styleOverrides: {
           root: {
-            fontWeight: 600,
+            height: 28,
+            borderRadius: '8px',
+            fontWeight: 650,
+            fontSize: '11px',
             fontFamily,
+            backgroundColor: alpha(c.primaryContainer, mode === 'dark' ? 0.14 : 0.06),
+            color: t.textSecondary,
+          },
+          label: {
+            paddingLeft: 9,
+            paddingRight: 9,
+          },
+          outlined: {
+            borderColor: t.borderGray,
+            backgroundColor: 'transparent',
           },
         },
       },

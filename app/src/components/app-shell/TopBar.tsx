@@ -59,14 +59,14 @@ export function TopBar({
           transition: 'background-color 0.3s ease, box-shadow 0.3s ease, backdrop-filter 0.3s ease',
         }}
       >
-        <Toolbar sx={{ justifyContent: 'space-between', px: { xs: 2, sm: 3 } }}>
+        <Toolbar sx={{ justifyContent: 'space-between', minHeight: { xs: 64, md: 76 }, px: { xs: 2, sm: 3, lg: 5 } }}>
           {/* Left: Logo & Brand Name */}
           <Stack
             direction="row"
             spacing={1}
             alignItems="center"
             onClick={() => navigate('/')}
-            sx={{ cursor: 'pointer', userSelect: 'none' }}
+            sx={{ cursor: 'pointer', userSelect: 'none', display: { xs: 'flex', md: 'none' } }}
           >
             <img src={logoSrc} alt="Kippa Logo" style={{ height: 32, width: 'auto' }} />
             <Typography variant="h3" sx={{ fontWeight: 'bold', letterSpacing: '0.05em', color: 'primary.main' }}>
@@ -76,7 +76,7 @@ export function TopBar({
 
           {/* Right: Activity Bell, Quick Nav & Profile */}
           <Stack direction="row" spacing={1} alignItems="center">
-            <ActivityBell onClick={() => navigate('/activity')} />
+            <Stack sx={{ display: { xs: 'flex', md: 'none' } }}><ActivityBell onClick={() => navigate('/activity')} /></Stack>
             <Tooltip title="Navigate">
               <IconButton
                 onClick={(e) => setNavAnchorEl(e.currentTarget)}

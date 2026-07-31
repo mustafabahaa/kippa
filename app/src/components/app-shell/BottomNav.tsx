@@ -130,6 +130,7 @@ export function BottomNav() {
       ref={containerRef}
       elevation={0}
       sx={{
+        display: { xs: 'block', md: 'none' },
         position: 'fixed',
         bottom: { xs: 16, md: 24 },
         left: '50%',

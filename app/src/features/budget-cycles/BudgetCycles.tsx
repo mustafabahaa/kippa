@@ -214,7 +214,7 @@ export function BudgetCycles() {
 
   if (isLoading) {
     return (
-      <Container maxWidth="md" sx={{ py: 1, px: { xs: 2, sm: 3 } }}>
+      <Container maxWidth="xl" sx={{ py: 1, px: { xs: 2, sm: 3, lg: 5 } }}>
         <Stack spacing={3}>
           <Box sx={{ mt: 1 }}>
             <Skeleton variant="text" width="60%" height={32} />
@@ -230,7 +230,7 @@ export function BudgetCycles() {
   const activeDaysInfo = activeCycle ? getDaysInfo(activeCycle.startDate, activeCycle.endDate) : null;
 
   return (
-    <Container maxWidth="md" sx={{ py: 1, px: { xs: 2, sm: 3 } }}>
+    <Container maxWidth="xl" sx={{ py: 1, px: { xs: 2, sm: 3, lg: 5 } }}>
       <Stack spacing={3}>
         {/* Page Header */}
         <PageHeader
@@ -243,8 +243,8 @@ export function BudgetCycles() {
             <IconButton
               onClick={() => setOpenCreateDialog(true)}
               sx={{
-                bgcolor: 'primary.main',
-                color: 'primary.contrastText',
+                bgcolor: 'secondary.main',
+                color: 'secondary.contrastText',
                 width: 40,
                 height: 40,
                 borderRadius: '12px',
@@ -256,57 +256,43 @@ export function BudgetCycles() {
           }
         />
 
-        <CycleAnalytics />
-
-        {/* ── Active Cycle Hero Card ── */}
-        {activeCycle ? (
-          <ActiveCycleCard
-            cycle={activeCycle}
-            daysInfo={activeDaysInfo!}
-            onCloseCycle={() => setOpenCloseDialog(true)}
-            isEditingBudget={editingCycleId === activeCycle.id}
-            onToggleBudget={() => handleToggleBudgetForCycle(activeCycle.id)}
-          />
-        ) : (
-          <EmptyLayout
-            title="No active budget cycle"
-            description="Create a new cycle to start allocating budgets and tracking expenses."
-            action={
-              <Button
-                variant="contained"
-                startIcon={<AddIcon />}
-                onClick={() => setOpenCreateDialog(true)}
-                sx={{
-                  borderRadius: '16px',
-                  textTransform: 'none',
-                  fontWeight: 'bold',
-                  height: 44,
-                  px: 3,
-                  bgcolor: 'primary.dark',
-                }}
-              >
-                New Cycle
-              </Button>
-            }
-          />
-        )}
+        <Grid container spacing={3} alignItems="flex-start">
+          <Grid size={{ xs: 12, lg: 8 }}><CycleAnalytics /></Grid>
+          <Grid size={{ xs: 12, lg: 4 }}>
+            {activeCycle ? (
+              <ActiveCycleCard
+                cycle={activeCycle}
+                daysInfo={activeDaysInfo!}
+                onCloseCycle={() => setOpenCloseDialog(true)}
+                isEditingBudget={editingCycleId === activeCycle.id}
+                onToggleBudget={() => handleToggleBudgetForCycle(activeCycle.id)}
+              />
+            ) : (
+              <EmptyLayout
+                title="No active budget cycle"
+                description="Create a new cycle to start allocating budgets and tracking expenses."
+                action={<Button variant="contained" startIcon={<AddIcon />} onClick={() => setOpenCreateDialog(true)}>New Cycle</Button>}
+              />
+            )}
+          </Grid>
+        </Grid>
 
         {/* ── Budget Allocations Editor Dialog (for any selected cycle) ── */}
         <Dialog 
           open={!!editingCycleId} 
           onClose={() => setEditingCycleId(null)}
           fullWidth
-          maxWidth="md"
+          maxWidth="sm"
           slotProps={{
             paper: {
               sx: {
-                borderRadius: '24px',
-                p: 1.5,
+                maxHeight: 'calc(100dvh - 48px)',
+                overflow: 'hidden',
               }
             }
           }}
         >
-          <DialogTitle sx={{ fontWeight: 800, fontSize: '20px', color: 'text.primary', pb: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 1.5 }}>
+          <DialogTitle sx={{ px: 3, py: 2.5, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 2 }}>
             <Box>
               <Typography variant="body2" sx={{ fontSize: '11px', color: 'text.secondary', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.03em' }}>
                 Configure Budget for
@@ -340,7 +326,7 @@ export function BudgetCycles() {
               </Typography>
             </Box>
           </DialogTitle>
-          <DialogContent sx={{ pt: 1 }}>
+          <DialogContent sx={{ px: 3, py: '8px !important' }}>
             {editingCycle && (
               <Box sx={{ mt: 1 }}>
                 {allocsLoading ? (
@@ -362,7 +348,7 @@ export function BudgetCycles() {
               </Box>
             )}
           </DialogContent>
-          <DialogActions sx={{ px: 3, pb: 2.5, gap: 1.5 }}>
+          <DialogActions sx={{ px: 3, py: 2.5, gap: 1.5 }}>
             <Button 
               onClick={() => setEditingCycleId(null)} 
               variant="outlined"
@@ -396,7 +382,7 @@ export function BudgetCycles() {
           </Box>
 
           {sortedHistory.length > 0 ? (
-            <Stack spacing={1.5}>
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'repeat(2, minmax(0, 1fr))' }, gap: 2 }}>
               {sortedHistory.map(cycle => (
                 <CycleHistoryCard
                   key={cycle.id}
@@ -405,7 +391,7 @@ export function BudgetCycles() {
                   onToggleBudget={() => handleToggleBudgetForCycle(cycle.id)}
                 />
               ))}
-            </Stack>
+            </Box>
           ) : (
             <EmptyLayout
               title="No previous cycles found"
@@ -444,7 +430,6 @@ export function BudgetCycles() {
               }}
               error={newCycleNameError}
               helperText={newCycleNameError ? 'A cycle name is required.' : undefined}
-              sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }}
             />
             <Grid container spacing={2}>
               <Grid size={{ xs: 6 }}>
@@ -455,7 +440,6 @@ export function BudgetCycles() {
                   value={newCycleStart}
                   onChange={e => setNewCycleStart(e.target.value)}
                   slotProps={{ inputLabel: { shrink: true } }}
-                  sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }}
                 />
               </Grid>
               <Grid size={{ xs: 6 }}>
@@ -466,7 +450,6 @@ export function BudgetCycles() {
                   value={newCycleEnd}
                   onChange={e => setNewCycleEnd(e.target.value)}
                   slotProps={{ inputLabel: { shrink: true } }}
-                  sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }}
                 />
               </Grid>
             </Grid>
@@ -573,6 +556,7 @@ function ActiveCycleCard({ cycle, daysInfo, onCloseCycle, isEditingBudget, onTog
   return (
     <Card
       sx={{
+        width: '100%',
         p: 3,
         display: 'flex',
         flexDirection: 'column',
@@ -650,9 +634,8 @@ function ActiveCycleCard({ cycle, daysInfo, onCloseCycle, isEditingBudget, onTog
         )}
 
         {/* Action Buttons */}
-        <Stack direction="row" spacing={1.5} sx={{ mt: 3.5 }}>
+        <Stack direction={{ xs: 'column', sm: 'row', lg: 'column', xl: 'row' }} alignItems="flex-start" spacing={1.5} sx={{ mt: 3.5 }}>
           <Button
-            fullWidth
             variant="contained"
             startIcon={isEditingBudget ? <ExpandLessIcon /> : <EditIcon />}
             onClick={onToggleBudget}
@@ -662,6 +645,9 @@ function ActiveCycleCard({ cycle, daysInfo, onCloseCycle, isEditingBudget, onTog
               fontWeight: 'bold',
               fontSize: '13.5px',
               height: 44,
+              minWidth: 142,
+              px: 2,
+              whiteSpace: 'nowrap',
               bgcolor: 'primary.dark',
               color: 'primary.contrastText',
               boxShadow: 'none',
@@ -672,7 +658,6 @@ function ActiveCycleCard({ cycle, daysInfo, onCloseCycle, isEditingBudget, onTog
             {isEditingBudget ? 'Hide Budget' : 'Edit Budget'}
           </Button>
           <Button
-            fullWidth
             variant="outlined"
             startIcon={<CheckCircleOutlineIcon />}
             onClick={onCloseCycle}
@@ -682,6 +667,9 @@ function ActiveCycleCard({ cycle, daysInfo, onCloseCycle, isEditingBudget, onTog
               fontWeight: 'bold',
               fontSize: '13.5px',
               height: 44,
+              minWidth: 136,
+              px: 2,
+              whiteSpace: 'nowrap',
               borderColor: 'divider',
               color: 'text.secondary',
               '&:hover': { borderColor: 'text.primary', color: 'text.primary', bgcolor: 'action.hover' },
@@ -713,6 +701,8 @@ function CycleHistoryCard({ cycle, isEditing, onToggleBudget }: CycleHistoryCard
     <Card
       sx={{
         p: 2.5,
+        display: 'flex',
+        flexDirection: 'column',
         borderColor: isEditing ? 'primary.main' : undefined,
         transition: 'all 0.2s ease-in-out',
       }}
@@ -763,12 +753,14 @@ function CycleHistoryCard({ cycle, isEditing, onToggleBudget }: CycleHistoryCard
 
       {/* Configure Budget button */}
       <Button
-        fullWidth
         variant="outlined"
         startIcon={isEditing ? <ExpandLessIcon /> : <EditIcon />}
         onClick={onToggleBudget}
         sx={{
           mt: 2,
+          alignSelf: 'flex-end',
+          minWidth: 138,
+          px: 2,
           borderRadius: '12px',
           textTransform: 'none',
           fontWeight: 'bold',

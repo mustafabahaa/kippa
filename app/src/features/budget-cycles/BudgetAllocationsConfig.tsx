@@ -10,12 +10,12 @@ import {
   List,
   ListItem,
   ListItemText,
-  Divider,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
-  Chip
+  Chip,
+  Tooltip
 } from '@mui/material';
 import { ContentCopyIcon } from '@/components/AppIcon';
 import { AddIcon } from '@/components/AppIcon';
@@ -235,91 +235,92 @@ export function BudgetAllocationsConfig({
 
       {/* Allocation Rows */}
       <List disablePadding>
-        {rows.map((row, idx) => (
-          <Box key={row.categoryId}>
-            {idx > 0 && <Divider />}
-            <ListItem 
-              sx={{ px: 0, py: 1 }}
-              secondaryAction={
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                  <TextField
-                    type="number"
-                    value={privacyMode && row.plannedAmount ? maskDigits(String(row.plannedAmount)) : row.plannedAmount}
-                    onChange={e => handleAmountChange(row.categoryId, e.target.value)}
-                    sx={{ width: '100px' }}
-                    slotProps={{ htmlInput: { style: { textAlign: 'right' } } }}
-                  />
-                  <IconButton
-                    size="small"
-                    onClick={() => handleOpenRename(row.categoryId)}
-                  >
-                    <EditIcon fontSize="small" />
+        {rows.map(row => (
+          <ListItem
+            key={row.categoryId}
+            sx={{ px: 0, py: 0.5, minHeight: 48, '&:hover .allocation-actions, &:focus-within .allocation-actions': { opacity: 1 } }}
+            secondaryAction={
+              <Stack direction="row" alignItems="center" spacing={0.75}>
+                <TextField
+                  variant="standard"
+                  type="number"
+                  value={privacyMode && row.plannedAmount ? maskDigits(String(row.plannedAmount)) : row.plannedAmount}
+                  onChange={e => handleAmountChange(row.categoryId, e.target.value)}
+                  sx={{
+                    width: 104,
+                    '& .MuiInput-root': { '&::before, &::after, &:hover:not(.Mui-disabled)::before': { borderBottom: 0 } },
+                  }}
+                  slotProps={{ input: { disableUnderline: true }, htmlInput: { min: 0, style: { textAlign: 'right', fontWeight: 700, padding: '10px 12px' } } }}
+                />
+                <Stack className="allocation-actions" direction="row" spacing={0.25} sx={{ opacity: { xs: 1, md: 0 }, transition: 'opacity 160ms ease' }}>
+                  <IconButton aria-label={`Rename ${getCategoryName(row.categoryId)}`} size="small" onClick={() => handleOpenRename(row.categoryId)} sx={{ width: 30, height: 30, minWidth: 30 }}>
+                    <EditIcon sx={{ fontSize: 15 }} />
                   </IconButton>
-                  <IconButton
-                    size="small"
-                    onClick={() => handleRemoveCategory(row.categoryId)}
-                    color="error"
-                  >
-                    <DeleteOutlineIcon fontSize="small" />
+                  <IconButton aria-label={`Remove ${getCategoryName(row.categoryId)}`} size="small" onClick={() => handleRemoveCategory(row.categoryId)} color="error" sx={{ width: 30, height: 30, minWidth: 30 }}>
+                    <DeleteOutlineIcon sx={{ fontSize: 15 }} />
                   </IconButton>
-                </Box>
-              }
-            >
-              <ListItemText
-                primary={getCategoryName(row.categoryId)}
-                slotProps={{ primary: { fontSize: '13px', fontWeight: 500 } }}
-              />
-            </ListItem>
-          </Box>
+                </Stack>
+              </Stack>
+            }
+          >
+            <ListItemText primary={getCategoryName(row.categoryId)} slotProps={{ primary: { fontSize: 13, fontWeight: 600 } }} />
+          </ListItem>
         ))}
       </List>
 
-      {/* Add existing categories as chips */}
-      {availableCategories.length > 0 && (
-        <Box sx={{ mt: 2 }}>
-          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.75 }}>
+      {/* Category actions */}
+      <Box sx={{ mt: 2.5, pt: 2.25, borderTop: 1, borderColor: 'divider' }}>
+        <Stack spacing={0.25} sx={{ mb: 1.25 }}>
+          <Typography sx={{ color: 'text.primary', fontSize: 14, fontWeight: 700 }}>
             Add to cycle
           </Typography>
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
-            {availableCategories.map(cat => (
+          <Typography sx={{ color: 'text.secondary', fontSize: 12 }}>
+            Choose an existing category or create a new one.
+          </Typography>
+        </Stack>
+
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 1 }}>
+          {availableCategories.map(cat => (
               <Chip
                 key={cat.id}
                 label={cat.name}
-                size="small"
                 variant="outlined"
-                icon={<AddIcon />}
                 onClick={() => handleAddExistingCategory(cat.id)}
-                sx={{ borderRadius: '8px' }}
+                sx={{
+                  height: 36,
+                  borderRadius: '12px',
+                  bgcolor: 'background.paper',
+                  color: 'text.secondary',
+                  borderColor: 'divider',
+                  fontSize: 13,
+                  fontWeight: 400,
+                  '&:hover': { bgcolor: 'action.hover' },
+                }}
               />
-            ))}
-          </Box>
+          ))}
+          <Tooltip title="Create a new category">
+            <IconButton
+              aria-label="Create a new category"
+              onClick={() => setAddDialogOpen(true)}
+              sx={{
+                width: 36,
+                height: 36,
+                border: 1,
+                borderColor: 'divider',
+                borderRadius: '12px',
+                bgcolor: 'background.paper',
+                color: 'primary.main',
+                '&:hover': { bgcolor: 'action.hover', borderColor: 'primary.main' },
+              }}
+            >
+              <AddIcon sx={{ fontSize: 19 }} />
+            </IconButton>
+          </Tooltip>
         </Box>
-      )}
-
-      {/* New category button */}
-      <Stack direction="row" spacing={1} sx={{ mt: 2 }}>
-        <Button
-          variant="outlined"
-          size="small"
-          startIcon={<AddIcon />}
-          onClick={() => setAddDialogOpen(true)}
-        >
-          New Category
-        </Button>
-      </Stack>
+      </Box>
 
       {/* Total + Save */}
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          mt: 2.5,
-          pt: 2,
-          borderTop: '1px solid',
-          borderColor: 'divider',
-        }}
-      >
+      {!saveRef && <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 2.5, pt: 2 }}>
         <Box>
           <Typography variant="body2" color="text.secondary">
             Total Budget
@@ -328,16 +329,8 @@ export function BudgetAllocationsConfig({
             <Money amount={totalBudget} code={baseCurrency} />
           </Typography>
         </Box>
-        {!saveRef && (
-          <Button 
-            variant="contained" 
-            onClick={handleSaveAllocations}
-            loading={saveAllocationsBatchMutation.isPending}
-          >
-            Save
-          </Button>
-        )}
-      </Box>
+        <Button variant="contained" onClick={handleSaveAllocations} loading={saveAllocationsBatchMutation.isPending}>Save</Button>
+      </Box>}
 
       {/* Rename Category Dialog */}
       <Dialog open={renameDialogOpen} onClose={() => setRenameDialogOpen(false)}>

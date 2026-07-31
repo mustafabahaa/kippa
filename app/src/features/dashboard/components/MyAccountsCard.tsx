@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Box, Card, CardContent, Skeleton, Stack, Typography } from '@mui/material';
+import { Box, Card, CardContent, Divider, Skeleton, Stack, Typography } from '@mui/material';
 import { AccountBalanceIcon } from '@/components/AppIcon';
 import { SavingsIcon } from '@/components/AppIcon';
 import { PaymentsIcon } from '@/components/AppIcon';
@@ -28,12 +28,12 @@ export function MyAccountsCard() {
 
   const getAccountIcon = (type: string) => {
     switch (type) {
-      case 'savings': return <SavingsIcon sx={{ color: 'text.secondary' }} />;
+      case 'savings': return <SavingsIcon sx={{ color: 'inherit' }} />;
       case 'cash':
-      case 'wallet': return <PaymentsIcon sx={{ color: 'text.secondary' }} />;
-      case 'credit': return <CreditCardIcon sx={{ color: 'text.secondary' }} />;
+      case 'wallet': return <PaymentsIcon sx={{ color: 'inherit' }} />;
+      case 'credit': return <CreditCardIcon sx={{ color: 'inherit' }} />;
       case 'running':
-      default: return <AccountBalanceIcon sx={{ color: 'text.secondary' }} />;
+      default: return <AccountBalanceIcon sx={{ color: 'inherit' }} />;
     }
   };
 
@@ -83,61 +83,71 @@ export function MyAccountsCard() {
   };
 
   return (
-    <Stack spacing={1.5}>
-      <Box display="flex" justifyContent="space-between" alignItems="center">
-        <Typography variant="h3" sx={{ fontSize: '18px', fontWeight: 700, color: 'text.primary' }}>
-          My Accounts
-        </Typography>
-      </Box>
-
-      <Stack spacing={1}>
-        {visibleAccounts.length === 0 ? (
-          <EmptyLayout
-            title="No accounts yet"
-            description="Add an account to start tracking your balances."
-          />
-        ) : visibleAccounts.map(acc => {
-          const bal = balancesMap[acc.id] || 0;
-          const linked = cards.filter(c =>
-            c.parentAccountId === acc.id || c.paymentAccountId === acc.id);
-          return (
-            <Card key={acc.id} sx={{ borderRadius: '16px', overflow: 'hidden' }}>
-              <Box sx={{ p: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <Box display="flex" alignItems="center" gap={2}>
-                  <Box sx={{ width: 44, height: 44, borderRadius: '12px', bgcolor: 'action.hover', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    {getAccountIcon(acc.type)}
-                  </Box>
-                  <Box>
-                    <Typography variant="body1" sx={{ fontWeight: 'bold', color: 'text.primary' }}>{acc.name}</Typography>
-                    <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '11px' }}>{acc.type}</Typography>
-                  </Box>
-                </Box>
-                <Typography variant="body1" sx={{ fontWeight: 'bold', color: 'text.primary' }}>
-                  <Money amount={bal} code={acc.currency} maxDigits={2} />
+    <>
+      <Card>
+        <CardContent>
+          <Stack spacing={2.5}>
+            <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
+              <Box>
+                <Typography sx={{ fontSize: 16, lineHeight: '22px', fontWeight: 800, color: 'text.primary' }}>My Accounts</Typography>
+                <Typography sx={{ mt: 0.5, fontSize: 12, lineHeight: '16px', fontWeight: 600, color: 'text.secondary' }}>
+                  Cash, banks and linked cards
                 </Typography>
               </Box>
+              <Typography sx={{ fontSize: 12, lineHeight: '16px', fontWeight: 700, color: 'text.secondary' }}>
+                {visibleAccounts.length} accounts
+              </Typography>
+            </Stack>
 
-              {linked.length > 0 && (
-                <Box sx={{ px: 2, pb: 2 }}>
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
-                    {linked.map(card => (
-                      <CardTile
-                        key={card.id}
-                        card={card}
-                        summary={summaryFor(card)}
-                        parentAccountBalance={balancesMap[card.parentAccountId]}
-                        onOpenDetail={() => setDetailCard(card)}
-                      />
-                    ))}
-                  </Box>
-                </Box>
-              )}
-            </Card>
-          );
-        })}
-      </Stack>
+            {visibleAccounts.length === 0 ? (
+              <EmptyLayout title="No accounts yet" description="Add an account to start tracking your balances." />
+            ) : (
+              <Stack divider={<Divider />}>
+                {visibleAccounts.map(acc => {
+                  const bal = balancesMap[acc.id] || 0;
+                  const linked = cards.filter(c => c.parentAccountId === acc.id || c.paymentAccountId === acc.id);
+                  return (
+                    <Box key={acc.id}>
+                      <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={2} sx={{ minHeight: 72, py: 1.5 }}>
+                        <Stack direction="row" spacing={1.5} alignItems="center" sx={{ minWidth: 0 }}>
+                          <Box sx={{ width: 42, height: 42, flexShrink: 0, borderRadius: 2, bgcolor: 'action.hover', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'primary.main' }}>
+                            {getAccountIcon(acc.type)}
+                          </Box>
+                          <Box sx={{ minWidth: 0 }}>
+                            <Typography noWrap sx={{ fontSize: 13, lineHeight: '20px', fontWeight: 800, color: 'text.primary' }}>{acc.name}</Typography>
+                            <Typography sx={{ fontSize: 11, lineHeight: '16px', fontWeight: 600, color: 'text.secondary', textTransform: 'capitalize' }}>{acc.type}</Typography>
+                          </Box>
+                        </Stack>
+                        <Typography noWrap sx={{ fontSize: 15, lineHeight: '22px', fontWeight: 800, color: bal < 0 ? 'error.main' : 'text.primary', fontVariantNumeric: 'tabular-nums', textAlign: 'right' }}>
+                          <Money amount={bal} code={acc.currency} maxDigits={2} />
+                        </Typography>
+                      </Stack>
+
+                      {linked.length > 0 && (
+                        <Box sx={{ pb: 2 }}>
+                          <Box sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 2 }}>
+                            {linked.map(card => (
+                              <CardTile
+                                key={card.id}
+                                card={card}
+                                summary={summaryFor(card)}
+                                parentAccountBalance={balancesMap[card.parentAccountId]}
+                                onOpenDetail={() => setDetailCard(card)}
+                              />
+                            ))}
+                          </Box>
+                        </Box>
+                      )}
+                    </Box>
+                  );
+                })}
+              </Stack>
+            )}
+          </Stack>
+        </CardContent>
+      </Card>
 
       {detailCard && <CardDetail card={detailCard} onClose={() => setDetailCard(null)} />}
-    </Stack>
+    </>
   );
 }

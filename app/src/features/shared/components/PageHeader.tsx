@@ -17,7 +17,9 @@ export function PageHeader({ title, subtitle, action }: PageHeaderProps) {
   return (
     <Box
       sx={{
-        mt: 1,
+        mt: 0.5,
+        gap: 2,
+        flexWrap: 'wrap',
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: action ? 'center' : 'flex-start',
@@ -26,7 +28,7 @@ export function PageHeader({ title, subtitle, action }: PageHeaderProps) {
       <Box>
         <Typography
           variant="h2"
-          sx={{ fontSize: '24px', fontWeight: 700, color: 'text.primary' }}
+          sx={{ fontSize: { xs: '24px', sm: '28px' }, lineHeight: 1.2, letterSpacing: '-0.03em', fontWeight: 750, color: 'text.primary' }}
         >
           {title}
         </Typography>

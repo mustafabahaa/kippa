@@ -4,17 +4,17 @@ import {
   Box,
   Card,
   CardContent,
-  Container,
   Stack,
   Typography,
   Button,
-  FormControlLabel,
-  Checkbox,
+  Switch,
   Skeleton
 } from '@mui/material';
 import { NotificationSettings } from '@/domain/financeTypes';
 import { useNotifications } from '@/notifications/useNotifications';
 import { IosInstallBanner } from '@/notifications/IosInstallBanner';
+import { PageHeader } from '@/features/shared/components/PageHeader';
+import { CalendarMonthIcon, CreditCardIcon, GroupAddIcon, NotificationsActiveIcon } from '@/components/AppIcon';
 
 interface NotificationSettingsFormProps {
   dbSettings: NotificationSettings;
@@ -64,168 +64,134 @@ export function NotificationSettingsForm({
     }
   };
 
+  const preferences = [
+    {
+      key: 'dailyReminderEnabled' as const,
+      title: 'Daily logging reminder',
+      description: 'A gentle prompt to keep your daily records complete.',
+      Icon: CalendarMonthIcon,
+    },
+    {
+      key: 'categoryWarningEnabled' as const,
+      title: 'Budget warning alerts',
+      description: 'Get notified when spending approaches a category limit.',
+      Icon: NotificationsActiveIcon,
+    },
+    {
+      key: 'cardExpiryWarningEnabled' as const,
+      title: 'Card expiry reminders',
+      description: 'Receive an alert before one of your linked cards expires.',
+      Icon: CreditCardIcon,
+    },
+    {
+      key: 'joinRequestEnabled' as const,
+      title: 'Household join requests',
+      description: 'Stay informed when a member requests access or a decision is made.',
+      Icon: GroupAddIcon,
+    },
+  ];
+
   return (
-    <Container maxWidth="md" sx={{ py: 1, px: { xs: 2, sm: 3 } }}>
+    <Box sx={{ py: 0.5 }}>
       <Stack spacing={3}>
-        <Box sx={{ mt: 1 }}>
-          <Typography variant="h2" sx={{ fontSize: '24px', fontWeight: 700, color: 'text.primary' }}>
-            Reminders & Alerts
-          </Typography>
-          <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '13px', mt: 0.5 }}>
-            Manage reminder alerts, warning levels, and email notification configurations
-          </Typography>
-        </Box>
+        <PageHeader
+          title="Reminders & Alerts"
+          subtitle="Choose what deserves your attention and how Kippa should reach you."
+        />
 
         {/* Push notification enablement — status + action.
             On iOS the permission prompt must come from a user gesture (click),
             hence the explicit button rather than an auto-prompt. */}
         {notifStatus === 'ios-not-installed' && <IosInstallBanner />}
 
-        {notifStatus === 'unsupported' && (
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'minmax(0, 7fr) minmax(300px, 4fr)' }, gap: 3, alignItems: 'start' }}>
           <Card>
-            <CardContent sx={{ p: 2.5 }}>
-              <Typography color="text.secondary" sx={{ fontSize: '14px' }}>
-                Push notifications aren't supported in this browser. For iPhone, add Kippa to your
-                Home Screen (iOS 16.4+) to enable them.
-              </Typography>
-            </CardContent>
-          </Card>
-        )}
-
-        {notifStatus === 'permission-denied' && (
-          <Card>
-            <CardContent sx={{ p: 2.5 }}>
-              <Typography color="text.secondary" sx={{ fontSize: '14px' }}>
-                Notifications are blocked. Enable them in your device/browser settings, then reopen
-                Kippa.
-              </Typography>
-            </CardContent>
-          </Card>
-        )}
-
-        {notifStatus === 'checking' && (
-          <Card>
-            <CardContent sx={{ p: 2.5 }}>
-              <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap" useFlexGap>
-                <Box sx={{ flex: 1 }}>
-                  <Skeleton variant="text" width="180px" height={24} sx={{ mb: 0.5 }} />
-                  <Skeleton variant="text" width="320px" height={18} />
+            <CardContent>
+              <Stack spacing={2.5}>
+                <Box>
+                  <Typography sx={{ fontSize: 16, fontWeight: 800, color: 'text.primary' }}>Alert preferences</Typography>
+                  <Typography sx={{ mt: 0.5, fontSize: 13, color: 'text.secondary' }}>Only enable the updates that help you act.</Typography>
                 </Box>
-                <Skeleton
-                  variant="rectangular"
-                  width={140}
-                  height={36}
-                  sx={{
-                    ml: 'auto',
-                    borderRadius: '12px',
-                  }}
-                />
+                <Stack divider={<Box sx={{ height: '1px', bgcolor: 'divider' }} />}>
+                  {preferences.map(({ key, title, description, Icon }) => (
+                    <Stack key={key} direction="row" spacing={1.5} alignItems="center" sx={{ py: 1.5 }}>
+                      <Box sx={{ width: 40, height: 40, borderRadius: 2.5, bgcolor: 'action.hover', color: 'primary.main', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <Icon sx={{ fontSize: 20 }} />
+                      </Box>
+                      <Box sx={{ flex: 1, minWidth: 0 }}>
+                        <Typography sx={{ fontSize: 14, fontWeight: 700, color: 'text.primary' }}>{title}</Typography>
+                        <Typography sx={{ mt: 0.25, fontSize: 12, lineHeight: 1.5, color: 'text.secondary' }}>{description}</Typography>
+                      </Box>
+                      <Switch
+                        checked={notifSettings[key]}
+                        onChange={event => setNotifSettings({ ...notifSettings, [key]: event.target.checked })}
+                        slotProps={{ input: { 'aria-label': title } }}
+                      />
+                    </Stack>
+                  ))}
+                </Stack>
+                <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                  <Button variant="contained" onClick={handleSaveNotifications} loading={isSaving} sx={{ minWidth: { xs: '100%', sm: 190 } }}>
+                    Save preferences
+                  </Button>
+                </Box>
               </Stack>
             </CardContent>
           </Card>
-        )}
 
-        {(notifStatus === 'pending' || notifStatus === 'enabled') && (
-          <Card>
-            <CardContent sx={{ p: 2.5 }}>
-              <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap" useFlexGap>
-                <Box>
-                  <Typography sx={{ fontWeight: 600, fontSize: '15px' }}>
-                    Push notifications {notifStatus === 'enabled' ? 'enabled' : 'not enabled yet'}
-                  </Typography>
-                  <Typography color="text.secondary" sx={{ fontSize: '13px' }}>
-                    Get reminded to log expenses and notified of household activity.
-                  </Typography>
-                </Box>
-                 {notifStatus === 'enabled' ? (
-                  <Button
-                    variant="outlined"
-                    color="error"
-                    onClick={handleDisableNotifications}
-                    loading={permissionActionLoading}
-                    sx={{
-                      ml: 'auto',
-                      borderRadius: '12px',
-                      boxShadow: 'none',
-                      textTransform: 'none',
-                      fontWeight: 'bold',
-                    }}
-                  >
-                    Disable
-                  </Button>
+          <Card sx={{ position: { lg: 'sticky' }, top: { lg: 24 } }}>
+            <CardContent>
+              <Stack spacing={2.5}>
+                <Stack direction="row" spacing={1.5} alignItems="center">
+                  <Box sx={{ width: 44, height: 44, borderRadius: 3, bgcolor: 'action.hover', color: notifStatus === 'enabled' ? 'success.main' : 'primary.main', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <NotificationsActiveIcon />
+                  </Box>
+                  <Box>
+                    <Typography sx={{ fontSize: 16, fontWeight: 800, color: 'text.primary' }}>Push delivery</Typography>
+                    <Typography sx={{ fontSize: 12, color: 'text.secondary' }}>Device-level notification status</Typography>
+                  </Box>
+                </Stack>
+
+                {notifStatus === 'checking' ? (
+                  <Stack spacing={1}>
+                    <Skeleton variant="text" width="75%" height={22} />
+                    <Skeleton variant="text" width="100%" height={18} />
+                    <Skeleton variant="rounded" width="100%" height={48} />
+                  </Stack>
                 ) : (
-                  <Button
-                    variant="contained"
-                    onClick={handleEnableNotifications}
-                    loading={permissionActionLoading}
-                    sx={{
-                      ml: 'auto',
-                      borderRadius: '12px',
-                      boxShadow: 'none',
-                      textTransform: 'none',
-                      fontWeight: 'bold',
-                    }}
-                  >
-                    Enable notifications
-                  </Button>
+                  <>
+                    <Box sx={{ p: 2, borderRadius: 3, bgcolor: 'surfaceContainerLow' }}>
+                      <Typography sx={{ fontSize: 14, fontWeight: 700, color: 'text.primary' }}>
+                        {notifStatus === 'enabled' ? 'Notifications are enabled' : notifStatus === 'permission-denied' ? 'Notifications are blocked' : notifStatus === 'unsupported' ? 'Push is unavailable here' : 'Notifications are not enabled'}
+                      </Typography>
+                      <Typography sx={{ mt: 0.5, fontSize: 12, lineHeight: 1.55, color: 'text.secondary' }}>
+                        {notifStatus === 'enabled'
+                          ? 'Kippa can send reminders and household updates to this device.'
+                          : notifStatus === 'permission-denied'
+                            ? 'Allow notifications in your browser or device settings, then reopen Kippa.'
+                            : notifStatus === 'unsupported'
+                              ? 'On iPhone, add Kippa to your Home Screen on iOS 16.4 or later.'
+                              : 'Enable push delivery to receive reminders outside the app.'}
+                      </Typography>
+                    </Box>
+                    {(notifStatus === 'pending' || notifStatus === 'enabled') && (
+                      <Button
+                        variant={notifStatus === 'enabled' ? 'outlined' : 'contained'}
+                        color={notifStatus === 'enabled' ? 'error' : 'primary'}
+                        onClick={notifStatus === 'enabled' ? handleDisableNotifications : handleEnableNotifications}
+                        loading={permissionActionLoading}
+                        fullWidth
+                      >
+                        {notifStatus === 'enabled' ? 'Disable on this device' : 'Enable notifications'}
+                      </Button>
+                    )}
+                  </>
                 )}
               </Stack>
             </CardContent>
           </Card>
-        )}
-
-        <Card>
-          <CardContent sx={{ p: 2.5 }}>
-            <Stack spacing={2.5}>
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={notifSettings.dailyReminderEnabled}
-                    onChange={e => setNotifSettings({ ...notifSettings, dailyReminderEnabled: e.target.checked })}
-                  />
-                }
-                label="Daily Logging Reminder"
-              />
-
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={notifSettings.categoryWarningEnabled}
-                    onChange={e => setNotifSettings({ ...notifSettings, categoryWarningEnabled: e.target.checked })}
-                  />
-                }
-                label="Budget Warn Alerts (Category warning)"
-              />
-
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={notifSettings.joinRequestEnabled}
-                    onChange={e => setNotifSettings({ ...notifSettings, joinRequestEnabled: e.target.checked })}
-                  />
-                }
-                label="Join-Request Notifications (notify on household join requests and decisions)"
-              />
-
-              <Button
-                variant="contained"
-                onClick={handleSaveNotifications}
-                loading={isSaving}
-                sx={{
-                  mt: 1,
-                  py: 1.2,
-                  borderRadius: '12px',
-                  boxShadow: 'none',
-                  textTransform: 'none',
-                  fontWeight: 'bold'
-                }}
-              >
-                Save Preferences
-              </Button>
-            </Stack>
-          </CardContent>
-        </Card>
+        </Box>
       </Stack>
-    </Container>
+    </Box>
   );
 }

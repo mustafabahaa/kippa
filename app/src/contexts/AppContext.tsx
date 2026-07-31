@@ -15,11 +15,21 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   // Listen to authentication state changes
   useEffect(() => {
-    const unsubscribe = authLib.onAuthStateChanged((profile) => {
-      setUserProfile(profile);
-      setIsAuthLoading(false);
-    });
-    return () => unsubscribe();
+    let cancelled = false;
+    let unsubscribe = () => {};
+    authLib.signInForLocalPreview()
+      .catch((error) => console.error(error))
+      .finally(() => {
+        if (cancelled) return;
+        unsubscribe = authLib.onAuthStateChanged((profile) => {
+          setUserProfile(profile);
+          setIsAuthLoading(false);
+        });
+      });
+    return () => {
+      cancelled = true;
+      unsubscribe();
+    };
   }, []);
 
   // Ensure active household exists in Firestore

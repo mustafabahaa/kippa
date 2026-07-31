@@ -3,7 +3,6 @@ import {
   Box,
   Card,
   CardContent,
-  Container,
   Stack,
   Typography,
   Button,
@@ -19,7 +18,8 @@ import {
   IconButton,
   FormControlLabel,
   Checkbox,
-  Skeleton
+  Skeleton,
+  Chip
 } from '@mui/material';
 import { AccountBalanceIcon } from '@/components/AppIcon';
 import { SavingsIcon } from '@/components/AppIcon';
@@ -46,6 +46,7 @@ import { computeCardSummary } from '@/libs/cardSelectors';
 import { CurrencySelect } from '@/features/shared/components/CurrencySelect';
 import { useHouseholdBaseCurrency } from '@/hooks/useFinance';
 import { Money } from '@/components/Money';
+import { EmptyLayout } from '@/features/shared/components/EmptyLayout';
 
 export function Accounts() {
   const { householdId } = useAppContext();
@@ -153,111 +154,126 @@ export function Accounts() {
   const visibleAccounts = accounts.filter(a => a.type !== 'credit');
 
   return (
-    <Container maxWidth="md" sx={{ py: 1, px: { xs: 2, sm: 3 } }}>
+    <Box sx={{ py: 0.5 }}>
       <Stack spacing={3}>
-        <Box sx={{ mt: 1 }}>
-          <Typography variant="h2" sx={{ fontSize: '24px', fontWeight: 700, color: 'text.primary' }}>
-            Accounts & Cards
-          </Typography>
-          <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '13px', mt: 0.5 }}>
-            Manage accounts, cash, wallets and cards
-          </Typography>
-        </Box>
-
-        {/* Accounts List — cards nested inside their account */}
-        <Stack spacing={1.5}>
-          {isLoading ? (
-            [1, 2].map(i => (
-              <Skeleton
-                key={i}
-                variant="rectangular"
-                width="100%"
-                height={76}
-                sx={{ borderRadius: '20px' }}
-                animation="wave"
-              />
-            ))
-          ) : (
-            visibleAccounts.map(acc => {
-              const bal = accountBalance(acc.id);
-              const linked = cards.filter(c =>
-                c.parentAccountId === acc.id || c.paymentAccountId === acc.id);
-              const canHoldCard = acc.type === 'running' || acc.type === 'savings';
-              return (
-                <Card
-                  key={acc.id}
-                  sx={{ overflow: 'hidden' }}
-                >
-                  <Box sx={{ p: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <Box display="flex" alignItems="center" gap={2}>
-                      <Box sx={{ width: 44, height: 44, borderRadius: '12px', bgcolor: 'action.hover', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        {getAccountIcon(acc.type)}
-                      </Box>
-                      <Box>
-                        <Typography variant="body1" sx={{ fontWeight: 'bold', color: 'text.primary' }}>{acc.name}</Typography>
-                        <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '11px' }}>
-                          {acc.type.toUpperCase()} • {acc.currency}
-                        </Typography>
-                      </Box>
-                    </Box>
-                    <Stack direction="row" spacing={1} alignItems="center">
-                      <Typography variant="body1" sx={{ fontWeight: 'bold', color: 'text.primary' }}>
-                        <Money amount={bal} code={acc.currency} maxDigits={2} />
-                      </Typography>
-                      <IconButton size="small" onClick={() => handleOpenEdit(acc)}>
-                        <EditIcon sx={{ fontSize: '18px' }} />
-                      </IconButton>
-                    </Stack>
-                  </Box>
-
-                  {/* Cards nested inside this account */}
-                  {canHoldCard && (
-                    <Box sx={{ px: 2, pb: linked.length > 0 ? 2 : 1.5 }}>
-                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: linked.length > 0 ? 2 : 0 }}>
-                        {linked.map(card => (
-                          <CardTile
-                            key={card.id}
-                            card={card}
-                            summary={summaryFor(card)}
-                            parentAccountBalance={accountBalance(card.parentAccountId)}
-                            onFreeze={() => updateCard.mutate({
-                              householdId, cardId: card.id,
-                              updates: { isActive: !card.isActive }, accounts,
-                            })}
-                            onOpenDetail={() => setDetailCard(card)}
-                          />
-                        ))}
-                      </Box>
-                      <Button
-                        size="small"
-                        startIcon={<AddIcon />}
-                        onClick={() => { setAddCardForAccount(acc.id); }}
-                        sx={{ textTransform: 'none', color: 'text.secondary' }}
-                      >
-                        {linked.length > 0 ? 'Add another card' : 'Add card'}
-                      </Button>
-                    </Box>
-                  )}
-                </Card>
-              );
-            })
+        <Stack direction="row" alignItems="flex-start" justifyContent="space-between" spacing={2} flexWrap="wrap" useFlexGap>
+          <Box>
+            <Typography variant="h2" sx={{ fontSize: 24, fontWeight: 800, color: 'text.primary' }}>
+              Accounts & Cards
+            </Typography>
+            <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: 13, mt: 0.5 }}>
+              Manage accounts, cash, wallets and cards
+            </Typography>
+          </Box>
+          {!isLoading && (
+            <Chip
+              label={`${visibleAccounts.length} ${visibleAccounts.length === 1 ? 'account' : 'accounts'} connected`}
+              sx={{ bgcolor: 'action.hover', color: 'primary.main' }}
+            />
           )}
         </Stack>
 
-        {/* Add Account Card */}
-        <Card>
-          <CardContent sx={{ p: 2.5 }}>
-            <Typography variant="h3" sx={{ fontSize: '16px', fontWeight: 700, color: 'text.primary', mb: 2 }}>
-              Add New Account
-            </Typography>
-            <Stack spacing={2}>
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: 'minmax(0, 1fr)', lg: 'minmax(0, 7fr) minmax(280px, 3fr)' },
+            gap: 3,
+            alignItems: 'start',
+          }}
+        >
+          {/* Accounts List — cards nested inside their account */}
+          <Stack spacing={2} sx={{ minWidth: 0 }}>
+            {isLoading ? (
+              [1, 2].map(i => (
+                <Skeleton key={i} variant="rectangular" width="100%" height={160} sx={{ borderRadius: '20px' }} animation="wave" />
+              ))
+            ) : visibleAccounts.length === 0 ? (
+              <EmptyLayout
+                icon={<AccountBalanceIcon sx={{ fontSize: 28 }} />}
+                title="No accounts yet"
+                description="Create your first account to begin tracking balances and cards."
+              />
+            ) : (
+              visibleAccounts.map(acc => {
+                const bal = accountBalance(acc.id);
+                const linked = cards.filter(c => c.parentAccountId === acc.id || c.paymentAccountId === acc.id);
+                const canHoldCard = acc.type === 'running' || acc.type === 'savings';
+                return (
+                  <Card key={acc.id} sx={{ overflow: 'hidden' }}>
+                    <CardContent>
+                      <Stack spacing={2.5}>
+                        <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={2}>
+                          <Stack direction="row" spacing={1.5} alignItems="center" sx={{ minWidth: 0 }}>
+                            <Box sx={{ width: 44, height: 44, borderRadius: 3, bgcolor: 'action.hover', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                              {getAccountIcon(acc.type)}
+                            </Box>
+                            <Box sx={{ minWidth: 0 }}>
+                              <Typography noWrap sx={{ fontSize: 16, lineHeight: '22px', fontWeight: 800, color: 'text.primary' }}>{acc.name}</Typography>
+                              <Typography sx={{ color: 'text.secondary', fontSize: 12, fontWeight: 600 }}>
+                                {acc.type.toUpperCase()} • {acc.currency}
+                              </Typography>
+                            </Box>
+                          </Stack>
+                          <Stack direction="row" spacing={0.5} alignItems="center">
+                            <Typography sx={{ fontSize: 14, fontWeight: 800, color: 'text.primary', whiteSpace: 'nowrap' }}>
+                              <Money amount={bal} code={acc.currency} maxDigits={2} />
+                            </Typography>
+                            <IconButton aria-label={`Edit ${acc.name}`} onClick={() => handleOpenEdit(acc)}>
+                              <EditIcon sx={{ fontSize: 18 }} />
+                            </IconButton>
+                          </Stack>
+                        </Stack>
+
+                        {canHoldCard && (
+                          <Box>
+                            {linked.length > 0 && (
+                              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 1.5 }}>
+                                {linked.map(card => (
+                                  <CardTile
+                                    key={card.id}
+                                    card={card}
+                                    summary={summaryFor(card)}
+                                    parentAccountBalance={accountBalance(card.parentAccountId)}
+                                    onFreeze={() => updateCard.mutate({
+                                      householdId, cardId: card.id,
+                                      updates: { isActive: !card.isActive }, accounts,
+                                    })}
+                                    onOpenDetail={() => setDetailCard(card)}
+                                  />
+                                ))}
+                              </Box>
+                            )}
+                            <Button startIcon={<AddIcon />} onClick={() => setAddCardForAccount(acc.id)} sx={{ color: 'text.secondary' }}>
+                              {linked.length > 0 ? 'Add another card' : 'Add card'}
+                            </Button>
+                          </Box>
+                        )}
+                      </Stack>
+                    </CardContent>
+                  </Card>
+                );
+              })
+            )}
+          </Stack>
+
+          {/* Add Account Card */}
+          <Card sx={{ position: { lg: 'sticky' }, top: { lg: 24 } }}>
+            <CardContent>
+              <Stack spacing={2.5}>
+                <Box>
+                  <Typography sx={{ fontSize: 16, lineHeight: '22px', fontWeight: 800, color: 'text.primary' }}>Add new account</Typography>
+                  <Typography sx={{ mt: 0.5, fontSize: 12, lineHeight: '16px', fontWeight: 600, color: 'text.secondary' }}>
+                    Connect cash, a wallet, or a bank balance.
+                  </Typography>
+                </Box>
+
+                <Stack spacing={2}>
               <TextField
                 fullWidth
                 label="Account Name"
                 placeholder="e.g. My Bank"
                 value={newAccName}
                 onChange={e => setNewAccName(e.target.value)}
-                sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
               />
               <FormControl fullWidth>
                 <InputLabel id="acc-type-label">Account Type</InputLabel>
@@ -266,7 +282,6 @@ export function Accounts() {
                   value={newAccType}
                   label="Account Type"
                   onChange={e => setNewAccType(e.target.value as AccountType)}
-                  sx={{ borderRadius: '12px' }}
                 >
                   <MenuItem value="running">Running Bank</MenuItem>
                   <MenuItem value="savings">Savings Bank</MenuItem>
@@ -284,19 +299,14 @@ export function Accounts() {
                 variant="contained"
                 onClick={handleCreateAccount}
                 loading={createAccountMutation.isPending}
-                sx={{
-                  py: 1.2,
-                  borderRadius: '12px',
-                  boxShadow: 'none',
-                  textTransform: 'none',
-                  fontWeight: 'bold'
-                }}
               >
                 Create Account
               </Button>
-            </Stack>
-          </CardContent>
-        </Card>
+                </Stack>
+              </Stack>
+            </CardContent>
+          </Card>
+        </Box>
       </Stack>
 
       {/* Card dialogs */}
@@ -359,6 +369,6 @@ export function Accounts() {
           </Button>
         </DialogActions>
       </Dialog>
-    </Container>
+    </Box>
   );
 }

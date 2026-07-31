@@ -12,10 +12,11 @@ import {
   MenuItem, 
   FormControl, 
   InputLabel,
-  Divider,
-  Chip,
-  Skeleton
+  Skeleton,
+  Grid
 } from '@mui/material';
+import { CategoryIcon } from '@/components/AppIcon';
+import { PageHeader } from '@/features/shared/components/PageHeader';
 import { 
   useCategories, 
   useCreateCategoryMutation 
@@ -47,87 +48,80 @@ export function Categories() {
     setNewCatName('');
   };
 
-  return (
-      <Container maxWidth="md" sx={{ py: 1, px: { xs: 2, sm: 3 } }}>
-      <Stack spacing={3}>
-        <Box sx={{ mt: 1 }}>
-          <Typography variant="h2" sx={{ fontSize: '24px', fontWeight: 700, color: 'text.primary' }}>
-            Categories
-          </Typography>
-          <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '13px', mt: 0.5 }}>
-            Configure and priorities your income and expense categories
-          </Typography>
-        </Box>
-
-        {/* Current Categories List */}
-        <Box>
-          <Typography variant="h3" sx={{ fontSize: '15px', fontWeight: 700, color: 'text.primary', mb: 1.5 }}>
-            Income Categories
-          </Typography>
-          <Box display="flex" flexWrap="wrap" gap={1}>
-            {isLoading ? (
-              [1, 2].map(i => (
-                <Skeleton key={i} variant="rectangular" width={80} height={32} sx={{ borderRadius: '8px' }} />
-              ))
-            ) : categories.filter(c => c.type === 'income').length === 0 ? (
-              <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '13px', fontStyle: 'italic' }}>
-                No income categories yet — add one below.
-              </Typography>
-            ) : (
-              categories.filter(c => c.type === 'income').map(cat => (
-                <Chip
-                  key={cat.id}
-                  label={cat.name}
-                  variant="outlined"
-                  sx={{ borderRadius: '8px', fontWeight: 500 }}
-                />
-              ))
-            )}
-          </Box>
-        </Box>
-
-        <Box>
-          <Typography variant="h3" sx={{ fontSize: '15px', fontWeight: 700, color: 'text.primary', mb: 1.5 }}>
-            Expense Categories
-          </Typography>
-          <Box display="flex" flexWrap="wrap" gap={1}>
-            {isLoading ? (
-              [1, 2, 3, 4].map(i => (
-                <Skeleton key={i} variant="rectangular" width={80} height={32} sx={{ borderRadius: '8px' }} />
-              ))
-            ) : categories.filter(c => c.type === 'expense').length === 0 ? (
-              <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '13px', fontStyle: 'italic' }}>
-                No expense categories yet — add one below.
-              </Typography>
-            ) : (
-              categories.filter(c => c.type === 'expense').map(cat => (
-                <Chip
-                  key={cat.id}
-                  label={cat.name}
-                  variant="outlined"
-                  sx={{ borderRadius: '8px', fontWeight: 500 }}
-                />
-              ))
-            )}
-          </Box>
-        </Box>
-
-        <Divider />
-
-        {/* Create Category Card */}
-        <Card>
-          <CardContent sx={{ p: 2.5 }}>
-            <Typography variant="h3" sx={{ fontSize: '16px', fontWeight: 700, color: 'text.primary', mb: 2 }}>
-              Add New Category
+  const renderCategoryGroup = (type: 'income' | 'expense', title: string) => {
+    const items = categories.filter(category => category.type === type);
+    return (
+      <Card>
+        <CardContent sx={{ p: { xs: 2, sm: 2.5 } }}>
+          <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
+            <Stack direction="row" alignItems="center" spacing={1}>
+              <Box sx={{ width: 34, height: 34, borderRadius: '9px', bgcolor: 'action.hover', color: 'primary.main', display: 'grid', placeItems: 'center' }}>
+                <CategoryIcon fontSize="small" />
+              </Box>
+              <Box>
+                <Typography sx={{ color: 'text.primary', fontSize: 14, fontWeight: 750 }}>{title}</Typography>
+                <Typography sx={{ color: 'text.secondary', fontSize: 11 }}>{items.length} configured</Typography>
+              </Box>
+            </Stack>
+            <Typography sx={{ color: type === 'income' ? 'success.main' : 'text.secondary', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+              {type}
             </Typography>
-            <Stack spacing={2}>
+          </Stack>
+
+          {isLoading ? (
+            <Grid container spacing={1}>
+              {[1, 2, 3, 4].map(item => <Grid key={item} size={{ xs: 12, sm: 6 }}><Skeleton height={48} sx={{ borderRadius: '10px' }} /></Grid>)}
+            </Grid>
+          ) : items.length === 0 ? (
+            <Box sx={{ py: 4, textAlign: 'center', borderRadius: '12px', bgcolor: 'action.hover' }}>
+              <Typography sx={{ color: 'text.secondary', fontSize: 12 }}>No {type} categories yet</Typography>
+            </Box>
+          ) : (
+            <Grid container spacing={1}>
+              {items.map(category => (
+                <Grid key={category.id} size={{ xs: 12, sm: 6 }}>
+                  <Stack
+                    direction="row"
+                    alignItems="center"
+                    spacing={1.25}
+                    sx={{ minHeight: 46, px: 1.25, py: 0.75, borderRadius: '10px', bgcolor: 'action.hover', border: '1px solid', borderColor: 'transparent' }}
+                  >
+                    <Box sx={{ width: 7, height: 7, borderRadius: '50%', bgcolor: type === 'income' ? 'success.main' : 'primary.main', flexShrink: 0 }} />
+                    <Typography sx={{ color: 'text.primary', fontSize: 12.5, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {category.name}
+                    </Typography>
+                  </Stack>
+                </Grid>
+              ))}
+            </Grid>
+          )}
+        </CardContent>
+      </Card>
+    );
+  };
+
+  return (
+    <Container maxWidth="xl" sx={{ py: 1, px: { xs: 2, sm: 3, lg: 5 } }}>
+      <Stack spacing={3}>
+        <PageHeader title="Categories" subtitle="Organize income and spending for reports and budget cycles" />
+
+        <Grid container spacing={{ xs: 2, lg: 3 }} alignItems="flex-start">
+          <Grid size={{ xs: 12, md: 8 }}>
+            <Stack spacing={2}>{renderCategoryGroup('income', 'Income categories')}{renderCategoryGroup('expense', 'Expense categories')}</Stack>
+          </Grid>
+
+          <Grid size={{ xs: 12, md: 4 }}>
+            <Card sx={{ position: { md: 'sticky' }, top: { md: 96 } }}>
+              <CardContent sx={{ p: { xs: 2, sm: 2.5 } }}>
+                <Typography sx={{ fontSize: 15, fontWeight: 750, color: 'text.primary' }}>Add a category</Typography>
+                <Typography sx={{ color: 'text.secondary', fontSize: 11.5, mt: 0.5, mb: 2.5 }}>New categories become available immediately in entry and budgeting.</Typography>
+                <Stack spacing={2}>
               <TextField
                 fullWidth
-                label="Category Name"
+                label="Category name"
                 placeholder="e.g. Subscriptions"
                 value={newCatName}
                 onChange={e => setNewCatName(e.target.value)}
-                sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
               />
               <FormControl fullWidth>
                 <InputLabel id="cat-type-label">Type</InputLabel>
@@ -136,7 +130,6 @@ export function Categories() {
                   value={newCatType}
                   label="Type"
                   onChange={e => setNewCatType(e.target.value as 'income' | 'expense')}
-                  sx={{ borderRadius: '12px' }}
                 >
                   <MenuItem value="expense">Expense</MenuItem>
                   <MenuItem value="income">Income</MenuItem>
@@ -147,19 +140,15 @@ export function Categories() {
                 variant="contained"
                 onClick={handleCreateCategory}
                 loading={createCategoryMutation.isPending}
-                sx={{
-                  py: 1.2,
-                  borderRadius: '12px',
-                  boxShadow: 'none',
-                  textTransform: 'none',
-                  fontWeight: 'bold'
-                }}
+                sx={{ borderRadius: '10px', fontWeight: 700 }}
               >
                 Create Category
               </Button>
-            </Stack>
-          </CardContent>
-        </Card>
+                </Stack>
+              </CardContent>
+            </Card>
+          </Grid>
+        </Grid>
       </Stack>
     </Container>
   );

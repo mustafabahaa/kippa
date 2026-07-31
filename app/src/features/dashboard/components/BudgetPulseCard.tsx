@@ -1,4 +1,4 @@
-import { Box, Card, CardContent, LinearProgress, Skeleton, Stack, Typography, useTheme, alpha } from '@mui/material';
+import { Box, Card, CardContent, Skeleton, Stack, Typography, useTheme, alpha } from '@mui/material';
 import {
   useAccounts,
   useTransactions,
@@ -13,8 +13,6 @@ import {
 import { computeDashboard, DashboardData } from '@/libs/selectors';
 import { Money } from '@/components/Money';
 import { useAppContext } from '@/hooks/useAppContext';
-import { InfoTooltip } from '@/features/shared/components/InfoTooltip';
-import { metricExplanations } from '@/features/shared/constants/metricExplanations';
 
 export function BudgetPulseCard() {
   const { householdId } = useAppContext();
@@ -80,94 +78,51 @@ export function BudgetPulseCard() {
     displayRates,
     baseCurrency
   );
+  const remainingPercent = data.spending.plannedBudget > 0
+    ? Math.max(0, Math.round((1 - data.spending.actual / data.spending.plannedBudget) * 100))
+    : 0;
+  const featuredCategories = [...data.categoryStatus]
+    .filter(category => category.planned > 0)
+    .sort((a, b) => b.planned - a.planned)
+    .slice(0, 3);
 
   return (
-    <Card>
-      <CardContent sx={{ p: 2.5 }}>
-        <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 1.5 }}>
-          <Typography variant="body1" sx={{ fontWeight: 'bold', color: 'text.primary' }}>
-            Budget Pulse
+    <Card sx={{ height: 375 }}>
+      <CardContent sx={{ height: '100%' }}>
+        <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={1}>
+          <Typography sx={{ fontSize: 15, fontWeight: 750, color: 'text.primary' }}>Remaining monthly</Typography>
+          <Typography noWrap sx={{ fontSize: 9.5, fontWeight: 700, color: getStatusColor(data.saving.status) }}>{getStatusLabel(data.saving.status)}</Typography>
+        </Stack>
+
+        <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={2} sx={{ mt: 2.5 }}>
+          <Typography sx={{ color: 'text.primary', fontSize: { xs: 36, lg: 40 }, fontWeight: 500, lineHeight: 1.05, letterSpacing: '-0.055em', fontVariantNumeric: 'tabular-nums' }}>{remainingPercent}<Box component="span" sx={{ color: 'text.secondary', fontSize: '0.62em', ml: 0.75 }}>%</Box></Typography>
+          <Typography sx={{ maxWidth: 150, color: 'text.secondary', fontSize: 10.5, lineHeight: 1.45 }}>
+            {data.saving.status === 'on-track' ? 'You are in good shape—your monthly spending remains within plan.' : 'Spending is running ahead of the monthly plan.'}
           </Typography>
-          <Box sx={{ bgcolor: getStatusBgColor(data.saving.status), color: getStatusColor(data.saving.status), px: 1.2, py: 0.4, borderRadius: '999px', fontSize: '11px', fontWeight: 'bold' }}>
-            {getStatusLabel(data.saving.status)}
-          </Box>
+        </Stack>
+
+        <Box sx={{ mt: 1.25, px: 1, py: 0.6, width: 'fit-content', borderRadius: '9px', bgcolor: getStatusBgColor(data.saving.status) }}>
+          <Typography sx={{ color: getStatusColor(data.saving.status), fontSize: 9.5, fontWeight: 700 }}>Cycle progress {data.cycleProgress ? Math.round(data.cycleProgress.ratio * 100) : 0}%</Typography>
         </Box>
 
-        <Box display="flex" alignItems="center" gap={2}>
-          <Box flex={1}>
-            <LinearProgress 
-              variant="determinate" 
-              value={Math.min(100, data.spending.plannedBudget > 0 ? (data.spending.actual / data.spending.plannedBudget) * 100 : 0)} 
-              sx={{ 
-                height: 8, 
-                borderRadius: 4, 
-                bgcolor: 'action.hover',
-                '& .MuiLinearProgress-bar': {
-                  bgcolor: getStatusColor(data.saving.status)
-                }
-              }} 
-            />
-            <Box display="flex" justifyContent="space-between" sx={{ mt: 1 }}>
-              <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                <InfoTooltip
-                  label="Spending ratio"
-                  text={metricExplanations.spendingRatio}
-                />
-                : {Math.round(data.spending.plannedBudget > 0 ? (data.spending.actual / data.spending.plannedBudget) * 100 : 0)}%
-              </Typography>
-              <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                <InfoTooltip
-                  label="Cycle progress"
-                  text={metricExplanations.cycleProgress}
-                />
-                : {data.cycleProgress ? Math.round(data.cycleProgress.ratio * 100) : 0}%
-              </Typography>
-            </Box>
-          </Box>
-          <Box sx={{ width: 44, height: 44, borderRadius: '50%', bgcolor: getStatusBgColor(data.saving.status), display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <span className="material-symbols-outlined" style={{ color: getStatusColor(data.saving.status), fontSize: '24px', margin: 'auto' }}>
-              {data.saving.status === 'on-track' ? 'trending_down' : 'trending_up'}
-            </span>
-          </Box>
-        </Box>
-
-        <Box
-          sx={{
-            mt: 2,
-            p: 1.5,
-            borderRadius: 2,
-            border: '1px solid',
-            borderColor: 'divider',
-            bgcolor: 'action.hover',
-          }}
-        >
-          <Box display="flex" alignItems="center" gap={0.5} sx={{ mb: 1 }}>
-            <Typography variant="caption" sx={{ color: 'text.secondary', fontStyle: 'italic' }}>
-              <InfoTooltip
-                label="Projected cycle spending"
-                text={metricExplanations.projectedCycleSpending}
-              />
-            </Typography>
-          </Box>
-          <Box display="flex" justifyContent="space-between" alignItems="flex-end" gap={2}>
-            <Box>
-              <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
-                Projected
-              </Typography>
-              <Typography variant="h6" sx={{ fontWeight: 'bold', color: getStatusColor(data.saving.status), lineHeight: 1.2 }}>
-                <Money amount={data.spending.projected} code={baseCurrency} />
-              </Typography>
-            </Box>
-            <Box sx={{ textAlign: 'right' }}>
-              <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
-                Target
-              </Typography>
-              <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.primary', lineHeight: 1.2 }}>
-                <Money amount={data.spending.plannedBudget} code={baseCurrency} />
-              </Typography>
-            </Box>
-          </Box>
-        </Box>
+        <Stack direction="row" spacing={1} alignItems="flex-end" sx={{ mt: 2.5, minHeight: 150 }}>
+          {featuredCategories.map((category, index) => {
+            const used = Math.round(category.ratio * 100);
+            const remaining = Math.max(0, category.planned - category.spent);
+            return (
+              <Box key={category.categoryId} sx={{ flex: 1, minWidth: 0 }}>
+                <Box sx={{ height: 8, mb: 1, borderRadius: '999px', bgcolor: index === 0 ? 'primary.dark' : index === 1 ? 'primary.main' : 'primary.light' }} />
+                <Box sx={{ height: 120 - index * 16, p: 1.25, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', borderRadius: '13px 13px 9px 9px', bgcolor: index === 0 ? 'primary.dark' : index === 1 ? 'primary.main' : 'primary.light', color: index === 2 ? 'primary.dark' : 'primary.contrastText' }}>
+                  <Box>
+                    <Typography sx={{ color: 'inherit', fontSize: used >= 100 ? 19 : 24, fontWeight: 500, lineHeight: 1 }}>{used}%</Typography>
+                    <Typography noWrap sx={{ color: 'inherit', fontSize: 10.5, opacity: 0.82 }}>{category.categoryName}</Typography>
+                  </Box>
+                  <Typography noWrap title={`${remaining.toLocaleString()} ${baseCurrency} left`} sx={{ color: 'inherit', fontSize: 8.5, fontWeight: 700 }}><Money amount={remaining} code={baseCurrency} maxDigits={0} /></Typography>
+                </Box>
+              </Box>
+            );
+          })}
+        </Stack>
       </CardContent>
     </Card>
   );

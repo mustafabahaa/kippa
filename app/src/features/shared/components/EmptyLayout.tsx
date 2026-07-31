@@ -5,13 +5,14 @@ interface EmptyLayoutProps {
   title: string;
   description?: string;
   action?: ReactNode;
+  icon?: ReactNode;
 }
 
 /**
  * EmptyLayout renders a premium empty state container with dashed borders,
  * the Kippa logo icon, title, description, and an optional action.
  */
-export function EmptyLayout({ title, description, action }: EmptyLayoutProps) {
+export function EmptyLayout({ title, description, action, icon }: EmptyLayoutProps) {
   const theme = useTheme();
   const logoSrc = theme.palette.mode === 'dark' ? '/icons/icon-dark.svg' : '/icons/icon.svg';
 
@@ -34,18 +35,36 @@ export function EmptyLayout({ title, description, action }: EmptyLayoutProps) {
         transition: 'all 0.3s ease-in-out',
       }}
     >
-      <Box
-        component="img"
-        src={logoSrc}
-        alt="Kippa Logo"
-        sx={{
-          width: 52,
-          height: 52,
-          opacity: 0.25,
-          mb: 2,
-          filter: theme.palette.mode === 'dark' ? 'none' : 'grayscale(100%)',
-        }}
-      />
+      {icon ? (
+        <Box
+          sx={{
+            width: 52,
+            height: 52,
+            mb: 2,
+            borderRadius: 3,
+            bgcolor: 'action.hover',
+            color: 'primary.main',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          {icon}
+        </Box>
+      ) : (
+        <Box
+          component="img"
+          src={logoSrc}
+          alt="Kippa Logo"
+          sx={{
+            width: 52,
+            height: 52,
+            opacity: 0.25,
+            mb: 2,
+            filter: theme.palette.mode === 'dark' ? 'none' : 'grayscale(100%)',
+          }}
+        />
+      )}
       <Typography
         variant="subtitle1"
         sx={{ fontWeight: 700, color: 'text.primary', fontSize: '15px' }}
@@ -55,7 +74,7 @@ export function EmptyLayout({ title, description, action }: EmptyLayoutProps) {
       {description && (
         <Typography
           variant="body2"
-          sx={{ color: 'text.secondary', fontSize: '13px', mt: 0.75, maxW: '80%' }}
+          sx={{ color: 'text.secondary', fontSize: '13px', mt: 0.75, maxWidth: '80%' }}
         >
           {description}
         </Typography>

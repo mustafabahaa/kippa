@@ -4,16 +4,20 @@ import {
   Box,
   Button,
   Card,
-  Container,
+  CardContent,
   Divider,
   FormControl,
   InputLabel,
-  List,
-  ListItem,
   MenuItem,
   Select,
   Skeleton,
   Stack,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
   TextField,
   Typography,
   useTheme,
@@ -41,6 +45,7 @@ import { useAppContext } from '@/hooks/useAppContext';
 import { usePrivacyMask } from '@/hooks/usePrivacyMask';
 import { AuditAction, AuditLogEntry } from '@/domain/financeTypes';
 import { TransactionIcon } from '@/features/transactions/components/TransactionIcon';
+import { EmptyLayout } from '@/features/shared/components/EmptyLayout';
 
 interface ActionVisual {
   Icon: React.ComponentType<{ sx?: object }>;
@@ -99,32 +104,6 @@ const ACTION_GROUPS: { label: string; actions: AuditAction[] }[] = [
   { label: 'Settings', actions: ['notification_settings_updated'] },
 ];
 
-function isToday(date: Date): boolean {
-  const now = new Date();
-  return date.getFullYear() === now.getFullYear()
-    && date.getMonth() === now.getMonth()
-    && date.getDate() === now.getDate();
-}
-
-function isYesterday(date: Date): boolean {
-  const y = new Date();
-  y.setDate(y.getDate() - 1);
-  return date.getFullYear() === y.getFullYear()
-    && date.getMonth() === y.getMonth()
-    && date.getDate() === y.getDate();
-}
-
-function dayKey(entry: AuditLogEntry): string {
-  return entry.createdAt.slice(0, 10); // YYYY-MM-DD
-}
-
-function dayLabel(key: string): string {
-  const date = new Date(key + 'T00:00:00');
-  if (isToday(date)) return 'Today';
-  if (isYesterday(date)) return 'Yesterday';
-  return date.toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' });
-}
-
 /** Compact relative timestamp, e.g. "2m ago", "3h ago", "Just now". */
 function relativeTime(iso: string): string {
   const then = new Date(iso).getTime();
@@ -152,26 +131,16 @@ function AuditLogRow({ entry }: { entry: AuditLogEntry }) {
   const { maskDigits } = usePrivacyMask();
   const { Icon, color, bg } = getActionVisual(entry.action, theme);
   return (
-    <ListItem
-      disableGutters
-      sx={{
-        px: 2,
-        py: 1.75,
-        alignItems: 'flex-start',
-        '&:hover': { bgcolor: 'action.hover' },
-        transition: 'background-color 0.15s ease',
-      }}
-    >
-      <Stack direction="row" spacing={1.75} sx={{ width: '100%', alignItems: 'flex-start' }}>
-        {/* Action icon badge */}
+    <TableRow hover>
+      <TableCell align="center" sx={{ width: 64, py: 1.25 }}>
         {entry.action === 'transaction_created' ? (
-          <TransactionIcon type={entry.details?.type || 'expense'} size={38} />
+          <TransactionIcon type={entry.details?.type || 'expense'} size={36} />
         ) : (
           <Box
             sx={{
-              mt: 0.25,
-              width: 38,
-              height: 38,
+              width: 36,
+              height: 36,
+              mx: 'auto',
               borderRadius: '50%',
               bgcolor: bg,
               display: 'flex',
@@ -183,42 +152,27 @@ function AuditLogRow({ entry }: { entry: AuditLogEntry }) {
             <Icon sx={{ color, fontSize: 20 }} />
           </Box>
         )}
-
-        <Box sx={{ flex: 1, minWidth: 0 }}>
-          <Typography
-            variant="body1"
-            sx={{
-              color: 'text.primary',
-              fontSize: '13.5px',
-              lineHeight: 1.45,
-              wordBreak: 'break-word',
-            }}
-          >
-            {maskDigits(entry.summary)}
-          </Typography>
-          <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 0.75 }}>
-            <Avatar
-              src={entry.userPhotoURL || undefined}
-              sx={{
-                width: 18,
-                height: 18,
-                fontSize: '0.6rem',
-                fontWeight: 600,
-                bgcolor: 'primary.main',
-              }}
-            >
-              {initials(entry.userDisplayName)}
-            </Avatar>
-            <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '11.5px', fontWeight: 500 }}>
-              {entry.userDisplayName}
-            </Typography>
-            <Typography variant="body2" sx={{ color: 'disabled', fontSize: '11.5px' }}>
-              • {relativeTime(entry.createdAt)}
-            </Typography>
-          </Stack>
-        </Box>
-      </Stack>
-    </ListItem>
+      </TableCell>
+      <TableCell sx={{ py: 1.25, minWidth: 0 }}>
+        <Typography noWrap sx={{ color: 'text.primary', fontSize: 13.5, fontWeight: 750 }}>
+          {maskDigits(entry.summary)}
+        </Typography>
+        <Typography noWrap sx={{ mt: 0.25, color: 'text.secondary', fontSize: 11 }}>
+          {new Date(entry.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+        </Typography>
+      </TableCell>
+      <TableCell sx={{ width: 220, py: 1.25, display: { xs: 'none', md: 'table-cell' } }}>
+        <Stack direction="row" spacing={1} alignItems="center">
+          <Avatar src={entry.userPhotoURL || undefined} sx={{ width: 24, height: 24, fontSize: 10, bgcolor: 'primary.main' }}>
+            {initials(entry.userDisplayName)}
+          </Avatar>
+          <Typography noWrap sx={{ color: 'text.secondary', fontSize: 12, fontWeight: 600 }}>{entry.userDisplayName}</Typography>
+        </Stack>
+      </TableCell>
+      <TableCell align="right" sx={{ width: { xs: 100, sm: 140 }, py: 1.25 }}>
+        <Typography noWrap sx={{ color: 'text.secondary', fontSize: 12, fontWeight: 650 }}>{relativeTime(entry.createdAt)}</Typography>
+      </TableCell>
+    </TableRow>
   );
 }
 
@@ -283,20 +237,8 @@ export function AuditLog() {
 
   const visibleEntries = filteredEntries.slice(0, visibleCount);
 
-  // Group visible entries by calendar day (already sorted desc by the subscription query).
-  const grouped = useMemo(() => {
-    const map = new Map<string, AuditLogEntry[]>();
-    for (const entry of visibleEntries) {
-      const key = dayKey(entry);
-      const bucket = map.get(key);
-      if (bucket) bucket.push(entry);
-      else map.set(key, [entry]);
-    }
-    return Array.from(map.entries()); // [dayKey, entries][]
-  }, [visibleEntries]);
-
   return (
-    <Container maxWidth="md" sx={{ py: 2 }}>
+    <Box sx={{ py: 0.5 }}>
       <Stack spacing={3}>
         <PageHeader
           title="Activity Log"
@@ -304,48 +246,32 @@ export function AuditLog() {
         />
 
         {isLoading ? (
-          <Card sx={{ p: 1 }}>
-            <Stack divider={<Divider />}>
-              {[0, 1, 2, 3, 4].map((i) => (
-                <Stack key={i} direction="row" spacing={1.75} sx={{ p: 1.75, alignItems: 'center' }}>
-                  <Skeleton variant="circular" width={38} height={38} />
-                  <Box sx={{ flex: 1 }}>
-                    <Skeleton variant="text" width="85%" height={18} />
-                    <Skeleton variant="text" width="40%" height={14} />
-                  </Box>
-                </Stack>
-              ))}
-            </Stack>
+          <Card>
+            <CardContent>
+              <Stack divider={<Divider />}>
+                {[0, 1, 2, 3, 4].map((i) => (
+                  <Stack key={i} direction="row" spacing={1.75} sx={{ py: 1.5, alignItems: 'center' }}>
+                    <Skeleton variant="circular" width={38} height={38} />
+                    <Box sx={{ flex: 1 }}>
+                      <Skeleton variant="text" width="85%" height={18} />
+                      <Skeleton variant="text" width="40%" height={14} />
+                    </Box>
+                  </Stack>
+                ))}
+              </Stack>
+            </CardContent>
           </Card>
         ) : entries.length === 0 ? (
-          <Card sx={{ p: 5, textAlign: 'center' }}>
-            <Box
-              sx={{
-                width: 56,
-                height: 56,
-                mx: 'auto',
-                mb: 2,
-                borderRadius: '50%',
-                bgcolor: 'secondary.container',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <HistoryIcon sx={{ color: 'primary.main', fontSize: 28 }} />
-            </Box>
-            <Typography variant="h3" sx={{ fontSize: '16px', fontWeight: 700, color: 'text.primary', mb: 0.5 }}>
-              No activity yet
-            </Typography>
-            <Typography variant="body1" sx={{ color: 'text.secondary', fontSize: '13px' }}>
-              Actions you and your household take — logging expenses, creating cycles,
-              updating accounts — will appear here in real time.
-            </Typography>
+          <Card>
+            <EmptyLayout
+              icon={<HistoryIcon />}
+              title="No activity yet"
+              description="Actions you and your household take—logging expenses, creating cycles, and updating accounts—will appear here in real time."
+            />
           </Card>
         ) : (
           <>
-            {/* Filter Bar — mirrors TransactionHistory styling */}
-            <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} alignItems="center">
+            <Stack spacing={1.5}>
               <TextField
                 placeholder="Search activity..."
                 value={searchTerm}
@@ -356,95 +282,68 @@ export function AuditLog() {
                     startAdornment: <SearchIcon sx={{ color: 'text.secondary', mr: 1, fontSize: '20px' }} />,
                   },
                 }}
-                sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    bgcolor: 'surfaceContainerLow',
+                    '& fieldset': { borderColor: 'transparent' },
+                    '&:hover fieldset': { borderColor: 'transparent' },
+                    '&.Mui-focused fieldset': { borderColor: 'primary.main' },
+                  },
+                }}
               />
-
-              <FormControl sx={{ minWidth: 160, width: { xs: '100%', md: 'auto' } }}>
-                <InputLabel id="activity-action-label">Action</InputLabel>
-                <Select
-                  labelId="activity-action-label"
-                  value={selectedAction}
-                  label="Action"
-                  onChange={(e) => handleActionChange(e.target.value)}
-                  sx={{ borderRadius: '12px' }}
-                >
-                  <MenuItem value="all">All Actions</MenuItem>
-                  {ACTION_GROUPS.map((g) => (
-                    <MenuItem key={g.label} value={g.label}>{g.label}</MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-
-              <FormControl sx={{ minWidth: 160, width: { xs: '100%', md: 'auto' } }}>
-                <InputLabel id="activity-member-label">Member</InputLabel>
-                <Select
-                  labelId="activity-member-label"
-                  value={selectedMember}
-                  label="Member"
-                  onChange={(e) => handleMemberChange(e.target.value)}
-                  sx={{ borderRadius: '12px' }}
-                >
-                  <MenuItem value="all">All Members</MenuItem>
-                  {members.map((m) => (
-                    <MenuItem key={m.userId} value={m.userId}>{m.userDisplayName}</MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
+              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))' }, gap: 1.5 }}>
+                <FormControl fullWidth>
+                  <InputLabel id="activity-action-label">Action</InputLabel>
+                  <Select labelId="activity-action-label" value={selectedAction} label="Action" onChange={(e) => handleActionChange(e.target.value)}>
+                    <MenuItem value="all">All Actions</MenuItem>
+                    {ACTION_GROUPS.map((g) => <MenuItem key={g.label} value={g.label}>{g.label}</MenuItem>)}
+                  </Select>
+                </FormControl>
+                <FormControl fullWidth>
+                  <InputLabel id="activity-member-label">Member</InputLabel>
+                  <Select labelId="activity-member-label" value={selectedMember} label="Member" onChange={(e) => handleMemberChange(e.target.value)}>
+                    <MenuItem value="all">All Members</MenuItem>
+                    {members.map((m) => <MenuItem key={m.userId} value={m.userId}>{m.userDisplayName}</MenuItem>)}
+                  </Select>
+                </FormControl>
+              </Box>
             </Stack>
 
-            {filteredEntries.length === 0 ? (
-              <Card sx={{ p: 5, textAlign: 'center' }}>
-                <Typography variant="body1" sx={{ color: 'text.secondary', fontSize: '13px' }}>
-                  No activity matches the selected filters.
-                </Typography>
-              </Card>
-            ) : (
-              <Stack spacing={2.5}>
-                {grouped.map(([key, dayEntries]) => (
-                  <Box key={key}>
-                    <Typography
-                      variant="body2"
-                      sx={{
-                        color: 'text.secondary',
-                        fontSize: '11px',
-                        fontWeight: 700,
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.06em',
-                        mb: 1,
-                        px: 0.5,
-                      }}
-                    >
-                      {dayLabel(key)}
-                    </Typography>
-                    <Card sx={{ p: 0, overflow: 'hidden' }}>
-                      <List disablePadding>
-                        {dayEntries.map((entry, idx) => (
-                          <Box key={entry.id}>
-                            <AuditLogRow entry={entry} />
-                            {idx < dayEntries.length - 1 && <Divider />}
-                          </Box>
-                        ))}
-                      </List>
-                    </Card>
-                  </Box>
-                ))}
-
-                {visibleCount < filteredEntries.length && (
-                  <Box sx={{ textAlign: 'center', py: 1.5 }}>
-                    <Button
-                      size="small"
-                      onClick={() => setVisibleCount((prev) => prev + PAGE_SIZE)}
-                      sx={{ borderRadius: '12px' }}
-                    >
-                      Load more ({filteredEntries.length - visibleCount} remaining)
-                    </Button>
-                  </Box>
-                )}
-              </Stack>
-            )}
+            <TableContainer component={Card} sx={{ border: 0, boxShadow: 'none', overflow: 'hidden', '&:hover': { transform: 'none', boxShadow: 'none' } }}>
+              <Table sx={{ tableLayout: 'fixed' }}>
+                <TableHead>
+                  <TableRow>
+                    <TableCell align="center" sx={{ width: 64, py: 1.75 }}>Type</TableCell>
+                    <TableCell sx={{ py: 1.75 }}>Activity</TableCell>
+                    <TableCell sx={{ width: 220, py: 1.75, display: { xs: 'none', md: 'table-cell' } }}>Member</TableCell>
+                    <TableCell align="right" sx={{ width: { xs: 100, sm: 140 }, py: 1.75 }}>When</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {filteredEntries.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={4} sx={{ p: 2, borderBottom: 0 }}>
+                        <EmptyLayout
+                          icon={<SearchIcon />}
+                          title="No matching activity"
+                          description="Try another search term or broaden the selected action and member filters."
+                        />
+                      </TableCell>
+                    </TableRow>
+                  ) : visibleEntries.map(entry => <AuditLogRow key={entry.id} entry={entry} />)}
+                </TableBody>
+              </Table>
+              {visibleCount < filteredEntries.length && (
+                <Box sx={{ textAlign: 'center', py: 1.5 }}>
+                  <Button size="small" onClick={() => setVisibleCount((prev) => prev + PAGE_SIZE)}>
+                    Load more ({filteredEntries.length - visibleCount} remaining)
+                  </Button>
+                </Box>
+              )}
+            </TableContainer>
           </>
         )}
       </Stack>
-    </Container>
+    </Box>
   );
 }

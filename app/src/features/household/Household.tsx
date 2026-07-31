@@ -6,7 +6,6 @@ import {
   Box,
   Card,
   CardContent,
-  Container,
   Stack,
   Typography,
   Button,
@@ -45,6 +44,7 @@ import { db as firestoreDb } from '@/config/firebase';
 import { useAppContext } from '@/hooks/useAppContext';
 import { CurrencySelect } from '@/features/shared/components/CurrencySelect';
 import { ledgerLib } from '@/libs/ledger';
+import { PageHeader } from '@/features/shared/components/PageHeader';
 
 export function Household() {
   const { enqueueSnackbar } = useSnackbar();
@@ -204,26 +204,24 @@ export function Household() {
   };
 
   return (
-    <Container maxWidth="md" sx={{ py: 1, px: { xs: 2, sm: 3 } }}>
+    <Box sx={{ py: 0.5 }}>
       <Stack spacing={3}>
-        <Box sx={{ mt: 1 }}>
-          <Typography variant="h2" sx={{ fontSize: '24px', fontWeight: 700, color: 'text.primary' }}>
-            Households
-          </Typography>
-          <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '13px', mt: 0.5 }}>
-            Switch between existing households, create different containers, or request to join shared invites.
-          </Typography>
-        </Box>
+        <PageHeader
+          title="Household"
+          subtitle="Manage members, shared access, and the financial spaces you belong to."
+        />
 
+        <Grid container spacing={3} alignItems="stretch">
         {/* Current Household Spotlight */}
         {activeHh && (
-          <Card sx={{ borderColor: 'primary.light' }}>
-            <CardContent sx={{ p: 2.5 }}>
+          <Grid size={{ xs: 12, lg: isOwner ? 7 : 12 }}>
+          <Card sx={{ height: '100%' }}>
+            <CardContent>
               <Stack spacing={2.5}>
                 <Box display="flex" alignItems="center" justifyContent="space-between" gap={2}>
                   <Box display="flex" alignItems="center" gap={2}>
-                    <Box sx={{ width: 44, height: 44, borderRadius: '12px', bgcolor: 'primary.main', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <HomeIcon sx={{ color: 'white' }} />
+                    <Box sx={{ width: 44, height: 44, borderRadius: 3, bgcolor: 'action.hover', color: 'primary.main', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <HomeIcon />
                     </Box>
                     <Box>
                       <Typography variant="body1" sx={{ fontWeight: 'bold', color: 'text.primary', fontSize: '16px' }}>
@@ -239,7 +237,7 @@ export function Household() {
                     color="primary"
                     size="small"
                     icon={<CheckCircleIcon sx={{ fontSize: '14px !important' }} />}
-                    sx={{ fontWeight: 'bold', borderRadius: '8px' }}
+                    sx={{ fontWeight: 700 }}
                   />
                 </Box>
 
@@ -274,11 +272,9 @@ export function Household() {
                     flexDirection: { xs: 'column', sm: 'row' },
                     alignItems: { xs: 'stretch', sm: 'center' },
                     justifyContent: 'space-between',
-                    bgcolor: 'action.hover',
-                    p: '8px 12px',
-                    borderRadius: '8px',
-                    border: '1px solid',
-                    borderColor: 'divider',
+                    bgcolor: 'surfaceContainerLow',
+                    p: 1.5,
+                    borderRadius: 3,
                     gap: 1
                   }}>
                     <Typography sx={{ fontFamily: 'monospace', fontSize: '13px', color: 'text.primary', userSelect: 'all', wordBreak: 'break-all', py: 0.5 }}>
@@ -290,7 +286,7 @@ export function Household() {
                       onClick={() => handleCopyHouseholdId(activeHh.id)}
                       startIcon={copied ? <CheckIcon fontSize="small" /> : <ContentCopyIcon fontSize="small" />}
                       color={copied ? "success" : "primary"}
-                      sx={{ alignSelf: { xs: 'flex-end', sm: 'center' }, textTransform: 'none', fontWeight: 'bold' }}
+                      sx={{ alignSelf: { xs: 'flex-end', sm: 'center' } }}
                     >
                       {copied ? "Copied!" : "Copy ID"}
                     </Button>
@@ -299,16 +295,19 @@ export function Household() {
               </Stack>
             </CardContent>
           </Card>
+          </Grid>
         )}
 
         {/* Members + Pending Requests — owner only */}
         {isOwner && (
-          <Card>
-            <CardContent sx={{ p: 2.5 }}>
+          <Grid size={{ xs: 12, lg: 5 }}>
+          <Card sx={{ height: '100%' }}>
+            <CardContent>
               <Stack spacing={2}>
-                <Typography variant="h3" sx={{ fontSize: '14px', fontWeight: 600, color: 'text.secondary', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                  Members ({householdMembers.length})
-                </Typography>
+                <Box>
+                  <Typography sx={{ fontSize: 16, fontWeight: 800, color: 'text.primary' }}>Members</Typography>
+                  <Typography sx={{ mt: 0.5, fontSize: 12, color: 'text.secondary' }}>{householdMembers.length} people connected to this household</Typography>
+                </Box>
                 {householdMembers.length === 0 ? (
                   <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '13px' }}>
                     {isMembersLoading
@@ -408,16 +407,19 @@ export function Household() {
               </Stack>
             </CardContent>
           </Card>
+          </Grid>
         )}
+        </Grid>
 
         <Grid container spacing={3}>
           {/* Left Column: Your Households List */}
           <Grid size={{ xs: 12, md: 6 }}>
-            <Stack spacing={1.5}>
-              <Typography variant="h3" sx={{ fontSize: '14px', fontWeight: 600, color: 'text.secondary', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                Your Households ({householdsList.length})
-              </Typography>
               <Card>
+                <CardContent>
+                  <Typography sx={{ fontSize: 16, fontWeight: 800, color: 'text.primary' }}>Your households</Typography>
+                  <Typography sx={{ mt: 0.5, fontSize: 12, color: 'text.secondary' }}>{householdsList.length} financial {householdsList.length === 1 ? 'space' : 'spaces'} available</Typography>
+                </CardContent>
+                <Divider />
                 {(householdsLoading || actionLoading) ? (
                   <Box display="flex" justifyContent="center" alignItems="center" p={4}>
                     <CircularProgress size={30} />
@@ -484,23 +486,22 @@ export function Household() {
                   </List>
                 )}
               </Card>
-            </Stack>
           </Grid>
 
           {/* Right Column: Create & Join Actions (Tabbed Panel) */}
           <Grid size={{ xs: 12, md: 6 }}>
-            <Stack spacing={1.5}>
-              <Typography variant="h3" sx={{ fontSize: '14px', fontWeight: 600, color: 'text.secondary', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                Quick Actions
-              </Typography>
               <Card>
+                <CardContent>
+                  <Typography sx={{ fontSize: 16, fontWeight: 800, color: 'text.primary' }}>Manage households</Typography>
+                  <Typography sx={{ mt: 0.5, fontSize: 12, color: 'text.secondary' }}>Create a new space or join someone else's.</Typography>
+                </CardContent>
                 <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
                   <Tabs value={tabValue} onChange={(_, val) => setTabValue(val)} variant="fullWidth">
                     <Tab icon={<AddHomeIcon sx={{ fontSize: '18px' }} />} iconPosition="start" label="Create" />
                     <Tab icon={<GroupAddIcon sx={{ fontSize: '18px' }} />} iconPosition="start" label="Join" />
                   </Tabs>
                 </Box>
-                <CardContent sx={{ p: 2.5 }}>
+                <CardContent>
                   {tabValue === 0 && (
                     <Stack spacing={2}>
                       <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '12px' }}>
@@ -519,7 +520,6 @@ export function Household() {
                         variant="contained"
                         onClick={handleCreateHousehold}
                         disabled={actionLoading}
-                        sx={{ boxShadow: 'none' }}
                       >
                         Create
                       </Button>
@@ -587,7 +587,6 @@ export function Household() {
                   )}
                 </CardContent>
               </Card>
-            </Stack>
           </Grid>
         </Grid>
       </Stack>
@@ -598,11 +597,6 @@ export function Household() {
         onClose={handleCloseLeaveConfirm}
         aria-labelledby="leave-dialog-title"
         aria-describedby="leave-dialog-description"
-        slotProps={{
-          paper: {
-            sx: { borderRadius: '16px', p: 1 }
-          }
-        }}
       >
         <DialogTitle id="leave-dialog-title" sx={{ fontWeight: 'bold' }}>
           Leave Household?
@@ -621,6 +615,6 @@ export function Household() {
           </Button>
         </DialogActions>
       </Dialog>
-    </Container>
+    </Box>
   );
 }

@@ -1,6 +1,6 @@
 
-import { Box, Card, Skeleton, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, useTheme, Grid, LinearProgress } from '@mui/material';
-import { PieChart } from '@mui/x-charts/PieChart';
+import { Box, Card, CardContent, Skeleton, Stack, Typography, useTheme, LinearProgress, alpha } from '@mui/material';
+import { BarChart } from '@mui/x-charts/BarChart';
 import {
   useAccounts,
   useTransactions,
@@ -15,6 +15,7 @@ import { computeDashboard } from '@/libs/selectors';
 import { useAppContext } from '@/hooks/useAppContext';
 import { Money } from '@/components/Money';
 import { usePrivacyMask } from '@/hooks/usePrivacyMask';
+import { BarChartIcon, PaymentsIcon, SavingsIcon } from '@/components/AppIcon';
 
 export function BudgetBreakdownCard() {
   const { householdId } = useAppContext();
@@ -59,176 +60,118 @@ export function BudgetBreakdownCard() {
     baseCurrency
   );
 
-  const pieData = data.categoryStatus
-    .filter(cat => cat.spent > 0)
-    .map((cat, idx) => ({
-      id: idx,
-      value: cat.spent,
-      label: cat.categoryName,
-    }));
-
   const totalPlanned = data.categoryStatus.reduce((sum, cat) => sum + cat.planned, 0);
   const totalSpent = data.categoryStatus.reduce((sum, cat) => sum + cat.spent, 0);
   const totalRemaining = totalPlanned - totalSpent;
-  const totalSpentPercent = totalPlanned > 0 ? (totalSpent / totalPlanned) * 100 : 0;
-  
-  const hasSpending = pieData.length > 0;
-  const displayPieData = hasSpending
-    ? pieData
-    : [{ id: 0, value: 1, label: 'No spending yet' }];
-  const displayPieColors = hasSpending
-    ? chartColors
-    : [theme.palette.action.disabledBackground || theme.palette.divider];
+  const spentPercent = totalPlanned > 0 ? Math.round((totalSpent / totalPlanned) * 100) : 0;
+  const chartCategories = [...data.categoryStatus]
+    .filter(category => category.planned > 0 || category.spent > 0)
+    .sort((a, b) => Math.max(b.planned, b.spent) - Math.max(a.planned, a.spent));
 
   return (
-    <Card sx={{ overflow: 'hidden' }}>
-      <Box sx={{ p: 2.5, borderBottom: '1px solid', borderColor: 'divider', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Typography variant="h3" sx={{ fontSize: '18px', fontWeight: 700, color: 'text.primary' }}>
-          Budget Breakdown
-        </Typography>
-        {activeCycle && (
-          <Box sx={{ bgcolor: 'action.hover', px: 1.5, py: 0.5, borderRadius: '999px', fontSize: '12px', fontWeight: 500, color: 'text.secondary' }}>
-            Cycle: {activeCycle.name}
-          </Box>
-        )}
-      </Box>
-
-      <Box sx={{ p: 2.5 }}>
+    <Card>
+      <CardContent>
         <Stack spacing={3}>
-          {/* Top Section: Chart on left, Summary stats on right */}
-          <Grid container spacing={4} alignItems="center">
-            <Grid size={{ xs: 12, sm: 6, md: 5 }}>
-              <Box 
-                sx={{ 
-                  display: 'flex', 
-                  justifyContent: 'center', 
-                  alignItems: 'center',
-                  height: 180,
-                  overflow: 'hidden',
-                  position: 'relative'
-                }}
-              >
-                <PieChart
-                  colors={displayPieColors}
-                  series={[
-                    {
-                      data: displayPieData,
-                      innerRadius: 55,
-                      outerRadius: 80,
-                      cx: '50%',
-                      cy: '50%',
-                      paddingAngle: hasSpending ? 2 : 0,
-                      cornerRadius: hasSpending ? 4 : 0,
-                    },
-                  ]}
-                  height={170}
-                  margin={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                  hideLegend
-                />
-                {!hasSpending && (
-                  <Box 
-                    sx={{ 
-                      position: 'absolute', 
-                      textAlign: 'center',
-                      pointerEvents: 'none'
-                    }}
-                  >
-                    <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 'bold', display: 'block' }}>
-                      No Spent
-                    </Typography>
-                    <Typography variant="caption" sx={{ color: 'text.disabled', fontSize: '10px' }}>
-                      Record first expense
-                    </Typography>
-                  </Box>
-                )}
-                {hasSpending && (
-                  <Box 
-                    sx={{ 
-                      position: 'absolute', 
-                      textAlign: 'center',
-                      pointerEvents: 'none'
-                    }}
-                  >
-                    <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
-                      Spent Ratio
-                    </Typography>
-                    <Typography variant="h6" sx={{ fontWeight: 800, color: 'text.primary', lineHeight: 1.1 }}>
-                      {Math.round(totalSpentPercent)}%
-                    </Typography>
-                  </Box>
-                )}
-              </Box>
-            </Grid>
+          <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={2}>
+            <Box>
+              <Typography sx={{ fontSize: 16, lineHeight: '22px', fontWeight: 800, color: 'text.primary' }}>Budget Breakdown</Typography>
+              <Typography sx={{ mt: 0.5, fontSize: 12, lineHeight: '16px', fontWeight: 600, color: 'text.secondary' }}>Planned versus actual spending by category</Typography>
+            </Box>
+            {activeCycle && (
+              <Typography sx={{ flexShrink: 0, fontSize: 11, lineHeight: '16px', fontWeight: 700, color: 'text.secondary' }}>{activeCycle.name}</Typography>
+            )}
+          </Stack>
 
-            <Grid size={{ xs: 12, sm: 6, md: 7 }}>
-              {/* Summary Stats */}
-              <Box 
-                sx={{ 
-                  p: 2, 
-                  borderRadius: 3, 
-                  bgcolor: 'action.hover', 
-                  border: '1px solid', 
-                  borderColor: 'divider' 
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
+            {[
+              { label: 'Planned budget', value: totalPlanned, valueColor: 'text.primary', accent: theme.palette.primary.main, meta: `${data.categoryStatus.length} category allocations`, Icon: PaymentsIcon },
+              { label: 'Total spent', value: totalSpent, valueColor: totalSpent > totalPlanned ? 'error.main' : 'text.primary', accent: totalSpent > totalPlanned ? theme.palette.error.main : theme.palette.primary.main, meta: `${spentPercent}% of the cycle plan`, Icon: BarChartIcon },
+              { label: totalRemaining < 0 ? 'Over budget' : 'Remaining', value: Math.abs(totalRemaining), valueColor: totalRemaining < 0 ? 'error.main' : 'success.main', accent: totalRemaining < 0 ? theme.palette.error.main : theme.palette.success.main, meta: totalRemaining < 0 ? 'Requires budget attention' : 'Available to spend', Icon: SavingsIcon },
+            ].map(metric => (
+              <Box
+                key={metric.label}
+                sx={{
+                  flex: 1,
+                  minWidth: 0,
+                  position: 'relative',
+                  overflow: 'hidden',
+                  py: 1,
+                  px: { xs: 0, sm: 1 },
                 }}
               >
-                <Stack spacing={1.5}>
-                  <Box display="flex" justifyContent="space-between" alignItems="center">
-                    <Typography variant="caption" sx={{ color: 'text.secondary' }}>Planned Budget</Typography>
-                    <Typography variant="body2" sx={{ fontWeight: 'bold', color: 'text.primary' }}>
-                      <Money amount={totalPlanned} code={baseCurrency} />
+                <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={1.5}>
+                  <Box sx={{ minWidth: 0 }}>
+                    <Typography sx={{ color: 'text.secondary', fontSize: 10.5, fontWeight: 650 }}>{metric.label}</Typography>
+                    <Typography noWrap sx={{ color: metric.valueColor, fontSize: 19, lineHeight: 1.25, fontWeight: 780, mt: 0.5, fontVariantNumeric: 'tabular-nums' }}>
+                      <Money amount={metric.value} code={baseCurrency} maxDigits={0} />
                     </Typography>
                   </Box>
-                  <Box display="flex" justifyContent="space-between" alignItems="center">
-                    <Typography variant="caption" sx={{ color: 'text.secondary' }}>Total Spent</Typography>
-                    <Typography variant="body2" sx={{ fontWeight: 'bold', color: totalSpent > totalPlanned ? 'error.main' : 'text.primary' }}>
-                      <Money amount={totalSpent} code={baseCurrency} />
-                    </Typography>
-                  </Box>
-                  <Box display="flex" justifyContent="space-between" alignItems="center">
-                    <Typography variant="caption" sx={{ color: 'text.secondary' }}>Remaining</Typography>
-                    <Typography variant="body2" sx={{ fontWeight: 'bold', color: totalRemaining < 0 ? 'error.main' : 'success.main' }}>
-                      {totalRemaining < 0 ? '-' : ''}<Money amount={Math.abs(totalRemaining)} code={baseCurrency} />
-                    </Typography>
+                  <Box sx={{ width: 36, height: 36, flexShrink: 0, borderRadius: '10px', display: 'grid', placeItems: 'center', color: metric.accent, bgcolor: alpha(metric.accent, 0.1) }}>
+                    <metric.Icon fontSize="small" />
                   </Box>
                 </Stack>
+                <Typography noWrap sx={{ color: 'text.secondary', fontSize: 9.5, fontWeight: 600, mt: 1.25 }}>{metric.meta}</Typography>
               </Box>
-            </Grid>
-          </Grid>
+            ))}
+          </Stack>
 
-          {/* Bottom Section: Breakdown Table (Full Width) */}
-          <TableContainer 
-            sx={{
-              overflowX: 'auto',
-              maxHeight: 380,
-              borderRadius: '16px',
-              overflowY: 'auto'
-            }}
-          >
-            <Table 
-              size="medium" 
-              aria-label="budget breakdown table" 
-              sx={{
-                '& .MuiTableCell-body': { borderBottom: '1px solid', borderColor: 'divider' }
-              }}
-            >
-              <TableHead>
-                <TableRow>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Category</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold', display: { xs: 'none', sm: 'table-cell' } }}>Progress</TableCell>
-                  <TableCell align="right" sx={{ fontWeight: 'bold' }}>Planned</TableCell>
-                  <TableCell align="right" sx={{ fontWeight: 'bold' }}>Spent</TableCell>
-                  <TableCell align="right" sx={{ fontWeight: 'bold' }}>Remaining</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {data.categoryStatus.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={5} align="center" sx={{ py: 5, color: 'text.secondary' }}>
-                      No budget allocations found for this cycle.
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  data.categoryStatus.map((cat, idx) => {
+          {chartCategories.length > 0 && (
+            <Box sx={{ width: '100%', height: 300, overflow: 'hidden' }}>
+                <BarChart
+                  xAxis={[{
+                    scaleType: 'band',
+                    data: chartCategories.map(category => category.categoryName.length > 11 ? `${category.categoryName.slice(0, 9)}…` : category.categoryName),
+                    disableLine: true,
+                    disableTicks: true,
+                    categoryGapRatio: chartCategories.length > 10 ? 0.42 : 0.28,
+                    barGapRatio: 0,
+                    tickLabelStyle: { fill: theme.palette.text.secondary, fontSize: chartCategories.length > 10 ? 8 : 9 },
+                  }]}
+                  yAxis={[{
+                    disableLine: true,
+                    disableTicks: true,
+                    tickLabelStyle: { fill: theme.palette.text.secondary, fontSize: 9 },
+                    valueFormatter: (value: number) => maskNumber(value.toLocaleString()),
+                  }]}
+                  series={[
+                    {
+                      data: chartCategories.map(category => Math.min(category.spent, Math.max(category.planned, category.spent))),
+                      label: 'Spent',
+                      stack: 'budget',
+                      color: theme.palette.primary.main,
+                      valueFormatter: value => `${value?.toLocaleString() ?? 0} ${baseCurrency}`,
+                    },
+                    {
+                      data: chartCategories.map(category => Math.max(0, category.planned - category.spent)),
+                      label: 'Remaining plan',
+                      stack: 'budget',
+                      color: alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.24 : 0.13),
+                      valueFormatter: value => `${value?.toLocaleString() ?? 0} ${baseCurrency}`,
+                    },
+                  ]}
+                  height={300}
+                  margin={{ top: 28, right: 12, bottom: 48, left: 58 }}
+                  grid={{ horizontal: true }}
+                  sx={{
+                    '& .MuiBarElement-root': { rx: 8, ry: 8 },
+                    '& .MuiChartsGrid-line': { stroke: alpha(theme.palette.text.primary, 0.07), strokeDasharray: '3 5' },
+                    '& .MuiChartsLegend-root text': { fill: `${theme.palette.text.secondary} !important`, fontSize: '10px !important' },
+                  }}
+                />
+            </Box>
+          )}
+
+          <Stack spacing={1.5} aria-label="Budget breakdown details">
+            <Box sx={{ display: { xs: 'none', md: 'grid' }, gridTemplateColumns: 'minmax(140px, 1.4fr) minmax(150px, 1fr) repeat(3, minmax(84px, .7fr))', gap: 2, px: 1 }}>
+              {['Category', 'Progress', 'Planned', 'Spent', 'Remaining'].map((label, index) => (
+                <Typography key={label} sx={{ fontSize: 10.5, lineHeight: '16px', fontWeight: 700, color: 'text.secondary', textAlign: index > 1 ? 'right' : 'left' }}>{label}</Typography>
+              ))}
+            </Box>
+
+            {data.categoryStatus.length === 0 ? (
+              <Typography align="center" sx={{ py: 4, color: 'text.secondary', fontSize: 12 }}>No budget allocations found for this cycle.</Typography>
+            ) : (
+              data.categoryStatus.map((cat, idx) => {
                     const remaining = cat.planned - cat.spent;
                     const isOver = remaining < 0;
                     const percent = cat.planned > 0 ? (cat.spent / cat.planned) * 100 : (cat.spent > 0 ? 100 : 0);
@@ -242,85 +185,38 @@ export function BudgetBreakdownCard() {
 
                     const statusColor = getCategoryStatusColor(cat.status);
 
+                    const formatValue = (value: number) => maskNumber(value.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 }));
                     return (
-                      <TableRow key={cat.categoryId} hover sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
-                        <TableCell component="th" scope="row">
-                          <Stack spacing={0.5}>
-                            <Box display="flex" alignItems="center" gap={1.2}>
-                              <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: catColor, flexShrink: 0 }} />
-                              <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.primary' }}>
-                                {cat.categoryName}
-                              </Typography>
-                            </Box>
-                            
-                            {/* Mobile Only progress bar under Category Name */}
-                            <Box sx={{ display: { xs: 'block', sm: 'none' }, width: '100px', mt: 0.5 }}>
-                              <LinearProgress 
-                                variant="determinate" 
-                                value={Math.min(100, percent)} 
-                                sx={{ 
-                                  height: 4, 
-                                  borderRadius: 2, 
-                                  bgcolor: 'action.hover',
-                                  '& .MuiLinearProgress-bar': {
-                                    bgcolor: statusColor
-                                  }
-                                }} 
-                              />
-                              <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '9px', fontWeight: 'bold' }}>
-                                {Math.round(percent)}% spent
-                              </Typography>
-                            </Box>
+                      <Box key={cat.categoryId} sx={{ px: 1, py: 1, borderRadius: 2, '&:hover': { bgcolor: 'action.hover' } }}>
+                        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'minmax(140px, 1.4fr) minmax(150px, 1fr) repeat(3, minmax(84px, .7fr))' }, gap: { xs: 1.5, md: 2 }, alignItems: 'center' }}>
+                          <Stack direction="row" alignItems="center" spacing={1} sx={{ minWidth: 0 }}>
+                            <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: catColor, flexShrink: 0 }} />
+                            <Typography noWrap sx={{ fontSize: 12, lineHeight: '18px', fontWeight: 700, color: 'text.primary' }}>{cat.categoryName}</Typography>
                           </Stack>
-                        </TableCell>
-                        
-                        {/* Desktop Only Progress Column */}
-                        <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' } }}>
-                          <Stack direction="row" alignItems="center" spacing={1.5}>
-                            <Box sx={{ flexGrow: 1, minWidth: 60 }}>
-                              <LinearProgress 
-                                variant="determinate" 
-                                value={Math.min(100, percent)} 
-                                sx={{ 
-                                  height: 6, 
-                                  borderRadius: 3, 
-                                  bgcolor: 'action.hover',
-                                  '& .MuiLinearProgress-bar': {
-                                    bgcolor: statusColor
-                                  }
-                                }} 
-                              />
-                            </Box>
-                            <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 'bold', minWidth: 32, textAlign: 'right' }}>
-                              {Math.round(percent)}%
-                            </Typography>
+                          <Stack direction="row" alignItems="center" spacing={1}>
+                            <LinearProgress variant="determinate" value={Math.min(100, percent)} sx={{ flex: 1, '& .MuiLinearProgress-bar': { bgcolor: statusColor } }} />
+                            <Typography sx={{ minWidth: 34, textAlign: 'right', fontSize: 10.5, fontWeight: 700, color: 'text.secondary' }}>{Math.round(percent)}%</Typography>
                           </Stack>
-                        </TableCell>
-
-                        <TableCell align="right" sx={{ fontWeight: 500 }}>
-                          {maskNumber(cat.planned.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 }))}
-                        </TableCell>
-                        <TableCell align="right" sx={{ color: cat.spent > 0 ? 'text.primary' : 'text.disabled', fontWeight: 500 }}>
-                          {cat.spent > 0 ? maskNumber(cat.spent.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })) : '-'}
-                        </TableCell>
-                        <TableCell 
-                          align="right" 
-                          sx={{ 
-                            fontWeight: 'bold', 
-                            color: isOver ? 'error.main' : remaining > 0 ? 'success.main' : 'text.secondary' 
-                          }}
-                        >
-                          {isOver ? '' : '+'}{maskNumber(remaining.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 }))}
-                        </TableCell>
-                      </TableRow>
+                          <Box sx={{ display: { xs: 'grid', md: 'contents' }, gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 1.5 }}>
+                            {[
+                              { label: 'Planned', value: formatValue(cat.planned), color: 'text.primary' },
+                              { label: 'Spent', value: cat.spent > 0 ? formatValue(cat.spent) : '—', color: cat.spent > 0 ? 'text.primary' : 'text.disabled' },
+                              { label: 'Remaining', value: `${isOver ? '' : '+'}${formatValue(remaining)}`, color: isOver ? 'error.main' : remaining > 0 ? 'success.main' : 'text.secondary' },
+                            ].map(item => (
+                              <Box key={item.label} sx={{ minWidth: 0, textAlign: { xs: 'left', md: 'right' } }}>
+                                <Typography sx={{ display: { md: 'none' }, fontSize: 9.5, lineHeight: '14px', fontWeight: 600, color: 'text.secondary' }}>{item.label}</Typography>
+                                <Typography noWrap sx={{ fontSize: 11.5, lineHeight: '18px', fontWeight: 700, color: item.color, fontVariantNumeric: 'tabular-nums' }}>{item.value}</Typography>
+                              </Box>
+                            ))}
+                          </Box>
+                        </Box>
+                      </Box>
                     );
                   })
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
+            )}
+          </Stack>
         </Stack>
-      </Box>
+      </CardContent>
     </Card>
   );
 }

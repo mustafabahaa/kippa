@@ -162,21 +162,27 @@ export const TransactionsListItem: React.FC<TransactionsListItemProps> = ({
   return (
     <Box
       sx={{
-        p: 2,
+        minHeight: 76,
+        px: 1.5,
+        py: 1.25,
         display: 'flex',
-        alignItems: 'flex-start',
+        alignItems: 'center',
         justifyContent: 'space-between',
         gap: 1.5,
-        '&:hover': { bgcolor: 'action.hover' },
+        bgcolor: 'background.paper',
+        transition: 'opacity 0.18s ease',
+        '&:hover': {
+          '& .transaction-actions': { opacity: 1 },
+        },
         opacity: tx.status === 'voided' ? 0.5 : 1,
       }}
     >
-      <Box display="flex" alignItems="flex-start" gap={2} sx={{ minWidth: 0, flex: 1 }}>
-        <TransactionIcon type={tx.type} size={40} isCreditCard={isCreditCard} />
+      <Box display="flex" alignItems="center" gap={1.5} sx={{ minWidth: 0, flex: 1 }}>
+        <TransactionIcon type={tx.type} size={36} isCreditCard={isCreditCard} />
         {renderItemDetails()}
       </Box>
 
-      <Stack direction="row" spacing={0.5} alignItems="center" sx={{ flexShrink: 0, alignSelf: 'center' }}>
+      <Stack className="transaction-actions" direction="row" spacing={0.5} alignItems="center" sx={{ flexShrink: 0, opacity: { xs: 1, md: 0.42 }, transition: 'opacity 0.18s ease' }}>
         <IconButton
           size="small"
           onClick={() => onEdit(tx)}

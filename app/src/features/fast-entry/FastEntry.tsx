@@ -1,14 +1,16 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import { useSnackbar } from 'notistack';
 import {
   Box,
   Button,
-  Container,
+  Card,
+  CardContent,
   Stack,
   Typography,
   Chip,
   TextField,
-  Skeleton
+  Skeleton,
+  alpha
 } from '@mui/material';
 import { MobileDatePicker } from '@mui/x-date-pickers/MobileDatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -21,6 +23,7 @@ import { CalendarTodayIcon } from '@/components/AppIcon';
 import { AccountBalanceIcon } from '@/components/AppIcon';
 import { SavingsIcon } from '@/components/AppIcon';
 import { PaymentsIcon } from '@/components/AppIcon';
+import { CheckCircleIcon } from '@/components/AppIcon';
 import { isToday, format } from 'date-fns';
 import {
   useAccounts,
@@ -178,6 +181,41 @@ export function FastEntry() {
     }
   };
 
+  // Mobile Safari can delay or swallow the compatibility click after a scroll.
+  // Handle a stationary touch on pointer-up, then suppress its synthetic click.
+  const keypadTouchStartRef = useRef<{ pointerId: number; x: number; y: number } | null>(null);
+  const suppressNextKeypadClickRef = useRef(false);
+
+  const handleKeypadPointerDown = (event: ReactPointerEvent<HTMLButtonElement>) => {
+    if (event.pointerType !== 'touch') return;
+    keypadTouchStartRef.current = {
+      pointerId: event.pointerId,
+      x: event.clientX,
+      y: event.clientY,
+    };
+  };
+
+  const handleKeypadPointerUp = (event: ReactPointerEvent<HTMLButtonElement>, key: string) => {
+    if (event.pointerType !== 'touch') return;
+    const start = keypadTouchStartRef.current;
+    keypadTouchStartRef.current = null;
+    if (!start || start.pointerId !== event.pointerId) return;
+
+    const moved = Math.hypot(event.clientX - start.x, event.clientY - start.y);
+    if (moved > 10) return;
+
+    suppressNextKeypadClickRef.current = true;
+    handleKeypadPress(key);
+  };
+
+  const handleKeypadClick = (key: string) => {
+    if (suppressNextKeypadClickRef.current) {
+      suppressNextKeypadClickRef.current = false;
+      return;
+    }
+    handleKeypadPress(key);
+  };
+
   const handleSave = async () => {
     const amount = parseFloat(amountStr);
 
@@ -318,19 +356,19 @@ export function FastEntry() {
 
   if (accountsLoading || categoriesLoading) {
     return (
-      <Container maxWidth="md" sx={{ py: 1, px: { xs: 2, sm: 3 } }}>
+      <Box sx={{ py: 0.5 }}>
         <Stack spacing={3}>
           <PageHeader title="Fast Entry" subtitle="Log expenses, income & transfers" />
           <Skeleton variant="rectangular" width="100%" height={100} sx={{ borderRadius: '20px' }} />
           <Skeleton variant="rectangular" width="100%" height={250} sx={{ borderRadius: '20px' }} />
         </Stack>
-      </Container>
+      </Box>
     );
   }
 
   if (accounts.length === 0) {
     return (
-      <Container maxWidth="md" sx={{ py: 1, px: { xs: 2, sm: 3 } }}>
+      <Box sx={{ py: 0.5 }}>
         <Stack spacing={3}>
           <PageHeader title="Fast Entry" subtitle="Log expenses, income & transfers" />
           <EmptyLayout
@@ -338,19 +376,31 @@ export function FastEntry() {
             description="Add an account first — you'll need one to record expenses, income, or transfers."
           />
         </Stack>
-      </Container>
+      </Box>
     );
   }
 
   return (
-    <Container maxWidth="md" sx={{ py: 1, px: { xs: 2, sm: 3 } }}>
+    <Box sx={{ py: 0.5 }}>
       <Stack spacing={2.5}>
         
         {/* Page Header */}
         <PageHeader title="Fast Entry" subtitle="Log expenses, income & transfers" />
 
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: 'minmax(0, 1fr)', lg: 'minmax(0, 7fr) minmax(300px, 4fr)' },
+            gap: 3,
+            alignItems: 'start',
+          }}
+        >
+          <Card>
+            <CardContent>
+              <Stack spacing={2.5}>
+
         {/* Mode Selector */}
-        <Stack direction="row" spacing={1} sx={{ mt: 1 }}>
+        <Stack direction="row" spacing={1}>
           {(['expense', 'income', 'transfer'] as EntryMode[]).map(m => (
             <Button
               key={m}
@@ -363,10 +413,14 @@ export function FastEntry() {
                 minHeight: 36, 
                 borderRadius: '16px',
                 px: 1,
-                bgcolor: mode === m ? 'primary.main' : 'background.paper',
-                color: mode === m ? 'primary.contrastText' : 'text.primary',
+                bgcolor: mode === m ? 'secondary.main' : 'background.paper',
+                color: mode === m ? 'secondary.contrastText' : 'text.primary',
                 border: '1px solid',
-                borderColor: mode === m ? 'primary.main' : 'divider'
+                borderColor: mode === m ? 'transparent' : 'divider',
+                '&:hover': {
+                  bgcolor: mode === m ? 'secondary.main' : 'action.hover',
+                  borderColor: mode === m ? 'transparent' : 'divider',
+                },
               }}
             >
               {m.toUpperCase()}
@@ -407,11 +461,11 @@ export function FastEntry() {
                         fontSize: '13px',
                         height: 36,
                         borderRadius: '12px',
-                        bgcolor: isSelected ? 'primary.main' : 'background.paper',
-                        color: isSelected ? 'primary.contrastText' : 'text.secondary',
-                        borderColor: isSelected ? 'primary.main' : 'divider',
+                        bgcolor: isSelected ? 'secondary.main' : 'background.paper',
+                        color: isSelected ? 'secondary.contrastText' : 'text.secondary',
+                        borderColor: isSelected ? 'secondary.main' : 'divider',
                         fontWeight: isSelected ? 'bold' : 'normal',
-                        '&:hover': { bgcolor: isSelected ? 'primary.main' : 'action.hover' },
+                        '&:hover': { bgcolor: isSelected ? 'secondary.main' : 'action.hover' },
                       }}
                     />
                   );
@@ -446,8 +500,10 @@ export function FastEntry() {
                     p: 1.5,
                     borderRadius: '16px',
                     border: '1px solid',
-                    borderColor: isSelected ? 'primary.main' : 'divider',
-                    bgcolor: isSelected ? 'action.selected' : 'background.paper',
+                    borderColor: isSelected ? 'transparent' : 'divider',
+                    bgcolor: isSelected
+                      ? theme => alpha(theme.palette.primary.main, 0.08)
+                      : 'background.paper',
                     color: isSelected ? 'primary.main' : 'text.secondary',
                     cursor: 'pointer',
                     transition: 'all 0.2s',
@@ -461,8 +517,8 @@ export function FastEntry() {
                       width: 24, 
                       height: 24, 
                       borderRadius: '8px', 
-                      bgcolor: isSelected ? 'primary.main' : 'action.hover', 
-                      color: isSelected ? 'primary.contrastText' : 'text.secondary', 
+                      bgcolor: 'action.hover',
+                      color: isSelected ? 'primary.main' : 'text.secondary',
                       display: 'flex', 
                       alignItems: 'center', 
                       justifyContent: 'center',
@@ -473,6 +529,7 @@ export function FastEntry() {
                     <Typography variant="body2" sx={{ opacity: 0.7, fontSize: '11px', textTransform: 'capitalize' }}>
                       {acc.type}
                     </Typography>
+                    {isSelected && <CheckCircleIcon sx={{ ml: 'auto', fontSize: 17, color: 'primary.main' }} />}
                   </Box>
                   <Typography variant="body1" sx={{ fontWeight: 'bold', fontSize: '13.5px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', width: '100%', color: isSelected ? 'primary.main' : 'text.primary' }}>
                     {acc.name}
@@ -510,8 +567,10 @@ export function FastEntry() {
                         p: 1.5,
                         borderRadius: '16px',
                         border: '1px solid',
-                        borderColor: isSelected ? 'primary.main' : 'divider',
-                        bgcolor: isSelected ? 'action.selected' : 'background.paper',
+                        borderColor: isSelected ? 'transparent' : 'divider',
+                        bgcolor: isSelected
+                          ? theme => alpha(theme.palette.primary.main, 0.08)
+                          : 'background.paper',
                         color: isSelected ? 'primary.main' : 'text.secondary',
                         cursor: 'pointer',
                         transition: 'all 0.2s',
@@ -525,8 +584,8 @@ export function FastEntry() {
                           width: 24, 
                           height: 24, 
                           borderRadius: '8px', 
-                          bgcolor: isSelected ? 'primary.main' : 'action.hover', 
-                          color: isSelected ? 'primary.contrastText' : 'text.secondary', 
+                          bgcolor: 'action.hover',
+                          color: isSelected ? 'primary.main' : 'text.secondary',
                           display: 'flex', 
                           alignItems: 'center', 
                           justifyContent: 'center',
@@ -537,6 +596,7 @@ export function FastEntry() {
                         <Typography variant="body2" sx={{ opacity: 0.7, fontSize: '11px', textTransform: 'capitalize' }}>
                           {acc.type}
                         </Typography>
+                        {isSelected && <CheckCircleIcon sx={{ ml: 'auto', fontSize: 17, color: 'primary.main' }} />}
                       </Box>
                       <Typography variant="body1" sx={{ fontWeight: 'bold', fontSize: '13.5px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', width: '100%', color: isSelected ? 'primary.main' : 'text.primary' }}>
                         {acc.name}
@@ -608,16 +668,16 @@ export function FastEntry() {
             placeholder="Add details..."
             value={description}
             onChange={e => setDescription(e.target.value)}
-            sx={{
-              '& .MuiOutlinedInput-root': {
-                borderRadius: '16px',
-              }
-            }}
           />
         )}
+              </Stack>
+            </CardContent>
+          </Card>
 
         {/* Custom Numeric Keypad */}
-        <Box sx={{ mt: 1 }}>
+        <Card sx={{ position: { lg: 'sticky' }, top: { lg: 24 } }}>
+          <CardContent>
+        <Box>
           {/* Amount display lives directly above the keypad so the value being
               entered is always visible while typing (mobile UX). */}
           <Box
@@ -703,7 +763,11 @@ export function FastEntry() {
               return (
                 <Button
                   key={k}
-                  onClick={() => handleKeypadPress(k)}
+                  onPointerDown={handleKeypadPointerDown}
+                  onPointerUp={(event) => handleKeypadPointerUp(event, k)}
+                  onPointerCancel={() => { keypadTouchStartRef.current = null; }}
+                  onClick={() => handleKeypadClick(k)}
+                  disableRipple
                   fullWidth
                   sx={{
                     height: 60,
@@ -715,6 +779,10 @@ export function FastEntry() {
                     fontSize: '20px',
                     fontWeight: 'bold',
                     boxShadow: 'none',
+                    touchAction: 'manipulation',
+                    userSelect: 'none',
+                    WebkitUserSelect: 'none',
+                    WebkitTapHighlightColor: 'transparent',
                     '&:hover': { bgcolor: 'action.hover' },
                     '&:active': { transform: 'scale(0.95)', bgcolor: 'info.light' }
                   }}
@@ -730,7 +798,7 @@ export function FastEntry() {
             onClick={handleSave}
             loading={isSaving}
             loadingPosition="start"
-            startIcon={<span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>}
+            startIcon={<CheckCircleIcon />}
             fullWidth
             variant="contained"
             sx={{
@@ -750,9 +818,12 @@ export function FastEntry() {
             {mode === 'expense' ? 'Save Expense' : mode === 'income' ? 'Save Income' : 'Save Transaction'}
           </Button>
         </Box>
+          </CardContent>
+        </Card>
+        </Box>
 
       </Stack>
-    </Container>
+    </Box>
   );
 }
 

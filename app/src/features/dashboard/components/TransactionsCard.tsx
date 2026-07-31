@@ -4,7 +4,9 @@ import { useSnackbar } from 'notistack';
 import {
   Box,
   Card,
-  Divider,
+  CardContent,
+  Chip,
+  IconButton,
   Skeleton,
   Stack,
   Typography,
@@ -20,6 +22,7 @@ import { FinanceTransaction } from '@/domain/financeTypes';
 import { useAppContext } from '@/hooks/useAppContext';
 import { TransactionsListItem } from './TransactionsListItem';
 import { EditTransactionDialog } from '@/features/transactions/components/EditTransactionDialog';
+import { ArrowBackIcon } from '@/components/AppIcon';
 
 export function TransactionsCard() {
   const navigate = useNavigate();
@@ -56,40 +59,42 @@ export function TransactionsCard() {
   }
 
   return (
-    <Stack spacing={1.5}>
-      <Box display="flex" justifyContent="space-between" alignItems="center">
-        <Typography variant="h3" sx={{ fontSize: '18px', fontWeight: 700, color: 'text.primary' }}>
-          Recent Transactions
-        </Typography>
-        <Typography 
-          variant="body2" 
-          onClick={() => navigate('/transactions')}
-          sx={{ color: 'primary.main', fontWeight: 'bold', cursor: 'pointer' }}
-        >
-          View All
-        </Typography>
-      </Box>
-
+    <>
       <Card>
-        {transactions.length === 0 ? (
-          <Typography variant="body2" color="text.secondary" align="center" sx={{ py: 4 }}>
-            No recent activity recorded.
-          </Typography>
-        ) : (
-          <Stack divider={<Divider />}>
-            {transactions.slice(0, 5).map(tx => (
-              <TransactionsListItem
-                key={tx.id}
-                tx={tx}
-                categories={categories}
-                ledgerLines={ledgerLines}
-                accounts={accounts}
-                onEdit={setEditingTx}
-                onVoid={handleVoidTransaction}
-              />
-            ))}
+        <CardContent>
+          <Stack spacing={2.5}>
+            <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
+              <Box>
+                <Typography sx={{ fontSize: 16, lineHeight: '22px', fontWeight: 800, color: 'text.primary' }}>Recent Transactions</Typography>
+                <Typography sx={{ mt: 0.5, fontSize: 12, lineHeight: '16px', fontWeight: 600, color: 'text.secondary' }}>Latest household activity</Typography>
+              </Box>
+              <Stack direction="row" spacing={1} alignItems="center">
+                <Chip size="small" label={`${Math.min(transactions.length, 8)} recent`} sx={{ bgcolor: 'action.hover', color: 'primary.main' }} />
+                <IconButton aria-label="View all transactions" onClick={() => navigate('/transactions')} size="small" sx={{ width: 36, height: 36, minWidth: 36 }}>
+                  <ArrowBackIcon sx={{ fontSize: 18, transform: 'rotate(180deg)' }} />
+                </IconButton>
+              </Stack>
+            </Stack>
+
+            {transactions.length === 0 ? (
+              <Typography variant="body2" color="text.secondary" align="center" sx={{ py: 4 }}>No recent activity recorded.</Typography>
+            ) : (
+              <Stack spacing={1}>
+                {transactions.slice(0, 8).map(tx => (
+                  <TransactionsListItem
+                    key={tx.id}
+                    tx={tx}
+                    categories={categories}
+                    ledgerLines={ledgerLines}
+                    accounts={accounts}
+                    onEdit={setEditingTx}
+                    onVoid={handleVoidTransaction}
+                  />
+                ))}
+              </Stack>
+            )}
           </Stack>
-        )}
+        </CardContent>
       </Card>
 
       {/* Reusable Edit Dialog */}
@@ -98,6 +103,6 @@ export function TransactionsCard() {
         transaction={editingTx}
         onClose={() => setEditingTx(null)}
       />
-    </Stack>
+    </>
   );
 }

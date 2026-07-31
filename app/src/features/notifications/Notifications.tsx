@@ -1,6 +1,5 @@
 import { 
   Box, 
-  Container, 
   Stack, 
   Skeleton
 } from '@mui/material';
@@ -29,7 +28,7 @@ export function Notifications() {
 
   if (isLoading) {
     return (
-      <Container maxWidth="md" sx={{ py: 1, px: { xs: 2, sm: 3 } }}>
+      <Box sx={{ py: 0.5 }}>
         <Stack spacing={3}>
           <Box sx={{ mt: 1 }}>
             <Skeleton variant="text" width="60%" height={32} />
@@ -37,7 +36,7 @@ export function Notifications() {
           </Box>
           <Skeleton variant="rectangular" width="100%" height={200} sx={{ borderRadius: '20px' }} />
         </Stack>
-      </Container>
+      </Box>
     );
   }
 

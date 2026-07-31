@@ -3,7 +3,7 @@ import { useSnackbar } from 'notistack';
 import {
   Box,
   Card,
-  Container,
+  CardContent,
   Stack,
   Typography,
   Button,
@@ -90,7 +90,7 @@ export function Reconciliation() {
 
   if (isLoading) {
     return (
-      <Container maxWidth="md" sx={{ py: 1, px: { xs: 2, sm: 3 } }}>
+      <Box sx={{ py: 0.5 }}>
         <Stack spacing={3}>
           <Box sx={{ mt: 1 }}>
             <Skeleton variant="text" width="60%" height={32} />
@@ -98,7 +98,7 @@ export function Reconciliation() {
           </Box>
           <Skeleton variant="rectangular" width="100%" height={200} sx={{ borderRadius: '20px' }} />
         </Stack>
-      </Container>
+      </Box>
     );
   }
 
@@ -191,13 +191,24 @@ export function Reconciliation() {
   const sortedHistory = [...history].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 
   return (
-    <Container maxWidth="md" sx={{ py: 1, px: { xs: 2, sm: 3 } }}>
+    <Box sx={{ py: 0.5 }}>
       <Stack spacing={3}>
         <PageHeader
           title="Reconciliation"
           subtitle="Audit your account balances manually to keep records perfectly aligned."
         />
 
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: 'minmax(0, 1fr)', lg: 'minmax(0, 7fr) minmax(320px, 5fr)' },
+            gap: 3,
+            alignItems: 'start',
+          }}
+        >
+          <Card>
+            <CardContent>
+              <Stack spacing={2.5}>
         {/* Account Selection */}
         <Box sx={{ width: '100%' }}>
           <Typography variant="body1" sx={{ fontWeight: 'bold', color: 'text.primary', fontSize: '14px', mb: 1 }}>
@@ -209,7 +220,7 @@ export function Reconciliation() {
               description="Create an account first, then come back here to balance-check it."
             />
           ) : (
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5 }}>
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))' }, gap: 1.5 }}>
               {sortedAccounts.map(acc => {
               const isSelected = selectedAccount?.id === acc.id;
               return (
@@ -220,21 +231,20 @@ export function Reconciliation() {
                     setActualBalanceInput('');
                   }}
                   sx={{
-                    flex: { xs: '1 1 calc(50% - 9px)', sm: '1 1 0' },
                     minWidth: 0,
                     p: 1.5,
                     borderRadius: '16px',
                     border: '1px solid',
-                    borderColor: isSelected ? 'primary.main' : 'divider',
-                    bgcolor: isSelected ? 'action.selected' : 'background.paper',
+                    borderColor: isSelected ? 'transparent' : 'divider',
+                    bgcolor: isSelected ? alpha(theme.palette.primary.main, 0.08) : 'background.paper',
                     cursor: 'pointer',
                     transition: 'all 0.2s ease-in-out',
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'flex-start',
                     '&:hover': {
-                      borderColor: 'primary.main',
-                      bgcolor: 'action.selected',
+                      borderColor: 'divider',
+                      bgcolor: alpha(theme.palette.primary.main, 0.05),
                       transform: 'translateY(-1px)',
                     }
                   }}
@@ -244,8 +254,8 @@ export function Reconciliation() {
                       width: 24, 
                       height: 24, 
                       borderRadius: '8px', 
-                      bgcolor: isSelected ? 'primary.main' : 'action.hover', 
-                      color: isSelected ? 'primary.contrastText' : 'text.secondary', 
+                      bgcolor: 'action.hover',
+                      color: isSelected ? 'primary.main' : 'text.secondary',
                       display: 'flex', 
                       alignItems: 'center', 
                       justifyContent: 'center',
@@ -256,6 +266,7 @@ export function Reconciliation() {
                     <Typography variant="body2" sx={{ opacity: 0.7, fontSize: '11px', textTransform: 'capitalize' }}>
                       {acc.type} ({acc.currency})
                     </Typography>
+                    {isSelected && <CheckCircleIcon sx={{ ml: 'auto', fontSize: 17, color: 'primary.main' }} />}
                   </Box>
                   <Typography variant="body1" sx={{ fontWeight: 'bold', fontSize: '13.5px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', width: '100%', color: isSelected ? 'primary.main' : 'text.primary' }}>
                     {acc.name}
@@ -273,10 +284,8 @@ export function Reconciliation() {
             <Box
               sx={{
                 p: 2,
-                borderRadius: '20px',
-                bgcolor: 'background.paper',
-                border: '1px solid',
-                borderColor: 'divider',
+                borderRadius: 3,
+                bgcolor: 'surfaceContainerLow',
               }}
             >
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -381,12 +390,12 @@ export function Reconciliation() {
                             fontSize: '13px',
                             height: 36,
                             borderRadius: '12px',
-                            bgcolor: isSel ? 'primary.main' : 'background.paper',
-                            color: isSel ? 'primary.contrastText' : 'text.secondary',
-                            borderColor: isSel ? 'primary.main' : 'divider',
+                            bgcolor: isSel ? 'secondary.main' : 'background.paper',
+                            color: isSel ? 'secondary.contrastText' : 'text.secondary',
+                            borderColor: isSel ? 'secondary.main' : 'divider',
                             fontWeight: isSel ? 'bold' : 'normal',
                             textTransform: 'capitalize',
-                            '&:hover': { bgcolor: isSel ? 'primary.main' : 'action.hover' },
+                            '&:hover': { bgcolor: isSel ? 'secondary.main' : 'action.hover' },
                           }}
                         />
                       );
@@ -400,11 +409,6 @@ export function Reconciliation() {
                   placeholder="Explain the reason..."
                   value={note}
                   onChange={e => setNote(e.target.value)}
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      borderRadius: '16px',
-                    }
-                  }}
                 />
               </Stack>
             )}
@@ -414,17 +418,14 @@ export function Reconciliation() {
               loading={isProcessing}
               fullWidth
               variant="contained"
-              sx={{
-                height: 48,
-                borderRadius: '16px',
-                bgcolor: 'primary.dark',
-                fontWeight: 'bold'
-              }}
             >
               Apply Correction & Reconcile
             </Button>
           </Stack>
         )}
+              </Stack>
+            </CardContent>
+          </Card>
 
         {/* History */}
         <Stack spacing={1.5}>
@@ -539,7 +540,8 @@ export function Reconciliation() {
             </Stack>
           </Card>
         </Stack>
+        </Box>
       </Stack>
-    </Container>
+    </Box>
   );
 }

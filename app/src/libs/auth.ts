@@ -4,6 +4,7 @@ import {
   User as FirebaseUser,
   GoogleAuthProvider,
   signInWithPopup,
+  signInWithCustomToken,
   Auth
 } from 'firebase/auth';
 import { httpsCallable } from 'firebase/functions';
@@ -23,6 +24,16 @@ function requireAuth(): Auth {
 }
 
 export const authLib = {
+  async signInForLocalPreview(): Promise<void> {
+    const isLocalPreview = import.meta.env.DEV
+      && new URLSearchParams(window.location.search).get('visual-preview') === '1';
+    if (!isLocalPreview || !auth || auth.currentUser) return;
+    const response = await fetch('/__visual-preview-token', { cache: 'no-store' });
+    if (!response.ok) throw new Error('Could not authenticate the local preview');
+    const { token } = await response.json() as { token: string };
+    await signInWithCustomToken(auth, token);
+  },
+
   onAuthStateChanged(callback: (user: UserProfile | null) => void): () => void {
     if (!isFirebaseReady || !auth) {
       callback(null);
