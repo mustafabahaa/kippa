@@ -12,6 +12,7 @@ import { ReceiptLongIcon } from '@/components/AppIcon';
 import { CategoryIcon } from '@/components/AppIcon';
 import { HomeIcon } from '@/components/AppIcon';
 import { NotificationsActiveIcon } from '@/components/AppIcon';
+import { HourglassEmptyIcon } from '@/components/AppIcon';
 import { HistoryIcon } from '@/components/AppIcon';
 
 interface QuickNavMenuProps {
@@ -61,6 +62,7 @@ const SECTIONS = [
     items: [
       { label: 'Bank Accounts', icon: <AccountBalanceIcon fontSize="small" />, path: '/accounts' },
       { label: 'Transactions', icon: <ReceiptLongIcon fontSize="small" />, path: '/transactions' },
+      { label: 'Pending Review', icon: <HourglassEmptyIcon fontSize="small" />, path: '/pending' },
       { label: 'Categories', icon: <CategoryIcon fontSize="small" />, path: '/categories' },
     ],
   },
