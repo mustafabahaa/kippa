@@ -1,10 +1,15 @@
-import { useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSnackbar } from 'notistack';
 import {
   Box,
   Button,
-  Card,
-  CardContent,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Divider,
+  Fab,
+  InputAdornment,
   Stack,
   Typography,
   Chip,
@@ -18,12 +23,12 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { BackspaceIcon } from '@/components/AppIcon';
 import { NotesIcon } from '@/components/AppIcon';
 import { AddIcon } from '@/components/AppIcon';
-import { RemoveIcon } from '@/components/AppIcon';
 import { CalendarTodayIcon } from '@/components/AppIcon';
 import { AccountBalanceIcon } from '@/components/AppIcon';
 import { SavingsIcon } from '@/components/AppIcon';
 import { PaymentsIcon } from '@/components/AppIcon';
 import { CheckCircleIcon } from '@/components/AppIcon';
+import { SearchIcon } from '@/components/AppIcon';
 import { isToday, format } from 'date-fns';
 import {
   useAccounts,
@@ -59,7 +64,20 @@ export function FastEntry() {
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null);
   const [description, setDescription] = useState('');
-  const [showNoteField, setShowNoteField] = useState(false);
+  const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
+  const [categorySearch, setCategorySearch] = useState('');
+  const [showSaveFeedback, setShowSaveFeedback] = useState(false);
+  const saveFeedbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => () => {
+    if (saveFeedbackTimerRef.current) clearTimeout(saveFeedbackTimerRef.current);
+  }, []);
+
+  const triggerSaveFeedback = () => {
+    if (saveFeedbackTimerRef.current) clearTimeout(saveFeedbackTimerRef.current);
+    setShowSaveFeedback(true);
+    saveFeedbackTimerRef.current = setTimeout(() => setShowSaveFeedback(false), 620);
+  };
 
   // Transfer Specific States
   const [toAccountId, setToAccountId] = useState<string | null>(null);
@@ -135,6 +153,24 @@ export function FastEntry() {
       });
   }, [categories, mode, frequencyScores]);
 
+  const frequentCategories = useMemo(() => {
+    const used = sortedCategories.filter(category => category.score > 0);
+    return (used.length > 0 ? used : sortedCategories).slice(0, 8);
+  }, [sortedCategories]);
+
+  const displayedCategories = useMemo(() => {
+    if (!selectedCategory || frequentCategories.some(category => category.id === selectedCategory.id)) {
+      return frequentCategories;
+    }
+    return [selectedCategory, ...frequentCategories.slice(0, 7)];
+  }, [frequentCategories, selectedCategory]);
+
+  const filteredCategories = useMemo(() => {
+    const query = categorySearch.trim().toLocaleLowerCase();
+    if (!query) return sortedCategories;
+    return sortedCategories.filter(category => category.name.toLocaleLowerCase().includes(query));
+  }, [categorySearch, sortedCategories]);
+
   // Event handlers to update state and reset target/destination account if it is invalid for the chosen mode or source account.
   const handleSelectSourceAccount = (id: string | null) => {
     setSelectedAccountId(id);
@@ -155,6 +191,8 @@ export function FastEntry() {
   const handleSelectMode = (m: EntryMode) => {
     setMode(m);
     setSelectedCategoryId(null);
+    setCategoryDialogOpen(false);
+    setCategorySearch('');
     
     if (!toAccountId || !selectedAccountId) return;
     const sourceAcc = accounts.find(a => a.id === selectedAccountId);
@@ -179,41 +217,6 @@ export function FastEntry() {
     } else {
       activeSetter(prev => prev === '0' ? val : prev + val);
     }
-  };
-
-  // Mobile Safari can delay or swallow the compatibility click after a scroll.
-  // Handle a stationary touch on pointer-up, then suppress its synthetic click.
-  const keypadTouchStartRef = useRef<{ pointerId: number; x: number; y: number } | null>(null);
-  const suppressNextKeypadClickRef = useRef(false);
-
-  const handleKeypadPointerDown = (event: ReactPointerEvent<HTMLButtonElement>) => {
-    if (event.pointerType !== 'touch') return;
-    keypadTouchStartRef.current = {
-      pointerId: event.pointerId,
-      x: event.clientX,
-      y: event.clientY,
-    };
-  };
-
-  const handleKeypadPointerUp = (event: ReactPointerEvent<HTMLButtonElement>, key: string) => {
-    if (event.pointerType !== 'touch') return;
-    const start = keypadTouchStartRef.current;
-    keypadTouchStartRef.current = null;
-    if (!start || start.pointerId !== event.pointerId) return;
-
-    const moved = Math.hypot(event.clientX - start.x, event.clientY - start.y);
-    if (moved > 10) return;
-
-    suppressNextKeypadClickRef.current = true;
-    handleKeypadPress(key);
-  };
-
-  const handleKeypadClick = (key: string) => {
-    if (suppressNextKeypadClickRef.current) {
-      suppressNextKeypadClickRef.current = false;
-      return;
-    }
-    handleKeypadPress(key);
   };
 
   const handleSave = async () => {
@@ -254,12 +257,12 @@ export function FastEntry() {
             }
           ]
         });
+        triggerSaveFeedback();
         localStorage.setItem('ledger_last_used_account', selectedAccount.id);
         enqueueSnackbar(`Saved! Logged expense of ${amount} ${selectedAccount.currency}`, { variant: 'success' });
         setAmountStr('0');
         setDescription('');
         setSelectedCategoryId(null);
-        setShowNoteField(false);
       } 
       else if (mode === 'income') {
         await createTxMutation.mutateAsync({
@@ -280,11 +283,11 @@ export function FastEntry() {
             }
           ]
         });
+        triggerSaveFeedback();
         enqueueSnackbar(`Saved! Logged income of ${amount} ${selectedAccount.currency}`, { variant: 'success' });
         setAmountStr('0');
         setDescription('');
         setSelectedCategoryId(null);
-        setShowNoteField(false);
       } 
       else if (mode === 'transfer') {
         if (!toAccount) {
@@ -340,11 +343,11 @@ export function FastEntry() {
             }
           } : {}),
         });
+        triggerSaveFeedback();
         enqueueSnackbar('Saved transfer!', { variant: 'success' });
         setAmountStr('0');
         setToAmountStr('0');
         setDescription('');
-        setShowNoteField(false);
       }
     } catch (err: any) {
       enqueueSnackbar(err?.message || 'Error occurred saving transaction', { variant: 'error' });
@@ -356,7 +359,7 @@ export function FastEntry() {
 
   if (accountsLoading || categoriesLoading) {
     return (
-      <Box sx={{ py: 0.5 }}>
+      <Box sx={{ py: 0.5, width: '100%', maxWidth: 520, mx: 'auto' }}>
         <Stack spacing={3}>
           <PageHeader title="Fast Entry" subtitle="Log expenses, income & transfers" />
           <Skeleton variant="rectangular" width="100%" height={100} sx={{ borderRadius: '20px' }} />
@@ -368,7 +371,7 @@ export function FastEntry() {
 
   if (accounts.length === 0) {
     return (
-      <Box sx={{ py: 0.5 }}>
+      <Box sx={{ py: 0.5, width: '100%', maxWidth: 520, mx: 'auto' }}>
         <Stack spacing={3}>
           <PageHeader title="Fast Entry" subtitle="Log expenses, income & transfers" />
           <EmptyLayout
@@ -381,41 +384,28 @@ export function FastEntry() {
   }
 
   return (
-    <Box sx={{ py: 0.5 }}>
+    <Box sx={{ py: 0.5, pb: { xs: 12, lg: 0 }, width: '100%', maxWidth: 520, mx: 'auto' }}>
       <Stack spacing={2.5}>
         
         {/* Page Header */}
         <PageHeader title="Fast Entry" subtitle="Log expenses, income & transfers" />
 
-        <Box
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: { xs: 'minmax(0, 1fr)', lg: 'minmax(0, 7fr) minmax(300px, 4fr)' },
-            gap: 3,
-            alignItems: 'start',
-          }}
-        >
-          <Card>
-            <CardContent>
-              <Stack spacing={2.5}>
-
-        {/* Mode Selector */}
-        <Stack direction="row" spacing={1}>
+        {/* Keep the entry type visible before the amount on every viewport. */}
+        <Stack direction="row" spacing={1} sx={{ width: '100%' }}>
           {(['expense', 'income', 'transfer'] as EntryMode[]).map(m => (
             <Button
               key={m}
               onClick={() => handleSelectMode(m)}
               variant={mode === m ? 'contained' : 'outlined'}
-              sx={{ 
-                flex: 1, 
-                fontSize: '11px', 
-                height: 36, 
-                minHeight: 36, 
+              sx={{
+                flex: 1,
+                fontSize: '11px',
+                height: 40,
+                minHeight: 40,
                 borderRadius: '16px',
                 px: 1,
                 bgcolor: mode === m ? 'secondary.main' : 'background.paper',
                 color: mode === m ? 'secondary.contrastText' : 'text.primary',
-                border: '1px solid',
                 borderColor: mode === m ? 'transparent' : 'divider',
                 '&:hover': {
                   bgcolor: mode === m ? 'secondary.main' : 'action.hover',
@@ -427,6 +417,17 @@ export function FastEntry() {
             </Button>
           ))}
         </Stack>
+
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: 'minmax(0, 1fr)',
+            gap: 3,
+            alignItems: 'start',
+          }}
+        >
+          <Box sx={{ order: 2, minWidth: 0 }}>
+            <Stack spacing={2.5} divider={<Divider flexItem />}>
 
         {/* Category Selection (Only for expense/income) */}
         {(mode === 'expense' || mode === 'income') && (
@@ -449,7 +450,7 @@ export function FastEntry() {
                   gap: 1,
                 }}
               >
-                {sortedCategories.map((cat) => {
+                {displayedCategories.map((cat) => {
                   const isSelected = selectedCategory?.id === cat.id;
                   return (
                     <Chip
@@ -470,6 +471,21 @@ export function FastEntry() {
                     />
                   );
                 })}
+                {sortedCategories.length > displayedCategories.length && (
+                  <Chip
+                    icon={<AddIcon fontSize="small" />}
+                    label={`More (${sortedCategories.length - displayedCategories.length})`}
+                    onClick={() => setCategoryDialogOpen(true)}
+                    variant="outlined"
+                    sx={{
+                      height: 36,
+                      borderRadius: '12px',
+                      borderColor: 'divider',
+                      color: 'primary.main',
+                      bgcolor: 'action.hover',
+                    }}
+                  />
+                )}
               </Box>
             )}
           </Box>
@@ -616,33 +632,22 @@ export function FastEntry() {
         )}
 
         {/* Note / Date Area */}
-        <Stack direction="row" spacing={2} sx={{ width: '100%' }}>
-          <Box flex={1}>
-            <Button
-              onClick={() => setShowNoteField(!showNoteField)}
-              fullWidth
-              variant="outlined"
-              sx={{
-                justifyContent: 'space-between',
-                px: 2,
-                py: 1.5,
-                borderRadius: '16px',
-                border: '1px solid',
-                borderColor: 'divider',
-                bgcolor: 'action.hover',
-                color: 'text.secondary',
-                fontSize: '13.5px',
-                height: 48,
-                '&:hover': { bgcolor: 'action.selected', borderColor: 'divider' }
-              }}
-            >
-              <Box display="flex" alignItems="center" gap={1}>
-                <NotesIcon sx={{ fontSize: '20px' }} />
-                Note
-              </Box>
-              {showNoteField ? <RemoveIcon sx={{ fontSize: '18px' }} /> : <AddIcon sx={{ fontSize: '18px' }} />}
-            </Button>
-          </Box>
+        <Stack direction="row" spacing={1.5} sx={{ width: '100%' }}>
+          <TextField
+            fullWidth
+            placeholder="Note (optional)"
+            value={description}
+            onChange={event => setDescription(event.target.value)}
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <NotesIcon fontSize="small" />
+                  </InputAdornment>
+                ),
+              },
+            }}
+          />
           <LocalizationProvider dateAdapter={AdapterDateFns}>
             <MobileDatePicker
               value={entryDate}
@@ -659,24 +664,11 @@ export function FastEntry() {
             />
           </LocalizationProvider>
         </Stack>
-
-        {showNoteField && (
-          <TextField
-            multiline
-            rows={2}
-            fullWidth
-            placeholder="Add details..."
-            value={description}
-            onChange={e => setDescription(e.target.value)}
-          />
-        )}
-              </Stack>
-            </CardContent>
-          </Card>
+            </Stack>
+          </Box>
 
         {/* Custom Numeric Keypad */}
-        <Card sx={{ position: { lg: 'sticky' }, top: { lg: 24 } }}>
-          <CardContent>
+        <Box sx={{ order: 1, minWidth: 0 }}>
         <Box>
           {/* Amount display lives directly above the keypad so the value being
               entered is always visible while typing (mobile UX). */}
@@ -697,6 +689,8 @@ export function FastEntry() {
               boxShadow: (!isKeypadForDest || !isCrossCurrency) ? '0px 4px 12px rgba(0,0,0,0.08)' : 'none',
               cursor: isCrossCurrency ? 'pointer' : 'default',
               transition: 'all 0.2s',
+              position: 'relative',
+              overflow: 'hidden',
             }}
           >
             <Typography variant="body2" sx={{ color: (!isKeypadForDest || !isCrossCurrency) ? 'rgba(255,255,255,0.7)' : 'text.secondary', fontSize: '12px', fontWeight: 500, mb: 0.5 }}>
@@ -710,6 +704,31 @@ export function FastEntry() {
                 {amountStr}
               </Typography>
             </Box>
+            {showSaveFeedback && (
+              <Stack
+                direction="row"
+                alignItems="center"
+                justifyContent="center"
+                spacing={1}
+                sx={{
+                  position: 'absolute',
+                  inset: 0,
+                  bgcolor: 'primary.main',
+                  color: 'primary.contrastText',
+                  pointerEvents: 'none',
+                  animation: 'fastEntrySaved 620ms ease-out both',
+                  '@keyframes fastEntrySaved': {
+                    '0%': { opacity: 0, transform: 'scale(0.96)' },
+                    '18%': { opacity: 1, transform: 'scale(1)' },
+                    '72%': { opacity: 1, transform: 'scale(1)' },
+                    '100%': { opacity: 0, transform: 'scale(1.02)' },
+                  },
+                }}
+              >
+                <CheckCircleIcon />
+                <Typography sx={{ fontSize: 16, fontWeight: 800 }}>Saved</Typography>
+              </Stack>
+            )}
           </Box>
 
           {/* Destination amount (cross-currency transfer only) */}
@@ -763,10 +782,7 @@ export function FastEntry() {
               return (
                 <Button
                   key={k}
-                  onPointerDown={handleKeypadPointerDown}
-                  onPointerUp={(event) => handleKeypadPointerUp(event, k)}
-                  onPointerCancel={() => { keypadTouchStartRef.current = null; }}
-                  onClick={() => handleKeypadClick(k)}
+                  onClick={() => handleKeypadPress(k)}
                   disableRipple
                   fullWidth
                   sx={{
@@ -809,18 +825,115 @@ export function FastEntry() {
               fontSize: '16px',
               fontWeight: 'bold',
               textTransform: 'none',
-              display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: 1
+              gap: 1,
+              display: { xs: 'none', lg: 'flex' },
             }}
           >
             {mode === 'expense' ? 'Save Expense' : mode === 'income' ? 'Save Income' : 'Save Transaction'}
           </Button>
+
+          <Fab
+            variant="extended"
+            color="primary"
+            aria-label={mode === 'expense' ? 'Save Expense' : mode === 'income' ? 'Save Income' : 'Save Transaction'}
+            onClick={handleSave}
+            disabled={isSaving}
+            sx={{
+              display: { xs: 'flex', lg: 'none' },
+              position: 'fixed',
+              right: 18,
+              bottom: 96,
+              zIndex: theme => theme.zIndex.appBar + 1,
+              minWidth: 112,
+              gap: 1,
+            }}
+          >
+            <CheckCircleIcon fontSize="small" />
+            {isSaving ? 'Saving…' : 'Save'}
+          </Fab>
         </Box>
-          </CardContent>
-        </Card>
         </Box>
+        </Box>
+
+        <Dialog
+          open={categoryDialogOpen}
+          onClose={() => {
+            setCategoryDialogOpen(false);
+            setCategorySearch('');
+          }}
+          fullWidth
+          maxWidth="xs"
+        >
+          <DialogTitle>
+            Choose category
+            <Typography component="span" sx={{ display: 'block', mt: 0.5, fontSize: 12, fontWeight: 600, color: 'text.secondary' }}>
+              Frequent categories stay on the entry screen for faster logging.
+            </Typography>
+          </DialogTitle>
+          <DialogContent dividers>
+            <Stack spacing={2} sx={{ pt: 0.5 }}>
+              <TextField
+                autoFocus
+                fullWidth
+                placeholder="Search categories"
+                value={categorySearch}
+                onChange={event => setCategorySearch(event.target.value)}
+                slotProps={{
+                  input: {
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <SearchIcon fontSize="small" />
+                      </InputAdornment>
+                    ),
+                  },
+                }}
+              />
+              {filteredCategories.length > 0 ? (
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                  {filteredCategories.map(category => {
+                    const isSelected = selectedCategory?.id === category.id;
+                    return (
+                      <Chip
+                        key={category.id}
+                        label={category.name}
+                        onClick={() => {
+                          setSelectedCategoryId(category.id);
+                          setCategoryDialogOpen(false);
+                          setCategorySearch('');
+                        }}
+                        variant={isSelected ? 'filled' : 'outlined'}
+                        sx={{
+                          height: 40,
+                          borderRadius: '12px',
+                          bgcolor: isSelected ? 'secondary.main' : 'background.paper',
+                          color: isSelected ? 'secondary.contrastText' : 'text.secondary',
+                          borderColor: isSelected ? 'secondary.main' : 'divider',
+                        }}
+                      />
+                    );
+                  })}
+                </Box>
+              ) : (
+                <EmptyLayout
+                  title="No matching categories"
+                  description="Try another category name."
+                />
+              )}
+            </Stack>
+          </DialogContent>
+          <DialogActions>
+            <Button
+              onClick={() => {
+                setCategoryDialogOpen(false);
+                setCategorySearch('');
+              }}
+            >
+              Cancel
+            </Button>
+          </DialogActions>
+        </Dialog>
 
       </Stack>
     </Box>
@@ -838,7 +951,7 @@ function DateButtonField({ dateLabel, setOpen }: { dateLabel?: string; setOpen?:
       onClick={() => setOpen?.(true)}
       sx={{
         width: '120px',
-        height: 48,
+        height: 56,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
