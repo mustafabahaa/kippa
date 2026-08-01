@@ -100,6 +100,15 @@ export function PendingTransactions() {
     return accounts.filter((account) => account.isActive && account.currency === selected.currency);
   }, [accounts, selected]);
 
+  const isCrossCurrency = !!selected?.destinationCurrency && selected.destinationCurrency !== selected.currency;
+  const isHalfPending = !!selected?.transferLeg;
+
+  const availableDestinationAccounts = useMemo(() => {
+    if (!selected) return [];
+    const targetCurrency = selected.destinationCurrency ?? selected.currency;
+    return accounts.filter((account) => account.isActive && account.currency === targetCurrency && account.id !== accountId);
+  }, [accounts, selected, accountId]);
+
   const openReview = (item: PendingFinancialMessage) => {
     setSelected(item);
     setCategoryId('');
@@ -283,10 +292,28 @@ export function PendingTransactions() {
           {selected && (
             <Stack spacing={2.5}>
               <Box>
-                <Typography sx={{ fontSize: 34, lineHeight: 1.25, fontWeight: 800 }}>
-                  <Money amount={selected.amount} code={selected.currency} maxDigits={2} />
-                </Typography>
+                {isCrossCurrency ? (
+                  <Typography sx={{ fontSize: 28, lineHeight: 1.3, fontWeight: 800 }}>
+                    <Money amount={selected.amount} code={selected.currency} maxDigits={2} />
+                    <Box component="span" sx={{ color: 'text.secondary', mx: 1 }}>→</Box>
+                    <Money amount={selected.destinationAmount ?? 0} code={selected.destinationCurrency ?? selected.currency} maxDigits={2} />
+                  </Typography>
+                ) : (
+                  <Typography sx={{ fontSize: 34, lineHeight: 1.25, fontWeight: 800 }}>
+                    <Money amount={selected.amount} code={selected.currency} maxDigits={2} />
+                  </Typography>
+                )}
                 <Typography sx={{ fontSize: 13, color: 'text.secondary', mt: 0.5 }}>{selected.description}</Typography>
+                {isCrossCurrency && selected.destinationAmount && (
+                  <Typography sx={{ fontSize: 11, color: 'text.secondary', mt: 0.25 }}>
+                    Rate: {(selected.destinationAmount / selected.amount).toFixed(2)} {selected.destinationCurrency}/{selected.currency}
+                  </Typography>
+                )}
+                {isHalfPending && (
+                  <Typography sx={{ fontSize: 11, color: 'warning.main', mt: 0.5 }}>
+                    Waiting for the other leg of this transfer…
+                  </Typography>
+                )}
               </Box>
 
               <Divider />
@@ -314,7 +341,7 @@ export function PendingTransactions() {
                     <FormControl fullWidth>
                       <InputLabel id="pending-destination-label">To account</InputLabel>
                       <Select labelId="pending-destination-label" value={destinationAccountId} label="To account" onChange={(event) => setDestinationAccountId(event.target.value)}>
-                        {availableAccounts.filter((account) => account.id !== accountId).map((account) => <MenuItem key={account.id} value={account.id}>{account.name}</MenuItem>)}
+                        {availableDestinationAccounts.map((account) => <MenuItem key={account.id} value={account.id}>{account.name}</MenuItem>)}
                       </Select>
                     </FormControl>
                   )}
@@ -343,7 +370,7 @@ export function PendingTransactions() {
             sx={{ borderRadius: 12, boxShadow: 'none' }}
             startIcon={<CheckCircleIcon />}
             onClick={approve}
-            disabled={!categoryId || !accountId || (selected?.kind === 'transfer' && !destinationAccountId) || approveMutation.isPending}
+            disabled={isHalfPending || !categoryId || !accountId || (selected?.kind === 'transfer' && !destinationAccountId) || approveMutation.isPending}
           >
             {approveMutation.isPending ? 'Approving…' : 'Approve'}
           </Button>

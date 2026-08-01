@@ -27,6 +27,22 @@ describe('parseFinancialMessage', () => {
     expect(result).toMatchObject({ outcome: 'matched', parsed: { kind: 'expense', amount: 2856.86, accountHintLast4: '1001', description: 'Transfer to PERSON NAME' } });
   });
 
+  it('parses a Phone Banking Transfer debit leg (from)', () => {
+    const result = parseFinancialMessage('From HSBC: 02AUG26 Phone Banking Transfer from 074-096***-017 USD 2,000.00- Your available balance is USD 1,429.60');
+    expect(result).toMatchObject({
+      outcome: 'matched',
+      parsed: { kind: 'transfer', transferLeg: 'debit', mergeKey: 'phone-banking-transfer', amount: 2000, currency: 'USD', accountHintLast4: '6017' },
+    });
+  });
+
+  it('parses a Phone Banking Transfer credit leg (to)', () => {
+    const result = parseFinancialMessage('From HSBC: 02AUG26 Phone Banking Transfer to 074-096***-001 EGP 102,200.00+ Your available balance is EGP 141,678.41');
+    expect(result).toMatchObject({
+      outcome: 'matched',
+      parsed: { kind: 'transfer', transferLeg: 'credit', mergeKey: 'phone-banking-transfer', amount: 102200, currency: 'EGP', accountHintLast4: '6001' },
+    });
+  });
+
   it('ignores statement alerts', () => {
     expect(parseFinancialMessage('HSBC Credit Card ending *** 7281 Statement Date 11/07/2026. Total Amt Due EGP 216.81, Due Date 05/08/2026.')).toMatchObject({ outcome: 'ignored' });
   });

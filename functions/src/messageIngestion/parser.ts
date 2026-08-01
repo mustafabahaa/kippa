@@ -10,6 +10,10 @@ export type ParsedFinancialMessage = {
   destinationHintLast4?: string;
   accountKind: 'bank' | 'credit-card';
   destinationKind?: 'cash' | 'credit-card';
+  /** Marks one leg of a multi-message cross-currency transfer so the ingestion layer can merge them. */
+  transferLeg?: 'debit' | 'credit';
+  /** Shared key used to correlate matching transfer legs. */
+  mergeKey?: string;
 };
 
 export type ParseResult =
@@ -97,6 +101,40 @@ export function parseFinancialMessage(raw: string, source = 'sms'): ParseResult 
         description: 'ATM cash withdrawal', counterparty: 'Cash',
         accountHintLast4: last4(atmWithdrawal[2]), accountKind: 'bank', destinationKind: 'cash',
         currency: atmWithdrawal[3].toUpperCase(), amount: amount(atmWithdrawal[4]),
+      },
+    };
+  }
+
+  // Phone Banking Transfer — debit leg ("from", amount ends with -)
+  const phoneTransferDebit = text.match(
+    /From HSBC:\s*(\d{2}[A-Z]{3}\d{2})\s+Phone Banking Transfer from\s+([^\s]+)\s+([A-Z]{3})\s+([\d,]+(?:\.\d{1,2})?)-/i,
+  );
+  if (phoneTransferDebit) {
+    return {
+      outcome: 'matched',
+      parsed: {
+        kind: 'transfer', provider, date: compactDate(phoneTransferDebit[1]),
+        description: 'Phone Banking Transfer',
+        accountHintLast4: last4(phoneTransferDebit[2]), accountKind: 'bank',
+        currency: phoneTransferDebit[3].toUpperCase(), amount: amount(phoneTransferDebit[4]),
+        transferLeg: 'debit', mergeKey: 'phone-banking-transfer',
+      },
+    };
+  }
+
+  // Phone Banking Transfer — credit leg ("to", amount ends with +)
+  const phoneTransferCredit = text.match(
+    /From HSBC:\s*(\d{2}[A-Z]{3}\d{2})\s+Phone Banking Transfer to\s+([^\s]+)\s+([A-Z]{3})\s+([\d,]+(?:\.\d{1,2})?)\+/i,
+  );
+  if (phoneTransferCredit) {
+    return {
+      outcome: 'matched',
+      parsed: {
+        kind: 'transfer', provider, date: compactDate(phoneTransferCredit[1]),
+        description: 'Phone Banking Transfer',
+        accountHintLast4: last4(phoneTransferCredit[2]), accountKind: 'bank',
+        currency: phoneTransferCredit[3].toUpperCase(), amount: amount(phoneTransferCredit[4]),
+        transferLeg: 'credit', mergeKey: 'phone-banking-transfer',
       },
     };
   }

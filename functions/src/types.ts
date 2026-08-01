@@ -155,6 +155,14 @@ export interface PendingFinancialMessage {
   destinationHintLast4?: string | null;
   suggestedAccountId?: string | null;
   suggestedDestinationAccountId?: string | null;
+  /** Amount on the destination leg of a cross-currency transfer (from the credit SMS). */
+  destinationAmount?: number | null;
+  /** Currency of the destination leg when it differs from `currency`. */
+  destinationCurrency?: string | null;
+  /** Marks one leg of a multi-message transfer before the pair is merged. */
+  transferLeg?: 'debit' | 'credit' | null;
+  /** Shared key used to correlate matching transfer legs. */
+  mergeKey?: string | null;
   createdAt: string;
   status: 'pending';
 }

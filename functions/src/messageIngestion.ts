@@ -281,23 +281,113 @@ export const ingestFinancialMessage = onRequest(
     }
 
     const suggestions = await resolveSuggestions(credential.householdId, parsedResult.parsed);
+    const parsed = parsedResult.parsed;
+
+    // ── Cross-currency transfer merge ──────────────────────────────────
+    // Phone Banking Transfers arrive as two SMS (one per leg). When the
+    // second leg arrives we merge it with the first half-pending doc into
+    // a single cross-currency transfer.
+    if (parsed.transferLeg && parsed.mergeKey) {
+      const oppositeLeg = parsed.transferLeg === 'debit' ? 'credit' : 'debit';
+      const halfPendingSnap = await db.collection(`households/${credential.householdId}/pendingFinancialMessages`)
+        .where('mergeKey', '==', parsed.mergeKey)
+        .where('transferLeg', '==', oppositeLeg)
+        .where('date', '==', parsed.date)
+        .where('status', '==', 'pending')
+        .limit(1)
+        .get();
+
+      if (!halfPendingSnap.empty) {
+        // Merge the two legs into one cross-currency transfer.
+        const half = halfPendingSnap.docs[0].data() as PendingFinancialMessage;
+        const debit = parsed.transferLeg === 'debit' ? parsed : half;
+        const credit = parsed.transferLeg === 'credit' ? parsed : half;
+
+        const mergedSuggestions = await resolveSuggestions(credential.householdId, {
+          ...parsed,
+          currency: debit.currency,
+          accountHintLast4: debit.accountHintLast4 ?? undefined,
+          destinationHintLast4: credit.accountHintLast4 ?? undefined,
+          destinationKind: 'cash' as const,
+          // resolveSuggestions uses currency for destination matching — we override after
+        });
+        // Resolve the destination account in the credit-leg currency separately.
+        const destAccountsSnap = await db.collection(`households/${credential.householdId}/accounts`)
+          .where('isActive', '==', true).get();
+        const destAccount = destAccountsSnap.docs
+          .map((d) => ({ id: d.id, ...d.data() }) as Account)
+          .find((a) => a.currency === credit.currency && a.type === 'running');
+
+        const mergedPendingId = half.id; // reuse the first-arriving doc id
+        const mergedPendingRef = db.doc(`households/${credential.householdId}/pendingFinancialMessages/${mergedPendingId}`);
+        const merged: Partial<PendingFinancialMessage> = {
+          amount: debit.amount,
+          currency: debit.currency,
+          destinationAmount: credit.amount,
+          destinationCurrency: credit.currency,
+          accountHintLast4: debit.accountHintLast4 ?? null,
+          destinationHintLast4: credit.accountHintLast4 ?? null,
+          suggestedAccountId: mergedSuggestions.accountId ?? null,
+          suggestedDestinationAccountId: destAccount?.id ?? null,
+          transferLeg: null, // fully merged — no longer a half-pending
+          mergeKey: null,
+          messagePreview: `${buildMessagePreview(body.message)} · ${half.messagePreview}`,
+        };
+
+        const batch = db.batch();
+        batch.set(mergedPendingRef, merged, { merge: true });
+        // Delete the second-leg receipt so re-sends don't recreate it.
+        batch.set(receiptRef, {
+          id: receiptId,
+          credentialId,
+          householdId: credential.householdId,
+          state: 'ignored',
+          pendingId: mergedPendingId,
+          createdAt: now,
+          updatedAt: now,
+        } satisfies IngestionReceipt);
+        batch.set(credentialRef, { lastUsedAt: now }, { merge: true });
+        await batch.commit();
+
+        const tokens = await getTokensForUsers(credential.householdId, [credential.ownerUid]);
+        await sendToMany(
+          credential.householdId,
+          tokens,
+          buildMessagePayload({
+            type: 'pending_financial_message',
+            title: 'Review transfer',
+            body: `${debit.amount} ${debit.currency} → ${credit.amount} ${credit.currency} · ${parsed.description}`,
+            householdId: credential.householdId,
+            deepLink: '/pending',
+          }),
+        ).catch((error) => console.error('Could not send pending-message notification', error));
+        response.status(202).json({ accepted: true, pendingId: mergedPendingId, kind: 'transfer', merged: true });
+        return;
+      }
+    }
+
+    // ── Normal / half-pending creation ─────────────────────────────────
     const pending: PendingFinancialMessage = {
       id: receiptId,
       householdId: credential.householdId,
       receivedBy: credential.ownerUid,
-      kind: parsedResult.parsed.kind,
+      kind: parsed.kind,
       source,
-      provider: parsedResult.parsed.provider,
-      amount: parsedResult.parsed.amount,
-      currency: parsedResult.parsed.currency,
-      date: parsedResult.parsed.date,
-      description: parsedResult.parsed.description,
-      counterparty: parsedResult.parsed.counterparty ?? null,
+      provider: parsed.provider,
+      amount: parsed.amount,
+      currency: parsed.currency,
+      date: parsed.date,
+      description: parsed.description,
+      counterparty: parsed.counterparty ?? null,
       messagePreview: buildMessagePreview(body.message),
-      accountHintLast4: parsedResult.parsed.accountHintLast4 ?? null,
-      destinationHintLast4: parsedResult.parsed.destinationHintLast4 ?? null,
+      accountHintLast4: parsed.accountHintLast4 ?? null,
+      destinationHintLast4: parsed.destinationHintLast4 ?? null,
       suggestedAccountId: suggestions.accountId ?? null,
       suggestedDestinationAccountId: suggestions.destinationAccountId ?? null,
+      destinationAmount: null,
+      destinationCurrency: null,
+      transferLeg: parsed.transferLeg ?? null,
+      mergeKey: parsed.mergeKey ?? null,
       createdAt: now,
       status: 'pending',
     };
@@ -316,13 +406,16 @@ export const ingestFinancialMessage = onRequest(
     batch.set(credentialRef, { lastUsedAt: now }, { merge: true });
     await batch.commit();
     const tokens = await getTokensForUsers(credential.householdId, [credential.ownerUid]);
+    const notifBody = pending.transferLeg
+      ? `${pending.amount} ${pending.currency} · ${pending.description} (waiting for the other leg)`
+      : `${pending.amount} ${pending.currency} · ${pending.description}`;
     await sendToMany(
       credential.householdId,
       tokens,
       buildMessagePayload({
         type: 'pending_financial_message',
         title: `Review ${pending.kind}`,
-        body: `${pending.amount} ${pending.currency} · ${pending.description}`,
+        body: notifBody,
         householdId: credential.householdId,
         deepLink: '/pending',
       }),
@@ -381,10 +474,17 @@ export const approvePendingFinancialMessage = onCall(async (request) => {
       if (!destinationAccountId) throw new HttpsError('invalid-argument', 'Destination account is required.');
       const destinationSnapshot = await transaction.get(db.doc(`households/${householdId}/accounts/${destinationAccountId}`));
       destinationAccount = destinationSnapshot.data() as Account | undefined;
-      if (!destinationAccount?.isActive || destinationAccount.currency !== pending.currency || destinationAccount.id === account.id) {
-        throw new HttpsError('failed-precondition', 'Choose a different active destination account in the same currency.');
+      const expectedDestCurrency = pending.destinationCurrency ?? pending.currency;
+      if (!destinationAccount?.isActive || destinationAccount.currency !== expectedDestCurrency || destinationAccount.id === account.id) {
+        throw new HttpsError('failed-precondition', `Choose a different active destination account in ${expectedDestCurrency}.`);
       }
     }
+
+    const isCrossCurrency = pending.kind === 'transfer'
+      && !!pending.destinationCurrency
+      && pending.destinationCurrency !== pending.currency;
+    const destAmount = isCrossCurrency ? (pending.destinationAmount ?? pending.amount) : pending.amount;
+    const destCurrency = isCrossCurrency ? (pending.destinationCurrency as string) : pending.currency;
 
     const now = new Date().toISOString();
     transaction.create(transactionRef, {
@@ -409,9 +509,20 @@ export const approvePendingFinancialMessage = onCall(async (request) => {
     if (pending.kind === 'transfer' && destinationAccount) {
       transaction.create(db.doc(`households/${householdId}/ledgerLines/${transactionId}_destination`), {
         id: `${transactionId}_destination`, householdId, transactionId,
-        accountId: destinationAccount.id, signedAmount: pending.amount,
-        currency: pending.currency, createdAt: now,
+        accountId: destinationAccount.id, signedAmount: destAmount,
+        currency: destCurrency, createdAt: now,
       });
+      if (isCrossCurrency && pending.destinationAmount) {
+        transaction.create(db.doc(`households/${householdId}/conversionDetails/${transactionId}`), {
+          transactionId,
+          fromCurrency: pending.currency,
+          toCurrency: destCurrency,
+          fromAmount: pending.amount,
+          toAmount: pending.destinationAmount,
+          effectiveRate: pending.destinationAmount / pending.amount,
+          rateSource: 'bank',
+        });
+      }
     }
     transaction.create(db.doc(`households/${householdId}/auditLog/${transactionId}`), {
       id: transactionId,
@@ -420,7 +531,9 @@ export const approvePendingFinancialMessage = onCall(async (request) => {
       userDisplayName: profile.displayName || 'User',
       userPhotoURL: profile.photoURL ?? null,
       action: 'transaction_created',
-      summary: `${profile.displayName || 'User'} approved imported ${pending.kind}: ${pending.amount} ${pending.currency} - ${pending.description}`,
+      summary: isCrossCurrency
+        ? `${profile.displayName || 'User'} approved imported transfer: ${pending.amount} ${pending.currency} → ${destAmount} ${destCurrency} - ${pending.description}`
+        : `${profile.displayName || 'User'} approved imported ${pending.kind}: ${pending.amount} ${pending.currency} - ${pending.description}`,
       details: { transactionId, type: pending.kind, amount: pending.amount, currency: pending.currency, imported: true },
       createdAt: now,
     });
