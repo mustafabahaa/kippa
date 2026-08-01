@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./app/public/icons/logo_white_on_green.png" alt="Kippa" width="160" />
+  <img src="./frontend/web/public/icons/logo_white_on_green.png" alt="Kippa" width="160" />
 </p>
 
 <h1 align="center">Kippa</h1>
@@ -62,7 +62,7 @@
 
 ## 🚀 Quick start
 
-> ⚠️ **Firebase Blaze plan required.** Kippa relies on Cloud Functions (cron reminders, FCM fanout, derived data) and scheduled functions, which are **only available on the Firebase Blaze (pay-as-you-go) plan**. The free Spark plan will *not* work — deploys of `functions/` will fail. Upgrade in Firebase Console → *Build → Functions → Upgrade project* (or Console → ⚙️ → Usage and billing). See [GETTING_STARTED.md §4](./GETTING_STARTED.md#4-enable-firebase-services) for details.
+> ⚠️ **Firebase Blaze plan required.** Kippa relies on Cloud Functions (cron reminders, FCM fanout, derived data) and scheduled functions, which are **only available on the Firebase Blaze (pay-as-you-go) plan**. The free Spark plan will *not* work — deploys of `backend/functions/` will fail. Upgrade in Firebase Console → *Build → Functions → Upgrade project* (or Console → ⚙️ → Usage and billing). See [GETTING_STARTED.md §4](./GETTING_STARTED.md#4-enable-firebase-services) for details.
 
 **New here?** Follow the complete, step-by-step guide: **[GETTING_STARTED.md](./GETTING_STARTED.md)** — it covers installing the Firebase CLI and `gcloud`, creating a project, getting config values, enabling services, and deploying. Written so a human *or* an AI agent can get the app running and hosted in minutes.
 
@@ -93,7 +93,8 @@ npm run deploy       # build + firebase deploy (hosting + firestore + functions)
 
 ```
 .
-├── app/                        # React + Vite PWA
+├── frontend/
+│   └── web/                   # React + Vite product application
 │   ├── public/
 │   │   ├── icons/              # PWA icons and logos
 │   │   └── firebase-messaging-sw.example.js
@@ -106,7 +107,8 @@ npm run deploy       # build + firebase deploy (hosting + firestore + functions)
 │       ├── hooks/              # Reusable hooks
 │       ├── libs/               # Finance logic (ledger, selectors, currency, …)
 │       └── notifications/      # FCM registration and handling
-├── functions/                  # Cloud Functions (cron reminders, FCM fanout, derived data)
+├── backend/
+│   └── functions/             # Cloud Functions (cron reminders, FCM fanout, derived data)
 ├── docs/                       # Product spec, data model, design system, UX flows
 ├── GETTING_STARTED.md          # End-to-end setup guide (CLIs → deploy)
 ├── .firebaserc.example

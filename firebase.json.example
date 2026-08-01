@@ -1,6 +1,6 @@
 {
   "hosting": {
-    "public": "app/dist",
+    "public": "frontend/web/dist",
     "ignore": [
       "firebase.json",
       "**/.*",
@@ -26,8 +26,8 @@
     }
   },
   "functions": {
-    "source": "functions",
+    "source": "backend/functions",
     "runtime": "nodejs22",
-    "predeploy": "npm --prefix functions run build"
+    "predeploy": "npm --prefix backend/functions run build"
   }
 }

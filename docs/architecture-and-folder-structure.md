@@ -6,16 +6,18 @@ This document outlines the architectural approach and folder structure of the Ki
 
 ## 1. Architectural Approach
 
-Kippa is designed as a **hybrid Feature-First (Feature-Oriented)** application built around a **Double-Entry Ledger Core**.
+Kippa is a feature-oriented monorepo built around a shared domain contract and a double-entry ledger core.
 
 ```mermaid
 graph TD
-    UI[React Presentational Layer] --> Features[Feature Modules: src/features/*]
+    Shared[Shared contracts: packages/domain] --> UI
+    Shared --> Functions[Firebase Functions]
+    UI[React Presentational Layer] --> Features[Feature Modules: frontend/web/src/features/*]
     Features --> Hooks[Custom React Hooks: src/hooks/*]
     Features --> Contexts[Global Contexts: src/contexts/*]
     Hooks --> Libs[Ledger Core & DB Libs: src/libs/*]
     Libs --> DB[(Firestore DB)]
-    Features & Hooks & Libs -.-> Domain[Domain Types: src/domain/*]
+    Features & Hooks & Libs -.-> Shared
 ```
 
 ### Key Architectural Pillars:
@@ -31,60 +33,62 @@ Below is the directory mapping for the workspace:
 
 ```text
 kippa/
-├── docs/                      # Architectural documents, calculations, and specifications
-├── public/                    # Static assets, icons, and PWA manifest logo files
-├── src/
-│   ├── config/                # Global SDK configurations (e.g., Firebase client setup)
-│   ├── contexts/              # Global React contexts for application state (e.g., AppContext)
-│   ├── domain/                # Pure TypeScript domain models and interface types
-│   ├── hooks/                 # Reusable custom React hooks and React Query queries/mutations
-│   ├── libs/                  # Core double-entry services, calculators, and API helpers
-│   ├── features/              # Feature modules (isolated folders containing views/components)
-│   │   ├── accounts/          # Account creation and listing views
-│   │   ├── activity/          # Audit logs and action feeds (with notification bell)
-│   │   ├── auth/              # Sign-in/registration screen and household invitation onboarding
-│   │   ├── budget-cycles/     # Budget period status dashboard and category allocation config
-│   │   ├── categories/        # Expense/Income category management list
-│   │   ├── dashboard/         # Landing home view integrating multi-component metrics & cards
-│   │   ├── fast-entry/        # Mobile-optimized high-speed expense recorder (under 10s flow)
-│   │   ├── household/         # Couple-sharing configurations and household setups
-│   │   ├── notifications/     # User reminder and warning preference settings
-│   │   ├── reconciliation/    # Balance drift verification interface (calculated vs. actual)
-│   │   ├── shared/            # Common UI utilities, layout components, and system constants
-│   │   └── transactions/      # Historical transaction ledger search, filters, edits, and voiding
-│   ├── theme.ts               # Material UI theme setup (Teal-oriented design tokens)
-│   ├── main.tsx               # Application bootstrap entrypoint
-│   └── App.tsx                # Layout shell, tab routing, and navigation
+├── frontend/
+│   └── web/
+│       └── src/
+│           ├── config/        # Global SDK configurations
+│           ├── contexts/      # Global React contexts
+│           ├── hooks/         # React Query queries and mutations
+│           ├── libs/          # Ledger services, calculators, and API helpers
+│           ├── features/      # Feature modules and their views/components
+│           ├── theme.ts       # Material UI theme setup
+│           ├── main.tsx       # Application bootstrap entrypoint
+│           └── App.tsx        # Layout shell, routing, and navigation
+├── backend/
+│   └── functions/
+│       └── src/
+│           ├── domain/        # Pure server-side rules; never imports Firebase
+│           ├── features/      # Firebase handlers grouped by product feature
+│           ├── libs/          # Firebase-backed infrastructure adapters
+│           └── index.ts       # Stable deployed function exports
+└── packages/
+    └── domain/                # Type-only contracts shared across runtimes
 ```
 
 ---
 
 ## 3. Detailed Component Responsibilities
 
-### `src/domain/`
-All pure domain entities are declared in `src/domain/financeTypes.ts`. These represent the exact schema structure stored in Firestore:
+### `packages/domain/`
+Canonical entities are declared in `packages/domain/src/index.d.ts`. Both the app and Functions import these contracts through `@kippa/domain`, preventing schema copies from drifting:
 - `FinanceTransaction`: Represents the transactional event.
 - `LedgerLine`: Double-entry record for balance sheets.
 - `BudgetCycle`: Period representing the salary duration.
 - `BudgetAllocation`: Category allocations per cycle.
 
-### `src/libs/`
+### `frontend/web/src/libs/`
 This folder contains framework-agnostic business logic. **No UI components belong here.**
-- [auth.ts](file:///Users/mustafabahaa/Work/Github/kippa/src/libs/auth.ts): Sign-in and onboarding operations.
-- [db.ts](file:///Users/mustafabahaa/Work/Github/kippa/src/libs/db.ts): Raw Firestore client collection references.
-- [transactions.ts](file:///Users/mustafabahaa/Work/Github/kippa/src/libs/transactions.ts): Creation, updation, and voiding of transactions. Writes must be atomic (transaction or batch writes) keeping the double-entry balance equal.
-- [ledger.ts](file:///Users/mustafabahaa/Work/Github/kippa/src/libs/ledger.ts): Ledger line creations and balance consistency controls.
-- [cycles.ts](file:///Users/mustafabahaa/Work/Github/kippa/src/libs/cycles.ts): Closing or rolling cycles over.
-- [selectors.ts](file:///Users/mustafabahaa/Work/Github/kippa/src/libs/selectors.ts): Pure calculation functions (e.g. calculating balances, cycle progress, or safe spending rates) from arrays of transactions/ledger lines.
+- `auth.ts`: Sign-in and onboarding operations.
+- `db.ts`: Raw Firestore client collection references.
+- `transactions.ts`: Atomic creation, updating, and voiding of transactions.
+- `ledger.ts`: Ledger-line creation and balance consistency controls.
+- `cycles.ts`: Closing or rolling cycles over.
+- `selectors.ts`: Pure balance, progress, and spending calculations.
 
-### `src/hooks/`
+### `frontend/web/src/hooks/`
 Ties the UI components to our business services using React state or React Query:
-- [useFinance.ts](file:///Users/mustafabahaa/Work/Github/kippa/src/hooks/useFinance.ts): Manages all server queries and mutation caching (accounts, categories, transactions, budget allocations).
+- `useFinance.ts`: Manages server queries and mutation caching.
 
-### `src/features/`
+### `frontend/web/src/features/`
 Feature-specific components:
 - If a component is only used within a single feature (e.g. `BudgetPulseCard` inside the `dashboard`), it must live within that feature's directory (e.g. `src/features/dashboard/components/`).
 - If a component is reused across multiple features (e.g., custom loaders, special info icons, page headers), it must live in `src/features/shared/components/`. Single-file components can be placed directly in this folder. Components containing multiple related files (such as subcomponents, styles, or configuration) should be grouped inside their own subfolders under `src/features/shared/components/` (e.g. `src/features/shared/components/DotGrid/`).
+
+### `backend/functions/src/`
+- `domain/` contains deterministic parsing, formatting, warning, date, and payload rules. It must not import Firebase.
+- `features/` contains callable, HTTP, scheduled, and Firestore handlers grouped by business feature.
+- `libs/` contains Firebase Admin integrations such as FCM token lookup, delivery, and cleanup.
+- `index.ts` is the deployment boundary. Export names here are public Cloud Function names and must remain stable during internal refactors.
 
 ---
 

@@ -4,7 +4,6 @@ node_modules/
 # Build output
 dist/
 build/
-functions/lib/
 
 # Environment
 .env
@@ -20,7 +19,7 @@ ui-debug.log
 # Per-project Firebase config — copy the *.example files and fill in your own.
 .firebaserc
 firebase.json
-app/public/firebase-messaging-sw.js
+frontend/web/public/firebase-messaging-sw.js
 
 # OS/editor
 .DS_Store

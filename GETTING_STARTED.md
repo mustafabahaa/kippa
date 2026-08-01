@@ -118,7 +118,7 @@ firebase apps:create web "Kippa web" --project "$PROJECT_ID"
 firebase apps:sdkconfig --project "$PROJECT_ID" web
 ```
 
-Copy the printed `firebaseConfig` object — you'll paste its values into `app/.env` next.
+Copy the printed `firebaseConfig` object — you'll paste its values into `frontend/web/.env` next.
 
 ### 3a. Get your Messaging Sender ID
 
@@ -192,13 +192,13 @@ Copy the resulting **public key** (long string starting with `B…`). You'll pas
 
 Four files hold project-specific values and are gitignored. Each has a committed `.example` template — copy and fill in. Run everything from the repo root.
 
-### 7a. App environment — `app/.env`
+### 7a. App environment — `frontend/web/.env`
 
 ```bash
-cp app/.env.example app/.env
+cp frontend/web/.env.example frontend/web/.env
 ```
 
-Open `app/.env` and fill in the values from step 3 and 6:
+Open `frontend/web/.env` and fill in the values from step 3 and 6:
 
 ```dotenv
 VITE_FIREBASE_API_KEY=AIza…                  # from apps:sdkconfig
@@ -211,12 +211,12 @@ VITE_FIREBASE_MEASUREMENT_ID=                # optional, leave blank
 VITE_FIREBASE_VAPID_KEY=B…                    # from step 6
 ```
 
-### 7b. Service worker — `app/public/firebase-messaging-sw.js`
+### 7b. Service worker — `frontend/web/public/firebase-messaging-sw.js`
 
 Service workers can't read `.env`, so the FCM config must be inlined (these are the same **public** client values, not secrets).
 
 ```bash
-cp app/public/firebase-messaging-sw.example.js app/public/firebase-messaging-sw.js
+cp frontend/web/public/firebase-messaging-sw.example.js frontend/web/public/firebase-messaging-sw.js
 ```
 
 Open the new file and replace every `YOUR_*` placeholder with the matching value from step 3:
@@ -279,7 +279,7 @@ Update the OAuth support email to one you own:
 npm install
 ```
 
-This installs both the `app/` and `functions/` workspaces (the repo is an npm workspace monorepo).
+This installs both the `frontend/web/` and `backend/functions/` workspaces (the repo is an npm workspace monorepo).
 
 ---
 
@@ -291,7 +291,7 @@ npm run dev
 
 Vite starts on <http://localhost:5173>. The app will:
 
-- Initialize Firebase using `app/.env`.
+- Initialize Firebase using `frontend/web/.env`.
 - Connect to Firestore (offline persistence enabled automatically).
 - Offer Google sign-in.
 
@@ -316,7 +316,7 @@ npm run deploy
 Which is equivalent to:
 
 ```bash
-npm run build                      # builds app/ into app/dist
+npm run build                      # builds frontend/web/ into frontend/web/dist
 firebase deploy --only hosting,firestore:rules,firestore:indexes,functions
 ```
 
@@ -366,7 +366,7 @@ After your first deploy, confirm:
 
 ## Agent / CI notes
 
-- All sensitive values live in gitignored files (`app/.env`, `.firebaserc`, `firebase.json`, `firebase-messaging-sw.js`). Never commit them.
+- All sensitive values live in gitignored files (`frontend/web/.env`, `.firebaserc`, `firebase.json`, `firebase-messaging-sw.js`). Never commit them.
 - For headless auth, set `GOOGLE_APPLICATION_CREDENTIALS` to a service-account key with Owner/Editor + Firebase Admin roles.
 - The full setup is scriptable; the only step that usually needs a human is generating the initial VAPID key pair, after which every value can be persisted as a CI secret.
 - The Functions runtime is pinned to `nodejs22` in `firebase.json` — your CI Node version only needs to be able to build TS, not match exactly.
