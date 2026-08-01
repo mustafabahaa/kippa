@@ -461,9 +461,11 @@ export const approvePendingFinancialMessage = onCall(async (request) => {
     const pending = pendingSnapshot.data() as PendingFinancialMessage;
     const category = categorySnapshot.data() as Category | undefined;
     const account = accountSnapshot.data() as Account | undefined;
-    if (!category?.isActive) throw new HttpsError('failed-precondition', 'Choose an active category.');
-    if (pending.kind !== 'transfer' && category.type !== pending.kind) {
-      throw new HttpsError('failed-precondition', `Choose an ${pending.kind} category.`);
+    if (pending.kind !== 'transfer') {
+      if (!category?.isActive) throw new HttpsError('failed-precondition', 'Choose an active category.');
+      if (category.type !== pending.kind) {
+        throw new HttpsError('failed-precondition', `Choose an ${pending.kind} category.`);
+      }
     }
     if (!account?.isActive || account.currency !== pending.currency) {
       throw new HttpsError('failed-precondition', 'Choose an active account in the message currency.');
@@ -493,7 +495,7 @@ export const approvePendingFinancialMessage = onCall(async (request) => {
       type: pending.kind,
       date: pending.date,
       description: pending.description,
-      categoryId,
+      categoryId: categoryId || null,
       budgetCycleId: activeCycleId,
       createdBy: uid,
       createdAt: now,

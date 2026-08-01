@@ -281,7 +281,7 @@ export function PendingTransactions() {
         </Card>
       )}
 
-      <Dialog open={!!selected} onClose={closeReview} fullWidth maxWidth="xs">
+      <Dialog open={!!selected && selected.kind !== 'transfer'} onClose={closeReview} fullWidth maxWidth="xs">
         <DialogTitle sx={{ fontWeight: 'bold' }}>
           Review detected {selected?.kind}
           <Typography component="span" sx={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'text.secondary', mt: 0.5 }}>
@@ -292,28 +292,10 @@ export function PendingTransactions() {
           {selected && (
             <Stack spacing={2.5}>
               <Box>
-                {isCrossCurrency ? (
-                  <Typography sx={{ fontSize: 28, lineHeight: 1.3, fontWeight: 800 }}>
-                    <Money amount={selected.amount} code={selected.currency} maxDigits={2} />
-                    <Box component="span" sx={{ color: 'text.secondary', mx: 1 }}>→</Box>
-                    <Money amount={selected.destinationAmount ?? 0} code={selected.destinationCurrency ?? selected.currency} maxDigits={2} />
-                  </Typography>
-                ) : (
-                  <Typography sx={{ fontSize: 34, lineHeight: 1.25, fontWeight: 800 }}>
-                    <Money amount={selected.amount} code={selected.currency} maxDigits={2} />
-                  </Typography>
-                )}
+                <Typography sx={{ fontSize: 34, lineHeight: 1.25, fontWeight: 800 }}>
+                  <Money amount={selected.amount} code={selected.currency} maxDigits={2} />
+                </Typography>
                 <Typography sx={{ fontSize: 13, color: 'text.secondary', mt: 0.5 }}>{selected.description}</Typography>
-                {isCrossCurrency && selected.destinationAmount && (
-                  <Typography sx={{ fontSize: 11, color: 'text.secondary', mt: 0.25 }}>
-                    Rate: {(selected.destinationAmount / selected.amount).toFixed(2)} {selected.destinationCurrency}/{selected.currency}
-                  </Typography>
-                )}
-                {isHalfPending && (
-                  <Typography sx={{ fontSize: 11, color: 'warning.main', mt: 0.5 }}>
-                    Waiting for the other leg of this transfer…
-                  </Typography>
-                )}
               </Box>
 
               <Divider />
@@ -337,14 +319,6 @@ export function PendingTransactions() {
                       {availableAccounts.map((account) => <MenuItem key={account.id} value={account.id}>{account.name}</MenuItem>)}
                     </Select>
                   </FormControl>
-                  {selected.kind === 'transfer' && (
-                    <FormControl fullWidth>
-                      <InputLabel id="pending-destination-label">To account</InputLabel>
-                      <Select labelId="pending-destination-label" value={destinationAccountId} label="To account" onChange={(event) => setDestinationAccountId(event.target.value)}>
-                        {availableDestinationAccounts.map((account) => <MenuItem key={account.id} value={account.id}>{account.name}</MenuItem>)}
-                      </Select>
-                    </FormControl>
-                  )}
                 </Stack>
               </Box>
 
@@ -370,7 +344,95 @@ export function PendingTransactions() {
             sx={{ borderRadius: 12, boxShadow: 'none' }}
             startIcon={<CheckCircleIcon />}
             onClick={approve}
-            disabled={isHalfPending || !categoryId || !accountId || (selected?.kind === 'transfer' && !destinationAccountId) || approveMutation.isPending}
+            disabled={!categoryId || !accountId || approveMutation.isPending}
+          >
+            {approveMutation.isPending ? 'Approving…' : 'Approve'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={!!selected && selected.kind === 'transfer'} onClose={closeReview} fullWidth maxWidth="xs">
+        <DialogTitle sx={{ fontWeight: 'bold' }}>
+          Review transfer
+          <Typography component="span" sx={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'text.secondary', mt: 0.5 }}>
+            Nothing enters your ledger until you approve.
+          </Typography>
+        </DialogTitle>
+        <DialogContent sx={{ pt: 1.5 }}>
+          {selected && selected.kind === 'transfer' && (
+            <Stack spacing={2.5}>
+              <Box>
+                {isCrossCurrency ? (
+                  <Typography sx={{ fontSize: 26, lineHeight: 1.3, fontWeight: 800 }}>
+                    <Money amount={selected.amount} code={selected.currency} maxDigits={2} />
+                    <Box component="span" sx={{ color: 'text.secondary', mx: 1 }}>→</Box>
+                    <Money amount={selected.destinationAmount ?? 0} code={selected.destinationCurrency ?? selected.currency} maxDigits={2} />
+                  </Typography>
+                ) : (
+                  <Typography sx={{ fontSize: 34, lineHeight: 1.25, fontWeight: 800 }}>
+                    <Money amount={selected.amount} code={selected.currency} maxDigits={2} />
+                  </Typography>
+                )}
+                <Typography sx={{ fontSize: 13, color: 'text.secondary', mt: 0.5 }}>{selected.description}</Typography>
+                {isCrossCurrency && selected.destinationAmount && (
+                  <Typography sx={{ fontSize: 11, color: 'text.secondary', mt: 0.25 }}>
+                    Rate: {(selected.destinationAmount / selected.amount).toFixed(2)} {selected.destinationCurrency}/{selected.currency}
+                  </Typography>
+                )}
+                {isHalfPending && (
+                  <Typography sx={{ fontSize: 11, color: 'warning.main', mt: 0.5 }}>
+                    Waiting for the other leg of this transfer…
+                  </Typography>
+                )}
+              </Box>
+
+              <Divider />
+              <Box>
+                <Typography sx={{ fontSize: 12, fontWeight: 700, color: 'primary.main', textTransform: 'uppercase', letterSpacing: 1 }}>
+                  Accounts
+                </Typography>
+                <Typography sx={{ fontSize: 11, color: 'text.secondary', mb: 1 }}>
+                  Confirm where the money moves.
+                </Typography>
+                <Stack spacing={2}>
+                  <FormControl fullWidth>
+                    <InputLabel id="pending-from-label">From account</InputLabel>
+                    <Select labelId="pending-from-label" value={accountId} label="From account" onChange={(event) => setAccountId(event.target.value)}>
+                      {availableAccounts.map((account) => <MenuItem key={account.id} value={account.id}>{account.name}</MenuItem>)}
+                    </Select>
+                  </FormControl>
+                  <FormControl fullWidth>
+                    <InputLabel id="pending-to-label">To account</InputLabel>
+                    <Select labelId="pending-to-label" value={destinationAccountId} label="To account" onChange={(event) => setDestinationAccountId(event.target.value)}>
+                      {availableDestinationAccounts.map((account) => <MenuItem key={account.id} value={account.id}>{account.name}</MenuItem>)}
+                    </Select>
+                  </FormControl>
+                </Stack>
+              </Box>
+
+              <Divider />
+              <Box>
+                <Typography sx={{ fontSize: 12, fontWeight: 700, color: 'primary.main', textTransform: 'uppercase', letterSpacing: 1 }}>
+                  Bank message
+                </Typography>
+                <Typography sx={{ fontSize: 11, color: 'text.secondary', mb: 1 }}>Sensitive balances and references are removed.</Typography>
+                <Typography sx={{ p: 1.5, borderRadius: 'control', bgcolor: 'action.hover', fontSize: 12, lineHeight: 1.6, color: 'text.secondary' }}>
+                  {selected.messagePreview}
+                </Typography>
+              </Box>
+            </Stack>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2.5 }}>
+          <Button color="inherit" startIcon={<DeleteIcon />} onClick={discard} disabled={discardMutation.isPending}>
+            {confirmDiscard ? 'Discard permanently' : 'Discard'}
+          </Button>
+          <Button
+            variant="contained"
+            sx={{ borderRadius: 12, boxShadow: 'none' }}
+            startIcon={<CheckCircleIcon />}
+            onClick={approve}
+            disabled={isHalfPending || !accountId || !destinationAccountId || approveMutation.isPending}
           >
             {approveMutation.isPending ? 'Approving…' : 'Approve'}
           </Button>
