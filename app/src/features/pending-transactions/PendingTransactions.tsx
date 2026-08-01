@@ -284,7 +284,7 @@ export function PendingTransactions() {
             <Stack spacing={2.5}>
               <Box>
                 <Typography sx={{ fontSize: 34, lineHeight: 1.25, fontWeight: 800 }}>
-                  <Money amount={selected.amount} code={selected.currency} />
+                  <Money amount={selected.amount} code={selected.currency} maxDigits={2} />
                 </Typography>
                 <Typography sx={{ fontSize: 13, color: 'text.secondary', mt: 0.5 }}>{selected.description}</Typography>
               </Box>

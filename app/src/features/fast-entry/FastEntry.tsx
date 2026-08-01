@@ -289,7 +289,7 @@ export function FastEntry() {
           selectedAccount.name,
         );
         localStorage.setItem('ledger_last_used_account', selectedAccount.id);
-        enqueueSnackbar(`Saved! Logged expense of ${amount} ${selectedAccount.currency}`, { variant: 'success' });
+        // No snackbar — save feedback animation already provides visual confirmation
         setAmountStr('0');
         setDescription('');
         setSelectedCategoryId(null);
@@ -319,7 +319,7 @@ export function FastEntry() {
           selectedCategory?.name ?? 'Income',
           selectedAccount.name,
         );
-        enqueueSnackbar(`Saved! Logged income of ${amount} ${selectedAccount.currency}`, { variant: 'success' });
+        // No snackbar — save feedback animation already provides visual confirmation
         setAmountStr('0');
         setDescription('');
         setSelectedCategoryId(null);
@@ -384,7 +384,7 @@ export function FastEntry() {
           'Transfer',
           `${selectedAccount.name} → ${toAccount.name}`,
         );
-        enqueueSnackbar('Saved transfer!', { variant: 'success' });
+        // No snackbar — save feedback animation already provides visual confirmation
         setAmountStr('0');
         setToAmountStr('0');
         setDescription('');
