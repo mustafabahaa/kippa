@@ -38,6 +38,8 @@ body { background: var(--kippa-bg); }
 .navbar__inner { max-width: 1440px; margin-inline: auto; }
 .navbar__title { font-weight: 800; letter-spacing: -.03em; }
 .navbar__logo { height: 36px; }
+.kippa-navbar-brand { gap: 10px; }
+.kippa-navbar-logo { width: 36px; object-fit: contain; }
 .navbar__link { font-weight: 700; }
 .navbar__link:hover, .navbar__link--active { color: var(--kippa-primary); }
 .navbar__item:last-child .navbar__link { min-height: 44px; display: inline-flex; align-items: center; border-radius: var(--kippa-pill-radius); background: var(--kippa-primary-strong); color: var(--kippa-on-primary); padding-inline: 18px; }
@@ -70,8 +72,13 @@ body { background: var(--kippa-bg); }
 .footer__title { color: var(--kippa-text); }
 .footer__link-item, .footer__copyright { color: var(--kippa-text-muted); }
 .footer__link-item:hover { color: var(--kippa-primary); }
+.kippa-footer-layout { display: grid; gap: 36px; }
+.kippa-footer-bottom { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding-top: 28px; border-top: 1px solid var(--kippa-border); }
+.kippa-footer-mark { display: flex; align-items: center; }
+.kippa-footer-mark img { max-height: 44px; }
 
 @media (max-width: 996px) {
   .navbar__item:last-child { display: none; }
   .theme-doc-markdown h1 { font-size: clamp(2.35rem, 10vw, 3.5rem); }
+  .kippa-footer-bottom { align-items: flex-start; flex-direction: column; }
 }

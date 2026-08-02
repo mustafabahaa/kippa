@@ -26,7 +26,7 @@ function localPreviewAuth(): Plugin {
               projectId: 'YOUR_FIREBASE_PROJECT_ID',
               serviceAccountId: 'firebase-adminsdk-fbsvc@YOUR_FIREBASE_PROJECT_ID.iam.gserviceaccount.com',
             }, 'kippa-local-preview-v2');
-          const uid = process.env.KIPPA_PREVIEW_UID || '1QkWrFkvSScKqQ4WqZcXwQBaZfL2';
+          const uid = process.env.KIPPA_PREVIEW_UID || 'kippa-visual-demo';
           const token = await getAuth(previewApp).createCustomToken(uid);
           res.setHeader('Content-Type', 'application/json');
           res.setHeader('Cache-Control', 'no-store');

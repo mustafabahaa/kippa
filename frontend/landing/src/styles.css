@@ -64,10 +64,11 @@ a { color: inherit; }
 .showcase-heading { max-width: 760px; margin-bottom: 56px; }
 .showcase h2, .docs-callout h2 { margin: 0; font-size: clamp(2.5rem, 5vw, 4.8rem); line-height: 1.02; letter-spacing: -.052em; font-weight: 720; text-wrap: balance; }
 .showcase-heading > p, .docs-callout p { max-width: 62ch; margin-top: 22px; font-size: 1.05rem; line-height: 1.7; }
-.showcase-grid { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(330px, .85fr); gap: 24px; align-items: stretch; }
-.showcase-main { padding: clamp(28px, 5vw, 72px); display: grid; place-items: center; border-radius: var(--kippa-card-radius); background: var(--kippa-primary-soft); }
-.showcase-main .dashboard-preview { width: min(100%, 610px); }
-.showcase-side .preview { height: 100%; }
+.showcase-grid { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(220px, .55fr) minmax(220px, .55fr); gap: 20px; align-items: center; }
+.showcase-main { padding: 16px; display: grid; place-items: center; border-radius: var(--kippa-card-radius); background: var(--kippa-primary-soft); }
+.screenshot-frame { overflow: hidden; border: 1px solid var(--kippa-border); border-radius: var(--kippa-card-radius); background: var(--kippa-surface); box-shadow: var(--kippa-shadow); }
+.screenshot-frame img { display: block; width: 100%; height: auto; }
+.screenshot-mobile { border-radius: 28px; }
 
 .docs-callout { margin-bottom: 120px; padding: clamp(36px, 6vw, 72px) !important; border: 1px solid var(--kippa-border); border-radius: var(--kippa-card-radius); background: var(--kippa-brand-panel); color: var(--kippa-brand-panel-text); display: grid !important; grid-template-columns: 1fr auto; gap: 56px; align-items: end; }
 .docs-callout h2 { font-size: clamp(2.25rem, 4.2vw, 4rem); }

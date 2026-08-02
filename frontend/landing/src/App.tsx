@@ -6,7 +6,6 @@ import {
   DarkModeRounded,
   GitHub,
   LightModeRounded,
-  SavingsRounded,
   SwapHorizRounded,
   WalletRounded,
 } from '@mui/icons-material';
@@ -101,31 +100,6 @@ function FastEntryPreview() {
   );
 }
 
-function CyclePreview() {
-  return (
-    <Paper className="preview cycle-preview" aria-label="Kippa salary cycle using sample budget data">
-      <Stack direction="row" justifyContent="space-between">
-        <Box>
-          <Typography variant="body2" color="text.secondary">Salary cycle</Typography>
-          <Typography variant="h6" fontWeight={800}>July 26 to August 25</Typography>
-        </Box>
-        <SavingsRounded color="primary" />
-      </Stack>
-      <Divider sx={{ my: 2.5 }} />
-      {[
-        ['Home', 'EGP 12,800'],
-        ['Everyday', 'EGP 8,450'],
-        ['Goals', 'EGP 5,200'],
-      ].map(([label, value]) => (
-        <Stack key={label} direction="row" justifyContent="space-between" sx={{ py: 1 }}>
-          <Typography color="text.secondary">{label}</Typography>
-          <Typography fontWeight={800}>{value}</Typography>
-        </Stack>
-      ))}
-    </Paper>
-  );
-}
-
 function Landing({ mode, onToggleMode }: { mode: ThemePreference; onToggleMode: () => void }) {
   const docsUrl = `${import.meta.env.BASE_URL}docs/`;
   const setupUrl = `${docsUrl}getting-started`;
@@ -203,7 +177,7 @@ function Landing({ mode, onToggleMode }: { mode: ThemePreference; onToggleMode: 
 
         <Container maxWidth="xl" component="section" className="product-story">
           <Box className="product-phone">
-            <Box component="img" src={`${import.meta.env.BASE_URL}assets/kippa-auth-screen.webp`} alt="Kippa sign-in screen" loading="lazy" />
+            <Box component="img" src={`${import.meta.env.BASE_URL}assets/kippa-demo-dashboard-mobile.webp`} alt="Kippa mobile dashboard using an isolated demo household" loading="lazy" />
           </Box>
           <Box className="product-story-copy">
             <Typography component="h2">A real product, not another spreadsheet.</Typography>
@@ -223,11 +197,11 @@ function Landing({ mode, onToggleMode }: { mode: ThemePreference; onToggleMode: 
             <Typography color="text.secondary">These product views use a demo household and sample balances. Your personal information never appears on the public site.</Typography>
           </Box>
           <Box className="showcase-grid">
-            <Box className="showcase-main"><DashboardPreview /></Box>
-            <Stack spacing={2.5} className="showcase-side">
-              <FastEntryPreview />
-              <CyclePreview />
-            </Stack>
+            <Box className="showcase-main screenshot-frame screenshot-desktop">
+              <Box component="img" src={`${import.meta.env.BASE_URL}assets/kippa-demo-dashboard.webp`} alt="Kippa desktop dashboard with sample household finances" loading="lazy" />
+            </Box>
+            <Box className="screenshot-frame screenshot-mobile"><Box component="img" src={`${import.meta.env.BASE_URL}assets/kippa-demo-entry.webp`} alt="Kippa Fast Entry screen with demo categories and accounts" loading="lazy" /></Box>
+            <Box className="screenshot-frame screenshot-mobile"><Box component="img" src={`${import.meta.env.BASE_URL}assets/kippa-demo-cycles.webp`} alt="Kippa Budget Cycles screen with demo analytics" loading="lazy" /></Box>
           </Box>
         </Container>
 

@@ -7,6 +7,8 @@
 - `src/theme/` composes the MUI palette and typography.
 - `src/theme/components/` contains focused overrides for buttons, cards, chips, inputs, navigation, feedback, overlays, and tables.
 - `src/tokens.css` exposes semantic variables to Docusaurus and other non-MUI surfaces.
+- `docs/src/theme/` contains the local Docusaurus component theme for branded navigation and footer structure.
+- `docs/src/css/custom.css` maps shared semantic tokens onto Infima and styles documentation content in both color modes.
 
 ---
 
