@@ -13,7 +13,7 @@ export function calculateCardActivity(accountId: string, transactions: FinanceTr
   const transactionById = new Map(transactions.map((transaction) => [transaction.id, transaction]));
   const accountLines = getPostedLedgerLines(transactions, lines)
     .filter((line) => line.accountId === accountId)
-    .sort((a, b) => (transactionById.get(a.transactionId)?.date ?? '').localeCompare(transactionById.get(b.transactionId)?.date ?? ''));
+    .sort((a, b) => (transactionById.get(b.transactionId)?.date ?? '').localeCompare(transactionById.get(a.transactionId)?.date ?? ''));
   const chargeIds = new Set(accountLines.filter((line) => line.signedAmount < 0).map((line) => line.transactionId));
   const explicitlySettled = new Set<string>();
   const remainingByCycle = new Map<string, number>();
