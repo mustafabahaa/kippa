@@ -5,7 +5,7 @@
 <h1 align="center">Kippa</h1>
 
 <p align="center">
-  A fast, ledger-first household finance PWA. Record expenses in seconds, know exactly where your money is, and see whether you're on track — across phone and desktop.
+  A fast, ledger-first household finance PWA. Record expenses in seconds, know exactly where your money is, and see whether you're on track across phone and desktop.
 </p>
 
 <p align="center">
@@ -29,7 +29,7 @@
 
 ## ✨ Features
 
-- **Ledger-first architecture.** Store raw financial events; balances, projections, and reports are derived — never hardcoded into the data model.
+- **Ledger-first architecture.** Store raw financial events; balances, projections, and reports are derived, never hardcoded into the data model.
 - **Fast expense entry.** Recording an expense takes seconds, with smart category chips ordered by your recency and frequency.
 - **Multi-currency.** First-class support for USD and EGP. USD→EGP transfers are modeled as transfers (not income).
 - **Salary-cycle budgeting.** Budget around salary cycles (which may land on the 25th, 26th, or 27th) instead of rigid calendar months.
@@ -37,7 +37,7 @@
 - **Budget pulse.** A clear answer to *“Am I on track or overspending?”* and *“Can I safely spend at this pace until next salary?”*
 - **Push notifications.** Daily reminders and shared-household activity via Firebase Cloud Messaging.
 - **Installable PWA.** Add to home screen; works offline and loads fast.
-- **Manual reconciliation.** No bank API required — reconcile balances when reality drifts.
+- **Manual reconciliation.** No bank API required; reconcile balances when reality drifts.
 
 ## 🧱 Tech stack
 
@@ -64,7 +64,7 @@
 
 > ⚠️ **Firebase Blaze plan required.** Kippa relies on Cloud Functions (cron reminders, FCM fanout, derived data) and scheduled functions, which are **only available on the Firebase Blaze (pay-as-you-go) plan**. The free Spark plan will *not* work — deploys of `backend/functions/` will fail. Upgrade in Firebase Console → *Build → Functions → Upgrade project* (or Console → ⚙️ → Usage and billing). See [GETTING_STARTED.md §4](./GETTING_STARTED.md#4-enable-firebase-services) for details.
 
-**New here?** Follow the complete, step-by-step guide: **[GETTING_STARTED.md](./GETTING_STARTED.md)** — it covers installing the Firebase CLI and `gcloud`, creating a project, getting config values, enabling services, and deploying. Written so a human *or* an AI agent can get the app running and hosted in minutes.
+**New here?** Follow the complete, step-by-step guide: **[GETTING_STARTED.md](./GETTING_STARTED.md)**. It covers installing the Firebase CLI and `gcloud`, creating a project, getting config values, enabling services, and deploying. Written so a human *or* an AI agent can get the app running and hosted in minutes.
 
 ### TL;DR
 
@@ -94,22 +94,13 @@ npm run deploy       # build + firebase deploy (hosting + firestore + functions)
 ```
 .
 ├── frontend/
-│   └── web/                   # React + Vite product application
-│   ├── public/
-│   │   ├── icons/              # PWA icons and logos
-│   │   └── firebase-messaging-sw.example.js
-│   └── src/
-│       ├── components/         # App shell, shared UI
-│       ├── config/             # Firebase init
-│       ├── contexts/           # React context providers
-│       ├── domain/             # Finance type definitions
-│       ├── features/           # Feature modules (accounts, cards, dashboard, fast-entry, …)
-│       ├── hooks/              # Reusable hooks
-│       ├── libs/               # Finance logic (ledger, selectors, currency, …)
-│       └── notifications/      # FCM registration and handling
+│   ├── web/                    # React + Vite product PWA
+│   └── landing/                # Public product landing page
 ├── backend/
 │   └── functions/             # Cloud Functions (cron reminders, FCM fanout, derived data)
-├── docs/                       # Product spec, data model, design system, UX flows
+├── docs/                       # Full-system Docusaurus documentation
+├── packages/
+│   └── domain/                # Shared cross-runtime contracts
 ├── GETTING_STARTED.md          # End-to-end setup guide (CLIs → deploy)
 ├── .firebaserc.example
 ├── firebase.json.example
@@ -119,16 +110,16 @@ npm run deploy       # build + firebase deploy (hosting + firestore + functions)
 ## 📚 Documentation
 
 - **[Getting Started (full setup guide)](./GETTING_STARTED.md)** — install CLIs, create a Firebase project, configure, deploy.
-- Deep-dive docs live in [`docs/`](./docs):
+- Browse the published **[Kippa documentation](https://mustafabahaa.github.io/kippa/docs/)** or edit its source under [`docs/docs/`](./docs/docs):
 
-- [Product spec](./docs/product-spec.md)
-- [Data model](./docs/data-model.md)
-- [Firebase architecture](./docs/firebase-architecture.md)
-- [Dashboard calculations](./docs/dashboard-calculations.md)
-- [UX flows](./docs/ux-flows.md)
-- [Notifications](./docs/notifications.md)
-- [Architecture & folder structure](./docs/architecture-and-folder-structure.md)
-- [Design system](./docs/design-system.md)
+- [Product spec](./docs/docs/product-spec.md)
+- [Data model](./docs/docs/data-model.md)
+- [Firebase architecture](./docs/docs/firebase-architecture.md)
+- [Dashboard calculations](./docs/docs/dashboard-calculations.md)
+- [UX flows](./docs/docs/ux-flows.md)
+- [Notifications](./docs/docs/notifications.md)
+- [Architecture & folder structure](./docs/docs/architecture-and-folder-structure.md)
+- [Design system](./docs/docs/design-system.md)
 
 ## 🤝 Contributing
 
@@ -150,4 +141,4 @@ For commercial licensing, contact: **YOUR_SUPPORT_EMAIL**.
 
 ## 💬 Acknowledgements
 
-Built for a household that earns in USD and spends in EGP — where knowing *“can I safely spend right now?”* should take a glance, not a spreadsheet.
+Built for a household that earns in USD and spends in EGP, where knowing *“can I safely spend right now?”* should take a glance, not a spreadsheet.

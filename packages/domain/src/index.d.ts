@@ -247,7 +247,9 @@ export type AuditAction =
   | 'reconciliation_created'
   | 'notification_settings_updated'
   | 'household_joined'
-  | 'household_left';
+  | 'household_left'
+  | 'pending_message_discarded'
+  | 'pending_message_restored';
 
 export type AuditLogEntry = {
   id: string;
@@ -288,6 +290,16 @@ export type PendingFinancialMessage = {
   mergeKey?: string | null;
   createdAt: string;
   status: 'pending';
+};
+
+export type ResolvedPendingFinancialMessage = {
+  id: string;
+  state: 'approved' | 'discarded';
+  snapshot: PendingFinancialMessage;
+  transactionId?: string | null;
+  resolvedAt: string;
+  resolvedBy: string;
+  resolvedByDisplayName: string;
 };
 
 export type MessageIngestionCredential = {

@@ -1,7 +1,11 @@
 import { httpsCallable } from 'firebase/functions';
 import { functions } from '@/config/firebase';
 import { dbLib } from '@/libs/db';
-import type { MessageIngestionCredential, PendingFinancialMessage } from '@kippa/domain';
+import type {
+  MessageIngestionCredential,
+  PendingFinancialMessage,
+  ResolvedPendingFinancialMessage,
+} from '@kippa/domain';
 
 function requireFunctions() {
   if (!functions) throw new Error('Firebase Functions is not configured.');
@@ -31,6 +35,22 @@ export const messageIngestionLib = {
       'discardPendingFinancialMessage',
     );
     await callable({ householdId, pendingId });
+  },
+
+  async getResolved(householdId: string): Promise<ResolvedPendingFinancialMessage[]> {
+    const callable = httpsCallable<
+      { householdId: string },
+      { items: ResolvedPendingFinancialMessage[] }
+    >(requireFunctions(), 'listResolvedPendingFinancialMessages');
+    return (await callable({ householdId })).data.items;
+  },
+
+  async restoreDiscarded(householdId: string, pendingId: string): Promise<PendingFinancialMessage> {
+    const callable = httpsCallable<
+      { householdId: string; pendingId: string },
+      { item: PendingFinancialMessage }
+    >(requireFunctions(), 'restoreDiscardedPendingFinancialMessage');
+    return (await callable({ householdId, pendingId })).data.item;
   },
 
   async createCredential(householdId: string): Promise<{ credentialId: string; token: string; endpoint: string }> {

@@ -87,7 +87,7 @@ export function FastEntry() {
     if (saveFeedbackTimerRef.current) clearTimeout(saveFeedbackTimerRef.current);
     setSaveFeedbackContent({ title, amount, category, account });
     setShowSaveFeedback(true);
-    saveFeedbackTimerRef.current = setTimeout(() => setShowSaveFeedback(false), 1650);
+    saveFeedbackTimerRef.current = setTimeout(() => setShowSaveFeedback(false), 2200);
   };
 
   // Transfer Specific States
@@ -956,97 +956,130 @@ export function FastEntry() {
               role="status"
               aria-live="polite"
               aria-label="Entry saved"
-              onClick={() => setShowSaveFeedback(false)}
               sx={{
-                '--save-origin-x': '50%',
-                '--save-origin-y': { xs: 'calc(100% - 122px)', lg: 'calc(100% - 96px)' },
                 position: 'fixed',
                 inset: 0,
                 zIndex: theme => theme.zIndex.modal + 2,
-                background: theme => `
-                  radial-gradient(circle at 50% 28%, ${alpha(theme.palette.common.white, 0.12)} 0%, transparent 38%),
-                  linear-gradient(155deg, ${theme.palette.primary.dark} 0%, ${theme.palette.primary.main} 100%)
-                `,
                 color: 'common.white',
-                pointerEvents: 'auto',
-                cursor: 'pointer',
-                overflow: 'hidden',
-                animation: 'fastEntrySendCover 1600ms cubic-bezier(0.22, 1, 0.36, 1) both',
-                '@keyframes fastEntrySendCover': {
-                  '0%': {
-                    opacity: 1,
-                    clipPath: 'circle(0 at var(--save-origin-x) var(--save-origin-y))',
-                  },
-                  '22%': {
-                    opacity: 1,
-                    clipPath: 'circle(150vmax at var(--save-origin-x) var(--save-origin-y))',
-                  },
-                  '90%': {
-                    opacity: 1,
-                    clipPath: 'circle(150vmax at var(--save-origin-x) var(--save-origin-y))',
-                  },
-                  '100%': {
-                    opacity: 0,
-                    clipPath: 'circle(150vmax at var(--save-origin-x) var(--save-origin-y))',
-                  },
+                bgcolor: theme => alpha(theme.palette.common.black, theme.palette.mode === 'dark' ? 0.2 : 0.1),
+                backdropFilter: 'blur(7px) saturate(0.82)',
+                WebkitBackdropFilter: 'blur(7px) saturate(0.82)',
+                pointerEvents: 'none',
+                overflow: 'visible',
+                animation: 'fastEntryBackdrop 2150ms ease both',
+                '@keyframes fastEntryBackdrop': {
+                  '0%': { opacity: 0 },
+                  '14%, 88%': { opacity: 1 },
+                  '100%': { opacity: 0 },
+                },
+                '@media (prefers-reduced-motion: reduce)': {
+                  animation: 'none',
+                  '& *': { animationDuration: '1ms !important' },
                 },
               }}
             >
-              {[0, 1].map(ring => (
+              {[0, 1, 2].map(ring => (
                 <Box
                   key={ring}
                   sx={{
                     position: 'absolute',
                     left: '50%',
-                    top: '50%',
-                    width: { xs: 220, sm: 320 },
+                    top: '52%',
+                    width: { xs: 150, sm: 190 },
                     aspectRatio: '1',
                     borderRadius: '50%',
                     border: '1px solid',
-                    borderColor: theme => alpha(theme.palette.common.white, 0.2),
-                    animation: `fastEntryRing 720ms ${100 + ring * 90}ms ease-out both`,
+                    borderColor: theme => alpha(theme.palette.common.white, 0.18),
+                    animation: `fastEntryRing 980ms ${120 + ring * 105}ms cubic-bezier(0.16, 1, 0.3, 1) both`,
                     '@keyframes fastEntryRing': {
                       '0%': { opacity: 0, transform: 'translate(-50%, -50%) scale(0.25)' },
                       '22%': { opacity: 1 },
-                      '100%': { opacity: 0, transform: 'translate(-50%, -50%) scale(2.6)' },
+                      '100%': { opacity: 0, transform: 'translate(-50%, -50%) scale(2.15)' },
                     },
+                    '@media (prefers-reduced-motion: reduce)': { display: 'none' },
                   }}
                 />
               ))}
 
+              {[...Array(10)].map((_, particle) => {
+                const angle = particle * 36;
+                const distance = 116 + (particle % 3) * 22;
+                return (
+                  <Box
+                    key={`particle-${particle}`}
+                    sx={{
+                      position: 'absolute',
+                      left: '50%',
+                      top: '48%',
+                      width: particle % 2 ? 5 : 8,
+                      height: particle % 2 ? 5 : 8,
+                      borderRadius: particle % 3 ? '50%' : '2px',
+                      bgcolor: particle % 3 === 0 ? 'secondary.main' : 'common.white',
+                      boxShadow: theme => `0 0 16px ${alpha(theme.palette.common.white, 0.42)}`,
+                      animation: `fastEntryParticle${particle} 820ms ${470 + (particle % 4) * 35}ms cubic-bezier(0.16, 1, 0.3, 1) both`,
+                      [`@keyframes fastEntryParticle${particle}`]: {
+                        '0%': { opacity: 0, transform: 'translate(-50%, -50%) scale(0.2)' },
+                        '20%': { opacity: 0.9 },
+                        '100%': {
+                          opacity: 0,
+                          transform: `translate(calc(-50% + ${Math.cos(angle * Math.PI / 180) * distance}px), calc(-50% + ${Math.sin(angle * Math.PI / 180) * distance}px)) scale(1) rotate(${angle + 90}deg)`,
+                        },
+                      },
+                      '@media (prefers-reduced-motion: reduce)': { display: 'none' },
+                    }}
+                  />
+                );
+              })}
+
               <Stack
                 alignItems="center"
                 spacing={0.5}
+                onClick={() => setShowSaveFeedback(false)}
                 sx={{
-                  color: theme => theme.palette.common.white,
+                  color: 'common.white',
                   position: 'absolute',
                   left: '50%',
-                  top: '54%',
-                  width: 'min(84vw, 440px)',
+                  top: { xs: '58%', sm: '56%' },
+                  width: 'min(calc(100vw - 40px), 420px)',
                   textAlign: 'center',
-                  animation: 'fastEntryCopy 1600ms cubic-bezier(0.22, 1, 0.36, 1) both',
+                  px: 3,
+                  py: 2.5,
+                  borderRadius: '24px',
+                  border: '1px solid',
+                  borderColor: theme => alpha(theme.palette.secondary.main, 0.34),
+                  background: theme => `linear-gradient(145deg, ${alpha(theme.palette.primary.dark, 0.9)} 0%, ${alpha(theme.palette.common.black, 0.62)} 100%)`,
+                  backdropFilter: 'blur(24px) saturate(1.2)',
+                  boxShadow: theme => `0 28px 72px ${alpha(theme.palette.common.black, 0.34)}, inset 0 1px 0 ${alpha(theme.palette.common.white, 0.14)}, 0 0 40px ${alpha(theme.palette.secondary.main, 0.08)}`,
+                  pointerEvents: 'auto',
+                  cursor: 'pointer',
+                  animation: 'fastEntryCopy 2150ms cubic-bezier(0.22, 1, 0.36, 1) both',
                   '@keyframes fastEntryCopy': {
-                    '0%': { transform: 'translate(-50%, 22px) scale(0.96)' },
-                    '32%': { transform: 'translate(-50%, 0) scale(1)' },
-                    '88%': { transform: 'translate(-50%, -4px) scale(1)' },
-                    '100%': { transform: 'translate(-50%, -18px) scale(0.98)' },
+                    '0%, 16%': { opacity: 0, transform: 'translate(-50%, 28px) scale(0.92)' },
+                    '34%': { opacity: 1, transform: 'translate(-50%, 0) scale(1.025)' },
+                    '43%, 86%': { opacity: 1, transform: 'translate(-50%, 0) scale(1)' },
+                    '100%': { opacity: 0, transform: 'translate(-50%, -10px) scale(0.98)' },
+                  },
+                  '@media (prefers-reduced-motion: reduce)': {
+                    animation: 'none',
+                    transform: 'translate(-50%, 0)',
+                    top: '50%',
                   },
                 }}
               >
                 <Typography
                   sx={{
-                    color: theme => theme.palette.common.white,
+                    color: 'common.white',
                     fontSize: 14,
                     lineHeight: 1.4,
                     fontWeight: 700,
-                    textShadow: theme => `0 2px 18px ${alpha(theme.palette.common.white, 0.16)}`,
+                    opacity: 0.74,
                   }}
                 >
                   {saveFeedbackContent.title}
                 </Typography>
                 <Typography
                   sx={{
-                    color: theme => theme.palette.common.white,
+                    color: 'common.white',
                     fontSize: { xs: 38, sm: 48 },
                     lineHeight: 1.1,
                     fontWeight: 800,
@@ -1060,7 +1093,7 @@ export function FastEntry() {
                   alignItems="center"
                   justifyContent="center"
                   spacing={1}
-                  sx={{ width: '100%', pt: 0.5, color: theme => theme.palette.common.white }}
+                  sx={{ width: '100%', pt: 0.5, color: 'common.white', opacity: 0.76 }}
                 >
                   <Typography noWrap sx={{ maxWidth: '42%', fontSize: 13, fontWeight: 650 }}>
                     {saveFeedbackContent.category}
@@ -1070,25 +1103,50 @@ export function FastEntry() {
                     {saveFeedbackContent.account}
                   </Typography>
                 </Stack>
-                <Typography sx={{ pt: 1, fontSize: 11, fontWeight: 600, color: theme => theme.palette.common.white }}>
-                  Tap anywhere to continue
+                <Typography sx={{ pt: 1, fontSize: 11, fontWeight: 650, color: 'secondary.main' }}>
+                  Saved securely · Tap to continue
                 </Typography>
+                <Box
+                  aria-hidden
+                  sx={{
+                    mt: 1.25,
+                    width: 72,
+                    height: 3,
+                    borderRadius: 'pill',
+                    bgcolor: theme => alpha(theme.palette.common.white, 0.14),
+                    overflow: 'hidden',
+                    '&::after': {
+                      content: '""',
+                      display: 'block',
+                      width: '100%',
+                      height: '100%',
+                      bgcolor: 'secondary.main',
+                      transformOrigin: 'left',
+                      animation: 'fastEntryProgress 1100ms 760ms linear both',
+                    },
+                    '@keyframes fastEntryProgress': {
+                      from: { transform: 'scaleX(0)' },
+                      to: { transform: 'scaleX(1)' },
+                    },
+                  }}
+                />
               </Stack>
 
               <Stack
                 alignItems="center"
                 sx={{
                   position: 'absolute',
-                  left: 'var(--save-origin-x)',
-                  top: 'var(--save-origin-y)',
-                  animation: 'fastEntrySendIcon 1100ms cubic-bezier(0.22, 1, 0.36, 1) both',
+                  left: '50%',
+                  top: { xs: 'calc(58% - 118px)', sm: 'calc(56% - 118px)' },
+                  animation: 'fastEntrySendIcon 2150ms cubic-bezier(0.22, 1, 0.36, 1) both',
                   '@keyframes fastEntrySendIcon': {
-                    '0%': { opacity: 0, transform: 'translate(-50%, -50%) scale(0.42) rotate(10deg)' },
-                    '14%': { opacity: 1, transform: 'translate(-50%, -50%) scale(1) rotate(0deg)' },
-                    '62%': { opacity: 1, transform: 'translate(-50%, calc(-50% - 52vh)) scale(1.04) rotate(-4deg)' },
-                    '82%': { opacity: 1, transform: 'translate(-50%, calc(-50% - 58vh)) scale(0.92) rotate(0deg)' },
-                    '100%': { opacity: 0, transform: 'translate(-50%, calc(-50% - 64vh)) scale(0.72)' },
+                    '0%': { opacity: 0, transform: 'translate(-50%, 24px) scale(0.36) rotate(8deg)' },
+                    '10%': { opacity: 1, transform: 'translate(-50%, -50%) scale(1.06) rotate(0deg)' },
+                    '17%': { transform: 'translate(-50%, -50%) scale(0.96)' },
+                    '26%, 88%': { opacity: 1, transform: 'translate(-50%, -50%) scale(0.78) rotate(0deg)' },
+                    '100%': { opacity: 0, transform: 'translate(-50%, calc(-50% - 8px)) scale(0.7)' },
                   },
+                  '@media (prefers-reduced-motion: reduce)': { display: 'none' },
                 }}
               >
                 {[0, 1, 2].map(trail => (

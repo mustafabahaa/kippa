@@ -30,6 +30,8 @@ import {
   AuditLogEntry,
   Card,
   CardStatement,
+  PendingFinancialMessage,
+  ResolvedPendingFinancialMessage,
 } from '@kippa/domain';
 
 /**
@@ -101,14 +103,41 @@ export function usePendingFinancialMessages(householdId: string) {
   });
 }
 
+export function useResolvedPendingFinancialMessages(householdId: string) {
+  return useQuery<ResolvedPendingFinancialMessage[]>({
+    queryKey: ['resolvedPendingFinancialMessages', householdId],
+    queryFn: () => messageIngestionLib.getResolved(householdId),
+    enabled: !!householdId,
+  });
+}
+
 export function useApprovePendingFinancialMessageMutation() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: messageIngestionLib.approve,
+    onMutate: async (variables) => {
+      const queryKey = ['pendingFinancialMessages', variables.householdId] as const;
+      await queryClient.cancelQueries({ queryKey });
+
+      const previousPending = queryClient.getQueryData<PendingFinancialMessage[]>(queryKey);
+      queryClient.setQueryData<PendingFinancialMessage[]>(queryKey, (current = []) =>
+        current.filter((item) => item.id !== variables.pendingId)
+      );
+
+      return { previousPending, queryKey };
+    },
+    onError: (_error, _variables, context) => {
+      if (context?.previousPending) {
+        queryClient.setQueryData(context.queryKey, context.previousPending);
+      }
+    },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['pendingFinancialMessages', variables.householdId] });
       queryClient.invalidateQueries({ queryKey: ['transactions', variables.householdId] });
       queryClient.invalidateQueries({ queryKey: ['ledgerLines', variables.householdId] });
+      queryClient.invalidateQueries({ queryKey: ['resolvedPendingFinancialMessages', variables.householdId] });
+    },
+    onSettled: (_data, _error, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['pendingFinancialMessages', variables.householdId] });
     },
   });
 }
@@ -118,8 +147,43 @@ export function useDiscardPendingFinancialMessageMutation() {
   return useMutation({
     mutationFn: ({ householdId, pendingId }: { householdId: string; pendingId: string }) =>
       messageIngestionLib.discard(householdId, pendingId),
-    onSuccess: (_, variables) => {
+    onMutate: async (variables) => {
+      const queryKey = ['pendingFinancialMessages', variables.householdId] as const;
+      await queryClient.cancelQueries({ queryKey });
+
+      const previousPending = queryClient.getQueryData<PendingFinancialMessage[]>(queryKey);
+      queryClient.setQueryData<PendingFinancialMessage[]>(queryKey, (current = []) =>
+        current.filter((item) => item.id !== variables.pendingId)
+      );
+
+      return { previousPending, queryKey };
+    },
+    onError: (_error, _variables, context) => {
+      if (context?.previousPending) {
+        queryClient.setQueryData(context.queryKey, context.previousPending);
+      }
+    },
+    onSettled: (_data, _error, variables) => {
       queryClient.invalidateQueries({ queryKey: ['pendingFinancialMessages', variables.householdId] });
+      queryClient.invalidateQueries({ queryKey: ['resolvedPendingFinancialMessages', variables.householdId] });
+    },
+  });
+}
+
+export function useRestoreDiscardedPendingFinancialMessageMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ householdId, pendingId }: { householdId: string; pendingId: string }) =>
+      messageIngestionLib.restoreDiscarded(householdId, pendingId),
+    onSuccess: (item, variables) => {
+      queryClient.setQueryData<PendingFinancialMessage[]>(
+        ['pendingFinancialMessages', variables.householdId],
+        (current = []) => [item, ...current.filter((candidate) => candidate.id !== item.id)],
+      );
+    },
+    onSettled: (_data, _error, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['pendingFinancialMessages', variables.householdId] });
+      queryClient.invalidateQueries({ queryKey: ['resolvedPendingFinancialMessages', variables.householdId] });
     },
   });
 }

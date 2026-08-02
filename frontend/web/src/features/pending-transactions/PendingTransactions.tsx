@@ -5,6 +5,7 @@ import {
   Button,
   Card,
   Chip,
+  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
@@ -17,6 +18,8 @@ import {
   Select,
   Skeleton,
   Stack,
+  Tab,
+  Tabs,
   Typography,
   alpha,
 } from '@mui/material';
@@ -24,7 +27,7 @@ import { PageHeader } from '@/features/shared/components/PageHeader';
 import { EmptyLayout } from '@/features/shared/components/EmptyLayout';
 import { TransactionIcon } from '@/features/transactions/components/TransactionIcon';
 import { Money } from '@/components/Money';
-import { CheckCircleIcon, ContentCopyIcon, DeleteIcon, KeyIcon } from '@/components/AppIcon';
+import { CheckCircleIcon, ContentCopyIcon, DeleteIcon, HistoryIcon, KeyIcon } from '@/components/AppIcon';
 import { useAppContext } from '@/hooks/useAppContext';
 import {
   useAccounts,
@@ -32,11 +35,14 @@ import {
   useCategories,
   useDiscardPendingFinancialMessageMutation,
   usePendingFinancialMessages,
+  useResolvedPendingFinancialMessages,
+  useRestoreDiscardedPendingFinancialMessageMutation,
 } from '@/hooks/useFinance';
 import { messageIngestionLib } from '@/libs/messageIngestion';
 import type { MessageIngestionCredential, PendingFinancialMessage } from '@kippa/domain';
 
 type GeneratedConnection = { token: string; endpoint: string };
+type PendingItemState = 'idle' | 'approving' | 'discarding' | 'settled';
 
 const PREVIEW_PENDING_ITEMS: PendingFinancialMessage[] = [
   {
@@ -64,13 +70,17 @@ const PREVIEW_PENDING_ITEMS: PendingFinancialMessage[] = [
 
 export function PendingTransactions() {
   const { householdId } = useAppContext();
-  const { enqueueSnackbar } = useSnackbar();
+  const { closeSnackbar, enqueueSnackbar } = useSnackbar();
   const { data: remotePending = [], isLoading: remoteLoading } = usePendingFinancialMessages(householdId);
   const { data: accounts = [] } = useAccounts(householdId);
   const { data: categories = [] } = useCategories(householdId);
   const approveMutation = useApprovePendingFinancialMessageMutation();
   const discardMutation = useDiscardPendingFinancialMessageMutation();
+  const restoreMutation = useRestoreDiscardedPendingFinancialMessageMutation();
+  const { data: resolved = [], isLoading: historyLoading } = useResolvedPendingFinancialMessages(householdId);
+  const [tab, setTab] = useState<'review' | 'history'>('review');
   const [selected, setSelected] = useState<PendingFinancialMessage | null>(null);
+  const [itemStates, setItemStates] = useState<Record<string, PendingItemState>>({});
   const [categoryId, setCategoryId] = useState('');
   const [accountId, setAccountId] = useState('');
   const [destinationAccountId, setDestinationAccountId] = useState('');
@@ -110,6 +120,7 @@ export function PendingTransactions() {
   }, [accounts, selected, accountId]);
 
   const openReview = (item: PendingFinancialMessage) => {
+    if ((itemStates[item.id] ?? 'idle') !== 'idle') return;
     setSelected(item);
     setCategoryId('');
     setAccountId(item.suggestedAccountId ?? '');
@@ -124,12 +135,14 @@ export function PendingTransactions() {
   };
 
   const approve = async () => {
-    if (!selected || !categoryId || !accountId || (selected.kind === 'transfer' && !destinationAccountId)) return;
+    if (!selected || !accountId || (selected.kind !== 'transfer' && !categoryId) || (selected.kind === 'transfer' && !destinationAccountId)) return;
     if (previewMode && selected.id.startsWith('preview-')) {
       enqueueSnackbar('Preview only — no transaction was created', { variant: 'success' });
       setSelected(null);
       return;
     }
+    const pendingId = selected.id;
+    setItemStates((current) => ({ ...current, [pendingId]: 'approving' }));
     try {
       await approveMutation.mutateAsync({
         householdId,
@@ -138,9 +151,12 @@ export function PendingTransactions() {
         accountId,
         destinationAccountId: selected.kind === 'transfer' ? destinationAccountId : undefined,
       });
+      setItemStates((current) => ({ ...current, [pendingId]: 'settled' }));
+      enqueueSnackbar('Transaction approved', { variant: 'success' });
       setSelected(null);
       setConfirmDiscard(false);
     } catch (error) {
+      setItemStates((current) => ({ ...current, [pendingId]: 'idle' }));
       enqueueSnackbar(error instanceof Error ? error.message : 'Could not approve this item', { variant: 'error' });
     }
   };
@@ -157,13 +173,48 @@ export function PendingTransactions() {
       setConfirmDiscard(false);
       return;
     }
+    const discardedItem = selected;
+    setItemStates((current) => ({ ...current, [discardedItem.id]: 'discarding' }));
     try {
-      await discardMutation.mutateAsync({ householdId, pendingId: selected.id });
-      enqueueSnackbar('Pending item discarded', { variant: 'success' });
+      await discardMutation.mutateAsync({ householdId, pendingId: discardedItem.id });
+      setItemStates((current) => ({ ...current, [discardedItem.id]: 'settled' }));
+      enqueueSnackbar('Pending item discarded', {
+        variant: 'success',
+        action: (snackbarKey) => (
+          <Button
+            color="inherit"
+            size="small"
+            onClick={async () => {
+              closeSnackbar(snackbarKey);
+              try {
+                await restoreMutation.mutateAsync({ householdId, pendingId: discardedItem.id });
+                setItemStates((current) => ({ ...current, [discardedItem.id]: 'idle' }));
+                enqueueSnackbar('Pending item restored', { variant: 'success' });
+              } catch (error) {
+                enqueueSnackbar(error instanceof Error ? error.message : 'Could not restore this item', { variant: 'error' });
+              }
+            }}
+          >
+            Undo
+          </Button>
+        ),
+      });
       setSelected(null);
       setConfirmDiscard(false);
     } catch (error) {
+      setItemStates((current) => ({ ...current, [discardedItem.id]: 'idle' }));
       enqueueSnackbar(error instanceof Error ? error.message : 'Could not discard this item', { variant: 'error' });
+    }
+  };
+
+  const restoreDiscarded = async (pendingId: string) => {
+    try {
+      await restoreMutation.mutateAsync({ householdId, pendingId });
+      setItemStates((current) => ({ ...current, [pendingId]: 'idle' }));
+      enqueueSnackbar('Pending item restored for review', { variant: 'success' });
+      setTab('review');
+    } catch (error) {
+      enqueueSnackbar(error instanceof Error ? error.message : 'Could not restore this item', { variant: 'error' });
     }
   };
 
@@ -196,13 +247,15 @@ export function PendingTransactions() {
   };
 
   const activeConnections = credentials.filter((credential) => credential.enabled).length;
+  const selectedState = selected ? (itemStates[selected.id] ?? 'idle') : 'idle';
+  const reviewBusy = selectedState === 'approving' || selectedState === 'discarding';
 
   return (
     <Stack spacing={3}>
       <PageHeader
-        title="Pending review"
-        subtitle="Approve detected bank activity only after confirming its category and account."
-        action={<Chip label={`${pending.length} pending`} color={pending.length ? 'secondary' : 'default'} />}
+        title="Message activity"
+        subtitle="Review detected bank activity and keep a complete resolution history."
+        action={<Chip label={tab === 'review' ? `${pending.length} pending` : `${resolved.length} resolved`} color={tab === 'review' && pending.length ? 'secondary' : 'default'} />}
       />
 
       <Box
@@ -232,7 +285,12 @@ export function PendingTransactions() {
         </Button>
       </Box>
 
-      {isLoading ? (
+      <Tabs value={tab} onChange={(_, value: 'review' | 'history') => setTab(value)} variant="fullWidth">
+        <Tab value="review" label="Review" />
+        <Tab value="history" label="History" icon={<HistoryIcon fontSize="small" />} iconPosition="start" />
+      </Tabs>
+
+      {tab === 'review' && (isLoading ? (
         <Stack spacing={1}>
           {[0, 1, 2].map((item) => <Skeleton key={item} variant="rounded" height={76} />)}
         </Stack>
@@ -255,14 +313,18 @@ export function PendingTransactions() {
                 component="button"
                 type="button"
                 onClick={() => openReview(item)}
+                disabled={(itemStates[item.id] ?? 'idle') !== 'idle'}
                 sx={{
                   width: '100%', minHeight: 72, px: { xs: 2, sm: 2.5 }, py: 1.25,
                   display: 'flex', alignItems: 'center', gap: 1.5, border: 0,
                   bgcolor: 'transparent', color: 'text.primary', textAlign: 'left', cursor: 'pointer',
+                  opacity: (itemStates[item.id] ?? 'idle') === 'idle' ? 1 : 0.6,
                   '&:hover': { bgcolor: 'action.hover' },
                 }}
               >
-                <TransactionIcon type={item.kind} size={40} />
+                {(itemStates[item.id] ?? 'idle') === 'idle'
+                  ? <TransactionIcon type={item.kind} size={40} />
+                  : <CircularProgress size={32} />}
                 <Box sx={{ flex: 1, minWidth: 0 }}>
                   <Stack direction="row" spacing={1} alignItems="center">
                     <Typography noWrap sx={{ fontSize: 13.5, fontWeight: 800, flex: 1 }}>{item.description}</Typography>
@@ -279,7 +341,62 @@ export function PendingTransactions() {
             </Box>
           ))}
         </Card>
-      )}
+      ))}
+
+      {tab === 'history' && (historyLoading ? (
+        <Stack spacing={1}>
+          {[0, 1, 2].map((item) => <Skeleton key={item} variant="rounded" height={76} />)}
+        </Stack>
+      ) : resolved.length === 0 ? (
+        <EmptyLayout
+          icon={<HistoryIcon sx={{ fontSize: 28 }} />}
+          title="No review history yet"
+          description="Approved and discarded message activity will appear here after you resolve it."
+        />
+      ) : (
+        <Card sx={{ overflow: 'hidden', '&:hover': { transform: 'none' } }}>
+          <Box sx={{ px: { xs: 2, sm: 2.5 }, py: 2 }}>
+            <Typography sx={{ fontSize: 16, fontWeight: 800 }}>Resolved activity</Typography>
+            <Typography sx={{ fontSize: 12, color: 'text.secondary', mt: 0.25 }}>The latest 100 reviewed messages</Typography>
+          </Box>
+          <Divider />
+          {resolved.map((item, index) => {
+            const restoring = restoreMutation.isPending && restoreMutation.variables?.pendingId === item.id;
+            return (
+              <Box key={item.id}>
+                <Box sx={{ minHeight: 72, px: { xs: 2, sm: 2.5 }, py: 1.25, display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                  <TransactionIcon type={item.snapshot.kind} size={40} />
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Stack direction="row" spacing={1} alignItems="center">
+                      <Typography noWrap sx={{ fontSize: 13.5, fontWeight: 800, flex: 1 }}>{item.snapshot.description}</Typography>
+                      <Typography sx={{ fontSize: 13, fontWeight: 800, whiteSpace: 'nowrap' }}>
+                        <Money amount={item.snapshot.amount} code={item.snapshot.currency} />
+                      </Typography>
+                    </Stack>
+                    <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 0.25 }}>
+                      <Chip
+                        label={item.state === 'approved' ? 'Approved' : 'Discarded'}
+                        color={item.state === 'approved' ? 'success' : 'default'}
+                        size="small"
+                        variant="outlined"
+                      />
+                      <Typography noWrap sx={{ fontSize: 11.5, color: 'text.secondary' }}>
+                        {new Date(item.resolvedAt).toLocaleString()} · {item.resolvedByDisplayName}
+                      </Typography>
+                    </Stack>
+                  </Box>
+                  {item.state === 'discarded' && (
+                    <Button size="small" variant="outlined" disabled={restoring} onClick={() => restoreDiscarded(item.id)}>
+                      {restoring ? 'Restoring…' : 'Restore'}
+                    </Button>
+                  )}
+                </Box>
+                {index < resolved.length - 1 && <Divider sx={{ ml: 8.5 }} />}
+              </Box>
+            );
+          })}
+        </Card>
+      ))}
 
       <Dialog open={!!selected && selected.kind !== 'transfer'} onClose={closeReview} fullWidth maxWidth="xs">
         <DialogTitle sx={{ fontWeight: 'bold' }}>
@@ -336,17 +453,17 @@ export function PendingTransactions() {
           )}
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2.5 }}>
-          <Button color="inherit" startIcon={<DeleteIcon />} onClick={discard} disabled={discardMutation.isPending}>
-            {confirmDiscard ? 'Discard permanently' : 'Discard'}
+          <Button color="inherit" startIcon={selectedState === 'discarding' ? <CircularProgress size={18} /> : <DeleteIcon />} onClick={discard} disabled={reviewBusy}>
+            {selectedState === 'discarding' ? 'Discarding…' : confirmDiscard ? 'Discard permanently' : 'Discard'}
           </Button>
           <Button
             variant="contained"
             sx={{ borderRadius: 12, boxShadow: 'none' }}
-            startIcon={<CheckCircleIcon />}
+            startIcon={selectedState === 'approving' ? <CircularProgress color="inherit" size={18} /> : <CheckCircleIcon />}
             onClick={approve}
-            disabled={!categoryId || !accountId || approveMutation.isPending}
+            disabled={!categoryId || !accountId || reviewBusy}
           >
-            {approveMutation.isPending ? 'Approving…' : 'Approve'}
+            {selectedState === 'approving' ? 'Approving…' : 'Approve'}
           </Button>
         </DialogActions>
       </Dialog>
@@ -424,17 +541,17 @@ export function PendingTransactions() {
           )}
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2.5 }}>
-          <Button color="inherit" startIcon={<DeleteIcon />} onClick={discard} disabled={discardMutation.isPending}>
-            {confirmDiscard ? 'Discard permanently' : 'Discard'}
+          <Button color="inherit" startIcon={selectedState === 'discarding' ? <CircularProgress size={18} /> : <DeleteIcon />} onClick={discard} disabled={reviewBusy}>
+            {selectedState === 'discarding' ? 'Discarding…' : confirmDiscard ? 'Discard permanently' : 'Discard'}
           </Button>
           <Button
             variant="contained"
             sx={{ borderRadius: 12, boxShadow: 'none' }}
-            startIcon={<CheckCircleIcon />}
+            startIcon={selectedState === 'approving' ? <CircularProgress color="inherit" size={18} /> : <CheckCircleIcon />}
             onClick={approve}
-            disabled={isHalfPending || !accountId || !destinationAccountId || approveMutation.isPending}
+            disabled={isHalfPending || !accountId || !destinationAccountId || reviewBusy}
           >
-            {approveMutation.isPending ? 'Approving…' : 'Approve'}
+            {selectedState === 'approving' ? 'Approving…' : 'Approve'}
           </Button>
         </DialogActions>
       </Dialog>

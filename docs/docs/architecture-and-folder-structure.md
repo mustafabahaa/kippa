@@ -34,16 +34,17 @@ Below is the directory mapping for the workspace:
 ```text
 kippa/
 ├── frontend/
-│   └── web/
-│       └── src/
-│           ├── config/        # Global SDK configurations
-│           ├── contexts/      # Global React contexts
-│           ├── hooks/         # React Query queries and mutations
-│           ├── libs/          # Ledger services, calculators, and API helpers
-│           ├── features/      # Feature modules and their views/components
-│           ├── theme.ts       # Material UI theme setup
-│           ├── main.tsx       # Application bootstrap entrypoint
-│           └── App.tsx        # Layout shell, routing, and navigation
+│   ├── web/                   # Product PWA
+│   │   └── src/
+│   │       ├── config/        # Global SDK configurations
+│   │       ├── contexts/      # Global React contexts
+│   │       ├── hooks/         # React Query queries and mutations
+│   │       ├── libs/          # Ledger services, calculators, and API helpers
+│   │       ├── features/      # Feature modules and their views/components
+│   │       ├── theme.ts       # Material UI theme setup
+│   │       ├── main.tsx       # Application bootstrap entrypoint
+│   │       └── App.tsx        # Layout shell, routing, and navigation
+│   └── landing/               # Public React + Vite landing page
 ├── backend/
 │   └── functions/
 │       └── src/
@@ -51,6 +52,7 @@ kippa/
 │           ├── features/      # Firebase handlers grouped by product feature
 │           ├── libs/          # Firebase-backed infrastructure adapters
 │           └── index.ts       # Stable deployed function exports
+├── docs/                       # Full-system Docusaurus documentation
 └── packages/
     └── domain/                # Type-only contracts shared across runtimes
 ```

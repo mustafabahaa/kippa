@@ -17,5 +17,7 @@ export {
   discardPendingFinancialMessage,
   ingestFinancialMessage,
   listMessageIngestionCredentials,
+  listResolvedPendingFinancialMessages,
   revokeMessageIngestionCredential,
+  restoreDiscardedPendingFinancialMessage,
 } from './features/message-ingestion/messageIngestion.js';

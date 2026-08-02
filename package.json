@@ -3,8 +3,9 @@
   "private": true,
   "version": "0.1.0",
   "workspaces": [
-    "frontend/web",
+    "frontend/*",
     "backend/functions",
+    "docs",
     "packages/*"
   ],
   "scripts": {
@@ -15,6 +16,11 @@
     "lint": "npm run lint --workspace=kippa-app",
     "test": "npm run functions:test && npm run test --workspace=kippa-app",
     "test:watch": "npm run test:watch --workspace=kippa-app",
+    "landing:dev": "npm run dev --workspace=kippa-landing",
+    "landing:build": "npm run build --workspace=kippa-landing",
+    "docs:dev": "npm run dev --workspace=kippa-docs",
+    "docs:build": "npm run build --workspace=kippa-docs",
+    "pages:build": "npm run landing:build && npm run docs:build && node scripts/assemble-pages.mjs",
     "functions:build": "npm run build --workspace=kippa-functions",
     "functions:test": "npm run test --workspace=kippa-functions",
     "deploy": "npm run build && firebase deploy",

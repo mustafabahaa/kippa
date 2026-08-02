@@ -28,6 +28,7 @@ frontend/web/public/firebase-messaging-sw.js
 
 # Vite dependency cache & local build artifacts
 .vite/
+.docusaurus/
 
 .agents/*
 

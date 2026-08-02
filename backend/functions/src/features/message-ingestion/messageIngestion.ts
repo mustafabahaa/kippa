@@ -24,6 +24,10 @@ type IngestionReceipt = {
   state: 'pending' | 'approved' | 'discarded' | 'ignored';
   pendingId?: string;
   transactionId?: string;
+  snapshot?: PendingFinancialMessage;
+  resolvedAt?: string;
+  resolvedBy?: string;
+  resolvedByDisplayName?: string;
   createdAt: string;
   updatedAt: string;
 };
@@ -437,7 +441,7 @@ export const approvePendingFinancialMessage = onCall(async (request) => {
   };
   const householdId = assertString(data.householdId, 'householdId');
   const pendingId = assertString(data.pendingId, 'pendingId');
-  const categoryId = assertString(data.categoryId, 'categoryId');
+  const categoryId = typeof data.categoryId === 'string' ? data.categoryId.trim() : '';
   const accountId = assertString(data.accountId, 'accountId');
   const destinationAccountId = typeof data.destinationAccountId === 'string' ? data.destinationAccountId.trim() : '';
   const profile = await requireHouseholdMember(uid, householdId);
@@ -451,18 +455,19 @@ export const approvePendingFinancialMessage = onCall(async (request) => {
   const activeCycleId = cycleSnapshot.empty ? null : cycleSnapshot.docs[0].id;
 
   await db.runTransaction(async (transaction) => {
-    const [pendingSnapshot, categorySnapshot, accountSnapshot, existingTransaction] = await Promise.all([
+    const [pendingSnapshot, accountSnapshot, existingTransaction] = await Promise.all([
       transaction.get(pendingRef),
-      transaction.get(db.doc(`households/${householdId}/categories/${categoryId}`)),
       transaction.get(db.doc(`households/${householdId}/accounts/${accountId}`)),
       transaction.get(transactionRef),
     ]);
     if (existingTransaction.exists) return;
     if (!pendingSnapshot.exists) throw new HttpsError('not-found', 'Pending item not found.');
     const pending = pendingSnapshot.data() as PendingFinancialMessage;
-    const category = categorySnapshot.data() as Category | undefined;
     const account = accountSnapshot.data() as Account | undefined;
     if (pending.kind !== 'transfer') {
+      if (!categoryId) throw new HttpsError('invalid-argument', 'Category is required.');
+      const categorySnapshot = await transaction.get(db.doc(`households/${householdId}/categories/${categoryId}`));
+      const category = categorySnapshot.data() as Category | undefined;
       if (!category?.isActive) throw new HttpsError('failed-precondition', 'Choose an active category.');
       if (category.type !== pending.kind) {
         throw new HttpsError('failed-precondition', `Choose an ${pending.kind} category.`);
@@ -541,7 +546,13 @@ export const approvePendingFinancialMessage = onCall(async (request) => {
       createdAt: now,
     });
     transaction.set(db.doc(`messageIngestionReceipts/${pendingId}`), {
-      state: 'approved', transactionId, updatedAt: now,
+      state: 'approved',
+      transactionId,
+      snapshot: pending,
+      resolvedAt: now,
+      resolvedBy: uid,
+      resolvedByDisplayName: profile.displayName || 'User',
+      updatedAt: now,
     }, { merge: true });
     transaction.delete(pendingRef);
   });
@@ -554,16 +565,116 @@ export const discardPendingFinancialMessage = onCall(async (request) => {
   if (!uid) throw new HttpsError('unauthenticated', 'Sign in required.');
   const householdId = assertString((request.data as { householdId?: unknown })?.householdId, 'householdId');
   const pendingId = assertString((request.data as { pendingId?: unknown })?.pendingId, 'pendingId');
-  await requireHouseholdMember(uid, householdId);
+  const profile = await requireHouseholdMember(uid, householdId);
   const db = getFirestore();
   const pendingRef = db.doc(`households/${householdId}/pendingFinancialMessages/${pendingId}`);
   await db.runTransaction(async (transaction) => {
-    const pending = await transaction.get(pendingRef);
-    if (!pending.exists) return;
+    const pendingSnapshot = await transaction.get(pendingRef);
+    if (!pendingSnapshot.exists) return;
+    const pending = pendingSnapshot.data() as PendingFinancialMessage;
+    const now = new Date().toISOString();
+    const auditId = `pending_discarded_${pendingId}_${Date.now()}`;
     transaction.delete(pendingRef);
     transaction.set(db.doc(`messageIngestionReceipts/${pendingId}`), {
-      state: 'discarded', updatedAt: new Date().toISOString(), rawMessage: FieldValue.delete(),
+      state: 'discarded',
+      snapshot: pending,
+      resolvedAt: now,
+      resolvedBy: uid,
+      resolvedByDisplayName: profile.displayName || 'User',
+      updatedAt: now,
+      rawMessage: FieldValue.delete(),
     }, { merge: true });
+    transaction.create(db.doc(`households/${householdId}/auditLog/${auditId}`), {
+      id: auditId,
+      householdId,
+      userId: uid,
+      userDisplayName: profile.displayName || 'User',
+      userPhotoURL: profile.photoURL ?? null,
+      action: 'pending_message_discarded',
+      summary: `${profile.displayName || 'User'} discarded imported ${pending.kind}: ${pending.amount} ${pending.currency} - ${pending.description}`,
+      details: { pendingId, type: pending.kind, amount: pending.amount, currency: pending.currency },
+      createdAt: now,
+    });
   });
   return { discarded: true };
+});
+
+export const listResolvedPendingFinancialMessages = onCall(async (request) => {
+  const uid = request.auth?.uid;
+  if (!uid) throw new HttpsError('unauthenticated', 'Sign in required.');
+  const householdId = assertString((request.data as { householdId?: unknown })?.householdId, 'householdId');
+  await requireHouseholdMember(uid, householdId);
+
+  const snapshot = await getFirestore().collection('messageIngestionReceipts')
+    .where('householdId', '==', householdId)
+    .where('state', 'in', ['approved', 'discarded'])
+    .orderBy('resolvedAt', 'desc')
+    .limit(100)
+    .get();
+  const items = snapshot.docs
+    .map((doc) => doc.data() as IngestionReceipt)
+    .filter((receipt) => (receipt.state === 'approved' || receipt.state === 'discarded')
+      && !!receipt.snapshot
+      && !!receipt.resolvedAt
+      && !!receipt.resolvedBy)
+    .map((receipt) => ({
+      id: receipt.id,
+      state: receipt.state as 'approved' | 'discarded',
+      snapshot: receipt.snapshot as PendingFinancialMessage,
+      transactionId: receipt.transactionId ?? null,
+      resolvedAt: receipt.resolvedAt as string,
+      resolvedBy: receipt.resolvedBy as string,
+      resolvedByDisplayName: receipt.resolvedByDisplayName || 'User',
+    }));
+  return { items };
+});
+
+export const restoreDiscardedPendingFinancialMessage = onCall(async (request) => {
+  const uid = request.auth?.uid;
+  if (!uid) throw new HttpsError('unauthenticated', 'Sign in required.');
+  const householdId = assertString((request.data as { householdId?: unknown })?.householdId, 'householdId');
+  const pendingId = assertString((request.data as { pendingId?: unknown })?.pendingId, 'pendingId');
+  const profile = await requireHouseholdMember(uid, householdId);
+  const db = getFirestore();
+  const receiptRef = db.doc(`messageIngestionReceipts/${pendingId}`);
+  const pendingRef = db.doc(`households/${householdId}/pendingFinancialMessages/${pendingId}`);
+
+  let restored: PendingFinancialMessage | null = null;
+  await db.runTransaction(async (transaction) => {
+    const [receiptSnapshot, existingPending] = await Promise.all([
+      transaction.get(receiptRef),
+      transaction.get(pendingRef),
+    ]);
+    const receipt = receiptSnapshot.data() as IngestionReceipt | undefined;
+    if (!receipt || receipt.householdId !== householdId) throw new HttpsError('not-found', 'Discarded item not found.');
+    if (receipt.state !== 'discarded' || !receipt.snapshot) {
+      throw new HttpsError('failed-precondition', 'Only discarded items can be restored.');
+    }
+    if (existingPending.exists) throw new HttpsError('already-exists', 'This item is already pending.');
+
+    const now = new Date().toISOString();
+    const auditId = `pending_restored_${pendingId}_${Date.now()}`;
+    restored = { ...receipt.snapshot, id: pendingId, householdId, status: 'pending' };
+    transaction.create(pendingRef, restored);
+    transaction.set(receiptRef, {
+      state: 'pending',
+      transactionId: FieldValue.delete(),
+      resolvedAt: FieldValue.delete(),
+      resolvedBy: FieldValue.delete(),
+      resolvedByDisplayName: FieldValue.delete(),
+      updatedAt: now,
+    }, { merge: true });
+    transaction.create(db.doc(`households/${householdId}/auditLog/${auditId}`), {
+      id: auditId,
+      householdId,
+      userId: uid,
+      userDisplayName: profile.displayName || 'User',
+      userPhotoURL: profile.photoURL ?? null,
+      action: 'pending_message_restored',
+      summary: `${profile.displayName || 'User'} restored discarded imported ${receipt.snapshot.kind}: ${receipt.snapshot.amount} ${receipt.snapshot.currency} - ${receipt.snapshot.description}`,
+      details: { pendingId },
+      createdAt: now,
+    });
+  });
+  return { item: restored };
 });

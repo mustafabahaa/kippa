@@ -1,4 +1,4 @@
-# Design System — Workspace Productivity System
+# Design System - Workspace Productivity System
 
 > **Canonical Source:** Google Stitch Design System, asset ID `d778924a54e1410caa5f4bc7d35e5bca` (project `5833365205671877695`).
 > All design tokens (colors, typography, spacing, elevation) are derived from this Stitch asset. Do not add ad-hoc values.
@@ -9,7 +9,7 @@
 
 ## 1. Visual Theme & Atmosphere
 
-Google Workspace's design system embodies clean, minimalist collaboration with a focus on productivity and clarity. The aesthetic is modern and professional, prioritizing information hierarchy and accessible readability over decorative elements. The interface conveys trust through spacious layouts, subtle interactions, and a restrained color palette that emphasizes focus on content. Every visual element serves a functional purpose—whether guiding users through tasks, highlighting collaborative features, or drawing attention to actionable moments. The design balances efficiency with an approachable, human-centered feel, making complex data management and real-time collaboration feel intuitive and empowering.
+Google Workspace's design system embodies clean, minimalist collaboration with a focus on productivity and clarity. The aesthetic is modern and professional, prioritizing information hierarchy and accessible readability over decorative elements. The interface conveys trust through spacious layouts, subtle interactions, and a restrained color palette that emphasizes focus on content. Every visual element serves a functional purpose-whether guiding users through tasks, highlighting collaborative features, or drawing attention to actionable moments. The design balances efficiency with an approachable, human-centered feel, making complex data management and real-time collaboration feel intuitive and empowering.
 
 **Key Characteristics**
 - Clean, grid-based layout with generous whitespace
@@ -71,7 +71,7 @@ Google Workspace's design system embodies clean, minimalist collaboration with a
 
 ### Principles
 - Use **Google Sans** exclusively for display and heading hierarchy to establish visual prominence
-- Maintain consistent line-height ratios (1.2–1.5 multiplier) to ensure readability and rhythm
+- Maintain consistent line-height ratios (1.2-1.5 multiplier) to ensure readability and rhythm
 - Limit font weights to 400, 500, and 700 to avoid visual fragmentation
 - Preserve generous letter-spacing defaults (0px) to prevent crowding at smaller sizes
 - Apply 14px body text as the system baseline; deviate only for emphasized or auxiliary content
@@ -289,7 +289,7 @@ Generous whitespace is central to Google Workspace's clarity. Maintain clear vis
 
 **Shadow Philosophy**
 
-Google Workspace employs subtle, restrained shadows to indicate layering without overwhelming the interface. Shadows are primarily used to distinguish navigation and interactive overlays from the base content layer. The system favors minimal depth cues, relying instead on color, borders, and spacing to establish visual hierarchy. When shadows are applied, they use soft blur radii (6–20px) and low opacity (12–20%) to maintain a clean, modern appearance. Shadows should never be harsh or darkly colored; they always respect the system's light, professional aesthetic.
+Google Workspace employs subtle, restrained shadows to indicate layering without overwhelming the interface. Shadows are primarily used to distinguish navigation and interactive overlays from the base content layer. The system favors minimal depth cues, relying instead on color, borders, and spacing to establish visual hierarchy. When shadows are applied, they use soft blur radii (6-20px) and low opacity (12-20%) to maintain a clean, modern appearance. Shadows should never be harsh or darkly colored; they always respect the system's light, professional aesthetic.
 
 ## 7. Do's and Don'ts
 
@@ -298,7 +298,7 @@ Google Workspace employs subtle, restrained shadows to indicate layering without
 - Use `#005c55` for all primary CTAs and interactive focus states to establish consistent actionability
 - Apply **Google Sans** at 54px weight 700 for hero headlines to command attention and establish page hierarchy
 - Maintain 48px minimum gap between major content sections for visual clarity and scanning efficiency
-- Keep button padding at 12–16px with 48px border-radius for icon buttons and 0px for text buttons
+- Keep button padding at 12-16px with 48px border-radius for icon buttons and 0px for text buttons
 - Use `#F1F3F4` backgrounds for hover states on flat elements to indicate interactivity subtly
 - Apply `16px` line-height multiplier for body text (14px × 1.57) to ensure comfortable readability
 - Group related actions in secondary buttons with `1px solid #DADCE0` borders for visual distinction
@@ -326,8 +326,8 @@ Google Workspace employs subtle, restrained shadows to indicate layering without
 | Breakpoint | Width | Key Changes |
 |------------|-------|-------------|
 | **Mobile** | ≤ 480px | Single column, 16px padding, stacked navigation, full-width cards, 24px gap |
-| **Tablet** | 481px – 768px | Two-column grid, 20px padding, collapsible navigation, 36px gap |
-| **Small Desktop** | 769px – 1024px | Three-column grid, 24px padding, expanded navigation visible, 48px gap |
+| **Tablet** | 481px - 768px | Two-column grid, 20px padding, collapsible navigation, 36px gap |
+| **Small Desktop** | 769px - 1024px | Three-column grid, 24px padding, expanded navigation visible, 48px gap |
 | **Large Desktop** | ≥ 1025px | Four-column grid, max 1200px container, full navigation, 48px gap |
 
 ### Touch Targets
@@ -352,18 +352,18 @@ Google Workspace employs subtle, restrained shadows to indicate layering without
 
 ### Quick Reference Checklist
 
-- **Primary CTA:** Google Teal (`#005c55`) — buttons, links, active states
-- **Hover State:** Google Dark Teal (`#0f766e`) — interactive element hover
-- **Body Text:** Charcoal (`#202124`) — headings, primary text
-- **Secondary Text:** Dark Gray (`#3C4043`) — supporting copy
-- **Disabled Text:** Light Gray (`#79747E`) — de-emphasized content
-- **Background:** Pure White (`#FFFFFF`) — primary surface
-- **Light Background:** Off-White (`#F1F3F4`) — secondary surface, hover states
-- **Borders & Dividers:** Border Gray (`#DADCE0`) — lines, card edges
-- **Callout Background:** Pale Blue (`#E8F0FE`) — informational boxes
-- **Success Indicator:** Google Green (`#1E8E3E`) — confirmations, positive states
-- **Warning Indicator:** Google Amber (`#F9AB00`) — alerts, caution messaging
-- **Icon Default:** Icon Gray (`#5F6368`) — icon elements at rest
+- **Primary CTA:** Google Teal (`#005c55`) - buttons, links, active states
+- **Hover State:** Google Dark Teal (`#0f766e`) - interactive element hover
+- **Body Text:** Charcoal (`#202124`) - headings, primary text
+- **Secondary Text:** Dark Gray (`#3C4043`) - supporting copy
+- **Disabled Text:** Light Gray (`#79747E`) - de-emphasized content
+- **Background:** Pure White (`#FFFFFF`) - primary surface
+- **Light Background:** Off-White (`#F1F3F4`) - secondary surface, hover states
+- **Borders & Dividers:** Border Gray (`#DADCE0`) - lines, card edges
+- **Callout Background:** Pale Blue (`#E8F0FE`) - informational boxes
+- **Success Indicator:** Google Green (`#1E8E3E`) - confirmations, positive states
+- **Warning Indicator:** Google Amber (`#F9AB00`) - alerts, caution messaging
+- **Icon Default:** Icon Gray (`#5F6368`) - icon elements at rest
 
 ### Iteration Guide
 
@@ -373,16 +373,16 @@ Google Workspace employs subtle, restrained shadows to indicate layering without
 
 3. **Color Hierarchy:** Text hierarchy follows the neutral scale (`#202124` → `#79747E`). Interactive elements always use **Google Teal** (`#005c55`) for primary actions; reserve status colors (`#1E8E3E`, `#F9AB00`) for semantic messaging only.
 
-4. **Elevation Restraint:** Apply shadows sparingly—navigation and modals only. Use `rgba(0, 0, 0, 0.12) 0px 2px 6px 0px` for raised elements, `rgba(0, 0, 0, 0.15) 0px 4px 12px 0px` for lifted overlays. Flat cards use borders (`#DADCE0`) instead of shadows.
+4. **Elevation Restraint:** Apply shadows sparingly-navigation and modals only. Use `rgba(0, 0, 0, 0.12) 0px 2px 6px 0px` for raised elements, `rgba(0, 0, 0, 0.15) 0px 4px 12px 0px` for lifted overlays. Flat cards use borders (`#DADCE0`) instead of shadows.
 
 5. **Interactive States:** All interactive elements require four states: default, hover, active, and focus. Hover states shift background to `#F1F3F4` or darken primary color. Focus states apply `2px solid #005c55` border. Disabled states use `#79747E` text on `#F1F3F4` background.
 
 6. **Border Radius Consistency:** 0px for navigation, buttons, and inputs; 4px for secondary inputs; 8px for callouts; 20px for cards; 48px for icon buttons and avatars. Never mix radius scales within a single component family.
 
-7. **Padding & Margin Scale:** Buttons: 12–16px. Cards: 20px minimum. Sections: 48–64px vertical. Navigation: 16px horizontal item spacing. Maintain this hierarchy across all breakpoints; reduce by one scale level on mobile.
+7. **Padding & Margin Scale:** Buttons: 12-16px. Cards: 20px minimum. Sections: 48-64px vertical. Navigation: 16px horizontal item spacing. Maintain this hierarchy across all breakpoints; reduce by one scale level on mobile.
 
 8. **Link Treatment:** Web links default to `#0000EE` with `underline`. Navigation links use `#202124` with no underline, active state applies bottom border `3px solid #005c55`. Never use link blue for non-hyperlink text.
 
-9. **Mobile Responsiveness:** At 768px and below, collapse multi-column grids to single column, reduce padding by one scale, collapse navigation to hamburger menu, and reduce typography sizes by 2–4px for display headings. Maintain 48px touch targets always.
+9. **Mobile Responsiveness:** At 768px and below, collapse multi-column grids to single column, reduce padding by one scale, collapse navigation to hamburger menu, and reduce typography sizes by 2-4px for display headings. Maintain 48px touch targets always.
 
 10. **Accessibility:** Ensure all text meets WCAG AA contrast ratios (4.5:1 minimum). Apply consistent focus indicators (`2px solid #005c55`). Use semantic HTML (`<button>`, `<nav>`, `<main>`) to support screen readers. Never rely on color alone for status indication; pair with icons or text.
