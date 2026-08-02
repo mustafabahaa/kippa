@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="theme-color" content="#1a73e8" />
+    <meta name="theme-color" content="#0f766e" />
     <meta
       name="description"
       content="Kippa - Private household finance ledger PWA for USD salary, EGP spending, balances, budget cycles, and reconciliation."
@@ -51,48 +51,32 @@
         height: 100vh;
         z-index: 9999;
         font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
-        transition: background 0.3s ease;
-        overflow: hidden;
-      }
-      #splash-screen::before { content: ''; position: absolute; width: min(76vw, 580px); aspect-ratio: 1; border: 1px solid rgba(45, 212, 191, 0.16); border-radius: 50%; box-shadow: 0 0 0 72px rgba(45, 212, 191, 0.025), 0 0 0 144px rgba(45, 212, 191, 0.018); transform: translateY(-2%); }
-      #splash-screen::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(circle at 50% 44%, rgba(45, 212, 191, 0.13), transparent 24rem); }
-      
-      /* Theme Gradients */
-      html.theme-dark #splash-screen {
-        background: radial-gradient(circle at 50% 42%, #163b36 0%, #070908 62%);
-        color: #f1f0f5;
-      }
-      html.theme-light #splash-screen {
-        background: radial-gradient(circle at 50% 42%, #e2f5f1 0%, #f4f5f7 62%);
+        background: #f4f5f7;
         color: #131b2e;
       }
 
-      /* Logo and glow */
+      html.theme-dark #splash-screen {
+        background: #070908;
+        color: #f4f7f2;
+      }
+
       .splash-logo-container {
-        width: 96px;
-        height: 96px;
-        padding: 18px;
+        width: 80px;
+        height: 80px;
+        padding: 16px;
         box-sizing: border-box;
-        border-radius: 30px;
-        border: 1px solid rgba(156, 242, 232, 0.2);
-        background: rgba(10, 26, 24, 0.54);
-        box-shadow: 0 20px 48px rgba(0, 0, 0, 0.24), inset 0 1px 0 rgba(255,255,255,.08);
-        z-index: 1;
+        border-radius: 20px;
+        border: 1px solid #ecedf0;
+        background: #ffffff;
         display: flex;
         align-items: center;
         justify-content: center;
-        opacity: 0;
-        transform: scale(0.8);
-        animation: splashLogoEntrance 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards, logoPulseFloat 3s infinite ease-in-out 0.8s;
+        animation: splashContentIn 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
       }
-      
+
       html.theme-dark .splash-logo-container {
-        filter: drop-shadow(0 0 25px rgba(15, 118, 110, 0.45));
-      }
-      html.theme-light .splash-logo-container {
-        background: rgba(255,255,255,.72);
-        border-color: rgba(15,118,110,.16);
-        filter: drop-shadow(0 0 20px rgba(15, 118, 110, 0.15));
+        background: #0e1110;
+        border-color: #252b29;
       }
 
       .splash-logo {
@@ -101,30 +85,26 @@
         object-fit: contain;
       }
 
-      /* Brand Text */
       .splash-brand {
-        margin-top: 28px;
+        margin-top: 20px;
         text-align: center;
-        opacity: 0;
-        animation: splashFadeIn 0.8s ease-out 0.4s forwards;
+        animation: splashContentIn 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
       }
 
       .splash-title {
-        font-size: 30px;
+        font-size: 28px;
         font-weight: 700;
-        letter-spacing: -1.2px;
+        line-height: 1.2;
+        letter-spacing: -0.04em;
         margin: 0;
-        text-transform: none;
       }
 
       .splash-subtitle {
-        font-size: 11px;
+        font-size: 14px;
         font-weight: 500;
-        margin-top: 8px;
+        line-height: 1.43;
+        margin-top: 6px;
         margin-bottom: 0;
-        opacity: 0.72;
-        letter-spacing: 1.2px;
-        text-transform: uppercase;
       }
       
       html.theme-dark .splash-subtitle {
@@ -134,55 +114,46 @@
         color: #5f6675;
       }
 
-      /* Sleek progress line */
       .splash-progress-container {
-        position: absolute;
-        bottom: 52px;
-        width: 144px;
-        height: 2px;
-        z-index: 1;
-        background: rgba(0, 0, 0, 0.05);
-        border-radius: 4px;
+        width: 112px;
+        height: 4px;
+        margin-top: 24px;
+        background: rgba(15, 118, 110, 0.12);
+        border-radius: 48px;
         overflow: hidden;
-        opacity: 0;
-        animation: splashFadeIn 0.8s ease-out 0.6s forwards;
-      }
-      html.theme-dark .splash-progress-container {
-        background: rgba(255, 255, 255, 0.1);
+        animation: splashContentIn 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
       }
 
       .splash-progress-bar {
-        width: 100%;
+        width: 44%;
         height: 100%;
         background-color: #0f766e;
-        transform-origin: 0% 50%;
-        animation: splashProgress 1.6s infinite ease-in-out;
+        border-radius: inherit;
+        animation: splashProgress 1.25s infinite ease-in-out;
       }
 
-      /* Keyframes */
-      @keyframes splashLogoEntrance {
-        to {
-          opacity: 1;
-          transform: scale(1);
-        }
-      }
-
-      @keyframes logoPulseFloat {
-        0% { transform: translateY(0px) scale(1); }
-        50% { transform: translateY(-6px) scale(1.04); }
-        100% { transform: translateY(0px) scale(1); }
-      }
-
-      @keyframes splashFadeIn {
-        to {
-          opacity: 1;
-        }
+      @keyframes splashContentIn {
+        from { opacity: 0; transform: translateY(8px); }
+        to { opacity: 1; transform: translateY(0); }
       }
 
       @keyframes splashProgress {
-        0% { transform: translateX(-100%) scaleX(0.2); }
-        50% { transform: translateX(0%) scaleX(0.5); }
-        100% { transform: translateX(100%) scaleX(0.2); }
+        from { transform: translateX(-110%); }
+        to { transform: translateX(250%); }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .splash-logo-container,
+        .splash-brand,
+        .splash-progress-container,
+        .splash-progress-bar {
+          animation: none;
+        }
+
+        .splash-progress-bar {
+          width: 100%;
+          opacity: 0.55;
+        }
       }
     </style>
   </head>

@@ -52,6 +52,8 @@ export function TopBar({
         color="transparent"
         elevation={scrolled ? 1 : 0}
         sx={{
+          top: 0,
+          zIndex: theme => theme.zIndex.appBar,
           py: 0.5,
           bgcolor: scrolled ? 'background.default' : 'transparent',
           backdropFilter: scrolled ? 'blur(12px)' : 'none',

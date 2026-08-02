@@ -38,7 +38,7 @@ export function AppShell() {
       <Box sx={{ position: 'relative', zIndex: 1, minHeight: '100dvh', pb: { xs: 10, md: 0 }, bgcolor: 'transparent', overflowX: 'clip' }}>
         <OfflineBanner isOnline={isOnline} />
         <SideNav />
-        <Box component="main" sx={{ ml: { md: '264px' }, minHeight: '100dvh', bgcolor: 'background.paper', overflow: 'hidden' }}>
+        <Box component="main" sx={{ ml: { md: '264px' }, minHeight: '100dvh', bgcolor: 'background.paper', overflowX: 'clip' }}>
           <TopBar
             logoSrc={logoSrc}
             modePref={modePref}
