@@ -1,7 +1,5 @@
-import { useState, useEffect } from 'react';
 import { useSnackbar } from 'notistack';
 import { useQueryClient } from '@tanstack/react-query';
-import { doc as fsDoc, onSnapshot } from 'firebase/firestore';
 import {
   Box,
   Card,
@@ -12,18 +10,6 @@ import {
   Divider,
   TextField,
   Chip,
-  List,
-  ListItem,
-  ListItemText,
-  IconButton,
-  Avatar,
-  CircularProgress,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogContentText,
-  DialogActions,
-  Tooltip,
   Grid,
   Tabs,
   Tab,
@@ -31,20 +17,22 @@ import {
 } from '@mui/material';
 import { ContentCopyIcon } from '@/components/AppIcon';
 import { HomeIcon } from '@/components/AppIcon';
-import { SwitchAccountIcon } from '@/components/AppIcon';
-import { LogoutIcon } from '@/components/AppIcon';
 import { AddHomeIcon } from '@/components/AppIcon';
 import { GroupAddIcon } from '@/components/AppIcon';
 import { CheckCircleIcon } from '@/components/AppIcon';
 import { CheckIcon } from '@/components/AppIcon';
 import { HourglassEmptyIcon } from '@/components/AppIcon';
 
-import type { Household, CurrencyCode, JoinStatus, JoinRequest } from '@kippa/domain';
-import { db as firestoreDb } from '@/config/firebase';
+import type { Household, CurrencyCode } from '@kippa/domain';
 import { useAppContext } from '@/hooks/useAppContext';
 import { CurrencySelect } from '@/features/shared/components/CurrencySelect';
 import { ledgerLib } from '@/libs/ledger';
 import { PageHeader } from '@/features/shared/components/PageHeader';
+import { HouseholdMembersCard } from './components/HouseholdMembersCard';
+import { YourHouseholdsCard } from './components/YourHouseholdsCard';
+import { LeaveHouseholdDialog } from './components/LeaveHouseholdDialog';
+import { useJoinRequestStatus } from './hooks/useJoinRequestStatus';
+import { useHouseholdUi } from './hooks/useHouseholdUi';
 
 export function Household() {
   const { enqueueSnackbar } = useSnackbar();
@@ -63,19 +51,8 @@ export function Household() {
     isMembersLoading,
   } = useAppContext();
 
-  // Leave Confirmation Dialog
-  const [leaveConfirmOpen, setLeaveConfirmOpen] = useState(false);
-  const [householdToLeave, setHouseholdToLeave] = useState<Household | null>(null);
-
+  const { actionLoading, baseCurrencyLoading, copied, householdIdToJoin, householdToLeave, newHouseholdName, setActionLoading, setBaseCurrencyLoading, setCopied, setHouseholdIdToJoin, setHouseholdToLeave, setNewHouseholdName, setTabValue, tabValue } = useHouseholdUi();
   const queryClient = useQueryClient();
-  const [baseCurrencyLoading, setBaseCurrencyLoading] = useState(false);
-
-  // Forms state
-  const [newHouseholdName, setNewHouseholdName] = useState('');
-  const [householdIdToJoin, setHouseholdIdToJoin] = useState('');
-  const [actionLoading, setActionLoading] = useState(false);
-  const [copied, setCopied] = useState(false);
-  const [tabValue, setTabValue] = useState(0);
 
   const handleCopyHouseholdId = (id: string) => {
     navigator.clipboard.writeText(id);
@@ -144,12 +121,10 @@ export function Household() {
 
   const handleOpenLeaveConfirm = (hh: Household) => {
     setHouseholdToLeave(hh);
-    setLeaveConfirmOpen(true);
   };
 
   const handleCloseLeaveConfirm = () => {
     setHouseholdToLeave(null);
-    setLeaveConfirmOpen(false);
   };
 
   const handleLeaveHousehold = async () => {
@@ -171,23 +146,7 @@ export function Household() {
   const isOwner = activeHh ? activeHh.createdBy === userProfile?.uid : false;
 
   // Outgoing request status for the id currently in the join box.
-  const [outgoingStatus, setOutgoingStatus] = useState<JoinStatus | null>(null);
-  useEffect(() => {
-    const id = householdIdToJoin.trim();
-    if (!id || !userProfile?.uid || !firestoreDb) {
-      // Clear stale request status when the input is empty.
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setOutgoingStatus(null);
-      return;
-    }
-    const unsub = onSnapshot(
-      fsDoc(firestoreDb, `households/${id}/joinRequests/${userProfile.uid}`),
-      (snap) => {
-        setOutgoingStatus(snap.exists() ? (snap.data() as JoinRequest).status : null);
-      },
-    );
-    return () => unsub();
-  }, [householdIdToJoin, userProfile?.uid]);
+  const outgoingStatus = useJoinRequestStatus(householdIdToJoin, userProfile?.uid);
 
   const handleBaseCurrencyChange = async (newCurrency: CurrencyCode) => {
     if (!activeHh || newCurrency === activeHh.baseCurrency) return;
@@ -301,112 +260,7 @@ export function Household() {
         {/* Members + Pending Requests — owner only */}
         {isOwner && (
           <Grid size={{ xs: 12, lg: 5 }}>
-          <Card sx={{ height: '100%' }}>
-            <CardContent>
-              <Stack spacing={2}>
-                <Box>
-                  <Typography sx={{ fontSize: 16, fontWeight: 800, color: 'text.primary' }}>Members</Typography>
-                  <Typography sx={{ mt: 0.5, fontSize: 12, color: 'text.secondary' }}>{householdMembers.length} people connected to this household</Typography>
-                </Box>
-                {householdMembers.length === 0 ? (
-                  <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '13px' }}>
-                    {isMembersLoading
-                      ? 'Loading members…'
-                      : 'No other members yet. Invite someone or approve a join request to share this household.'}
-                  </Typography>
-                ) : (
-                  <List sx={{ p: 0 }}>
-                    {householdMembers.map((m, idx) => (
-                      <Box key={m.uid}>
-                        {idx > 0 && <Divider />}
-                        <ListItem sx={{ px: 0, py: 1 }}>
-                          <Avatar
-                            src={m.photoURL || undefined}
-                            sx={{ width: 36, height: 36, mr: 1.5, bgcolor: 'primary.light' }}
-                          >
-                            {m.displayName?.charAt(0)?.toUpperCase() || '?'}
-                          </Avatar>
-                          <ListItemText
-                            primary={
-                              <Typography sx={{ fontWeight: m.isOwner ? 'bold' : 500, fontSize: '14px' }}>
-                                {m.displayName}
-                              </Typography>
-                            }
-                            secondary={
-                              <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '11px' }}>
-                                {m.email}
-                              </Typography>
-                            }
-                          />
-                          {m.isOwner && (
-                            <Chip label="Owner" size="small" color="primary" variant="outlined" />
-                          )}
-                        </ListItem>
-                      </Box>
-                    ))}
-                  </List>
-                )}
-
-                {pendingRequests.length > 0 && (
-                  <>
-                    <Divider sx={{ my: 1 }} />
-                    <Typography variant="h3" sx={{ fontSize: '14px', fontWeight: 600, color: 'text.secondary', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                      Pending Requests ({pendingRequests.length})
-                    </Typography>
-                    <List sx={{ p: 0 }}>
-                      {pendingRequests.map((req, idx) => (
-                        <Box key={req.uid}>
-                          {idx > 0 && <Divider />}
-                          <ListItem sx={{ px: 0, py: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <Box sx={{ display: 'flex', alignItems: 'center', flex: 1, minWidth: 0 }}>
-                              <Avatar
-                                src={req.photoURL || undefined}
-                                sx={{ width: 36, height: 36, mr: 1.5, bgcolor: 'action.selected' }}
-                              >
-                                {req.displayName?.charAt(0)?.toUpperCase() || '?'}
-                              </Avatar>
-                              <ListItemText
-                                primary={
-                                  <Typography sx={{ fontWeight: 500, fontSize: '14px' }}>
-                                    {req.displayName}
-                                  </Typography>
-                                }
-                                secondary={
-                                  <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '11px' }}>
-                                    {req.email}
-                                  </Typography>
-                                }
-                              />
-                            </Box>
-                            <Stack direction="row" spacing={1}>
-                              <Button
-                                size="small"
-                                variant="contained"
-                                color="success"
-                                onClick={() => handleDecide(req.uid, 'approve')}
-                                disabled={actionLoading}
-                              >
-                                Approve
-                              </Button>
-                              <Button
-                                size="small"
-                                variant="outlined"
-                                color="error"
-                                onClick={() => handleDecide(req.uid, 'reject')}
-                                disabled={actionLoading}
-                              >
-                                Reject
-                              </Button>
-                            </Stack>
-                          </ListItem>
-                        </Box>
-                      ))}
-                    </List>
-                  </>
-                )}
-              </Stack>
-            </CardContent>
-          </Card>
+          <HouseholdMembersCard busy={actionLoading} loading={isMembersLoading} members={householdMembers} onDecide={handleDecide} requests={pendingRequests} />
           </Grid>
         )}
         </Grid>
@@ -414,78 +268,7 @@ export function Household() {
         <Grid container spacing={3}>
           {/* Left Column: Your Households List */}
           <Grid size={{ xs: 12, md: 6 }}>
-              <Card>
-                <CardContent>
-                  <Typography sx={{ fontSize: 16, fontWeight: 800, color: 'text.primary' }}>Your households</Typography>
-                  <Typography sx={{ mt: 0.5, fontSize: 12, color: 'text.secondary' }}>{householdsList.length} financial {householdsList.length === 1 ? 'space' : 'spaces'} available</Typography>
-                </CardContent>
-                <Divider />
-                {(householdsLoading || actionLoading) ? (
-                  <Box display="flex" justifyContent="center" alignItems="center" p={4}>
-                    <CircularProgress size={30} />
-                  </Box>
-                ) : householdsList.length === 0 ? (
-                  <Box p={3} textAlign="center">
-                    <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                      No households found. Please create or request to join one below.
-                    </Typography>
-                  </Box>
-                ) : (
-                  <List sx={{ p: 0 }}>
-                    {householdsList.map((hh, index) => {
-                      const isActive = hh.id === householdId;
-                      return (
-                        <Box key={hh.id}>
-                          {index > 0 && <Divider />}
-                          <ListItem sx={{ px: 2.5, py: 1.5, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <ListItemText
-                              primary={
-                                <Typography variant="body1" sx={{ fontWeight: isActive ? 'bold' : 600, color: isActive ? 'primary.main' : 'text.primary', fontSize: '15px' }}>
-                                  {hh.name}
-                                </Typography>
-                              }
-                              secondary={
-                                <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '11px', mt: 0.2 }}>
-                                  ID: {hh.id.slice(0, 8)}... • Currency: {hh.baseCurrency}
-                                </Typography>
-                              }
-                            />
-                            <Stack direction="row" spacing={0.5} sx={{ ml: 2 }}>
-                              {!isActive && (
-                                <>
-                                  <Tooltip title="Switch to this household">
-                                    <IconButton
-                                      color="primary"
-                                      onClick={() => handleSwitchHousehold(hh.id)}
-                                      size="small"
-                                      sx={{ bgcolor: 'action.hover' }}
-                                    >
-                                      <SwitchAccountIcon fontSize="small" />
-                                    </IconButton>
-                                  </Tooltip>
-                                  <Tooltip title="Leave this household">
-                                    <IconButton
-                                      color="error"
-                                      onClick={() => handleOpenLeaveConfirm(hh)}
-                                      size="small"
-                                      sx={{ bgcolor: 'action.hover' }}
-                                    >
-                                      <LogoutIcon fontSize="small" />
-                                    </IconButton>
-                                  </Tooltip>
-                                </>
-                              )}
-                              {isActive && (
-                                <Chip label="Active" color="primary" size="small" sx={{ borderRadius: '6px', fontWeight: 'bold', fontSize: '11px' }} />
-                              )}
-                            </Stack>
-                          </ListItem>
-                        </Box>
-                      );
-                    })}
-                  </List>
-                )}
-              </Card>
+              <YourHouseholdsCard activeId={householdId} busy={actionLoading} households={householdsList} loading={householdsLoading} onLeave={handleOpenLeaveConfirm} onSwitch={handleSwitchHousehold} />
           </Grid>
 
           {/* Right Column: Create & Join Actions (Tabbed Panel) */}
@@ -591,30 +374,7 @@ export function Household() {
         </Grid>
       </Stack>
 
-      {/* Leave Household Confirmation Dialog */}
-      <Dialog
-        open={leaveConfirmOpen}
-        onClose={handleCloseLeaveConfirm}
-        aria-labelledby="leave-dialog-title"
-        aria-describedby="leave-dialog-description"
-      >
-        <DialogTitle id="leave-dialog-title" sx={{ fontWeight: 'bold' }}>
-          Leave Household?
-        </DialogTitle>
-        <DialogContent>
-          <DialogContentText id="leave-dialog-description">
-            Are you sure you want to leave the household <strong>{householdToLeave?.name}</strong>? You will no longer be able to access its transactions and ledger details. You can only rejoin if the owner approves a new request.
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions sx={{ px: 2.5, pb: 2 }}>
-          <Button onClick={handleCloseLeaveConfirm} variant="outlined">
-            Cancel
-          </Button>
-          <Button onClick={handleLeaveHousehold} color="error" variant="contained" disabled={actionLoading} autoFocus>
-            Leave Household
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <LeaveHouseholdDialog busy={actionLoading} household={householdToLeave} onClose={handleCloseLeaveConfirm} onConfirm={handleLeaveHousehold} />
     </Box>
   );
 }

@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
 import {
@@ -18,13 +18,9 @@ import {
   TableRow,
   Card,
   Skeleton,
-  IconButton,
   Button,
-  Tooltip,
 } from '@mui/material';
 import { SearchIcon } from '@/components/AppIcon';
-import { EditIcon } from '@/components/AppIcon';
-import { DeleteIcon } from '@/components/AppIcon';
 
 import {
   useAccounts,
@@ -36,25 +32,12 @@ import {
   useActiveCycle,
   useHouseholdBaseCurrency
 } from '@/hooks/useFinance';
-import { FinanceTransaction } from '@kippa/domain';
 import { useAppContext } from '@/hooks/useAppContext';
 import { usePrivacyMask } from '@/hooks/usePrivacyMask';
-import { TransactionIcon } from './components/TransactionIcon';
-import { TransactionTypeChip } from './components/TransactionTypeChip';
 import { EditTransactionDialog } from './components/EditTransactionDialog';
 import { EmptyLayout } from '@/features/shared/components/EmptyLayout';
-
-/** Format an ISO timestamp as a short time, e.g. "3:45 PM". */
-function formatTime(iso: string): string {
-  try {
-    return new Date(iso).toLocaleTimeString(undefined, {
-      hour: 'numeric',
-      minute: '2-digit',
-    });
-  } catch {
-    return '';
-  }
-}
+import { useTransactionHistoryUi } from './hooks/useTransactionHistoryUi';
+import { TransactionHistoryRow } from './components/TransactionHistoryRow';
 
 export function TransactionHistory() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -64,11 +47,8 @@ export function TransactionHistory() {
   const { maskDigits } = usePrivacyMask();
   
   // Filter States
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('all');
-  const [selectedAccount, setSelectedAccount] = useState('all');
+  const { editingTx, loadMore, resetPage, searchTerm, selectedAccount, selectedCategory, selectedCycleId, setEditingTx, setSearchTerm, setSelectedAccount, setSelectedCategory, setSelectedCycleId, visibleCount } = useTransactionHistoryUi();
   const selectedType = searchParams.get('type') ?? 'all';
-  const [selectedCycleId, setSelectedCycleId] = useState('active');
 
   const handleSearch = (value: string) => { setSearchTerm(value); resetPage(); };
   const handleCategoryChange = (value: string) => { setSelectedCategory(value); resetPage(); };
@@ -79,13 +59,6 @@ export function TransactionHistory() {
   };
   const handleCycleChange = (value: string) => { setSelectedCycleId(value); resetPage(); };
 
-  // Edit Transaction Modal State
-  const [editingTx, setEditingTx] = useState<FinanceTransaction | null>(null);
-
-  // Pagination State
-  const PAGE_SIZE = 25;
-  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
-  const resetPage = () => setVisibleCount(PAGE_SIZE);
 
   // Queries & Mutations
   const { data: accounts = [], isLoading: accountsLoading } = useAccounts(householdId);
@@ -266,109 +239,7 @@ export function TransactionHistory() {
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredTxs.slice(0, visibleCount).map(tx => {
-                  const cat = categories.find(c => c.id === tx.categoryId);
-                  
-                  // Find amount from ledgerLines
-                  const txLines = ledgerLines.filter(l => l.transactionId === tx.id);
-                  const firstLine = txLines.find(l => l.signedAmount !== 0) || txLines[0];
-                  const amount = firstLine ? Number(Math.abs(firstLine.signedAmount).toFixed(2)) : 0;
-                  const currency = firstLine ? firstLine.currency : baseCurrency;
-                  const isIncome = tx.type === 'income' || (tx.type === 'adjustment' && (firstLine?.signedAmount || 0) >= 0);
-                  const txAccount = firstLine ? accounts.find(a => a.id === firstLine.accountId) : null;
-                  const isCreditCard = tx.type === 'expense' && txAccount?.type === 'credit';
-
-                  // Formatting details cell text based on transaction type
-                  let detailsText: string;
-                  if (tx.type === 'transfer') {
-                    const fromL = txLines.find(l => l.signedAmount < 0);
-                    const toL = txLines.find(l => l.signedAmount > 0);
-                    const crossCurrency = !!fromL && !!toL && fromL.currency !== toL.currency;
-                    if (crossCurrency) {
-                      const fromAcc = accounts.find(a => a.id === fromL?.accountId);
-                      const toAcc = accounts.find(a => a.id === toL?.accountId);
-                      const fromAmt = fromL ? Number(Math.abs(fromL.signedAmount).toFixed(2)) : 0;
-                      const toAmt = toL ? Number(Math.abs(toL.signedAmount).toFixed(2)) : 0;
-                      detailsText = `${fromAmt} ${fromL?.currency || baseCurrency} (${fromAcc?.name || 'Wallet'}) ➔ ${toAmt} ${toL?.currency || baseCurrency} (${toAcc?.name || 'Bank'})`;
-                    } else {
-                      const fromAcc = accounts.find(a => a.id === fromL?.accountId);
-                      const toAcc = accounts.find(a => a.id === toL?.accountId);
-                      detailsText = `${fromAcc?.name || 'Wallet'} ➔ ${toAcc?.name || 'Bank'}`;
-                    }
-                  } else {
-                    const acc = accounts.find(a => a.id === firstLine?.accountId);
-                    detailsText = acc?.name || 'Account';
-                  }
-
-                  return (
-                    <TableRow
-                      key={tx.id}
-                      hover
-                      sx={{
-                        opacity: tx.status === 'voided' ? 0.5 : 1,
-                        '& .transaction-actions': { opacity: { xs: 1, md: 0 } },
-                        '&:hover .transaction-actions, &:focus-within .transaction-actions': { opacity: 1 },
-                      }}
-                    >
-                      <TableCell align="center" sx={{ py: 1.25 }}>
-                        <TransactionIcon type={tx.type} size={36} isCreditCard={isCreditCard} />
-                      </TableCell>
-                      <TableCell sx={{ py: 1.25, minWidth: 0 }}>
-                        <Stack direction="row" spacing={0.75} alignItems="center" sx={{ minWidth: 0 }}>
-                          <Typography noWrap variant="body1" sx={{ fontWeight: 750, fontSize: 13.5, minWidth: 0 }}>
-                            {tx.type === 'transfer'
-                              ? (tx.description || 'Transfer')
-                              : tx.type === 'adjustment'
-                              ? 'Reconciliation'
-                              : (cat?.name || 'General')}
-                          </Typography>
-                          <TransactionTypeChip type={tx.type} />
-                        </Stack>
-                        <Typography noWrap variant="body2" sx={{ color: 'text.secondary', fontSize: 11, mt: 0.25 }}>
-                          {tx.date} • {formatTime(tx.createdAt)}{tx.status === 'voided' ? ' • (VOIDED)' : ''}
-                        </Typography>
-                      </TableCell>
-                      <TableCell sx={{ py: 1.25, display: { xs: 'none', md: 'table-cell' } }}>
-                        <Typography noWrap variant="body2" sx={{ color: 'text.secondary', fontSize: 12, fontWeight: 600 }}>
-                          {detailsText}
-                        </Typography>
-                      </TableCell>
-                      <TableCell align="right" sx={{ py: 1.25 }}>
-                        {tx.type === 'transfer' && (() => {
-                          const fromL = txLines.find(l => l.signedAmount < 0);
-                          const toL = txLines.find(l => l.signedAmount > 0);
-                          return !!fromL && !!toL && fromL.currency !== toL.currency;
-                        })() ? (
-                          <Typography variant="body1" sx={{ fontWeight: 'bold', color: tx.status === 'voided' ? 'text.secondary' : 'text.primary' }}>
-                            Transfer Completed
-                          </Typography>
-                        ) : (
-                          <Typography variant="body1" sx={{ fontWeight: 'bold', color: tx.status === 'voided' ? 'text.secondary' : isIncome ? 'success.main' : 'text.primary' }}>
-                            {isIncome ? '+' : '-'}{maskDigits(`${amount.toLocaleString()} ${currency}`)}
-                          </Typography>
-                        )}
-                      </TableCell>
-                      <TableCell align="center" sx={{ py: 1.25 }}>
-                        <Stack className="transaction-actions" direction="row" spacing={0} justifyContent="center" sx={{ transition: 'opacity 160ms ease' }}>
-                          <Tooltip title="Edit transaction">
-                            <span>
-                              <IconButton onClick={() => setEditingTx(tx)} disabled={tx.status === 'voided'} aria-label="Edit transaction">
-                                <EditIcon sx={{ fontSize: 18 }} />
-                              </IconButton>
-                            </span>
-                          </Tooltip>
-                          <Tooltip title="Void transaction">
-                            <span>
-                              <IconButton color="error" onClick={() => handleVoid(tx.id)} disabled={tx.status === 'voided'} aria-label="Void transaction">
-                                <DeleteIcon sx={{ fontSize: 18 }} />
-                              </IconButton>
-                            </span>
-                          </Tooltip>
-                        </Stack>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })
+                filteredTxs.slice(0, visibleCount).map((transaction) => <TransactionHistoryRow key={transaction.id} transaction={transaction} accounts={accounts} categories={categories} ledgerLines={ledgerLines} baseCurrency={baseCurrency} maskDigits={maskDigits} onEdit={setEditingTx} onVoid={handleVoid} />)
               )}
             </TableBody>
           </Table>
@@ -376,7 +247,7 @@ export function TransactionHistory() {
             <Box sx={{ textAlign: 'center', py: 1.5 }}>
               <Button
                 size="small"
-                onClick={() => setVisibleCount(prev => prev + PAGE_SIZE)}
+                onClick={loadMore}
                 sx={{ fontWeight: 600, fontSize: '12px', color: 'primary.main', textTransform: 'none', px: 2 }}
               >
                 Load more ({filteredTxs.length - visibleCount} remaining)

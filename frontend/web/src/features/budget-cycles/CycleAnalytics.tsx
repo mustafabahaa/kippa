@@ -9,7 +9,6 @@ import {
   InputLabel, 
   Select, 
   MenuItem, 
-  Skeleton,
   Tabs,
   Tab,
   useTheme,
@@ -29,7 +28,8 @@ import {
   useAllExpectedIncomes
 } from '@/hooks/useFinance';
 import { useAppContext } from '@/hooks/useAppContext';
-import { EmptyLayout } from '@/features/shared/components/EmptyLayout';
+import { buildCashFlowSeries, calculateCategoryTrends, calculateCycleData } from '@/libs/budgetAnalytics';
+import { AnalyticsPlaceholder } from './components/AnalyticsPlaceholder';
 
 export function CycleAnalytics() {
   const { householdId } = useAppContext();
@@ -65,124 +65,28 @@ export function CycleAnalytics() {
   // Compute stats per cycle
   const cycleData = useMemo(() => {
     if (isLoading || sortedCycles.length === 0) return [];
-
-    const activeTxIds = new Set(transactions.filter(t => t.status === 'posted').map(t => t.id));
-    const activeLines = ledgerLines.filter(line => activeTxIds.has(line.transactionId));
-
-    return sortedCycles.map(cycle => {
-      // Find actual income and expenses in EGP equivalent
-      let actualIncome = 0;
-      let actualExpense = 0;
-
-      // Filter transactions belonging to this cycle
-      const cycleTxs = transactions.filter(t => t.budgetCycleId === cycle.id && t.status === 'posted');
-      const cycleTxIds = new Set(cycleTxs.map(t => t.id));
-      const cycleLines = activeLines.filter(l => cycleTxIds.has(l.transactionId));
-
-      cycleTxs.forEach(tx => {
-        const txLines = cycleLines.filter(l => l.transactionId === tx.id);
-        txLines.forEach(l => {
-          let amountBase = Math.abs(l.signedAmount);
-          const rate = l.currency === baseCurrency ? 1 : (displayRates[l.currency] ?? 1);
-          amountBase = amountBase * rate;
-          if (tx.type === 'income') {
-            actualIncome += amountBase;
-          } else if (tx.type === 'expense') {
-            actualExpense += amountBase;
-          }
-        });
-      });
-
-      // Find planned budget (allocations)
-      const cycleAllocations = allAllocations.filter(a => a.budgetCycleId === cycle.id);
-      const plannedBudget = cycleAllocations.reduce((acc, curr) => acc + curr.plannedAmount, 0);
-
-      // Find expected income
-      const cycleExpectedIncomes = allExpectedIncomes.filter(i => i.budgetCycleId === cycle.id);
-      const expectedIncome = cycleExpectedIncomes.reduce((acc, curr) => {
-        const rate = curr.expectedRateToBaseCurrency || (displayRates[curr.currency] ?? 1);
-        return acc + (curr.amount * (curr.currency === baseCurrency ? 1 : rate));
-      }, 0);
-
-      return {
-        id: cycle.id,
-        name: cycle.name,
-        actualIncome: Math.round(actualIncome),
-        actualExpense: Math.round(actualExpense),
-        plannedBudget: Math.round(plannedBudget),
-        expectedIncome: Math.round(expectedIncome),
-        savings: Math.round(actualIncome - actualExpense)
-      };
-    });
+    return calculateCycleData(sortedCycles, transactions, ledgerLines, allAllocations, allExpectedIncomes, baseCurrency, displayRates);
   }, [isLoading, sortedCycles, transactions, ledgerLines, allAllocations, allExpectedIncomes, displayRates, baseCurrency]);
 
   // Compute category trends over cycles
   const categoryTrends = useMemo(() => {
     if (isLoading || sortedCycles.length === 0 || !selectedCategoryId) return [];
 
-    const activeTxIds = new Set(transactions.filter(t => t.status === 'posted').map(t => t.id));
-    const activeLines = ledgerLines.filter(line => activeTxIds.has(line.transactionId));
-
-    return sortedCycles.map(cycle => {
-      let spent = 0;
-      
-      const cycleTxs = transactions.filter(t => t.budgetCycleId === cycle.id && t.status === 'posted' && t.categoryId === selectedCategoryId);
-      const cycleTxIds = new Set(cycleTxs.map(t => t.id));
-      const cycleLines = activeLines.filter(l => cycleTxIds.has(l.transactionId));
-
-      cycleTxs.forEach(tx => {
-        const txLines = cycleLines.filter(l => l.transactionId === tx.id);
-        txLines.forEach(l => {
-          let amountBase = Math.abs(l.signedAmount);
-          const rate = l.currency === baseCurrency ? 1 : (displayRates[l.currency] ?? 1);
-          amountBase = amountBase * rate;
-          spent += amountBase;
-        });
-      });
-
-      return {
-        cycleName: cycle.name,
-        spent: Math.round(spent)
-      };
-    });
+    return calculateCategoryTrends(sortedCycles, transactions, ledgerLines, selectedCategoryId, baseCurrency, displayRates);
   }, [isLoading, sortedCycles, transactions, ledgerLines, selectedCategoryId, displayRates, baseCurrency]);
 
   const expenseCategories = useMemo(() => {
     return categories.filter(c => c.type === 'expense');
   }, [categories]);
 
-  const cashFlowSeries = useMemo(() => {
-    const spend = cycleData.map(d => d.actualExpense);
-    const retained = cycleData.map(d => Math.max(d.actualIncome - d.actualExpense, 0));
-    const planGap = cycleData.map(d => {
-      const target = Math.max(d.expectedIncome, d.plannedBudget, d.actualIncome, d.actualExpense);
-      return Math.max(target - d.actualExpense - Math.max(d.actualIncome - d.actualExpense, 0), 0);
-    });
-    return { spend, retained, planGap };
-  }, [cycleData]);
+  const cashFlowSeries = useMemo(() => buildCashFlowSeries(cycleData), [cycleData]);
 
   if (isLoading) {
-    return (
-      <Card sx={{ height: '100%' }}>
-        <CardContent sx={{ p: 2.5 }}>
-          <Skeleton variant="text" width="40%" height={28} animation="wave" />
-          <Skeleton variant="rectangular" width="100%" height={200} sx={{ borderRadius: '12px', mt: 2 }} animation="wave" />
-        </CardContent>
-      </Card>
-    );
+    return <AnalyticsPlaceholder loading />;
   }
 
   if (cycleData.length === 0) {
-    return (
-      <Card sx={{ height: '100%' }}>
-        <CardContent sx={{ p: 2.5 }}>
-          <EmptyLayout
-            title="No analytics data yet"
-            description="Once you have at least one completed budget cycle with transactions, trends and insights will appear here."
-          />
-        </CardContent>
-      </Card>
-    );
+    return <AnalyticsPlaceholder loading={false} />;
   }
 
   return (

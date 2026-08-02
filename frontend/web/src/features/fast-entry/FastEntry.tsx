@@ -1,36 +1,19 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo } from 'react';
 import { useSnackbar } from 'notistack';
 import {
   Box,
   Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
   Divider,
-  Fab,
   InputAdornment,
-  Portal,
   Stack,
-  Typography,
-  Chip,
   TextField,
-  Skeleton,
-  alpha
+  Skeleton
 } from '@mui/material';
 import { MobileDatePicker } from '@mui/x-date-pickers/MobileDatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
-import { BackspaceIcon } from '@/components/AppIcon';
 import { NotesIcon } from '@/components/AppIcon';
-import { AddIcon } from '@/components/AppIcon';
 import { CalendarTodayIcon } from '@/components/AppIcon';
-import { AccountBalanceIcon } from '@/components/AppIcon';
-import { SavingsIcon } from '@/components/AppIcon';
-import { PaymentsIcon } from '@/components/AppIcon';
-import { CheckCircleIcon } from '@/components/AppIcon';
-import { ReceiptLongIcon } from '@/components/AppIcon';
-import { SearchIcon } from '@/components/AppIcon';
 import { isToday, format } from 'date-fns';
 import {
   useAccounts,
@@ -43,8 +26,13 @@ import {
 import { useAppContext } from '@/hooks/useAppContext';
 import { PageHeader } from '@/features/shared/components/PageHeader';
 import { EmptyLayout } from '@/features/shared/components/EmptyLayout';
-
-type EntryMode = 'expense' | 'income' | 'transfer';
+import { AccountPicker } from '@/features/shared/components/AccountPicker';
+import { CategoryChips, CategoryDialog } from './components/CategoryPicker';
+import { SaveFeedbackOverlay } from './components/SaveFeedbackOverlay';
+import { EntryKeypad } from './components/EntryKeypad';
+import { buildFastEntryTransaction, type EntryMode } from '@/libs/fastEntryTransaction';
+import { useSaveFeedback } from './hooks/useSaveFeedback';
+import { useFastEntryFormState } from './hooks/useFastEntryFormState';
 
 export function FastEntry() {
   const { enqueueSnackbar } = useSnackbar();
@@ -53,47 +41,11 @@ export function FastEntry() {
   const isSaveAnimationPreview = import.meta.env.DEV
     && new URLSearchParams(window.location.search).get('preview-save-animation') === '1';
 
-  const getAccountIcon = (type: string) => {
-    const iconStyle = { fontSize: '14px', color: 'inherit' };
-    if (type.toLowerCase() === 'savings' || type.toLowerCase() === 'savings bank') {
-      return <SavingsIcon sx={iconStyle} />;
-    }
-    if (type.toLowerCase() === 'cash' || type.toLowerCase() === 'wallet') {
-      return <PaymentsIcon sx={iconStyle} />;
-    }
-    return <AccountBalanceIcon sx={iconStyle} />;
-  };
-  const [mode, setMode] = useState<EntryMode>('expense');
-  const [amountStr, setAmountStr] = useState('0');
-  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
-  const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null);
-  const [description, setDescription] = useState('');
-  const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
-  const [categorySearch, setCategorySearch] = useState('');
-  const [showSaveFeedback, setShowSaveFeedback] = useState(false);
-  const [saveFeedbackContent, setSaveFeedbackContent] = useState({
-    title: 'Entry logged',
-    amount: '',
-    category: '',
-    account: '',
-  });
-  const saveFeedbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => () => {
-    if (saveFeedbackTimerRef.current) clearTimeout(saveFeedbackTimerRef.current);
-  }, []);
-
-  const triggerSaveFeedback = (title: string, amount: string, category: string, account: string) => {
-    if (saveFeedbackTimerRef.current) clearTimeout(saveFeedbackTimerRef.current);
-    setSaveFeedbackContent({ title, amount, category, account });
-    setShowSaveFeedback(true);
-    saveFeedbackTimerRef.current = setTimeout(() => setShowSaveFeedback(false), 2200);
-  };
+  const { amountStr, categoryDialogOpen, categorySearch, datePickerOpen, description, entryDate, isKeypadForDest, mode, selectedAccountId, selectedCategoryId, setAmountStr, setCategoryDialogOpen, setCategorySearch, setDatePickerOpen, setDescription, setEntryDate, setIsKeypadForDest, setMode, setSelectedAccountId, setSelectedCategoryId, setToAccountId, setToAmountStr, toAccountId, toAmountStr } = useFastEntryFormState();
+  const saveFeedback = useSaveFeedback();
+  const triggerSaveFeedback = saveFeedback.show;
 
   // Transfer Specific States
-  const [toAccountId, setToAccountId] = useState<string | null>(null);
-  const [toAmountStr, setToAmountStr] = useState('0');
-  const [isKeypadForDest, setIsKeypadForDest] = useState(false); // Controls which amount input the keypad controls
 
   // Queries & Mutations
   const { data: accounts = [], isLoading: accountsLoading } = useAccounts(householdId);
@@ -107,8 +59,6 @@ export function FastEntry() {
   );
 
   const activeCycle = cycles.find(c => c.status === 'open') || null;
-  const [entryDate, setEntryDate] = useState<Date>(new Date());
-  const [datePickerOpen, setDatePickerOpen] = useState(false);
   // YYYY-MM-DD string submitted to the backend
   const date = format(entryDate, 'yyyy-MM-dd');
   const dateLabel = isToday(entryDate) ? 'Today' : format(entryDate, 'MMM d');
@@ -231,169 +181,24 @@ export function FastEntry() {
   };
 
   const handleSave = async () => {
-    // Development-only visual QA: preview the success motion without validation
-    // or any transaction mutation. This branch is compiled out in production.
     if (isSaveAnimationPreview) {
-      triggerSaveFeedback(
-        mode === 'expense' ? 'Expense logged' : mode === 'income' ? 'Income logged' : 'Transfer sent',
-        `${amountStr === '0' ? '250' : amountStr} ${selectedAccount?.currency ?? baseCurrency}`,
-        mode === 'transfer' ? 'Transfer' : selectedCategory?.name ?? 'Food & dining',
-        mode === 'transfer'
-          ? `${selectedAccount?.name ?? 'EGP Cash'} → ${toAccount?.name ?? 'EGP Bank'}`
-          : selectedAccount?.name ?? 'EGP Cash',
-      );
+      triggerSaveFeedback(mode === 'expense' ? 'Expense logged' : mode === 'income' ? 'Income logged' : 'Transfer sent', `${amountStr === '0' ? '250' : amountStr} ${selectedAccount?.currency ?? baseCurrency}`, mode === 'transfer' ? 'Transfer' : selectedCategory?.name ?? 'Food & dining', mode === 'transfer' ? `${selectedAccount?.name ?? 'EGP Cash'} → ${toAccount?.name ?? 'EGP Bank'}` : selectedAccount?.name ?? 'EGP Cash');
       return;
     }
-
-    const amount = parseFloat(amountStr);
-
-    if (isNaN(amount) || amount <= 0) {
-      enqueueSnackbar('Please enter a valid amount', { variant: 'warning' });
-      return;
-    }
-
-    if ((mode === 'expense' || mode === 'income') && !selectedCategory) {
-      enqueueSnackbar('Please select a category before continuing', { variant: 'warning' });
-      return;
-    }
-
-    if (!selectedAccount) {
-      enqueueSnackbar('Please select a From Account', { variant: 'warning' });
-      return;
-    }
-
     try {
-      if (mode === 'expense') {
-        await createTxMutation.mutateAsync({
-          householdId,
-          transaction: {
-            type: 'expense',
-            date,
-            description: description || null,
-            categoryId: selectedCategory?.id || null,
-            budgetCycleId: activeCycle?.id || null,
-            createdBy: userProfile!.uid,
-          },
-          lines: [
-            {
-              accountId: selectedAccount.id,
-              signedAmount: -amount,
-              currency: selectedAccount.currency,
-            }
-          ]
-        });
-        triggerSaveFeedback(
-          'Expense logged',
-          `${amount} ${selectedAccount.currency}`,
-          selectedCategory?.name ?? 'Expense',
-          selectedAccount.name,
-        );
-        localStorage.setItem('ledger_last_used_account', selectedAccount.id);
-        // No snackbar — save feedback animation already provides visual confirmation
-        setAmountStr('0');
-        setDescription('');
-        setSelectedCategoryId(null);
-      } 
-      else if (mode === 'income') {
-        await createTxMutation.mutateAsync({
-          householdId,
-          transaction: {
-            type: 'income',
-            date,
-            description: description || 'Income',
-            categoryId: selectedCategory?.id || null,
-            budgetCycleId: activeCycle?.id || null,
-            createdBy: userProfile!.uid,
-          },
-          lines: [
-            {
-              accountId: selectedAccount.id,
-              signedAmount: amount,
-              currency: selectedAccount.currency,
-            }
-          ]
-        });
-        triggerSaveFeedback(
-          'Income logged',
-          `${amount} ${selectedAccount.currency}`,
-          selectedCategory?.name ?? 'Income',
-          selectedAccount.name,
-        );
-        // No snackbar — save feedback animation already provides visual confirmation
-        setAmountStr('0');
-        setDescription('');
-        setSelectedCategoryId(null);
-      } 
-      else if (mode === 'transfer') {
-        if (!toAccount) {
-          enqueueSnackbar('Please select a Destination Account', { variant: 'warning' });
-          return;
-        }
-        if (toAccount.id === selectedAccount.id) {
-          enqueueSnackbar('Source and Destination accounts must be different', { variant: 'warning' });
-          return;
-        }
-
-        const crossCurrency = toAccount.currency !== selectedAccount.currency;
-        let toAmount = 0;
-        if (crossCurrency) {
-          toAmount = parseFloat(toAmountStr);
-          if (isNaN(toAmount) || toAmount <= 0) {
-            enqueueSnackbar('Please enter a valid destination amount', { variant: 'warning' });
-            return;
-          }
-        }
-
-        await createTxMutation.mutateAsync({
-          householdId,
-          transaction: {
-            type: 'transfer',
-            date,
-            description: description || (crossCurrency
-              ? `${selectedAccount.currency} to ${toAccount.currency} Transfer`
-              : 'Transfer'),
-            budgetCycleId: activeCycle?.id || null,
-            createdBy: userProfile!.uid,
-          },
-          lines: [
-            {
-              accountId: selectedAccount.id,
-              signedAmount: -amount,
-              currency: selectedAccount.currency,
-            },
-            {
-              accountId: toAccount.id,
-              signedAmount: crossCurrency ? toAmount : amount,
-              currency: toAccount.currency,
-            }
-          ],
-          ...(crossCurrency ? {
-            conversionDetails: {
-              fromCurrency: selectedAccount.currency,
-              toCurrency: toAccount.currency,
-              fromAmount: amount,
-              toAmount: toAmount,
-              effectiveRate: toAmount / amount,
-              rateSource: 'manual' as const,
-            }
-          } : {}),
-        });
-        triggerSaveFeedback(
-          'Transfer sent',
-          `${amount} ${selectedAccount.currency}`,
-          'Transfer',
-          `${selectedAccount.name} → ${toAccount.name}`,
-        );
-        // No snackbar — save feedback animation already provides visual confirmation
-        setAmountStr('0');
-        setToAmountStr('0');
-        setDescription('');
-      }
-    } catch (err: any) {
-      enqueueSnackbar(err?.message || 'Error occurred saving transaction', { variant: 'error' });
+      const payload = buildFastEntryTransaction({ activeCycle, amountText: amountStr, category: selectedCategory, createdBy: userProfile!.uid, date, description, destinationAccount: toAccount, destinationAmountText: toAmountStr, mode, sourceAccount: selectedAccount });
+      await createTxMutation.mutateAsync({ householdId, ...payload });
+      const amount = Number(amountStr);
+      triggerSaveFeedback(mode === 'expense' ? 'Expense logged' : mode === 'income' ? 'Income logged' : 'Transfer sent', `${amount} ${selectedAccount!.currency}`, mode === 'transfer' ? 'Transfer' : selectedCategory?.name ?? mode, mode === 'transfer' ? `${selectedAccount!.name} → ${toAccount!.name}` : selectedAccount!.name);
+      if (mode === 'expense') localStorage.setItem('ledger_last_used_account', selectedAccount!.id);
+      setAmountStr('0');
+      setToAmountStr('0');
+      setDescription('');
+      if (mode !== 'transfer') setSelectedCategoryId(null);
+    } catch (error) {
+      enqueueSnackbar(error instanceof Error ? error.message : 'Error occurred saving transaction', { variant: 'error' });
     }
   };
-
   const currentCurrencySymbol = selectedAccount?.currency ?? baseCurrency;
   const isSaving = createTxMutation.isPending;
 
@@ -436,22 +241,8 @@ export function FastEntry() {
             <Button
               key={m}
               onClick={() => handleSelectMode(m)}
-              variant={mode === m ? 'contained' : 'outlined'}
-              sx={{
-                flex: 1,
-                fontSize: '11px',
-                height: 40,
-                minHeight: 40,
-                borderRadius: '16px',
-                px: 1,
-                bgcolor: mode === m ? 'secondary.main' : 'background.paper',
-                color: mode === m ? 'secondary.contrastText' : 'text.primary',
-                borderColor: mode === m ? 'transparent' : 'divider',
-                '&:hover': {
-                  bgcolor: mode === m ? 'secondary.main' : 'action.hover',
-                  borderColor: mode === m ? 'transparent' : 'divider',
-                },
-              }}
+              variant={mode === m ? 'segmentedSelected' : 'segmented'}
+              sx={{ flex: 1 }}
             >
               {m.toUpperCase()}
             </Button>
@@ -471,204 +262,34 @@ export function FastEntry() {
 
         {/* Category Selection (Only for expense/income) */}
         {(mode === 'expense' || mode === 'income') && (
-          <Box>
-            <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
-              <Typography variant="body1" sx={{ fontWeight: 'bold', color: 'text.primary', fontSize: '14px' }}>
-                Category
-              </Typography>
-            </Box>
-            {sortedCategories.length === 0 ? (
-              <EmptyLayout
-                title={`No ${mode} categories yet`}
-                description={`Create ${mode} categories first to tag your ${mode} entries.`}
-              />
-            ) : (
-              <Box
-                sx={{
-                  display: 'flex',
-                  flexWrap: 'wrap',
-                  gap: 1,
-                }}
-              >
-                {displayedCategories.map((cat) => {
-                  const isSelected = selectedCategory?.id === cat.id;
-                  return (
-                    <Chip
-                      key={cat.id}
-                      label={cat.name}
-                      onClick={() => setSelectedCategoryId(cat.id)}
-                      variant={isSelected ? 'filled' : 'outlined'}
-                      sx={{
-                        fontSize: '13px',
-                        height: 36,
-                        borderRadius: '12px',
-                        bgcolor: isSelected ? 'secondary.main' : 'background.paper',
-                        color: isSelected ? 'secondary.contrastText' : 'text.secondary',
-                        borderColor: isSelected ? 'secondary.main' : 'divider',
-                        fontWeight: isSelected ? 'bold' : 'normal',
-                        '&:hover': { bgcolor: isSelected ? 'secondary.main' : 'action.hover' },
-                      }}
-                    />
-                  );
-                })}
-                {sortedCategories.length > displayedCategories.length && (
-                  <Chip
-                    icon={<AddIcon fontSize="small" />}
-                    label={`More (${sortedCategories.length - displayedCategories.length})`}
-                    onClick={() => setCategoryDialogOpen(true)}
-                    variant="outlined"
-                    sx={{
-                      height: 36,
-                      borderRadius: '12px',
-                      borderColor: 'divider',
-                      color: 'primary.main',
-                      bgcolor: 'action.hover',
-                    }}
-                  />
-                )}
-              </Box>
-            )}
-          </Box>
+          <CategoryChips
+            categories={displayedCategories}
+            mode={mode}
+            onOpenAll={() => setCategoryDialogOpen(true)}
+            onSelect={setSelectedCategoryId}
+            selectedCategoryId={selectedCategoryId}
+            totalCount={sortedCategories.length}
+          />
         )}
 
-        {/* Account Selection */}
-        <Box sx={{ width: '100%' }}>
-          <Box display="flex" alignItems="center" justifyContent="space-between" sx={{ mb: 1 }}>
-            <Typography variant="body1" sx={{ fontWeight: 'bold', color: 'text.primary', fontSize: '14px' }}>
-              {mode === 'transfer' ? 'Source Account' : 'From Account'}
-            </Typography>
-            {!selectedAccount && (
-              <Typography variant="caption" sx={{ color: 'error.main', fontSize: '11px', fontWeight: 600 }}>
-                Tap to select
-              </Typography>
-            )}
-          </Box>
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5 }}>
-            {sortedAccounts.map(acc => {
-              const isSelected = selectedAccount?.id === acc.id;
-              return (
-                <Box
-                  key={acc.id}
-                  onClick={() => handleSelectSourceAccount(acc.id)}
-                  sx={{
-                    flex: { xs: '1 1 calc(50% - 9px)', sm: '1 1 0' },
-                    minWidth: 0,
-                    p: 1.5,
-                    borderRadius: '16px',
-                    border: '1px solid',
-                    borderColor: isSelected ? 'transparent' : 'divider',
-                    bgcolor: isSelected
-                      ? theme => alpha(theme.palette.primary.main, 0.08)
-                      : 'background.paper',
-                    color: isSelected ? 'primary.main' : 'text.secondary',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'flex-start'
-                  }}
-                >
-                  <Box display="flex" alignItems="center" gap={1} sx={{ width: '100%', mb: 0.5 }}>
-                    <Box sx={{ 
-                      width: 24, 
-                      height: 24, 
-                      borderRadius: '8px', 
-                      bgcolor: 'action.hover',
-                      color: isSelected ? 'primary.main' : 'text.secondary',
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      justifyContent: 'center',
-                      flexShrink: 0
-                    }}>
-                      {getAccountIcon(acc.type)}
-                    </Box>
-                    <Typography variant="body2" sx={{ opacity: 0.7, fontSize: '11px', textTransform: 'capitalize' }}>
-                      {acc.type}
-                    </Typography>
-                    {isSelected && <CheckCircleIcon sx={{ ml: 'auto', fontSize: 17, color: 'primary.main' }} />}
-                  </Box>
-                  <Typography variant="body1" sx={{ fontWeight: 'bold', fontSize: '13.5px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', width: '100%', color: isSelected ? 'primary.main' : 'text.primary' }}>
-                    {acc.name}
-                  </Typography>
-                </Box>
-              );
-            })}
-          </Box>
-        </Box>
+        <AccountPicker
+          accounts={sortedAccounts}
+          label={mode === 'transfer' ? 'Source Account' : 'From Account'}
+          onSelect={handleSelectSourceAccount}
+          selectedAccountId={selectedAccountId}
+        />
 
         {/* Target Account Selection (Only for transfer) */}
         {mode === 'transfer' && (
-          <Box sx={{ width: '100%' }}>
-            <Box display="flex" alignItems="center" justifyContent="space-between" sx={{ mb: 1 }}>
-              <Typography variant="body1" sx={{ fontWeight: 'bold', color: 'text.primary', fontSize: '14px' }}>
-                Destination Account
-              </Typography>
-              {!toAccount && (
-                <Typography variant="caption" sx={{ color: 'error.main', fontSize: '11px', fontWeight: 600 }}>
-                  Tap to select
-                </Typography>
-              )}
-            </Box>
-            {eligibleDestinationAccounts.length > 0 ? (
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5 }}>
-                {eligibleDestinationAccounts.map(acc => {
-                  const isSelected = toAccount?.id === acc.id;
-                  return (
-                    <Box
-                      key={acc.id}
-                      onClick={() => setToAccountId(acc.id)}
-                      sx={{
-                        flex: { xs: '1 1 calc(50% - 9px)', sm: '1 1 0' },
-                        minWidth: 0,
-                        p: 1.5,
-                        borderRadius: '16px',
-                        border: '1px solid',
-                        borderColor: isSelected ? 'transparent' : 'divider',
-                        bgcolor: isSelected
-                          ? theme => alpha(theme.palette.primary.main, 0.08)
-                          : 'background.paper',
-                        color: isSelected ? 'primary.main' : 'text.secondary',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'flex-start'
-                      }}
-                    >
-                      <Box display="flex" alignItems="center" gap={1} sx={{ width: '100%', mb: 0.5 }}>
-                        <Box sx={{ 
-                          width: 24, 
-                          height: 24, 
-                          borderRadius: '8px', 
-                          bgcolor: 'action.hover',
-                          color: isSelected ? 'primary.main' : 'text.secondary',
-                          display: 'flex', 
-                          alignItems: 'center', 
-                          justifyContent: 'center',
-                          flexShrink: 0
-                        }}>
-                          {getAccountIcon(acc.type)}
-                        </Box>
-                        <Typography variant="body2" sx={{ opacity: 0.7, fontSize: '11px', textTransform: 'capitalize' }}>
-                          {acc.type}
-                        </Typography>
-                        {isSelected && <CheckCircleIcon sx={{ ml: 'auto', fontSize: 17, color: 'primary.main' }} />}
-                      </Box>
-                      <Typography variant="body1" sx={{ fontWeight: 'bold', fontSize: '13.5px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', width: '100%', color: isSelected ? 'primary.main' : 'text.primary' }}>
-                        {acc.name}
-                      </Typography>
-                    </Box>
-                  );
-                })}
-              </Box>
-            ) : (
-              <Typography variant="body2" sx={{ color: 'text.secondary', fontStyle: 'italic', fontSize: '13px', py: 1 }}>
-                {selectedAccountId
-                  ? 'No other accounts available.'
-                  : 'Please select a Source Account first.'}
-              </Typography>
-            )}
-          </Box>
+          <AccountPicker
+            accounts={eligibleDestinationAccounts}
+            emptyMessage={selectedAccountId
+              ? 'No other accounts available.'
+              : 'Please select a Source Account first.'}
+            label="Destination Account"
+            onSelect={setToAccountId}
+            selectedAccountId={toAccountId}
+          />
         )}
 
         {/* Note / Date Area */}
@@ -707,514 +328,40 @@ export function FastEntry() {
             </Stack>
           </Box>
 
-        {/* Custom Numeric Keypad */}
-        <Box sx={{ order: 1, minWidth: 0 }}>
-        <Box>
-          {/* Amount display lives directly above the keypad so the value being
-              entered is always visible while typing (mobile UX). */}
-          <Box
-            onClick={() => isCrossCurrency && setIsKeypadForDest(false)}
-            sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              py: 2,
-              mb: 1.5,
-              bgcolor: (!isKeypadForDest || !isCrossCurrency) ? 'primary.dark' : 'background.paper',
-              color: (!isKeypadForDest || !isCrossCurrency) ? 'primary.contrastText' : 'text.secondary',
-              borderRadius: '24px',
-              border: '1px solid',
-              borderColor: (!isKeypadForDest || !isCrossCurrency) ? 'transparent' : 'divider',
-              boxShadow: (!isKeypadForDest || !isCrossCurrency) ? '0px 4px 12px rgba(0,0,0,0.08)' : 'none',
-              cursor: isCrossCurrency ? 'pointer' : 'default',
-              transition: 'all 0.2s',
-              position: 'relative',
-              overflow: 'hidden',
-            }}
-          >
-            <Typography variant="body2" sx={{ color: (!isKeypadForDest || !isCrossCurrency) ? 'rgba(255,255,255,0.7)' : 'text.secondary', fontSize: '12px', fontWeight: 500, mb: 0.5 }}>
-              {mode === 'transfer' ? 'Source Amount' : 'Amount to Log'}
-            </Typography>
-            <Box display="flex" alignItems="baseline" gap={0.5} sx={{ color: (!isKeypadForDest || !isCrossCurrency) ? 'primary.contrastText' : 'text.secondary' }}>
-              <Typography color="inherit" sx={{ fontSize: '20px', fontWeight: 600 }}>
-                {currentCurrencySymbol}
-              </Typography>
-              <Typography color="inherit" sx={{ fontSize: '32px', fontWeight: 700 }}>
-                {amountStr}
-              </Typography>
-            </Box>
-          </Box>
-
-          {/* Destination amount (cross-currency transfer only) */}
-          {isCrossCurrency && (
-            <Box
-              onClick={() => setIsKeypadForDest(true)}
-              sx={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                py: 1.5,
-                mb: 1.5,
-                bgcolor: isKeypadForDest ? 'primary.dark' : 'background.paper',
-                color: isKeypadForDest ? 'primary.contrastText' : 'text.secondary',
-                borderRadius: '24px',
-                border: '1px solid',
-                borderColor: isKeypadForDest ? 'transparent' : 'divider',
-                boxShadow: isKeypadForDest ? '0px 4px 12px rgba(0,0,0,0.08)' : 'none',
-                cursor: 'pointer',
-                transition: 'all 0.2s',
-              }}
-            >
-              <Typography variant="body2" sx={{ color: isKeypadForDest ? 'rgba(255,255,255,0.7)' : 'text.secondary', fontSize: '12px', fontWeight: 500, mb: 0.5 }}>
-                Destination Amount
-              </Typography>
-              <Box display="flex" alignItems="baseline" gap={0.5} sx={{ color: isKeypadForDest ? 'primary.contrastText' : 'text.secondary' }}>
-                <Typography color="inherit" sx={{ fontSize: '18px', fontWeight: 600 }}>
-                  {toAccount?.currency ?? baseCurrency}
-                </Typography>
-                <Typography color="inherit" sx={{ fontSize: '28px', fontWeight: 700 }}>
-                  {toAmountStr}
-                </Typography>
-              </Box>
-            </Box>
-          )}
-          {isCrossCurrency && (() => {
-            const fromAmt = parseFloat(amountStr);
-            const destAmt = parseFloat(toAmountStr);
-            if (isNaN(fromAmt) || fromAmt <= 0 || isNaN(destAmt) || destAmt <= 0) return null;
-            const rate = destAmt / fromAmt;
-            return (
-              <Typography variant="body2" align="center" sx={{ color: 'text.secondary', fontSize: '12px', mb: 1.5 }}>
-                Rate: 1 {selectedAccount?.currency} = {rate.toFixed(2)} {toAccount?.currency}
-              </Typography>
-            );
-          })()}
-          <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1 }}>
-            {['1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '0', 'back'].map(k => {
-              const isBack = k === 'back';
-              return (
-                <Button
-                  key={k}
-                  onClick={() => handleKeypadPress(k)}
-                  disableRipple
-                  fullWidth
-                  sx={{
-                    height: 60,
-                    borderRadius: '16px',
-                    border: '1px solid',
-                    borderColor: 'divider',
-                    bgcolor: isBack ? 'surfaceOffWhite' : 'background.paper',
-                    color: 'text.primary',
-                    fontSize: '20px',
-                    fontWeight: 'bold',
-                    boxShadow: 'none',
-                    touchAction: 'manipulation',
-                    userSelect: 'none',
-                    WebkitUserSelect: 'none',
-                    WebkitTapHighlightColor: 'transparent',
-                    '&:hover': { bgcolor: 'action.hover' },
-                    '&:active': { transform: 'scale(0.95)', bgcolor: 'info.light' }
-                  }}
-                >
-                  {isBack ? <BackspaceIcon /> : k}
-                </Button>
-              );
-            })}
-          </Box>
-
-          {/* Submit Action Button */}
-          <Button
-            onClick={handleSave}
-            loading={isSaving}
-            loadingPosition="start"
-            startIcon={<CheckCircleIcon />}
-            fullWidth
-            variant="contained"
-            sx={{
-              mt: 2.5,
-              height: 56,
-              borderRadius: '16px',
-              bgcolor: 'primary.dark',
-              fontSize: '16px',
-              fontWeight: 'bold',
-              textTransform: 'none',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 1,
-              display: { xs: 'none', lg: 'flex' },
-            }}
-          >
-            {mode === 'expense' ? 'Save Expense' : mode === 'income' ? 'Save Income' : 'Save Transaction'}
-          </Button>
-
-          <Fab
-            variant="extended"
-            color="primary"
-            aria-label={mode === 'expense' ? 'Save Expense' : mode === 'income' ? 'Save Income' : 'Save Transaction'}
-            onClick={handleSave}
-            disabled={isSaving}
-            sx={{
-              display: { xs: 'flex', lg: 'none' },
-              position: 'fixed',
-              right: 18,
-              bottom: 96,
-              zIndex: theme => theme.zIndex.appBar + 1,
-              minWidth: 112,
-              gap: 1,
-            }}
-          >
-            <CheckCircleIcon fontSize="small" />
-            {isSaving ? 'Saving…' : 'Save'}
-          </Fab>
-        </Box>
-        </Box>
+        <EntryKeypad
+          activeDestination={isKeypadForDest}
+          amount={amountStr}
+          crossCurrency={isCrossCurrency}
+          destinationAmount={toAmountStr}
+          destinationCurrency={toAccount?.currency ?? baseCurrency}
+          mode={mode}
+          onDestinationFocus={() => setIsKeypadForDest(true)}
+          onKeyPress={handleKeypadPress}
+          onSave={handleSave}
+          onSourceFocus={() => isCrossCurrency && setIsKeypadForDest(false)}
+          saving={isSaving}
+          sourceCurrency={currentCurrencySymbol}
+        />
         </Box>
 
-        <Dialog
+        <CategoryDialog
+          categories={filteredCategories}
           open={categoryDialogOpen}
+          search={categorySearch}
+          selectedCategoryId={selectedCategoryId}
+          onSearchChange={setCategorySearch}
+          onSelect={(categoryId) => {
+            setSelectedCategoryId(categoryId);
+            setCategoryDialogOpen(false);
+            setCategorySearch('');
+          }}
           onClose={() => {
             setCategoryDialogOpen(false);
             setCategorySearch('');
           }}
-          fullWidth
-          maxWidth="xs"
-        >
-          <DialogTitle>
-            Choose category
-            <Typography component="span" sx={{ display: 'block', mt: 0.5, fontSize: 12, fontWeight: 600, color: 'text.secondary' }}>
-              Frequent categories stay on the entry screen for faster logging.
-            </Typography>
-          </DialogTitle>
-          <DialogContent dividers>
-            <Stack spacing={2} sx={{ pt: 0.5 }}>
-              <TextField
-                autoFocus
-                fullWidth
-                placeholder="Search categories"
-                value={categorySearch}
-                onChange={event => setCategorySearch(event.target.value)}
-                slotProps={{
-                  input: {
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <SearchIcon fontSize="small" />
-                      </InputAdornment>
-                    ),
-                  },
-                }}
-              />
-              {filteredCategories.length > 0 ? (
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                  {filteredCategories.map(category => {
-                    const isSelected = selectedCategory?.id === category.id;
-                    return (
-                      <Chip
-                        key={category.id}
-                        label={category.name}
-                        onClick={() => {
-                          setSelectedCategoryId(category.id);
-                          setCategoryDialogOpen(false);
-                          setCategorySearch('');
-                        }}
-                        variant={isSelected ? 'filled' : 'outlined'}
-                        sx={{
-                          height: 40,
-                          borderRadius: '12px',
-                          bgcolor: isSelected ? 'secondary.main' : 'background.paper',
-                          color: isSelected ? 'secondary.contrastText' : 'text.secondary',
-                          borderColor: isSelected ? 'secondary.main' : 'divider',
-                        }}
-                      />
-                    );
-                  })}
-                </Box>
-              ) : (
-                <EmptyLayout
-                  title="No matching categories"
-                  description="Try another category name."
-                />
-              )}
-            </Stack>
-          </DialogContent>
-          <DialogActions>
-            <Button
-              onClick={() => {
-                setCategoryDialogOpen(false);
-                setCategorySearch('');
-              }}
-            >
-              Cancel
-            </Button>
-          </DialogActions>
-        </Dialog>
+        />
 
-        <Portal>
-          {showSaveFeedback && (
-            <Box
-              role="status"
-              aria-live="polite"
-              aria-label="Entry saved"
-              sx={{
-                position: 'fixed',
-                inset: 0,
-                zIndex: theme => theme.zIndex.modal + 2,
-                color: 'common.white',
-                bgcolor: theme => alpha(theme.palette.common.black, theme.palette.mode === 'dark' ? 0.2 : 0.1),
-                backdropFilter: 'blur(7px) saturate(0.82)',
-                WebkitBackdropFilter: 'blur(7px) saturate(0.82)',
-                pointerEvents: 'none',
-                overflow: 'visible',
-                animation: 'fastEntryBackdrop 2150ms ease both',
-                '@keyframes fastEntryBackdrop': {
-                  '0%': { opacity: 0 },
-                  '14%, 88%': { opacity: 1 },
-                  '100%': { opacity: 0 },
-                },
-                '@media (prefers-reduced-motion: reduce)': {
-                  animation: 'none',
-                  '& *': { animationDuration: '1ms !important' },
-                },
-              }}
-            >
-              {[0, 1, 2].map(ring => (
-                <Box
-                  key={ring}
-                  sx={{
-                    position: 'absolute',
-                    left: '50%',
-                    top: '52%',
-                    width: { xs: 150, sm: 190 },
-                    aspectRatio: '1',
-                    borderRadius: '50%',
-                    border: '1px solid',
-                    borderColor: theme => alpha(theme.palette.common.white, 0.18),
-                    animation: `fastEntryRing 980ms ${120 + ring * 105}ms cubic-bezier(0.16, 1, 0.3, 1) both`,
-                    '@keyframes fastEntryRing': {
-                      '0%': { opacity: 0, transform: 'translate(-50%, -50%) scale(0.25)' },
-                      '22%': { opacity: 1 },
-                      '100%': { opacity: 0, transform: 'translate(-50%, -50%) scale(2.15)' },
-                    },
-                    '@media (prefers-reduced-motion: reduce)': { display: 'none' },
-                  }}
-                />
-              ))}
-
-              {[...Array(10)].map((_, particle) => {
-                const angle = particle * 36;
-                const distance = 116 + (particle % 3) * 22;
-                return (
-                  <Box
-                    key={`particle-${particle}`}
-                    sx={{
-                      position: 'absolute',
-                      left: '50%',
-                      top: '48%',
-                      width: particle % 2 ? 5 : 8,
-                      height: particle % 2 ? 5 : 8,
-                      borderRadius: particle % 3 ? '50%' : '2px',
-                      bgcolor: particle % 3 === 0 ? 'secondary.main' : 'common.white',
-                      boxShadow: theme => `0 0 16px ${alpha(theme.palette.common.white, 0.42)}`,
-                      animation: `fastEntryParticle${particle} 820ms ${470 + (particle % 4) * 35}ms cubic-bezier(0.16, 1, 0.3, 1) both`,
-                      [`@keyframes fastEntryParticle${particle}`]: {
-                        '0%': { opacity: 0, transform: 'translate(-50%, -50%) scale(0.2)' },
-                        '20%': { opacity: 0.9 },
-                        '100%': {
-                          opacity: 0,
-                          transform: `translate(calc(-50% + ${Math.cos(angle * Math.PI / 180) * distance}px), calc(-50% + ${Math.sin(angle * Math.PI / 180) * distance}px)) scale(1) rotate(${angle + 90}deg)`,
-                        },
-                      },
-                      '@media (prefers-reduced-motion: reduce)': { display: 'none' },
-                    }}
-                  />
-                );
-              })}
-
-              <Stack
-                alignItems="center"
-                spacing={0.5}
-                onClick={() => setShowSaveFeedback(false)}
-                sx={{
-                  color: 'common.white',
-                  position: 'absolute',
-                  left: '50%',
-                  top: { xs: '58%', sm: '56%' },
-                  width: 'min(calc(100vw - 40px), 420px)',
-                  textAlign: 'center',
-                  px: 3,
-                  py: 2.5,
-                  borderRadius: '24px',
-                  border: '1px solid',
-                  borderColor: theme => alpha(theme.palette.secondary.main, 0.34),
-                  background: theme => `linear-gradient(145deg, ${alpha(theme.palette.primary.dark, 0.9)} 0%, ${alpha(theme.palette.common.black, 0.62)} 100%)`,
-                  backdropFilter: 'blur(24px) saturate(1.2)',
-                  boxShadow: theme => `0 28px 72px ${alpha(theme.palette.common.black, 0.34)}, inset 0 1px 0 ${alpha(theme.palette.common.white, 0.14)}, 0 0 40px ${alpha(theme.palette.secondary.main, 0.08)}`,
-                  pointerEvents: 'auto',
-                  cursor: 'pointer',
-                  animation: 'fastEntryCopy 2150ms cubic-bezier(0.22, 1, 0.36, 1) both',
-                  '@keyframes fastEntryCopy': {
-                    '0%, 16%': { opacity: 0, transform: 'translate(-50%, 28px) scale(0.92)' },
-                    '34%': { opacity: 1, transform: 'translate(-50%, 0) scale(1.025)' },
-                    '43%, 86%': { opacity: 1, transform: 'translate(-50%, 0) scale(1)' },
-                    '100%': { opacity: 0, transform: 'translate(-50%, -10px) scale(0.98)' },
-                  },
-                  '@media (prefers-reduced-motion: reduce)': {
-                    animation: 'none',
-                    transform: 'translate(-50%, 0)',
-                    top: '50%',
-                  },
-                }}
-              >
-                <Typography
-                  sx={{
-                    color: 'common.white',
-                    fontSize: 14,
-                    lineHeight: 1.4,
-                    fontWeight: 700,
-                    opacity: 0.74,
-                  }}
-                >
-                  {saveFeedbackContent.title}
-                </Typography>
-                <Typography
-                  sx={{
-                    color: 'common.white',
-                    fontSize: { xs: 38, sm: 48 },
-                    lineHeight: 1.1,
-                    fontWeight: 800,
-                    letterSpacing: '-0.04em',
-                  }}
-                >
-                  {saveFeedbackContent.amount}
-                </Typography>
-                <Stack
-                  direction="row"
-                  alignItems="center"
-                  justifyContent="center"
-                  spacing={1}
-                  sx={{ width: '100%', pt: 0.5, color: 'common.white', opacity: 0.76 }}
-                >
-                  <Typography noWrap sx={{ maxWidth: '42%', fontSize: 13, fontWeight: 650 }}>
-                    {saveFeedbackContent.category}
-                  </Typography>
-                  <Typography aria-hidden sx={{ fontSize: 12 }}>•</Typography>
-                  <Typography noWrap sx={{ maxWidth: '50%', fontSize: 13, fontWeight: 650 }}>
-                    {saveFeedbackContent.account}
-                  </Typography>
-                </Stack>
-                <Typography sx={{ pt: 1, fontSize: 11, fontWeight: 650, color: 'secondary.main' }}>
-                  Saved securely · Tap to continue
-                </Typography>
-                <Box
-                  aria-hidden
-                  sx={{
-                    mt: 1.25,
-                    width: 72,
-                    height: 3,
-                    borderRadius: 'pill',
-                    bgcolor: theme => alpha(theme.palette.common.white, 0.14),
-                    overflow: 'hidden',
-                    '&::after': {
-                      content: '""',
-                      display: 'block',
-                      width: '100%',
-                      height: '100%',
-                      bgcolor: 'secondary.main',
-                      transformOrigin: 'left',
-                      animation: 'fastEntryProgress 1100ms 760ms linear both',
-                    },
-                    '@keyframes fastEntryProgress': {
-                      from: { transform: 'scaleX(0)' },
-                      to: { transform: 'scaleX(1)' },
-                    },
-                  }}
-                />
-              </Stack>
-
-              <Stack
-                alignItems="center"
-                sx={{
-                  position: 'absolute',
-                  left: '50%',
-                  top: { xs: 'calc(58% - 118px)', sm: 'calc(56% - 118px)' },
-                  animation: 'fastEntrySendIcon 2150ms cubic-bezier(0.22, 1, 0.36, 1) both',
-                  '@keyframes fastEntrySendIcon': {
-                    '0%': { opacity: 0, transform: 'translate(-50%, 24px) scale(0.36) rotate(8deg)' },
-                    '10%': { opacity: 1, transform: 'translate(-50%, -50%) scale(1.06) rotate(0deg)' },
-                    '17%': { transform: 'translate(-50%, -50%) scale(0.96)' },
-                    '26%, 88%': { opacity: 1, transform: 'translate(-50%, -50%) scale(0.78) rotate(0deg)' },
-                    '100%': { opacity: 0, transform: 'translate(-50%, calc(-50% - 8px)) scale(0.7)' },
-                  },
-                  '@media (prefers-reduced-motion: reduce)': { display: 'none' },
-                }}
-              >
-                {[0, 1, 2].map(trail => (
-                  <Box
-                    key={trail}
-                    sx={{
-                      position: 'absolute',
-                      top: 124 + trail * 22,
-                      width: 11 - trail,
-                      height: 11 - trail,
-                      borderRadius: '50%',
-                      bgcolor: 'secondary.main',
-                      opacity: 0.68 - trail * 0.16,
-                      animation: `fastEntryTrail 260ms ${trail * 45}ms ease-in-out infinite alternate`,
-                      '@keyframes fastEntryTrail': {
-                        from: { transform: 'translateY(0) scale(0.75)' },
-                        to: { transform: 'translateY(8px) scale(1)' },
-                      },
-                    }}
-                  />
-                ))}
-                <Box
-                  sx={{
-                    width: { xs: 120, sm: 132 },
-                    height: { xs: 120, sm: 132 },
-                    borderRadius: '50%',
-                    display: 'grid',
-                    placeItems: 'center',
-                    bgcolor: 'secondary.main',
-                    color: 'secondary.contrastText',
-                    position: 'relative',
-                  }}
-                >
-                  <ReceiptLongIcon
-                    fontSize="inherit"
-                    sx={{
-                      fontSize: { xs: 72, sm: 80 },
-                      position: 'absolute',
-                      '& path, & circle, & rect, & line, & polyline': {
-                        strokeWidth: 1,
-                      },
-                      animation: 'fastEntryReceiptOut 1100ms ease-out both',
-                      '@keyframes fastEntryReceiptOut': {
-                        '0%, 45%': { opacity: 1, transform: 'scale(1) rotate(0deg)' },
-                        '62%, 100%': { opacity: 0, transform: 'scale(0.55) rotate(-18deg)' },
-                      },
-                    }}
-                  />
-                  <CheckCircleIcon
-                    fontSize="inherit"
-                    sx={{
-                      fontSize: { xs: 72, sm: 80 },
-                      position: 'absolute',
-                      '& path, & circle, & rect, & line, & polyline': {
-                        strokeWidth: 1,
-                      },
-                      animation: 'fastEntryCheckIn 1100ms cubic-bezier(0.22, 1, 0.36, 1) both',
-                      '@keyframes fastEntryCheckIn': {
-                        '0%, 48%': { opacity: 0, transform: 'scale(0.35) rotate(18deg)' },
-                        '68%, 100%': { opacity: 1, transform: 'scale(1) rotate(0deg)' },
-                      },
-                    }}
-                  />
-                </Box>
-              </Stack>
-            </Box>
-          )}
-        </Portal>
+        <SaveFeedbackOverlay content={saveFeedback.content} onClose={saveFeedback.hide} open={saveFeedback.open} />
 
       </Stack>
     </Box>
@@ -1228,28 +375,13 @@ export function FastEntry() {
  */
 function DateButtonField({ dateLabel, setOpen }: { dateLabel?: string; setOpen?: (open: boolean) => void }) {
   return (
-    <Box
+    <Button
+      variant="compactField"
       onClick={() => setOpen?.(true)}
-      sx={{
-        width: '120px',
-        height: 56,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        border: '1px solid',
-        borderColor: 'divider',
-        bgcolor: 'action.hover',
-        borderRadius: '16px',
-        color: 'text.secondary',
-        fontSize: '13.5px',
-        gap: 0.5,
-        cursor: 'pointer',
-        userSelect: 'none',
-        '&:hover': { bgcolor: 'action.selected' },
-      }}
+      startIcon={<CalendarTodayIcon sx={{ fontSize: 16 }} />}
+      sx={{ width: 120 }}
     >
-      <CalendarTodayIcon sx={{ fontSize: '16px' }} />
       {dateLabel}
-    </Box>
+    </Button>
   );
 }

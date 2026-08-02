@@ -17,6 +17,8 @@ import { Money } from '@/components/Money';
 import { usePrivacyMask } from '@/hooks/usePrivacyMask';
 import { BarChartIcon, PaymentsIcon, SavingsIcon } from '@/components/AppIcon';
 
+const formatMaskedValue = (value: number, mask: (value: string) => string) => mask(Math.round(value).toLocaleString());
+
 export function BudgetBreakdownCard() {
   const { householdId } = useAppContext();
   const theme = useTheme();
@@ -185,7 +187,6 @@ export function BudgetBreakdownCard() {
 
                     const statusColor = getCategoryStatusColor(cat.status);
 
-                    const formatValue = (value: number) => maskNumber(value.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 }));
                     return (
                       <Box key={cat.categoryId} sx={{ px: 1, py: 1, borderRadius: 2, '&:hover': { bgcolor: 'action.hover' } }}>
                         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'minmax(140px, 1.4fr) minmax(150px, 1fr) repeat(3, minmax(84px, .7fr))' }, gap: { xs: 1.5, md: 2 }, alignItems: 'center' }}>
@@ -199,9 +200,9 @@ export function BudgetBreakdownCard() {
                           </Stack>
                           <Box sx={{ display: { xs: 'grid', md: 'contents' }, gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 1.5 }}>
                             {[
-                              { label: 'Planned', value: formatValue(cat.planned), color: 'text.primary' },
-                              { label: 'Spent', value: cat.spent > 0 ? formatValue(cat.spent) : '—', color: cat.spent > 0 ? 'text.primary' : 'text.disabled' },
-                              { label: 'Remaining', value: `${isOver ? '' : '+'}${formatValue(remaining)}`, color: isOver ? 'error.main' : remaining > 0 ? 'success.main' : 'text.secondary' },
+                              { label: 'Planned', value: formatMaskedValue(cat.planned, maskNumber), color: 'text.primary' },
+                              { label: 'Spent', value: cat.spent > 0 ? formatMaskedValue(cat.spent, maskNumber) : '—', color: cat.spent > 0 ? 'text.primary' : 'text.disabled' },
+                              { label: 'Remaining', value: `${isOver ? '' : '+'}${formatMaskedValue(remaining, maskNumber)}`, color: isOver ? 'error.main' : remaining > 0 ? 'success.main' : 'text.secondary' },
                             ].map(item => (
                               <Box key={item.label} sx={{ minWidth: 0, textAlign: { xs: 'left', md: 'right' } }}>
                                 <Typography sx={{ display: { md: 'none' }, fontSize: 9.5, lineHeight: '14px', fontWeight: 600, color: 'text.secondary' }}>{item.label}</Typography>

@@ -6,6 +6,7 @@ import { FinanceTransaction, Category, LedgerLine, Account } from '@kippa/domain
 import { TransactionIcon } from '@/features/transactions/components/TransactionIcon';
 import { useHouseholdBaseCurrency } from '@/hooks/useFinance';
 import { usePrivacyMask } from '@/hooks/usePrivacyMask';
+import { formatShortTime } from '@/libs/dateFormatting';
 
 interface TransactionsListItemProps {
   tx: FinanceTransaction;
@@ -37,15 +38,6 @@ export const TransactionsListItem: React.FC<TransactionsListItemProps> = ({
   const txAccount = firstLine ? accounts.find((a) => a.id === firstLine.accountId) : null;
   const isCreditCard = tx.type === 'expense' && txAccount?.type === 'credit';
 
-  const formatTime = (isoString: string) => {
-    try {
-      const date = new Date(isoString);
-      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    } catch {
-      return '';
-    }
-  };
-
   // Helper to render type-specific description layout
   const renderItemDetails = () => {
     switch (tx.type) {
@@ -67,7 +59,7 @@ export const TransactionsListItem: React.FC<TransactionsListItemProps> = ({
                 {maskDigits(`${fromAmt} ${fromLine?.currency}`)} ➔ {maskDigits(`${toAmt} ${toLine?.currency}`)}
               </Typography>
               <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', fontSize: '10px', mt: 0.25, opacity: 0.8 }}>
-                {tx.date} • {formatTime(tx.createdAt)}
+                {tx.date} • {formatShortTime(tx.createdAt)}
               </Typography>
               <Typography variant="body1" sx={{ fontWeight: 'bold', color: 'text.primary', fontSize: '13.5px', whiteSpace: 'nowrap', mt: 0.5 }}>
                 Transfer Completed
@@ -84,7 +76,7 @@ export const TransactionsListItem: React.FC<TransactionsListItemProps> = ({
               {fromAcc?.name || 'Wallet'} ➔ {toAcc?.name || 'Bank'}
             </Typography>
             <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', fontSize: '10px', mt: 0.25, opacity: 0.8 }}>
-              {tx.date} • {formatTime(tx.createdAt)}
+              {tx.date} • {formatShortTime(tx.createdAt)}
             </Typography>
             <Typography variant="body1" sx={{ fontWeight: 'bold', color: 'text.primary', fontSize: '13.5px', whiteSpace: 'nowrap', mt: 0.5 }}>
               -{maskDigits(`${amount.toLocaleString()} ${currency}`)}
@@ -105,7 +97,7 @@ export const TransactionsListItem: React.FC<TransactionsListItemProps> = ({
               </Typography>
             )}
             <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', fontSize: '10px', mt: 0.25, opacity: 0.8 }}>
-              {tx.date} • {formatTime(tx.createdAt)}
+              {tx.date} • {formatShortTime(tx.createdAt)}
             </Typography>
             <Typography variant="body1" sx={{ fontWeight: 'bold', color: isIncome ? 'success.main' : 'error.main', fontSize: '13.5px', whiteSpace: 'nowrap', mt: 0.5 }}>
               {isIncome ? '+' : '-'}{maskDigits(`${amount.toLocaleString()} ${currency}`)}
@@ -126,7 +118,7 @@ export const TransactionsListItem: React.FC<TransactionsListItemProps> = ({
               </Typography>
             )}
             <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', fontSize: '10px', mt: 0.25, opacity: 0.8 }}>
-              {tx.date} • {formatTime(tx.createdAt)}
+              {tx.date} • {formatShortTime(tx.createdAt)}
             </Typography>
             <Typography variant="body1" sx={{ fontWeight: 'bold', color: 'success.main', fontSize: '13.5px', whiteSpace: 'nowrap', mt: 0.5 }}>
               +{maskDigits(`${amount.toLocaleString()} ${currency}`)}
@@ -148,7 +140,7 @@ export const TransactionsListItem: React.FC<TransactionsListItemProps> = ({
               </Typography>
             )}
             <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', fontSize: '10px', mt: 0.25, opacity: 0.8 }}>
-              {tx.date} • {formatTime(tx.createdAt)}
+              {tx.date} • {formatShortTime(tx.createdAt)}
             </Typography>
             <Typography variant="body1" sx={{ fontWeight: 'bold', color: 'text.primary', fontSize: '13.5px', whiteSpace: 'nowrap', mt: 0.5 }}>
               -{maskDigits(`${amount.toLocaleString()} ${currency}`)}

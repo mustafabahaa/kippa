@@ -9,11 +9,9 @@ import {
   Typography,
   Box,
   Stack,
-  Divider,
   IconButton,
   LinearProgress,
 } from '@mui/material';
-import { CheckCircleIcon } from '@/components/AppIcon';
 import { CloseIcon } from '@/components/AppIcon';
 import { useAppContext } from '@/hooks/useAppContext';
 import {
@@ -23,36 +21,14 @@ import {
   useCategories,
   useCycles,
 } from '@/hooks/useFinance';
-import type { Card, TransactionType } from '@kippa/domain';
+import type { Card } from '@kippa/domain';
 import { CardBackground, BankLogo, NetworkLogo, TierLabel, CardChip, ContactlessIcon } from './CardDesign';
-import { TransactionIcon } from '@/features/transactions/components/TransactionIcon';
-import { EmptyLayout } from '@/features/shared/components/EmptyLayout';
 import { Money } from '@/components/Money';
 import { useFormattedMoney } from '@/hooks/useFormattedMoney';
 import { usePrivacyMask } from '@/hooks/usePrivacyMask';
-
-type Charge = {
-  lineId: string;
-  txId: string;
-  date: string;
-  description: string | null;
-  amount: number; // positive
-  paid: boolean;
-  txType: TransactionType;
-  categoryId: string | null;
-  budgetCycleId: string | null;
-};
-
-function formatDateRange(startDate: string, endDate?: string | null): string {
-  const fmt = (d: string) => {
-    try {
-      return new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    } catch {
-      return d;
-    }
-  };
-  return `${fmt(startDate)} – ${endDate ? fmt(endDate) : 'Present'}`;
-}
+import { calculateCardActivity, type CardCharge } from '@/libs/cardActivity';
+import { CardActivityList } from './components/CardActivityList';
+import { useCardPaymentState } from './hooks/useCardPaymentState';
 
 export function CardDetail({ card, onClose }: { card: Card; onClose: () => void }) {
   const { householdId } = useAppContext();
@@ -65,89 +41,11 @@ export function CardDetail({ card, onClose }: { card: Card; onClose: () => void 
   const { data: allCycles = [] } = useCycles(householdId);
   const activeCycle = allCycles.find(c => c.status === 'open') || null;
 
-  const [payOpen, setPayOpen] = useState(false);
-  const [payAmount, setPayAmount] = useState<number | ''>('');
-  const [payLabel, setPayLabel] = useState('Pay');
-  const [paySettlesChargeIds, setPaySettlesChargeIds] = useState<string[] | undefined>(undefined);
-  const [paySettlesDescriptions, setPaySettlesDescriptions] = useState<string[] | undefined>(undefined);
+  const { amount: payAmount, label: payLabel, open: payOpen, setAmount: setPayAmount, setLabel: setPayLabel, setOpen: setPayOpen, setSettlesChargeIds: setPaySettlesChargeIds, setSettlesDescriptions: setPaySettlesDescriptions, settlesChargeIds: paySettlesChargeIds, settlesDescriptions: paySettlesDescriptions } = useCardPaymentState();
 
   const isCredit = card.kind === 'credit';
   const creditAccountId = card.parentAccountId;
-
-  // All outflows (purchases) and inflows (payments) on the credit account.
-  const postedTxIds = new Set(allTransactions.filter(t => t.status === 'posted').map(t => t.id));
-  const cardLines = allLines
-    .filter(l => l.accountId === creditAccountId && postedTxIds.has(l.transactionId))
-    .sort((a, b) => {
-      const ta = allTransactions.find(t => t.id === a.transactionId);
-      const tb = allTransactions.find(t => t.id === b.transactionId);
-      return (ta?.date ?? '').localeCompare(tb?.date ?? '');
-    });
-
-  // Map every charge txId → settled status.
-  // Preferred source of truth: a card-payment transfer that explicitly lists
-  // the charge id in `settlesChargeIds`. Only if a payment has no such link
-  // (legacy "Pay all" lump sums) do we fall back to FIFO allocation, AND only
-  // within the same budget cycle — a payment can never mark a charge paid in a
-  // different cycle, which was the bug that silently crossed month boundaries.
-  const chargeTxIds = new Set(
-    cardLines.filter(l => l.signedAmount < 0).map(l => l.transactionId)
-  );
-  const explicitlySettled = new Set<string>();
-  for (const l of cardLines) {
-    if (l.signedAmount <= 0) continue; // only payment lines (inflows)
-    const tx = allTransactions.find(t => t.id === l.transactionId);
-    if (tx?.settlesChargeIds) {
-      for (const cid of tx.settlesChargeIds) {
-        if (chargeTxIds.has(cid)) explicitlySettled.add(cid);
-      }
-    }
-  }
-
-  // FIFO fallback, scoped per budget cycle so a lump "Pay all" can't bleed
-  // into a later cycle and hide the Pay buttons there.
-  const cycleRemaining = new Map<string, number>();
-  for (const l of cardLines) {
-    if (l.signedAmount <= 0) continue;
-    const tx = allTransactions.find(t => t.id === l.transactionId);
-    if (tx?.settlesChargeIds && tx.settlesChargeIds.length > 0) continue; // already attributed
-    const key = tx?.budgetCycleId ?? 'uncategorized';
-    cycleRemaining.set(key, (cycleRemaining.get(key) ?? 0) + l.signedAmount);
-  }
-
-  const charges: Charge[] = [];
-  for (const line of cardLines) {
-    const tx = allTransactions.find(t => t.id === line.transactionId);
-    if (!tx) continue;
-    if (line.signedAmount >= 0) continue; // charges only (outflows)
-    const key = tx.budgetCycleId ?? 'uncategorized';
-    let paid = explicitlySettled.has(tx.id);
-    if (!paid) {
-      const remaining = cycleRemaining.get(key) ?? 0;
-      const amount = Math.abs(line.signedAmount);
-      if (remaining >= amount) {
-        paid = true;
-        cycleRemaining.set(key, remaining - amount);
-      }
-    }
-    charges.push({
-      lineId: line.id, txId: tx.id, date: tx.date,
-      description: tx.description ?? null,
-      amount: Math.abs(line.signedAmount),
-      paid,
-      txType: tx.type,
-      categoryId: tx.categoryId ?? null,
-      budgetCycleId: tx.budgetCycleId ?? null,
-    });
-  }
-
-  const unpaidCharges = charges.filter(c => !c.paid);
-  const totalDebt = unpaidCharges.reduce((s, c) => s + c.amount, 0);
-
-  // Compute debit available balance (account balance for debit cards).
-  const accountBalance = allLines
-    .filter(l => l.accountId === creditAccountId && postedTxIds.has(l.transactionId))
-    .reduce((s, l) => s + l.signedAmount, 0);
+  const { accountBalance, charges, cycleGroups, totalDebt } = calculateCardActivity(creditAccountId, allTransactions, allLines, allCycles);
 
   const utilizationPct = card.creditLimit != null && card.creditLimit > 0
     ? Math.min(100, Math.round((totalDebt / card.creditLimit) * 100))
@@ -159,38 +57,6 @@ export function CardDetail({ card, onClose }: { card: Card; onClose: () => void 
     setVisibleCycleCount(prev => prev + 1);
   };
 
-  type CycleGroup = {
-    groupId: string;
-    cycleName: string;
-    cycleDateRange: string;
-    startDate: string;
-    charges: Charge[];
-  };
-
-  const cycleMap = new Map<string, CycleGroup>();
-
-  for (const c of charges) {
-    const resolvedCycle = c.budgetCycleId ? allCycles.find(cy => cy.id === c.budgetCycleId) : null;
-    const groupId = resolvedCycle ? resolvedCycle.id : 'uncategorized';
-    if (!cycleMap.has(groupId)) {
-      cycleMap.set(groupId, {
-        groupId,
-        cycleName: resolvedCycle?.name ?? 'Uncategorized',
-        cycleDateRange: resolvedCycle ? formatDateRange(resolvedCycle.startDate, resolvedCycle.endDate) : '',
-        startDate: resolvedCycle?.startDate ?? '0000-00-00',
-        charges: [],
-      });
-    }
-    cycleMap.get(groupId)!.charges.push(c);
-  }
-
-  const cycleGroups = [...cycleMap.values()]
-    .filter(g => g.charges.length > 0)
-    .sort((a, b) => {
-      if (a.groupId === 'uncategorized') return 1;
-      if (b.groupId === 'uncategorized') return -1;
-      return b.startDate.localeCompare(a.startDate);
-    });
 
   const openPayAll = () => {
     // Record every currently-unpaid charge this lump payment will settle, so
@@ -205,7 +71,7 @@ export function CardDetail({ card, onClose }: { card: Card; onClose: () => void 
     setPayOpen(true);
   };
 
-  const openPayOne = (charge: Charge) => {
+  const openPayOne = (charge: CardCharge) => {
     const desc = charge.description ?? charge.txType;
     setPayAmount(Number(charge.amount.toFixed(2)));
     setPayLabel(`Pay ${desc} (${formatMoney(charge.amount, card.currency, 2)})`);
@@ -420,157 +286,7 @@ export function CardDetail({ card, onClose }: { card: Card; onClose: () => void 
 
         {/* ── Activity Section ─────────────────────────────────────── */}
         <DialogContent sx={{ px: 3, pb: 3, pt: 2 }}>
-          {cycleGroups.length === 0 ? (
-            <EmptyLayout
-              title="No charges yet"
-              description="Transactions on this card will appear here grouped by cycle."
-            />
-          ) : (
-            <Stack spacing={0} divider={<Divider />}>
-              {cycleGroups.slice(0, visibleCycleCount).map((group) => {
-                return (
-                  <Box key={group.groupId}>
-                    {/* Cycle group header */}
-                    <Stack
-                      direction="row"
-                      justifyContent="space-between"
-                      alignItems="center"
-                      sx={{ py: 1.5 }}
-                    >
-                      <Box>
-                        <Typography variant="body1" sx={{ fontWeight: 700, color: 'text.primary' }}>
-                          {group.cycleName}
-                        </Typography>
-                        {group.cycleDateRange && (
-                          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                            {group.cycleDateRange}
-                          </Typography>
-                        )}
-                      </Box>
-                      <Typography variant="body2" sx={{ color: 'text.secondary', fontWeight: 600 }}>
-                        {group.charges.length} charge{group.charges.length !== 1 ? 's' : ''}
-                      </Typography>
-                    </Stack>
-
-                    {/* Charges in this cycle */}
-                    {group.charges.map((c) => {
-                      const cat = c.categoryId ? categories.find(ct => ct.id === c.categoryId) : null;
-                      const currency = card.currency;
-
-                      return (
-                        <Stack
-                          key={c.lineId}
-                          direction="row"
-                          alignItems="flex-start"
-                          spacing={1.5}
-                          sx={{ py: 1 }}
-                        >
-                          {/* Transaction icon */}
-                          <TransactionIcon type={c.txType} size={38} isCreditCard={card.kind === 'credit'} />
-
-                          {/* Details */}
-                          <Box sx={{ flex: 1, minWidth: 0 }}>
-                            <Typography
-                              variant="body1"
-                              sx={{
-                                fontWeight: 600,
-                                fontSize: '13.5px',
-                                color: c.paid ? 'text.disabled' : 'text.primary',
-                                textDecoration: c.paid ? 'line-through' : 'none',
-                              }}
-                            >
-                              {cat?.name ?? c.txType}
-                            </Typography>
-                            {c.description && (
-                              <Typography
-                                variant="body2"
-                                sx={{
-                                  color: 'text.secondary',
-                                  fontSize: '11px',
-                                  mt: 0.25,
-                                  overflow: 'hidden',
-                                  textOverflow: 'ellipsis',
-                                  whiteSpace: 'nowrap',
-                                }}
-                              >
-                                {c.description}
-                              </Typography>
-                            )}
-                            <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '10px', mt: 0.25, display: 'block' }}>
-                              {c.date}
-                            </Typography>
-                          </Box>
-
-                          {/* Amount + actions */}
-                          <Stack direction="row" spacing={1} alignItems="center" sx={{ flexShrink: 0, ml: 1 }}>
-                            {c.paid ? (
-                              <>
-                                <Typography
-                                  variant="body1"
-                                  sx={{
-                                    fontWeight: 600,
-                                    fontSize: '13.5px',
-                                    color: 'text.disabled',
-                                    textDecoration: 'line-through',
-                                  }}
-                                >
-                                  −{maskDigits(`${currency} ${c.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}`)}
-                                </Typography>
-                                <CheckCircleIcon sx={{ fontSize: 18, color: 'success.main' }} />
-                              </>
-                            ) : (
-                              <>
-                                <Typography
-                                  variant="body1"
-                                  sx={{ fontWeight: 700, fontSize: '13.5px', color: 'text.primary' }}
-                                >
-                                  −{maskDigits(`${currency} ${c.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}`)}
-                                </Typography>
-                                {isCredit && (
-                                  <Button
-                                    size="small"
-                                    onClick={() => openPayOne(c)}
-                                    sx={{
-                                      fontWeight: 600,
-                                      fontSize: '11px',
-                                      px: 1.5,
-                                      borderRadius: '8px',
-                                      minWidth: 'auto',
-                                    }}
-                                  >
-                                    Pay
-                                  </Button>
-                                )}
-                              </>
-                            )}
-                          </Stack>
-                        </Stack>
-                      );
-                    })}
-                  </Box>
-                );
-              })}
-
-              {/* Load next cycle */}
-              {visibleCycleCount < cycleGroups.length && (
-                <Box sx={{ textAlign: 'center', py: 1 }}>
-                  <Button
-                    size="small"
-                    onClick={loadNextCycle}
-                    sx={{
-                      fontWeight: 600,
-                      fontSize: '12px',
-                      color: 'primary.main',
-                      textTransform: 'none',
-                      px: 2,
-                    }}
-                  >
-                    Load previous cycle ({cycleGroups.length - visibleCycleCount} remaining)
-                  </Button>
-                </Box>
-              )}
-            </Stack>
-          )}
+          <CardActivityList card={card} categories={categories} groups={cycleGroups} mask={maskDigits} onLoadMore={loadNextCycle} onPay={openPayOne} visibleCount={visibleCycleCount} />
         </DialogContent>
       </Dialog>
 

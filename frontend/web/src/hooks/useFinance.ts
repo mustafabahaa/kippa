@@ -14,6 +14,7 @@ import { useSnackbar } from 'notistack';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { notifyOfflineAwareSuccess } from '@/lib/offlineToast';
 import { computeFrequencyScores } from '@/utils/categoryFrequency';
+import { financeQueryKeys as keys } from './financeQueryKeys';
 import {
   Account,
   Category,
@@ -64,7 +65,7 @@ function useOfflineSuccessNotifier() {
 
 export function useAccounts(householdId: string) {
   return useQuery({
-    queryKey: ['accounts', householdId],
+    queryKey: keys.accounts(householdId),
     queryFn: () => ledgerLib.getAccounts(householdId),
     enabled: !!householdId,
   });
@@ -72,7 +73,7 @@ export function useAccounts(householdId: string) {
 
 export function useCategories(householdId: string) {
   return useQuery({
-    queryKey: ['categories', householdId],
+    queryKey: keys.categories(householdId),
     queryFn: () => ledgerLib.getCategories(householdId),
     enabled: !!householdId,
   });
@@ -80,7 +81,7 @@ export function useCategories(householdId: string) {
 
 export function useCycles(householdId: string) {
   return useQuery({
-    queryKey: ['budgetCycles', householdId],
+    queryKey: keys.cycles(householdId),
     queryFn: () => cyclesLib.getCycles(householdId),
     enabled: !!householdId,
   });
@@ -88,7 +89,7 @@ export function useCycles(householdId: string) {
 
 export function useTransactions(householdId: string, cycleId?: string) {
   return useQuery({
-    queryKey: ['transactions', householdId, cycleId],
+    queryKey: keys.transactions(householdId, cycleId),
     queryFn: () => ledgerLib.getTransactions(householdId, cycleId),
     enabled: !!householdId,
   });
@@ -96,7 +97,7 @@ export function useTransactions(householdId: string, cycleId?: string) {
 
 export function usePendingFinancialMessages(householdId: string) {
   return useQuery({
-    queryKey: ['pendingFinancialMessages', householdId],
+    queryKey: keys.pendingMessages(householdId),
     queryFn: () => messageIngestionLib.getPending(householdId),
     enabled: !!householdId,
     refetchInterval: 30_000,
@@ -105,7 +106,7 @@ export function usePendingFinancialMessages(householdId: string) {
 
 export function useResolvedPendingFinancialMessages(householdId: string) {
   return useQuery<ResolvedPendingFinancialMessage[]>({
-    queryKey: ['resolvedPendingFinancialMessages', householdId],
+    queryKey: keys.resolvedMessages(householdId),
     queryFn: () => messageIngestionLib.getResolved(householdId),
     enabled: !!householdId,
   });
@@ -116,7 +117,7 @@ export function useApprovePendingFinancialMessageMutation() {
   return useMutation({
     mutationFn: messageIngestionLib.approve,
     onMutate: async (variables) => {
-      const queryKey = ['pendingFinancialMessages', variables.householdId] as const;
+      const queryKey = keys.pendingMessages(variables.householdId);
       await queryClient.cancelQueries({ queryKey });
 
       const previousPending = queryClient.getQueryData<PendingFinancialMessage[]>(queryKey);
@@ -132,12 +133,12 @@ export function useApprovePendingFinancialMessageMutation() {
       }
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['transactions', variables.householdId] });
-      queryClient.invalidateQueries({ queryKey: ['ledgerLines', variables.householdId] });
-      queryClient.invalidateQueries({ queryKey: ['resolvedPendingFinancialMessages', variables.householdId] });
+      queryClient.invalidateQueries({ queryKey: keys.transactions(variables.householdId) });
+      queryClient.invalidateQueries({ queryKey: keys.ledgerLines(variables.householdId) });
+      queryClient.invalidateQueries({ queryKey: keys.resolvedMessages(variables.householdId) });
     },
     onSettled: (_data, _error, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['pendingFinancialMessages', variables.householdId] });
+      queryClient.invalidateQueries({ queryKey: keys.pendingMessages(variables.householdId) });
     },
   });
 }
@@ -148,7 +149,7 @@ export function useDiscardPendingFinancialMessageMutation() {
     mutationFn: ({ householdId, pendingId }: { householdId: string; pendingId: string }) =>
       messageIngestionLib.discard(householdId, pendingId),
     onMutate: async (variables) => {
-      const queryKey = ['pendingFinancialMessages', variables.householdId] as const;
+      const queryKey = keys.pendingMessages(variables.householdId);
       await queryClient.cancelQueries({ queryKey });
 
       const previousPending = queryClient.getQueryData<PendingFinancialMessage[]>(queryKey);
@@ -164,8 +165,8 @@ export function useDiscardPendingFinancialMessageMutation() {
       }
     },
     onSettled: (_data, _error, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['pendingFinancialMessages', variables.householdId] });
-      queryClient.invalidateQueries({ queryKey: ['resolvedPendingFinancialMessages', variables.householdId] });
+      queryClient.invalidateQueries({ queryKey: keys.pendingMessages(variables.householdId) });
+      queryClient.invalidateQueries({ queryKey: keys.resolvedMessages(variables.householdId) });
     },
   });
 }
@@ -177,13 +178,13 @@ export function useRestoreDiscardedPendingFinancialMessageMutation() {
       messageIngestionLib.restoreDiscarded(householdId, pendingId),
     onSuccess: (item, variables) => {
       queryClient.setQueryData<PendingFinancialMessage[]>(
-        ['pendingFinancialMessages', variables.householdId],
+        keys.pendingMessages(variables.householdId),
         (current = []) => [item, ...current.filter((candidate) => candidate.id !== item.id)],
       );
     },
     onSettled: (_data, _error, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['pendingFinancialMessages', variables.householdId] });
-      queryClient.invalidateQueries({ queryKey: ['resolvedPendingFinancialMessages', variables.householdId] });
+      queryClient.invalidateQueries({ queryKey: keys.pendingMessages(variables.householdId) });
+      queryClient.invalidateQueries({ queryKey: keys.resolvedMessages(variables.householdId) });
     },
   });
 }
@@ -206,7 +207,7 @@ export function useCategoryFrequency(
 
 export function useLedgerLines(householdId: string, cycleId?: string) {
   return useQuery({
-    queryKey: ['ledgerLines', householdId, cycleId],
+    queryKey: keys.ledgerLines(householdId, cycleId),
     queryFn: () => ledgerLib.getLedgerLines(householdId, cycleId),
     enabled: !!householdId,
   });
@@ -214,7 +215,7 @@ export function useLedgerLines(householdId: string, cycleId?: string) {
 
 export function useActiveCycle(householdId: string) {
   return useQuery({
-    queryKey: ['activeCycle', householdId],
+    queryKey: keys.activeCycle(householdId),
     queryFn: () => cyclesLib.getActiveCycle(householdId),
     enabled: !!householdId,
   });
@@ -222,7 +223,7 @@ export function useActiveCycle(householdId: string) {
 
 export function useBudgetAllocations(householdId: string, cycleId: string | undefined) {
   return useQuery({
-    queryKey: ['budgetAllocations', householdId, cycleId],
+    queryKey: keys.allocations(householdId, cycleId),
     queryFn: () => cyclesLib.getBudgetAllocations(householdId, cycleId!),
     enabled: !!householdId && !!cycleId,
   });
@@ -230,7 +231,7 @@ export function useBudgetAllocations(householdId: string, cycleId: string | unde
 
 export function useExpectedIncomes(householdId: string, cycleId: string | undefined) {
   return useQuery({
-    queryKey: ['expectedIncome', householdId, cycleId],
+    queryKey: keys.expectedIncome(householdId, cycleId),
     queryFn: () => cyclesLib.getExpectedIncomes(householdId, cycleId!),
     enabled: !!householdId && !!cycleId,
   });
@@ -238,7 +239,7 @@ export function useExpectedIncomes(householdId: string, cycleId: string | undefi
 
 export function useReconciliationHistory(householdId: string) {
   return useQuery({
-    queryKey: ['reconciliations', householdId],
+    queryKey: keys.reconciliations(householdId),
     queryFn: () => ledgerLib.getReconciliations(householdId),
     enabled: !!householdId,
   });
@@ -254,7 +255,7 @@ export function useNotificationSettings(householdId: string, userId: string) {
 
 export function useCards(householdId: string) {
   return useQuery({
-    queryKey: ['cards', householdId],
+    queryKey: keys.cards(householdId),
     queryFn: () => cardsLib.getCards(householdId),
     enabled: !!householdId,
   });
@@ -262,7 +263,7 @@ export function useCards(householdId: string) {
 
 export function useCardStatements(householdId: string, cardId?: string) {
   return useQuery({
-    queryKey: ['cardStatements', householdId, cardId],
+    queryKey: keys.cardStatements(householdId, cardId),
     queryFn: () => cardsLib.getStatements(householdId, cardId),
     enabled: !!householdId,
   });
@@ -455,8 +456,8 @@ export function useCreateTransactionMutation() {
     }) => transactionsLib.createTransaction(data.householdId, data.transaction, data.lines, data.conversionDetails, auditUser),
     onSuccess: (_, variables) => {
       notifyOfflineSuccess();
-      queryClient.invalidateQueries({ queryKey: ['transactions', variables.householdId] });
-      queryClient.invalidateQueries({ queryKey: ['ledgerLines', variables.householdId] });
+      queryClient.invalidateQueries({ queryKey: keys.transactions(variables.householdId) });
+      queryClient.invalidateQueries({ queryKey: keys.ledgerLines(variables.householdId) });
     },
   });
 }
@@ -470,8 +471,8 @@ export function useVoidTransactionMutation() {
       transactionsLib.voidTransaction(data.householdId, data.transactionId, auditUser),
     onSuccess: (_, variables) => {
       notifyOfflineSuccess();
-      queryClient.invalidateQueries({ queryKey: ['transactions', variables.householdId] });
-      queryClient.invalidateQueries({ queryKey: ['ledgerLines', variables.householdId] });
+      queryClient.invalidateQueries({ queryKey: keys.transactions(variables.householdId) });
+      queryClient.invalidateQueries({ queryKey: keys.ledgerLines(variables.householdId) });
     },
   });
 }
@@ -495,8 +496,8 @@ export function useUpdateTransactionMutation() {
     ),
     onSuccess: (_, variables) => {
       notifyOfflineSuccess();
-      queryClient.invalidateQueries({ queryKey: ['transactions', variables.householdId] });
-      queryClient.invalidateQueries({ queryKey: ['ledgerLines', variables.householdId] });
+      queryClient.invalidateQueries({ queryKey: keys.transactions(variables.householdId) });
+      queryClient.invalidateQueries({ queryKey: keys.ledgerLines(variables.householdId) });
     },
   });
 }
@@ -512,7 +513,7 @@ export function useCreateAccountMutation() {
     }) => ledgerLib.createAccount(data.householdId, data.account, auditUser),
     onSuccess: (_, variables) => {
       notifyOfflineSuccess();
-      queryClient.invalidateQueries({ queryKey: ['accounts', variables.householdId] });
+      queryClient.invalidateQueries({ queryKey: keys.accounts(variables.householdId) });
     },
   });
 }
@@ -529,7 +530,7 @@ export function useUpdateAccountMutation() {
     }) => ledgerLib.updateAccount(data.householdId, data.accountId, data.updated, auditUser),
     onSuccess: (_, variables) => {
       notifyOfflineSuccess();
-      queryClient.invalidateQueries({ queryKey: ['accounts', variables.householdId] });
+      queryClient.invalidateQueries({ queryKey: keys.accounts(variables.householdId) });
     },
   });
 }
@@ -543,8 +544,8 @@ export function useCreateDebitCardMutation() {
       cardsLib.createDebitCard(data.householdId, data.card, data.accounts, auditUser),
     onSuccess: (_, variables) => {
       notifyOfflineSuccess();
-      queryClient.invalidateQueries({ queryKey: ['cards', variables.householdId] });
-      queryClient.invalidateQueries({ queryKey: ['accounts', variables.householdId] });
+      queryClient.invalidateQueries({ queryKey: keys.cards(variables.householdId) });
+      queryClient.invalidateQueries({ queryKey: keys.accounts(variables.householdId) });
     },
   });
 }
@@ -558,8 +559,8 @@ export function useCreateCreditCardMutation() {
       cardsLib.createCreditCard(data.householdId, data.card, data.accounts, data.sortOrder, auditUser),
     onSuccess: (_, variables) => {
       notifyOfflineSuccess();
-      queryClient.invalidateQueries({ queryKey: ['cards', variables.householdId] });
-      queryClient.invalidateQueries({ queryKey: ['accounts', variables.householdId] });
+      queryClient.invalidateQueries({ queryKey: keys.cards(variables.householdId) });
+      queryClient.invalidateQueries({ queryKey: keys.accounts(variables.householdId) });
     },
   });
 }
@@ -573,7 +574,7 @@ export function useUpdateCardMutation() {
       cardsLib.updateCard(data.householdId, data.cardId, data.updates, data.accounts, auditUser),
     onSuccess: (_, variables) => {
       notifyOfflineSuccess();
-      queryClient.invalidateQueries({ queryKey: ['cards', variables.householdId] });
+      queryClient.invalidateQueries({ queryKey: keys.cards(variables.householdId) });
     },
   });
 }
@@ -587,9 +588,9 @@ export function useMarkAsPaidMutation() {
       cardsLib.markAsPaid(data.householdId, data.statement, data.card, data.amount, auditUser),
     onSuccess: (_, variables) => {
       notifyOfflineSuccess();
-      queryClient.invalidateQueries({ queryKey: ['transactions', variables.householdId] });
-      queryClient.invalidateQueries({ queryKey: ['ledgerLines', variables.householdId] });
-      queryClient.invalidateQueries({ queryKey: ['cardStatements', variables.householdId] });
+      queryClient.invalidateQueries({ queryKey: keys.transactions(variables.householdId) });
+      queryClient.invalidateQueries({ queryKey: keys.ledgerLines(variables.householdId) });
+      queryClient.invalidateQueries({ queryKey: keys.cardStatements(variables.householdId) });
     },
   });
 }
@@ -603,8 +604,8 @@ export function usePayCardMutation() {
       cardsLib.payCard(data.householdId, data.card, data.amount, auditUser, data.settlesChargeIds, data.budgetCycleId, data.settlesDescriptions),
     onSuccess: (_, variables) => {
       notifyOfflineSuccess();
-      queryClient.invalidateQueries({ queryKey: ['transactions', variables.householdId] });
-      queryClient.invalidateQueries({ queryKey: ['ledgerLines', variables.householdId] });
+      queryClient.invalidateQueries({ queryKey: keys.transactions(variables.householdId) });
+      queryClient.invalidateQueries({ queryKey: keys.ledgerLines(variables.householdId) });
     },
   });
 }
@@ -620,7 +621,7 @@ export function useCreateCategoryMutation() {
     }) => ledgerLib.createCategory(data.householdId, data.category, auditUser),
     onSuccess: (_, variables) => {
       notifyOfflineSuccess();
-      queryClient.invalidateQueries({ queryKey: ['categories', variables.householdId] });
+      queryClient.invalidateQueries({ queryKey: keys.categories(variables.householdId) });
     },
   });
 }
@@ -637,7 +638,7 @@ export function useUpdateCategoryMutation() {
     }) => ledgerLib.updateCategory(data.householdId, data.categoryId, data.updates, auditUser),
     onSuccess: (_, variables) => {
       notifyOfflineSuccess();
-      queryClient.invalidateQueries({ queryKey: ['categories', variables.householdId] });
+      queryClient.invalidateQueries({ queryKey: keys.categories(variables.householdId) });
     },
   });
 }
@@ -653,8 +654,8 @@ export function useCreateCycleMutation() {
     }) => cyclesLib.createCycle(data.householdId, data.cycle, auditUser),
     onSuccess: (_, variables) => {
       notifyOfflineSuccess();
-      queryClient.invalidateQueries({ queryKey: ['budgetCycles', variables.householdId] });
-      queryClient.invalidateQueries({ queryKey: ['activeCycle', variables.householdId] });
+      queryClient.invalidateQueries({ queryKey: keys.cycles(variables.householdId) });
+      queryClient.invalidateQueries({ queryKey: keys.activeCycle(variables.householdId) });
     },
   });
 }
@@ -672,8 +673,8 @@ export function useUpdateCycleStatusMutation() {
     }) => cyclesLib.updateCycleStatus(data.householdId, data.cycleId, data.status, data.extra, auditUser),
     onSuccess: (_, variables) => {
       notifyOfflineSuccess();
-      queryClient.invalidateQueries({ queryKey: ['budgetCycles', variables.householdId] });
-      queryClient.invalidateQueries({ queryKey: ['activeCycle', variables.householdId] });
+      queryClient.invalidateQueries({ queryKey: keys.cycles(variables.householdId) });
+      queryClient.invalidateQueries({ queryKey: keys.activeCycle(variables.householdId) });
     },
   });
 }
@@ -689,7 +690,7 @@ export function useSaveAllocationMutation() {
     }) => cyclesLib.saveBudgetAllocation(data.householdId, data.allocation, auditUser),
     onSuccess: (_, variables) => {
       notifyOfflineSuccess();
-      queryClient.invalidateQueries({ queryKey: ['budgetAllocations', variables.householdId, variables.allocation.budgetCycleId] });
+      queryClient.invalidateQueries({ queryKey: keys.allocations(variables.householdId, variables.allocation.budgetCycleId) });
     },
   });
 }
@@ -706,7 +707,7 @@ export function useSaveAllocationsBatchMutation() {
     }) => cyclesLib.saveBudgetAllocationsBatch(data.householdId, data.allocations, auditUser),
     onSuccess: (_, variables) => {
       notifyOfflineSuccess();
-      queryClient.invalidateQueries({ queryKey: ['budgetAllocations', variables.householdId, variables.cycleId] });
+      queryClient.invalidateQueries({ queryKey: keys.allocations(variables.householdId, variables.cycleId) });
     },
   });
 }
@@ -722,7 +723,7 @@ export function useSaveExpectedIncomeMutation() {
     }) => cyclesLib.saveExpectedIncome(data.householdId, data.income, auditUser),
     onSuccess: (_, variables) => {
       notifyOfflineSuccess();
-      queryClient.invalidateQueries({ queryKey: ['expectedIncome', variables.householdId, variables.income.budgetCycleId] });
+      queryClient.invalidateQueries({ queryKey: keys.expectedIncome(variables.householdId, variables.income.budgetCycleId) });
     },
   });
 }
@@ -756,7 +757,7 @@ export function useSaveReconciliationMutation() {
     }) => ledgerLib.createReconciliation(data.householdId, data.reconId, data.reconLog, auditUser),
     onSuccess: (_, variables) => {
       notifyOfflineSuccess();
-      queryClient.invalidateQueries({ queryKey: ['reconciliations', variables.householdId] });
+      queryClient.invalidateQueries({ queryKey: keys.reconciliations(variables.householdId) });
     },
   });
 }

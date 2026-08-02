@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -18,6 +18,7 @@ import {
   Box,
   Stack,
   Divider,
+  alpha,
 } from '@mui/material';
 import { useSnackbar } from 'notistack';
 import {
@@ -28,8 +29,10 @@ import {
   useHouseholdBaseCurrency,
 } from '@/hooks/useFinance';
 import { useAppContext } from '@/hooks/useAppContext';
-import { FinanceTransaction, CurrencyCode } from '@kippa/domain';
+import { FinanceTransaction } from '@kippa/domain';
 import { TransactionTypeChip } from './TransactionTypeChip';
+import { useTransactionEditFields } from '../hooks/useTransactionEditFields';
+import { findPrimaryLedgerLine, resolveEditedCurrency, resolveEditedSignedAmount } from '@/libs/transactionEdit';
 
 interface EditTransactionDialogProps {
   open: boolean;
@@ -50,69 +53,37 @@ export const EditTransactionDialog: React.FC<EditTransactionDialogProps> = ({
   const { data: ledgerLines = [] } = useLedgerLines(householdId);
   const updateMutation = useUpdateTransactionMutation();
 
-  const [editDesc, setEditDesc] = useState('');
-  const [editDate, setEditDate] = useState('');
-  const [editCatId, setEditCatId] = useState('');
-  const [editAccId, setEditAccId] = useState('');
-  const [editAmount, setEditAmount] = useState('0');
-  const [editType, setEditType] = useState<'income' | 'expense'>('expense');
-
-  /* eslint-disable react-hooks/set-state-in-effect */
-  useEffect(() => {
-    if (transaction) {
-      setEditDesc(transaction.description || '');
-      setEditDate(transaction.date);
-      setEditCatId(transaction.categoryId || '');
-      setEditType((transaction.type === 'income' ? 'income' : 'expense') as 'income' | 'expense');
-
-      const txLines = ledgerLines.filter((l) => l.transactionId === transaction.id);
-      const firstLine = txLines.find((l) => l.signedAmount !== 0) || txLines[0];
-      setEditAccId(firstLine ? firstLine.accountId : '');
-      setEditAmount(firstLine ? Number(Math.abs(firstLine.signedAmount).toFixed(2)).toString() : '0');
-    }
-  }, [transaction, ledgerLines]);
-  /* eslint-enable react-hooks/set-state-in-effect */
+  const { fields, setField } = useTransactionEditFields(transaction, ledgerLines);
 
   if (!transaction) return null;
 
   const isRegularTx = transaction.type === 'expense' || transaction.type === 'income';
 
   const handleSave = async () => {
-    const amount = parseFloat(editAmount);
+    const amount = parseFloat(fields.amount);
     if (isNaN(amount) || amount <= 0) {
       enqueueSnackbar('Please enter a valid amount.', { variant: 'warning' });
       return;
     }
 
-    const txLines = ledgerLines.filter((l) => l.transactionId === transaction.id);
-    const firstLine = txLines.find((l) => l.signedAmount !== 0) || txLines[0];
-    const currency = firstLine ? firstLine.currency : baseCurrency;
-
-    // If it's a regular transaction, it determines sign based on editType.
-    // If it's a special transaction, it retains its original sign!
-    let signedAmount: number;
-    if (isRegularTx) {
-      signedAmount = editType === 'income' ? amount : -amount;
-    } else {
-      // Retain original sign
-      const originalSign = firstLine ? (firstLine.signedAmount >= 0 ? 1 : -1) : -1;
-      signedAmount = amount * originalSign;
-    }
+    const firstLine = findPrimaryLedgerLine(transaction.id, ledgerLines);
+    const currency = resolveEditedCurrency(firstLine, baseCurrency);
+    const signedAmount = resolveEditedSignedAmount(amount, fields.type, firstLine, isRegularTx);
 
     try {
       await updateMutation.mutateAsync({
         householdId,
         transactionId: transaction.id,
         transactionUpdates: {
-          description: editDesc,
-          date: editDate,
-          categoryId: isRegularTx ? (editCatId || null) : null,
-          type: isRegularTx ? editType : transaction.type,
+          description: fields.description,
+          date: fields.date,
+          categoryId: isRegularTx ? (fields.categoryId || null) : null,
+          type: isRegularTx ? fields.type : transaction.type,
         },
         lineUpdates: {
-          accountId: editAccId,
+          accountId: fields.accountId,
           signedAmount: signedAmount,
-          currency: currency as CurrencyCode,
+          currency,
         },
       });
       enqueueSnackbar('Transaction updated successfully!', { variant: 'success' });
@@ -144,8 +115,8 @@ export const EditTransactionDialog: React.FC<EditTransactionDialogProps> = ({
                 sx={{
                   p: 2,
                   borderRadius: '12px',
-                  bgcolor: 'rgba(25, 118, 210, 0.05)',
-                  border: '1px solid rgba(25, 118, 210, 0.1)',
+                  bgcolor: (theme) => alpha(theme.palette.info.main, 0.05),
+                  border: (theme) => `1px solid ${alpha(theme.palette.info.main, 0.1)}`,
                 }}
               >
                 <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic', mb: 1.5 }}>
@@ -153,10 +124,10 @@ export const EditTransactionDialog: React.FC<EditTransactionDialogProps> = ({
                 </Typography>
                 <Stack spacing={1}>
                   <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
-                    Amount: <span style={{ fontWeight: 'normal' }}>{editAmount} {ledgerLines.find(l => l.transactionId === transaction.id)?.currency || baseCurrency}</span>
+                    Amount: <span style={{ fontWeight: 'normal' }}>{fields.amount} {findPrimaryLedgerLine(transaction.id, ledgerLines)?.currency || baseCurrency}</span>
                   </Typography>
                   <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
-                    Account: <span style={{ fontWeight: 'normal' }}>{getAccountName(editAccId)}</span>
+                    Account: <span style={{ fontWeight: 'normal' }}>{getAccountName(fields.accountId)}</span>
                   </Typography>
                 </Stack>
               </Box>
@@ -178,8 +149,8 @@ export const EditTransactionDialog: React.FC<EditTransactionDialogProps> = ({
               </Typography>
               <RadioGroup
                 row
-                value={editType}
-                onChange={(e) => setEditType(e.target.value as 'income' | 'expense')}
+                value={fields.type}
+                onChange={(e) => setField('type', e.target.value)}
                 sx={{ gap: 2 }}
               >
                 <FormControlLabel value="expense" control={<Radio />} label="Expense" />
@@ -194,9 +165,8 @@ export const EditTransactionDialog: React.FC<EditTransactionDialogProps> = ({
                 type="number"
                 fullWidth
                 label="Amount"
-                value={editAmount}
-                onChange={(e) => setEditAmount(e.target.value)}
-                sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+                value={fields.amount}
+                onChange={(e) => setField('amount', e.target.value)}
               />
             </Grid>
           ) : null}
@@ -207,10 +177,9 @@ export const EditTransactionDialog: React.FC<EditTransactionDialogProps> = ({
                 <InputLabel id="edit-tx-acc-label">Account</InputLabel>
                 <Select
                   labelId="edit-tx-acc-label"
-                  value={editAccId}
+                  value={fields.accountId}
                   label="Account"
-                  onChange={(e) => setEditAccId(e.target.value)}
-                  sx={{ borderRadius: '12px' }}
+                  onChange={(e) => setField('accountId', e.target.value)}
                 >
                   {accounts.map((a) => (
                     <MenuItem key={a.id} value={a.id}>
@@ -237,24 +206,22 @@ export const EditTransactionDialog: React.FC<EditTransactionDialogProps> = ({
               fullWidth
               label="Date"
               slotProps={{ inputLabel: { shrink: true } }}
-              value={editDate}
-              onChange={(e) => setEditDate(e.target.value)}
-              sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+              value={fields.date}
+              onChange={(e) => setField('date', e.target.value)}
             />
           </Grid>
 
           {/* Category Selector (Regular only) */}
           {isRegularTx && (
             <Grid size={{ xs: 12, sm: 6 }}>
-              {editType === 'expense' ? (
+              {fields.type === 'expense' ? (
                 <FormControl fullWidth>
                   <InputLabel id="edit-tx-cat-label">Category</InputLabel>
                   <Select
                     labelId="edit-tx-cat-label"
-                    value={editCatId}
+                    value={fields.categoryId}
                     label="Category"
-                    onChange={(e) => setEditCatId(e.target.value)}
-                    sx={{ borderRadius: '12px' }}
+                    onChange={(e) => setField('categoryId', e.target.value)}
                   >
                     {categories
                       .filter((c) => c.type === 'expense')
@@ -270,10 +237,9 @@ export const EditTransactionDialog: React.FC<EditTransactionDialogProps> = ({
                   <InputLabel id="edit-tx-cat-income-label">Income Category</InputLabel>
                   <Select
                     labelId="edit-tx-cat-income-label"
-                    value={editCatId}
+                    value={fields.categoryId}
                     label="Income Category"
-                    onChange={(e) => setEditCatId(e.target.value)}
-                    sx={{ borderRadius: '12px' }}
+                    onChange={(e) => setField('categoryId', e.target.value)}
                   >
                     {categories
                       .filter((c) => c.type === 'income')
@@ -296,9 +262,8 @@ export const EditTransactionDialog: React.FC<EditTransactionDialogProps> = ({
               rows={2}
               label="Description / Notes"
               placeholder="Add details or notes about this transaction..."
-              value={editDesc}
-              onChange={(e) => setEditDesc(e.target.value)}
-              sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+              value={fields.description}
+              onChange={(e) => setField('description', e.target.value)}
             />
           </Grid>
         </Grid>
@@ -312,7 +277,6 @@ export const EditTransactionDialog: React.FC<EditTransactionDialogProps> = ({
           onClick={handleSave}
           variant="contained"
           loading={updateMutation.isPending}
-          sx={{ borderRadius: '12px', boxShadow: 'none' }}
         >
           Save Changes
         </Button>

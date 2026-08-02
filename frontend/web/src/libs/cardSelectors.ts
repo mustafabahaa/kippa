@@ -1,4 +1,5 @@
 import { Card, CardStatement, FinanceTransaction, LedgerLine } from '@kippa/domain';
+import { getPostedLedgerLines } from './financeCalculations';
 
 export interface CardSummary {
   currentDebt: number;
@@ -21,12 +22,10 @@ export function currentCyclePurchases(
   creditAccountId: string,
   lastStatement: CardStatement | null
 ): number {
-  const postedTxIds = new Set(transactions.filter(t => t.status === 'posted').map(t => t.id));
   const cutoff = lastStatement?.statementDate ?? '';
   let total = 0;
-  for (const line of lines) {
+  for (const line of getPostedLedgerLines(transactions, lines)) {
     if (line.accountId !== creditAccountId) continue;
-    if (!postedTxIds.has(line.transactionId)) continue;
     if (line.signedAmount >= 0) continue; // only outflows (purchases)
     const tx = transactions.find(t => t.id === line.transactionId);
     if (!tx) continue;

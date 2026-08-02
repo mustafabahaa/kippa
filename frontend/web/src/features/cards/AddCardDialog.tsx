@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import {
   Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Select, MenuItem,
   FormControl, InputLabel, Typography, Box, IconButton, Grid, Divider, ToggleButton, ToggleButtonGroup,
@@ -6,10 +5,11 @@ import {
 import { ArrowBackIcon } from '@/components/AppIcon';
 import { useAppContext } from '@/hooks/useAppContext';
 import { useAccounts, useCreateDebitCardMutation, useCreateCreditCardMutation, useHouseholdBaseCurrency } from '@/hooks/useFinance';
-import type { Card, CardKind, CardNetwork, CurrencyCode } from '@kippa/domain';
+import type { Card, CardKind, CardNetwork } from '@kippa/domain';
 import { getBank, getTier } from './banks/banks';
 import { BankPicker } from './BankPicker';
 import { CardTile } from './CardTile';
+import { useAddCardForm } from './hooks/useAddCardForm';
 
 export function AddCardDialog({ open, preselectAccountId, onClose }: { open: boolean; preselectAccountId: string | null; onClose: () => void }) {
   return open ? (
@@ -25,20 +25,7 @@ function AddCardDialogInner({ preselectAccountId, onClose }: { preselectAccountI
   const baseCurrency = useHouseholdBaseCurrency();
 
   const preAcc = preselectAccountId ? accounts.find(a => a.id === preselectAccountId) : undefined;
-  const [step, setStep] = useState<'bank' | 'details'>('bank');
-  const [bankId, setBankId] = useState<string>('');
-  const [tierId, setTierId] = useState<string>('');
-  const [kind, setKind] = useState<CardKind>('debit');
-  const [name, setName] = useState('');
-  const [last4, setLast4] = useState('');
-  const [network, setNetwork] = useState<CardNetwork>('visa');
-  const [expiryMonth, setExpiryMonth] = useState<number | ''>('');
-  const [expiryYear, setExpiryYear] = useState<number | ''>('');
-  const [currency, setCurrency] = useState<CurrencyCode>(preAcc?.currency ?? baseCurrency);
-  const [parentAccountId, setParentAccountId] = useState(preselectAccountId ?? '');
-  const [creditLimit, setCreditLimit] = useState<number | ''>('');
-  const [paymentAccountId, setPaymentAccountId] = useState(preselectAccountId ?? '');
-  const [error, setError] = useState('');
+  const { bankId, creditLimit, currency, error, expiryMonth, expiryYear, kind, last4, name, network, parentAccountId, paymentAccountId, setBankId, setCreditLimit, setCurrency, setError, setExpiryMonth, setExpiryYear, setKind, setLast4, setName, setNetwork, setParentAccountId, setPaymentAccountId, setStep, setTierId, step, tierId } = useAddCardForm(preAcc?.currency ?? baseCurrency, preselectAccountId ?? '');
 
   const depositAccounts = accounts.filter(a => a.type === 'running' || a.type === 'savings');
 

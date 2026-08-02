@@ -90,6 +90,26 @@ export default defineConfig({
             if (id.includes('firebase')) {
               return 'firebase-vendor';
             }
+            if (id.includes('/react-router')) {
+              return 'router-vendor';
+            }
+            if (
+              id.includes('/react/')
+              || id.includes('/react-dom/')
+              || id.includes('/scheduler/')
+              || id.includes('/@mui/material/')
+              || id.includes('/@mui/system/')
+              || id.includes('/@mui/icons-material/')
+              || id.includes('/@emotion/')
+            ) {
+              return 'ui-framework-vendor';
+            }
+            if (
+              id.includes('/@tanstack/react-query/')
+              || id.includes('/notistack/')
+            ) {
+              return 'app-runtime-vendor';
+            }
           }
         }
       }

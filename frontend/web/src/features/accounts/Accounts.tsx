@@ -6,18 +6,7 @@ import {
   Stack,
   Typography,
   Button,
-  TextField,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   IconButton,
-  FormControlLabel,
-  Checkbox,
   Skeleton,
   Chip
 } from '@mui/material';
@@ -43,26 +32,18 @@ import { useAppContext } from '@/hooks/useAppContext';
 import { CardTile } from '@/features/cards/CardTile';
 import { AddCardDialog } from '@/features/cards/AddCardDialog';
 import { CardDetail } from '@/features/cards/CardDetail';
+import { calculateAccountBalance } from '@/libs/financeCalculations';
 import { computeCardSummary } from '@/libs/cardSelectors';
-import { CurrencySelect } from '@/features/shared/components/CurrencySelect';
 import { useHouseholdBaseCurrency } from '@/hooks/useFinance';
 import { Money } from '@/components/Money';
 import { EmptyLayout } from '@/features/shared/components/EmptyLayout';
 import { ForeignBalanceTooltip } from '@/features/shared/components/ForeignBalanceTooltip';
+import { AddAccountCard, EditAccountDialog } from './components/AccountForms';
 
 export function Accounts() {
   const { householdId } = useAppContext();
   const baseCurrency = useHouseholdBaseCurrency();
-  const [newAccName, setNewAccName] = useState('');
-  const [newAccType, setNewAccType] = useState<AccountType>('running');
-  const [newAccCurrency, setNewAccCurrency] = useState<CurrencyCode>(baseCurrency);
-
-  // Edit Account State
   const [editingAccount, setEditingAccount] = useState<Account | null>(null);
-  const [editAccName, setEditAccName] = useState('');
-  const [editAccType, setEditAccType] = useState<AccountType>('running');
-  const [editAccCurrency, setEditAccCurrency] = useState<CurrencyCode>(baseCurrency);
-  const [editAccIsActive, setEditAccIsActive] = useState(true);
 
   // Card UI state
   const [addCardForAccount, setAddCardForAccount] = useState<string | null>(null);
@@ -82,10 +63,7 @@ export function Accounts() {
 
   // Balance of an account from the ledger.
   const accountBalance = (accountId: string) => {
-    const postedTxIds = new Set(transactions.filter(t => t.status === 'posted').map(t => t.id));
-    return ledgerLines
-      .filter(l => l.accountId === accountId && postedTxIds.has(l.transactionId))
-      .reduce((s, l) => s + l.signedAmount, 0);
+    return calculateAccountBalance(accountId, transactions, ledgerLines);
   };
 
   // Compute the summary for a credit card from ledger + statements.
@@ -98,23 +76,10 @@ export function Accounts() {
 
   const handleOpenEdit = (acc: Account) => {
     setEditingAccount(acc);
-    setEditAccName(acc.name);
-    setEditAccType(acc.type);
-    setEditAccCurrency(acc.currency);
-    setEditAccIsActive(acc.isActive);
   };
 
-  const handleUpdateAccount = async () => {
-    if (!editingAccount || !editAccName.trim()) return;
-
-    const updated: Account = {
-      ...editingAccount,
-      name: editAccName,
-      type: editAccType,
-      currency: editAccCurrency,
-      isActive: editAccIsActive
-    };
-
+  const handleUpdateAccount = async (updated: Account) => {
+    if (!editingAccount) return;
     await updateAccountMutation.mutateAsync({
       householdId,
       accountId: editingAccount.id,
@@ -123,23 +88,17 @@ export function Accounts() {
     setEditingAccount(null);
   };
 
-  const handleCreateAccount = async () => {
-    if (!newAccName.trim()) return;
-
+  const handleCreateAccount = async (draft: { name: string; type: AccountType; currency: CurrencyCode }) => {
     const nextOrder = accounts.length > 0 ? Math.max(...accounts.map(a => a.sortOrder)) + 1 : 1;
 
     await createAccountMutation.mutateAsync({
       householdId,
       account: {
-        name: newAccName,
-        type: newAccType,
-        currency: newAccCurrency,
+        ...draft,
         isActive: true,
         sortOrder: nextOrder
       }
     });
-
-    setNewAccName('');
   };
 
   const getAccountIcon = (type: string) => {
@@ -269,56 +228,7 @@ export function Accounts() {
             )}
           </Stack>
 
-          {/* Add Account Card */}
-          <Card sx={{ position: { lg: 'sticky' }, top: { lg: 24 } }}>
-            <CardContent>
-              <Stack spacing={2.5}>
-                <Box>
-                  <Typography sx={{ fontSize: 16, lineHeight: '22px', fontWeight: 800, color: 'text.primary' }}>Add new account</Typography>
-                  <Typography sx={{ mt: 0.5, fontSize: 12, lineHeight: '16px', fontWeight: 600, color: 'text.secondary' }}>
-                    Connect cash, a wallet, or a bank balance.
-                  </Typography>
-                </Box>
-
-                <Stack spacing={2}>
-              <TextField
-                fullWidth
-                label="Account Name"
-                placeholder="e.g. My Bank"
-                value={newAccName}
-                onChange={e => setNewAccName(e.target.value)}
-              />
-              <FormControl fullWidth>
-                <InputLabel id="acc-type-label">Account Type</InputLabel>
-                <Select
-                  labelId="acc-type-label"
-                  value={newAccType}
-                  label="Account Type"
-                  onChange={e => setNewAccType(e.target.value as AccountType)}
-                >
-                  <MenuItem value="running">Running Bank</MenuItem>
-                  <MenuItem value="savings">Savings Bank</MenuItem>
-                  <MenuItem value="cash">Cash</MenuItem>
-                  <MenuItem value="wallet">Wallet</MenuItem>
-                </Select>
-              </FormControl>
-              <CurrencySelect
-                labelId="acc-currency-label"
-                value={newAccCurrency}
-                onChange={setNewAccCurrency}
-              />
-              <Button
-                fullWidth
-                variant="contained"
-                onClick={handleCreateAccount}
-                loading={createAccountMutation.isPending}
-              >
-                Create Account
-              </Button>
-                </Stack>
-              </Stack>
-            </CardContent>
-          </Card>
+          <AddAccountCard baseCurrency={baseCurrency} busy={createAccountMutation.isPending} onCreate={handleCreateAccount} />
         </Box>
       </Stack>
 
@@ -330,58 +240,7 @@ export function Accounts() {
       />
       {detailCard && <CardDetail card={detailCard} onClose={() => setDetailCard(null)} />}
 
-      {/* Edit Account Dialog */}
-      <Dialog open={Boolean(editingAccount)} onClose={() => setEditingAccount(null)}>
-        <DialogTitle sx={{ fontWeight: 'bold' }}>Edit Account</DialogTitle>
-        <DialogContent sx={{ minWidth: 280, pt: 1 }}>
-          <Stack spacing={2} sx={{ mt: 1 }}>
-            <TextField
-              fullWidth
-              label="Account Name"
-              value={editAccName}
-              onChange={e => setEditAccName(e.target.value)}
-              sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
-            />
-            <FormControl fullWidth>
-              <InputLabel id="edit-acc-type-label">Account Type</InputLabel>
-              <Select
-                labelId="edit-acc-type-label"
-                value={editAccType}
-                label="Account Type"
-                onChange={e => setEditAccType(e.target.value as AccountType)}
-                sx={{ borderRadius: '12px' }}
-              >
-                <MenuItem value="running">Running Bank</MenuItem>
-                <MenuItem value="savings">Savings Bank</MenuItem>
-                <MenuItem value="cash">Cash</MenuItem>
-                <MenuItem value="wallet">Wallet</MenuItem>
-              </Select>
-            </FormControl>
-            <CurrencySelect
-              labelId="edit-acc-currency-label"
-              value={editAccCurrency}
-              onChange={setEditAccCurrency}
-            />
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={editAccIsActive}
-                  onChange={e => setEditAccIsActive(e.target.checked)}
-                />
-              }
-              label="Account is Active"
-            />
-          </Stack>
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2.5 }}>
-          <Button onClick={() => setEditingAccount(null)} color="inherit">
-            Cancel
-          </Button>
-          <Button onClick={handleUpdateAccount} variant="contained" loading={updateAccountMutation.isPending} sx={{ borderRadius: '12px', boxShadow: 'none' }}>
-            Save Changes
-          </Button>
-        </DialogActions>
-      </Dialog>
+      {editingAccount && <EditAccountDialog account={editingAccount} busy={updateAccountMutation.isPending} onClose={() => setEditingAccount(null)} onSave={handleUpdateAccount} />}
     </Box>
   );
 }

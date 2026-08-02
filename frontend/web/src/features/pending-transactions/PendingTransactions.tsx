@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useSnackbar } from 'notistack';
 import {
   Box,
@@ -6,16 +6,7 @@ import {
   Card,
   Chip,
   CircularProgress,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
   Divider,
-  FormControl,
-  IconButton,
-  InputLabel,
-  MenuItem,
-  Select,
   Skeleton,
   Stack,
   Tab,
@@ -24,10 +15,12 @@ import {
   alpha,
 } from '@mui/material';
 import { PageHeader } from '@/features/shared/components/PageHeader';
+import { PendingReviewDialog } from './components/PendingReviewDialog';
+import { MessageConnectionDialog } from './components/MessageConnectionDialog';
 import { EmptyLayout } from '@/features/shared/components/EmptyLayout';
 import { TransactionIcon } from '@/features/transactions/components/TransactionIcon';
 import { Money } from '@/components/Money';
-import { CheckCircleIcon, ContentCopyIcon, DeleteIcon, HistoryIcon, KeyIcon } from '@/components/AppIcon';
+import { CheckCircleIcon, HistoryIcon, KeyIcon } from '@/components/AppIcon';
 import { useAppContext } from '@/hooks/useAppContext';
 import {
   useAccounts,
@@ -38,10 +31,9 @@ import {
   useResolvedPendingFinancialMessages,
   useRestoreDiscardedPendingFinancialMessageMutation,
 } from '@/hooks/useFinance';
-import { messageIngestionLib } from '@/libs/messageIngestion';
-import type { MessageIngestionCredential, PendingFinancialMessage } from '@kippa/domain';
-
-type GeneratedConnection = { token: string; endpoint: string };
+import type { PendingFinancialMessage } from '@kippa/domain';
+import { useMessageConnections } from './hooks/useMessageConnections';
+import { usePendingReviewState } from './hooks/usePendingReviewState';
 type PendingItemState = 'idle' | 'approving' | 'discarding' | 'settled';
 
 const PREVIEW_PENDING_ITEMS: PendingFinancialMessage[] = [
@@ -79,25 +71,14 @@ export function PendingTransactions() {
   const restoreMutation = useRestoreDiscardedPendingFinancialMessageMutation();
   const { data: resolved = [], isLoading: historyLoading } = useResolvedPendingFinancialMessages(householdId);
   const [tab, setTab] = useState<'review' | 'history'>('review');
-  const [selected, setSelected] = useState<PendingFinancialMessage | null>(null);
+  const { accountId, categoryId, confirmDiscard, destinationAccountId, selected, setAccountId, setCategoryId, setConfirmDiscard, setDestinationAccountId, setSelected } = usePendingReviewState();
   const [itemStates, setItemStates] = useState<Record<string, PendingItemState>>({});
-  const [categoryId, setCategoryId] = useState('');
-  const [accountId, setAccountId] = useState('');
-  const [destinationAccountId, setDestinationAccountId] = useState('');
-  const [confirmDiscard, setConfirmDiscard] = useState(false);
   const [setupOpen, setSetupOpen] = useState(false);
-  const [credentials, setCredentials] = useState<MessageIngestionCredential[]>([]);
-  const [generated, setGenerated] = useState<GeneratedConnection | null>(null);
-  const [setupBusy, setSetupBusy] = useState(false);
+  const connections = useMessageConnections(householdId);
   const previewMode = import.meta.env.DEV && new URLSearchParams(window.location.search).get('preview-pending') === '1';
   const pending = previewMode ? PREVIEW_PENDING_ITEMS : remotePending;
   const isLoading = previewMode ? false : remoteLoading;
 
-  useEffect(() => {
-    messageIngestionLib.listCredentials(householdId)
-      .then(setCredentials)
-      .catch(() => setCredentials([]));
-  }, [householdId]);
 
   const availableCategories = useMemo(() => {
     if (!selected) return [];
@@ -109,9 +90,6 @@ export function PendingTransactions() {
     if (!selected) return [];
     return accounts.filter((account) => account.isActive && account.currency === selected.currency);
   }, [accounts, selected]);
-
-  const isCrossCurrency = !!selected?.destinationCurrency && selected.destinationCurrency !== selected.currency;
-  const isHalfPending = !!selected?.transferLeg;
 
   const availableDestinationAccounts = useMemo(() => {
     if (!selected) return [];
@@ -218,35 +196,7 @@ export function PendingTransactions() {
     }
   };
 
-  const createConnection = async () => {
-    setSetupBusy(true);
-    try {
-      const result = await messageIngestionLib.createCredential(householdId);
-      setGenerated({ token: result.token, endpoint: result.endpoint });
-      setCredentials(await messageIngestionLib.listCredentials(householdId));
-    } catch (error) {
-      enqueueSnackbar(error instanceof Error ? error.message : 'Could not create the connection', { variant: 'error' });
-    } finally {
-      setSetupBusy(false);
-    }
-  };
-
-  const revokeConnection = async (credentialId: string) => {
-    try {
-      await messageIngestionLib.revokeCredential(credentialId);
-      setCredentials(await messageIngestionLib.listCredentials(householdId));
-      enqueueSnackbar('Connection revoked', { variant: 'info' });
-    } catch (error) {
-      enqueueSnackbar(error instanceof Error ? error.message : 'Could not revoke the connection', { variant: 'error' });
-    }
-  };
-
-  const copy = async (value: string, label: string) => {
-    await navigator.clipboard.writeText(value);
-    enqueueSnackbar(`${label} copied`, { variant: 'success' });
-  };
-
-  const activeConnections = credentials.filter((credential) => credential.enabled).length;
+  const activeConnections = connections.credentials.filter((credential) => credential.enabled).length;
   const selectedState = selected ? (itemStates[selected.id] ?? 'idle') : 'idle';
   const reviewBusy = selectedState === 'approving' || selectedState === 'discarding';
 
@@ -398,240 +348,9 @@ export function PendingTransactions() {
         </Card>
       ))}
 
-      <Dialog open={!!selected && selected.kind !== 'transfer'} onClose={closeReview} fullWidth maxWidth="xs">
-        <DialogTitle sx={{ fontWeight: 'bold' }}>
-          Review detected {selected?.kind}
-          <Typography component="span" sx={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'text.secondary', mt: 0.5 }}>
-            Nothing enters your ledger until you approve.
-          </Typography>
-        </DialogTitle>
-        <DialogContent sx={{ pt: 1.5 }}>
-          {selected && (
-            <Stack spacing={2.5}>
-              <Box>
-                <Typography sx={{ fontSize: 34, lineHeight: 1.25, fontWeight: 800 }}>
-                  <Money amount={selected.amount} code={selected.currency} maxDigits={2} />
-                </Typography>
-                <Typography sx={{ fontSize: 13, color: 'text.secondary', mt: 0.5 }}>{selected.description}</Typography>
-              </Box>
+      <PendingReviewDialog accountId={accountId} accounts={availableAccounts} busy={reviewBusy} categories={availableCategories} categoryId={categoryId} confirmDiscard={confirmDiscard} destinationAccountId={destinationAccountId} destinationAccounts={availableDestinationAccounts} item={selected} onAccountChange={setAccountId} onApprove={approve} onCategoryChange={setCategoryId} onClose={closeReview} onDestinationChange={setDestinationAccountId} onDiscard={discard} state={selectedState} />
 
-              <Divider />
-              <Box>
-                <Typography sx={{ fontSize: 12, fontWeight: 700, color: 'primary.main', textTransform: 'uppercase', letterSpacing: 1 }}>
-                  Classification
-                </Typography>
-                <Typography sx={{ fontSize: 11, color: 'text.secondary', mb: 1 }}>
-                  A category is required. This is never guessed from the message.
-                </Typography>
-                <Stack spacing={2}>
-                  <FormControl fullWidth>
-                    <InputLabel id="pending-category-label">Category</InputLabel>
-                    <Select labelId="pending-category-label" value={categoryId} label="Category" onChange={(event) => setCategoryId(event.target.value)}>
-                      {availableCategories.map((category) => <MenuItem key={category.id} value={category.id}>{category.name}</MenuItem>)}
-                    </Select>
-                  </FormControl>
-                  <FormControl fullWidth>
-                    <InputLabel id="pending-account-label">{selected.kind === 'income' ? 'To account' : 'From account'}</InputLabel>
-                    <Select labelId="pending-account-label" value={accountId} label={selected.kind === 'income' ? 'To account' : 'From account'} onChange={(event) => setAccountId(event.target.value)}>
-                      {availableAccounts.map((account) => <MenuItem key={account.id} value={account.id}>{account.name}</MenuItem>)}
-                    </Select>
-                  </FormControl>
-                </Stack>
-              </Box>
-
-              <Divider />
-              <Box>
-                <Typography sx={{ fontSize: 12, fontWeight: 700, color: 'primary.main', textTransform: 'uppercase', letterSpacing: 1 }}>
-                  Bank message
-                </Typography>
-                <Typography sx={{ fontSize: 11, color: 'text.secondary', mb: 1 }}>Sensitive balances and references are removed.</Typography>
-                <Typography sx={{ p: 1.5, borderRadius: 'control', bgcolor: 'action.hover', fontSize: 12, lineHeight: 1.6, color: 'text.secondary' }}>
-                  {selected.messagePreview}
-                </Typography>
-              </Box>
-            </Stack>
-          )}
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2.5 }}>
-          <Button color="inherit" startIcon={selectedState === 'discarding' ? <CircularProgress size={18} /> : <DeleteIcon />} onClick={discard} disabled={reviewBusy}>
-            {selectedState === 'discarding' ? 'Discarding…' : confirmDiscard ? 'Discard permanently' : 'Discard'}
-          </Button>
-          <Button
-            variant="contained"
-            sx={{ borderRadius: 12, boxShadow: 'none' }}
-            startIcon={selectedState === 'approving' ? <CircularProgress color="inherit" size={18} /> : <CheckCircleIcon />}
-            onClick={approve}
-            disabled={!categoryId || !accountId || reviewBusy}
-          >
-            {selectedState === 'approving' ? 'Approving…' : 'Approve'}
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      <Dialog open={!!selected && selected.kind === 'transfer'} onClose={closeReview} fullWidth maxWidth="xs">
-        <DialogTitle sx={{ fontWeight: 'bold' }}>
-          Review transfer
-          <Typography component="span" sx={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'text.secondary', mt: 0.5 }}>
-            Nothing enters your ledger until you approve.
-          </Typography>
-        </DialogTitle>
-        <DialogContent sx={{ pt: 1.5 }}>
-          {selected && selected.kind === 'transfer' && (
-            <Stack spacing={2.5}>
-              <Box>
-                {isCrossCurrency ? (
-                  <Typography sx={{ fontSize: 26, lineHeight: 1.3, fontWeight: 800 }}>
-                    <Money amount={selected.amount} code={selected.currency} maxDigits={2} />
-                    <Box component="span" sx={{ color: 'text.secondary', mx: 1 }}>→</Box>
-                    <Money amount={selected.destinationAmount ?? 0} code={selected.destinationCurrency ?? selected.currency} maxDigits={2} />
-                  </Typography>
-                ) : (
-                  <Typography sx={{ fontSize: 34, lineHeight: 1.25, fontWeight: 800 }}>
-                    <Money amount={selected.amount} code={selected.currency} maxDigits={2} />
-                  </Typography>
-                )}
-                <Typography sx={{ fontSize: 13, color: 'text.secondary', mt: 0.5 }}>{selected.description}</Typography>
-                {isCrossCurrency && selected.destinationAmount && (
-                  <Typography sx={{ fontSize: 11, color: 'text.secondary', mt: 0.25 }}>
-                    Rate: {(selected.destinationAmount / selected.amount).toFixed(2)} {selected.destinationCurrency}/{selected.currency}
-                  </Typography>
-                )}
-                {isHalfPending && (
-                  <Typography sx={{ fontSize: 11, color: 'warning.main', mt: 0.5 }}>
-                    Waiting for the other leg of this transfer…
-                  </Typography>
-                )}
-              </Box>
-
-              <Divider />
-              <Box>
-                <Typography sx={{ fontSize: 12, fontWeight: 700, color: 'primary.main', textTransform: 'uppercase', letterSpacing: 1 }}>
-                  Accounts
-                </Typography>
-                <Typography sx={{ fontSize: 11, color: 'text.secondary', mb: 1 }}>
-                  Confirm where the money moves.
-                </Typography>
-                <Stack spacing={2}>
-                  <FormControl fullWidth>
-                    <InputLabel id="pending-from-label">From account</InputLabel>
-                    <Select labelId="pending-from-label" value={accountId} label="From account" onChange={(event) => setAccountId(event.target.value)}>
-                      {availableAccounts.map((account) => <MenuItem key={account.id} value={account.id}>{account.name}</MenuItem>)}
-                    </Select>
-                  </FormControl>
-                  <FormControl fullWidth>
-                    <InputLabel id="pending-to-label">To account</InputLabel>
-                    <Select labelId="pending-to-label" value={destinationAccountId} label="To account" onChange={(event) => setDestinationAccountId(event.target.value)}>
-                      {availableDestinationAccounts.map((account) => <MenuItem key={account.id} value={account.id}>{account.name}</MenuItem>)}
-                    </Select>
-                  </FormControl>
-                </Stack>
-              </Box>
-
-              <Divider />
-              <Box>
-                <Typography sx={{ fontSize: 12, fontWeight: 700, color: 'primary.main', textTransform: 'uppercase', letterSpacing: 1 }}>
-                  Bank message
-                </Typography>
-                <Typography sx={{ fontSize: 11, color: 'text.secondary', mb: 1 }}>Sensitive balances and references are removed.</Typography>
-                <Typography sx={{ p: 1.5, borderRadius: 'control', bgcolor: 'action.hover', fontSize: 12, lineHeight: 1.6, color: 'text.secondary' }}>
-                  {selected.messagePreview}
-                </Typography>
-              </Box>
-            </Stack>
-          )}
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2.5 }}>
-          <Button color="inherit" startIcon={selectedState === 'discarding' ? <CircularProgress size={18} /> : <DeleteIcon />} onClick={discard} disabled={reviewBusy}>
-            {selectedState === 'discarding' ? 'Discarding…' : confirmDiscard ? 'Discard permanently' : 'Discard'}
-          </Button>
-          <Button
-            variant="contained"
-            sx={{ borderRadius: 12, boxShadow: 'none' }}
-            startIcon={selectedState === 'approving' ? <CircularProgress color="inherit" size={18} /> : <CheckCircleIcon />}
-            onClick={approve}
-            disabled={isHalfPending || !accountId || !destinationAccountId || reviewBusy}
-          >
-            {selectedState === 'approving' ? 'Approving…' : 'Approve'}
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      <Dialog open={setupOpen} onClose={() => !setupBusy && setSetupOpen(false)} fullWidth maxWidth="xs">
-        <DialogTitle sx={{ fontWeight: 'bold' }}>
-          Connect iPhone messages
-          <Typography component="span" sx={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'text.secondary', mt: 0.5 }}>
-            Create a private, revocable connection for the Shortcut.
-          </Typography>
-        </DialogTitle>
-        <DialogContent sx={{ pt: 1.5 }}>
-          <Stack spacing={2.5}>
-            {credentials.length > 0 && (
-              <Box>
-                <Typography sx={{ fontSize: 12, fontWeight: 700, color: 'primary.main', textTransform: 'uppercase', letterSpacing: 1 }}>Existing connections</Typography>
-                <Divider sx={{ mt: 1, mb: 1.5 }} />
-                <Typography sx={{ fontSize: 11, color: 'text.secondary', mb: 1 }}>Active credentials the Shortcut can use to send messages.</Typography>
-                <Stack spacing={1}>
-                  {credentials.map((cred) => (
-                    <Box key={cred.id} sx={{ p: 1.5, borderRadius: 'control', bgcolor: 'action.hover', display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                      <KeyIcon sx={{ fontSize: 18, color: cred.enabled ? 'primary.main' : 'text.disabled' }} />
-                      <Box sx={{ flex: 1, minWidth: 0 }}>
-                        <Typography sx={{ fontSize: 12.5, fontWeight: 700 }}>{cred.label}</Typography>
-                        <Typography sx={{ fontSize: 11, color: 'text.secondary' }}>
-                          {cred.lastUsedAt ? `Used ${new Date(cred.lastUsedAt).toLocaleDateString()}` : 'Never used'}
-                        </Typography>
-                      </Box>
-                      <Chip label={cred.enabled ? 'Active' : 'Disabled'} size="small" color={cred.enabled ? 'success' : 'default'} variant="outlined" />
-                      {cred.enabled && (
-                        <IconButton aria-label={`Revoke ${cred.label}`} size="small" onClick={() => revokeConnection(cred.id)}>
-                          <DeleteIcon fontSize="small" />
-                        </IconButton>
-                      )}
-                    </Box>
-                  ))}
-                </Stack>
-              </Box>
-            )}
-            <Box>
-              <Typography sx={{ fontSize: 12, fontWeight: 700, color: 'primary.main', textTransform: 'uppercase', letterSpacing: 1 }}>Connection</Typography>
-              <Divider sx={{ mt: 1, mb: 1.5 }} />
-              <Typography sx={{ fontSize: 11, color: 'text.secondary', mb: 1 }}>The secret is shown once and never stored in readable form.</Typography>
-              {generated ? (
-                <Stack spacing={1.5}>
-                  {[
-                    ['Endpoint', generated.endpoint],
-                    ['Bearer token', generated.token],
-                  ].map(([label, value]) => (
-                    <Box key={label} sx={{ p: 1.5, borderRadius: 'control', bgcolor: 'action.hover' }}>
-                      <Stack direction="row" spacing={1} alignItems="center">
-                        <Box sx={{ flex: 1, minWidth: 0 }}>
-                          <Typography sx={{ fontSize: 11, color: 'text.secondary' }}>{label}</Typography>
-                          <Typography noWrap sx={{ fontSize: 12, fontWeight: 700 }}>{value}</Typography>
-                        </Box>
-                        <IconButton aria-label={`Copy ${label}`} onClick={() => copy(value, label)}><ContentCopyIcon fontSize="small" /></IconButton>
-                      </Stack>
-                    </Box>
-                  ))}
-                </Stack>
-              ) : (
-                <Button variant="contained" sx={{ borderRadius: 12, boxShadow: 'none' }} onClick={createConnection} disabled={setupBusy}>
-                  {setupBusy ? 'Creating…' : 'Create secure connection'}
-                </Button>
-              )}
-            </Box>
-            <Box>
-              <Typography sx={{ fontSize: 12, fontWeight: 700, color: 'primary.main', textTransform: 'uppercase', letterSpacing: 1 }}>Shortcut request</Typography>
-              <Divider sx={{ mt: 1, mb: 1.5 }} />
-              <Typography sx={{ fontSize: 11, color: 'text.secondary', mb: 1 }}>POST JSON using the endpoint and Bearer token above.</Typography>
-              <Typography component="pre" sx={{ m: 0, p: 1.5, borderRadius: 'control', bgcolor: 'action.hover', fontSize: 11, whiteSpace: 'pre-wrap' }}>
-                {'{\n  "message": "Shortcut Input",\n  "source": "ios-shortcut"\n}'}
-              </Typography>
-            </Box>
-          </Stack>
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2.5 }}>
-          <Button onClick={() => setSetupOpen(false)}>Close</Button>
-        </DialogActions>
-      </Dialog>
+      <MessageConnectionDialog busy={connections.busy} credentials={connections.credentials} generated={connections.generated} onClose={() => setSetupOpen(false)} onCopy={connections.copy} onCreate={connections.create} onRevoke={connections.revoke} open={setupOpen} />
     </Stack>
   );
 }

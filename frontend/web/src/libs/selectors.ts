@@ -1,4 +1,5 @@
 import { Account, FinanceTransaction, LedgerLine, BudgetCycle, BudgetAllocation, ExpectedIncome, Category, CurrencyCode } from '@kippa/domain';
+import { calculateAccountBalances, convertToBaseCurrency, getPostedLedgerLines, getPostedTransactions } from './financeCalculations';
 
 export interface DashboardData {
   accountBalances: { accountId: string; balance: number }[];
@@ -51,23 +52,11 @@ export function computeDashboard(
   baseCurrency: CurrencyCode
 ): DashboardData {
   // 1. Filter out voided transactions
-  const activeTxIds = new Set(
-    transactions.filter(t => t.status === 'posted').map(t => t.id)
-  );
-  const activeTxs = transactions.filter(t => t.status === 'posted');
-  const activeLines = ledgerLines.filter(line => activeTxIds.has(line.transactionId));
+  const activeTxs = getPostedTransactions(transactions);
+  const activeLines = getPostedLedgerLines(transactions, ledgerLines);
 
   // 2. Account balances
-  const balancesMap: Record<string, number> = {};
-  accounts.forEach(acc => {
-    balancesMap[acc.id] = 0;
-  });
-
-  activeLines.forEach(line => {
-    if (balancesMap[line.accountId] !== undefined) {
-      balancesMap[line.accountId] += line.signedAmount;
-    }
-  });
+  const balancesMap = calculateAccountBalances(accounts, transactions, ledgerLines);
 
   const accountBalances = accounts.map(acc => ({
     accountId: acc.id,
@@ -129,9 +118,7 @@ export function computeDashboard(
       const linesForTx = cycleLines.filter(l => l.transactionId === tx.id);
       linesForTx.forEach(l => {
         // Expense is negative, sum the absolute base-currency equivalent value
-        let amountBase = Math.abs(l.signedAmount);
-        const rate = l.currency === baseCurrency ? 1 : (displayRates[l.currency] ?? 1);
-        amountBase = amountBase * rate;
+        const amountBase = Math.abs(convertToBaseCurrency(l.signedAmount, l.currency, baseCurrency, displayRates));
         catSpent[tx.categoryId!] = (catSpent[tx.categoryId!] || 0) + amountBase;
       });
     }
@@ -180,10 +167,7 @@ export function computeDashboard(
     if (tx.type === 'income') {
       const linesForTx = cycleLines.filter(l => l.transactionId === tx.id);
       linesForTx.forEach(l => {
-        let amountBase = l.signedAmount;
-        const rate = l.currency === baseCurrency ? 1 : (displayRates[l.currency] ?? 1);
-        amountBase = amountBase * rate;
-        actualIncome += amountBase;
+        actualIncome += convertToBaseCurrency(l.signedAmount, l.currency, baseCurrency, displayRates);
       });
     }
   });

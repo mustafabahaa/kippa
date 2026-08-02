@@ -3,24 +3,14 @@ import { useSnackbar } from 'notistack';
 import {
   Box,
   Button,
-  TextField,
   IconButton,
   Stack,
   Typography,
-  List,
-  ListItem,
-  ListItemText,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   Chip,
   Tooltip
 } from '@mui/material';
 import { ContentCopyIcon } from '@/components/AppIcon';
 import { AddIcon } from '@/components/AppIcon';
-import { DeleteOutlineIcon } from '@/components/AppIcon';
-import { EditIcon } from '@/components/AppIcon';
 import {
   useSaveAllocationsBatchMutation,
   useCreateCategoryMutation,
@@ -31,6 +21,9 @@ import { Money } from '@/components/Money';
 import { usePrivacyMask } from '@/hooks/usePrivacyMask';
 import { cyclesLib } from '@/libs/cycles';
 import { BudgetCycle, BudgetAllocation, Category } from '@kippa/domain';
+import { AllocationRow, AllocationRows } from './components/AllocationRows';
+import { CategoryNameDialog } from './components/CategoryNameDialog';
+import { useAllocationCategoryDialogs } from './hooks/useAllocationCategoryDialogs';
 
 interface BudgetAllocationsConfigProps {
   householdId: string;
@@ -42,11 +35,6 @@ interface BudgetAllocationsConfigProps {
   saveRef?: React.RefObject<(() => Promise<void>) | null>;
   onSavingStatusChange?: (isSaving: boolean) => void;
   onTotalBudgetChange?: (total: number) => void;
-}
-
-interface AllocationRow {
-  categoryId: string;
-  plannedAmount: string;
 }
 
 export function BudgetAllocationsConfig({
@@ -86,14 +74,7 @@ export function BudgetAllocationsConfig({
     return initial;
   });
 
-  // Rename dialog state
-  const [renameDialogOpen, setRenameDialogOpen] = useState(false);
-  const [renameCategoryId, setRenameCategoryId] = useState<string | null>(null);
-  const [renameValue, setRenameValue] = useState('');
-
-  // Add new category dialog state
-  const [addDialogOpen, setAddDialogOpen] = useState(false);
-  const [newCategoryName, setNewCategoryName] = useState('');
+  const categoryDialog = useAllocationCategoryDialogs();
 
   // Mutations
   const saveAllocationsBatchMutation = useSaveAllocationsBatchMutation();
@@ -122,33 +103,28 @@ export function BudgetAllocationsConfig({
 
   const handleOpenRename = (categoryId: string) => {
     const cat = categories.find(c => c.id === categoryId);
-    setRenameCategoryId(categoryId);
-    setRenameValue(cat?.name || '');
-    setRenameDialogOpen(true);
+    categoryDialog.openRename(categoryId, cat?.name || '');
   };
 
   const handleSaveRename = async () => {
-    if (!renameCategoryId || !renameValue.trim()) return;
+    if (!categoryDialog.categoryId || !categoryDialog.value.trim()) return;
     await updateCategoryMutation.mutateAsync({
       householdId,
-      categoryId: renameCategoryId,
-      updates: { name: renameValue.trim() },
+      categoryId: categoryDialog.categoryId,
+      updates: { name: categoryDialog.value.trim() },
     });
-    setRenameDialogOpen(false);
-    setRenameCategoryId(null);
-    setRenameValue('');
+    categoryDialog.close();
   };
 
   const handleCreateNewCategory = async () => {
-    if (!newCategoryName.trim()) return;
+    if (!categoryDialog.value.trim()) return;
     const newId = await createCategoryMutation.mutateAsync({
       householdId,
-      category: { name: newCategoryName.trim(), type: 'expense', isActive: true },
+      category: { name: categoryDialog.value.trim(), type: 'expense', isActive: true },
     });
     // Add to rows immediately
     setRows(prev => [...prev, { categoryId: newId, plannedAmount: '0' }]);
-    setAddDialogOpen(false);
-    setNewCategoryName('');
+    categoryDialog.close();
   };
 
   const handleSaveAllocations = useCallback(async () => {
@@ -233,40 +209,15 @@ export function BudgetAllocationsConfig({
         </Button>
       </Box>
 
-      {/* Allocation Rows */}
-      <List disablePadding>
-        {rows.map(row => (
-          <ListItem
-            key={row.categoryId}
-            sx={{ px: 0, py: 0.5, minHeight: 48, '&:hover .allocation-actions, &:focus-within .allocation-actions': { opacity: 1 } }}
-            secondaryAction={
-              <Stack direction="row" alignItems="center" spacing={0.75}>
-                <TextField
-                  variant="standard"
-                  type="number"
-                  value={privacyMode && row.plannedAmount ? maskDigits(String(row.plannedAmount)) : row.plannedAmount}
-                  onChange={e => handleAmountChange(row.categoryId, e.target.value)}
-                  sx={{
-                    width: 104,
-                    '& .MuiInput-root': { '&::before, &::after, &:hover:not(.Mui-disabled)::before': { borderBottom: 0 } },
-                  }}
-                  slotProps={{ input: { disableUnderline: true }, htmlInput: { min: 0, style: { textAlign: 'right', fontWeight: 700, padding: '10px 12px' } } }}
-                />
-                <Stack className="allocation-actions" direction="row" spacing={0.25} sx={{ opacity: { xs: 1, md: 0 }, transition: 'opacity 160ms ease' }}>
-                  <IconButton aria-label={`Rename ${getCategoryName(row.categoryId)}`} size="small" onClick={() => handleOpenRename(row.categoryId)} sx={{ width: 30, height: 30, minWidth: 30 }}>
-                    <EditIcon sx={{ fontSize: 15 }} />
-                  </IconButton>
-                  <IconButton aria-label={`Remove ${getCategoryName(row.categoryId)}`} size="small" onClick={() => handleRemoveCategory(row.categoryId)} color="error" sx={{ width: 30, height: 30, minWidth: 30 }}>
-                    <DeleteOutlineIcon sx={{ fontSize: 15 }} />
-                  </IconButton>
-                </Stack>
-              </Stack>
-            }
-          >
-            <ListItemText primary={getCategoryName(row.categoryId)} slotProps={{ primary: { fontSize: 13, fontWeight: 600 } }} />
-          </ListItem>
-        ))}
-      </List>
+      <AllocationRows
+        rows={rows}
+        privacyMode={privacyMode}
+        maskDigits={maskDigits}
+        getCategoryName={getCategoryName}
+        onAmountChange={handleAmountChange}
+        onRename={handleOpenRename}
+        onRemove={handleRemoveCategory}
+      />
 
       {/* Category actions */}
       <Box sx={{ mt: 2.5, pt: 2.25, borderTop: 1, borderColor: 'divider' }}>
@@ -301,7 +252,7 @@ export function BudgetAllocationsConfig({
           <Tooltip title="Create a new category">
             <IconButton
               aria-label="Create a new category"
-              onClick={() => setAddDialogOpen(true)}
+              onClick={categoryDialog.openAdd}
               sx={{
                 width: 36,
                 height: 36,
@@ -332,58 +283,8 @@ export function BudgetAllocationsConfig({
         <Button variant="contained" onClick={handleSaveAllocations} loading={saveAllocationsBatchMutation.isPending}>Save</Button>
       </Box>}
 
-      {/* Rename Category Dialog */}
-      <Dialog open={renameDialogOpen} onClose={() => setRenameDialogOpen(false)}>
-        <DialogTitle>Rename Category</DialogTitle>
-        <DialogContent sx={{ minWidth: 300 }}>
-          <TextField
-            fullWidth
-            label="Category Name"
-            value={renameValue}
-            onChange={e => setRenameValue(e.target.value)}
-            sx={{ mt: 1 }}
-            autoFocus
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setRenameDialogOpen(false)} color="inherit">Cancel</Button>
-          <Button
-            onClick={handleSaveRename}
-            variant="contained"
-            disabled={!renameValue.trim()}
-            loading={updateCategoryMutation.isPending}
-          >
-            Save
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Add New Category Dialog */}
-      <Dialog open={addDialogOpen} onClose={() => setAddDialogOpen(false)}>
-        <DialogTitle>Add New Category</DialogTitle>
-        <DialogContent sx={{ minWidth: 300 }}>
-          <TextField
-            fullWidth
-            label="Category Name"
-            placeholder="e.g. Entertainment"
-            value={newCategoryName}
-            onChange={e => setNewCategoryName(e.target.value)}
-            sx={{ mt: 1 }}
-            autoFocus
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setAddDialogOpen(false)} color="inherit">Cancel</Button>
-          <Button
-            onClick={handleCreateNewCategory}
-            variant="contained"
-            disabled={!newCategoryName.trim()}
-            loading={createCategoryMutation.isPending}
-          >
-            Create & Add
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <CategoryNameDialog open={categoryDialog.mode === 'rename'} title="Rename Category" confirmLabel="Save" value={categoryDialog.value} loading={updateCategoryMutation.isPending} onChange={categoryDialog.setValue} onClose={categoryDialog.close} onConfirm={handleSaveRename} />
+      <CategoryNameDialog open={categoryDialog.mode === 'add'} title="Add New Category" confirmLabel="Create & Add" value={categoryDialog.value} placeholder="e.g. Entertainment" loading={createCategoryMutation.isPending} onChange={categoryDialog.setValue} onClose={categoryDialog.close} onConfirm={handleCreateNewCategory} />
     </Box>
   );
 }

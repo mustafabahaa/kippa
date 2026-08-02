@@ -20,6 +20,7 @@ import { computeCardSummary } from '@/libs/cardSelectors';
 import { Money } from '@/components/Money';
 import type { Card as CardType } from '@kippa/domain';
 import { ForeignBalanceTooltip } from '@/features/shared/components/ForeignBalanceTooltip';
+import { calculateAccountBalances } from '@/libs/financeCalculations';
 
 export function MyAccountsCard() {
   const { householdId } = useAppContext();
@@ -69,16 +70,7 @@ export function MyAccountsCard() {
     );
   }
 
-  // Calculate balances.
-  const activeTxIds = new Set(transactions.filter(t => t.status === 'posted').map(t => t.id));
-  const activeLines = ledgerLines.filter(line => activeTxIds.has(line.transactionId));
-  const balancesMap: Record<string, number> = {};
-  accounts.forEach(acc => { balancesMap[acc.id] = 0; });
-  activeLines.forEach(line => {
-    if (balancesMap[line.accountId] !== undefined) {
-      balancesMap[line.accountId] += line.signedAmount;
-    }
-  });
+  const balancesMap = calculateAccountBalances(accounts, transactions, ledgerLines);
 
   // Credit accounts are debt buckets — hide from the accounts list.
   const visibleAccounts = accounts.filter(a => a.type !== 'credit');
