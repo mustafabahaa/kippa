@@ -1,5 +1,6 @@
 import { createHash, randomBytes, randomUUID, timingSafeEqual } from 'node:crypto';
 import { FieldValue, getFirestore } from 'firebase-admin/firestore';
+import { projectID } from 'firebase-functions/params';
 import { HttpsError, onCall, onRequest } from 'firebase-functions/v2/https';
 import type { Account, Card, Category, PendingFinancialMessage, UserProfile } from '@kippa/domain';
 import { buildMessagePreview, parseFinancialMessage, type ParsedFinancialMessage } from '../../domain/message-ingestion/parser.js';
@@ -129,6 +130,11 @@ export const createMessageIngestionCredential = onCall(async (request) => {
     : 'iPhone Shortcut';
   await requireHouseholdMember(uid, householdId);
 
+  const runtimeProjectId = projectID.value();
+  if (!runtimeProjectId) {
+    throw new HttpsError('internal', 'Firebase project configuration is unavailable.');
+  }
+
   const id = randomUUID();
   const secret = randomBytes(32).toString('base64url');
   const now = new Date().toISOString();
@@ -144,15 +150,10 @@ export const createMessageIngestionCredential = onCall(async (request) => {
   };
   await getFirestore().doc(`messageIngestionCredentials/${id}`).set(credential);
 
-  const projectId = process.env.GCLOUD_PROJECT || process.env.GOOGLE_CLOUD_PROJECT;
-  if (!projectId) {
-    throw new HttpsError('internal', 'Firebase project configuration is unavailable.');
-  }
-
   return {
     credentialId: id,
     token: `${id}.${secret}`,
-    endpoint: `https://us-central1-${projectId}.cloudfunctions.net/ingestFinancialMessage`,
+    endpoint: `https://us-central1-${runtimeProjectId}.cloudfunctions.net/ingestFinancialMessage`,
   };
 });
 
