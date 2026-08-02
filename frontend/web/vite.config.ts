@@ -20,11 +20,11 @@ function localPreviewAuth(): Plugin {
             import('firebase-admin/app'),
             import('firebase-admin/auth'),
           ]);
+          const previewProjectId = process.env.KIPPA_PREVIEW_PROJECT_ID;
           const previewApp = getApps().find(app => app.name === 'kippa-local-preview-v2')
             || initializeApp({
               credential: applicationDefault(),
-              projectId: 'YOUR_FIREBASE_PROJECT_ID',
-              serviceAccountId: 'firebase-adminsdk-fbsvc@YOUR_FIREBASE_PROJECT_ID.iam.gserviceaccount.com',
+              ...(previewProjectId ? { projectId: previewProjectId } : {}),
             }, 'kippa-local-preview-v2');
           const uid = process.env.KIPPA_PREVIEW_UID || 'kippa-visual-demo';
           const token = await getAuth(previewApp).createCustomToken(uid);

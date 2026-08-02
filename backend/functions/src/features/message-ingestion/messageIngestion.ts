@@ -144,10 +144,15 @@ export const createMessageIngestionCredential = onCall(async (request) => {
   };
   await getFirestore().doc(`messageIngestionCredentials/${id}`).set(credential);
 
+  const projectId = process.env.GCLOUD_PROJECT || process.env.GOOGLE_CLOUD_PROJECT;
+  if (!projectId) {
+    throw new HttpsError('internal', 'Firebase project configuration is unavailable.');
+  }
+
   return {
     credentialId: id,
     token: `${id}.${secret}`,
-    endpoint: 'https://us-central1-YOUR_FIREBASE_PROJECT_ID.cloudfunctions.net/ingestFinancialMessage',
+    endpoint: `https://us-central1-${projectId}.cloudfunctions.net/ingestFinancialMessage`,
   };
 });
 

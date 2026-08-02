@@ -23,7 +23,7 @@
 
 ---
 
-> ⚠️ **License notice.** This project is licensed under the **PolyForm Noncommercial License 1.0.0**. Personal and non-commercial use is fully permitted. **Commercial use requires a separate paid license** — see [LICENSE](./LICENSE) or contact `YOUR_SUPPORT_EMAIL`.
+> ⚠️ **License notice.** This project is licensed under the **PolyForm Noncommercial License 1.0.0**. Personal and non-commercial use is fully permitted. **Commercial use requires a separate paid license** — see [LICENSE](./LICENSE).
 
 ---
 
@@ -138,7 +138,7 @@ Copyright (c) 2026 **Mustafa BAHAA**. Licensed under the [PolyForm Noncommercial
 - ✅ **Allowed:** personal use, learning, non-commercial projects, modifications for your own non-commercial use.
 - 💰 **Requires a license:** any commercial use, SaaS, resale, or integration into a paid product.
 
-For commercial licensing, contact: **YOUR_SUPPORT_EMAIL**.
+Commercial licensing is available from the copyright holder.
 
 ## 💬 Acknowledgements
 
