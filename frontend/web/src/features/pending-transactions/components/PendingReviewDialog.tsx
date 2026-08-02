@@ -5,10 +5,6 @@ import { Money } from '@/components/Money';
 
 type Props = { accountId: string; accounts: Account[]; busy: boolean; categories: Category[]; categoryId: string; confirmDiscard: boolean; destinationAccountId: string; destinationAccounts: Account[]; item: PendingFinancialMessage | null; onAccountChange: (id: string) => void; onApprove: () => void; onCategoryChange: (id: string) => void; onClose: () => void; onDestinationChange: (id: string) => void; onDiscard: () => void; state: 'idle' | 'approving' | 'discarding' | 'settled' };
 
-function Options({ items }: { items: Array<{ id: string; name: string }> }) {
-  return <>{items.map((item) => <MenuItem key={item.id} value={item.id}>{item.name}</MenuItem>)}</>;
-}
-
 export function PendingReviewDialog(props: Props) {
   const { accountId, accounts, busy, categories, categoryId, confirmDiscard, destinationAccountId, destinationAccounts, item, onAccountChange, onApprove, onCategoryChange, onClose, onDestinationChange, onDiscard, state } = props;
   if (!item) return null;
@@ -34,9 +30,9 @@ export function PendingReviewDialog(props: Props) {
           </Box>
           <Divider />
           <Stack spacing={2}>
-            {!transfer && <FormControl fullWidth><InputLabel id="pending-category-label">Category</InputLabel><Select labelId="pending-category-label" value={categoryId} label="Category" onChange={(event) => onCategoryChange(event.target.value)}><Options items={categories} /></Select></FormControl>}
-            <FormControl fullWidth><InputLabel id="pending-account-label">{item.kind === 'income' ? 'To account' : 'From account'}</InputLabel><Select labelId="pending-account-label" value={accountId} label={item.kind === 'income' ? 'To account' : 'From account'} onChange={(event) => onAccountChange(event.target.value)}><Options items={accounts} /></Select></FormControl>
-            {transfer && <FormControl fullWidth><InputLabel id="pending-destination-label">To account</InputLabel><Select labelId="pending-destination-label" value={destinationAccountId} label="To account" onChange={(event) => onDestinationChange(event.target.value)}><Options items={destinationAccounts} /></Select></FormControl>}
+            {!transfer && <FormControl fullWidth><InputLabel id="pending-category-label">Category</InputLabel><Select labelId="pending-category-label" value={categoryId} label="Category" onChange={(event) => onCategoryChange(event.target.value)}>{categories.map((category) => <MenuItem key={category.id} value={category.id}>{category.name}</MenuItem>)}</Select></FormControl>}
+            <FormControl fullWidth><InputLabel id="pending-account-label">{item.kind === 'income' ? 'To account' : 'From account'}</InputLabel><Select labelId="pending-account-label" value={accountId} label={item.kind === 'income' ? 'To account' : 'From account'} onChange={(event) => onAccountChange(event.target.value)}>{accounts.map((account) => <MenuItem key={account.id} value={account.id}>{account.name}</MenuItem>)}</Select></FormControl>
+            {transfer && <FormControl fullWidth><InputLabel id="pending-destination-label">To account</InputLabel><Select labelId="pending-destination-label" value={destinationAccountId} label="To account" onChange={(event) => onDestinationChange(event.target.value)}>{destinationAccounts.map((account) => <MenuItem key={account.id} value={account.id}>{account.name}</MenuItem>)}</Select></FormControl>}
           </Stack>
           <Divider />
           <Box><Typography variant="sectionLabel" color="primary">Bank message</Typography><Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>{item.messagePreview}</Typography></Box>
