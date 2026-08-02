@@ -42,6 +42,10 @@ function KippaLogo({ mode }: { mode: ThemePreference }) {
   return <Box component="img" src={`${import.meta.env.BASE_URL}assets/${mode === 'dark' ? 'kippa-logo-dark.png' : 'kippa-logo.png'}`} alt="Kippa" sx={{ width: 104, height: 42, objectFit: 'contain', objectPosition: 'left center' }} />;
 }
 
+function previewAsset(name: string, mode: ThemePreference) {
+  return `${import.meta.env.BASE_URL}assets/kippa-demo-${name}${mode === 'dark' ? '-dark' : ''}.webp`;
+}
+
 function DashboardPreview() {
   return (
     <Paper className="preview dashboard-preview" aria-label="Kippa dashboard with demo household data">
@@ -177,7 +181,7 @@ function Landing({ mode, onToggleMode }: { mode: ThemePreference; onToggleMode: 
 
         <Container maxWidth="xl" component="section" className="product-story">
           <Box className="product-phone">
-            <Box component="img" src={`${import.meta.env.BASE_URL}assets/kippa-demo-dashboard-mobile.webp`} alt="Kippa mobile dashboard using an isolated demo household" loading="lazy" />
+            <Box component="img" src={previewAsset('dashboard-mobile', mode)} alt={`Kippa mobile dashboard in ${mode} mode using an isolated demo household`} loading="lazy" />
           </Box>
           <Box className="product-story-copy">
             <Typography component="h2">A real product, not another spreadsheet.</Typography>
@@ -198,10 +202,10 @@ function Landing({ mode, onToggleMode }: { mode: ThemePreference; onToggleMode: 
           </Box>
           <Box className="showcase-grid">
             <Box className="showcase-main screenshot-frame screenshot-desktop">
-              <Box component="img" src={`${import.meta.env.BASE_URL}assets/kippa-demo-dashboard.webp`} alt="Kippa desktop dashboard with sample household finances" loading="lazy" />
+              <Box component="img" src={previewAsset('dashboard', mode)} alt={`Kippa desktop dashboard in ${mode} mode with sample household finances`} loading="lazy" />
             </Box>
-            <Box className="screenshot-frame screenshot-mobile"><Box component="img" src={`${import.meta.env.BASE_URL}assets/kippa-demo-entry.webp`} alt="Kippa Fast Entry screen with demo categories and accounts" loading="lazy" /></Box>
-            <Box className="screenshot-frame screenshot-mobile"><Box component="img" src={`${import.meta.env.BASE_URL}assets/kippa-demo-cycles.webp`} alt="Kippa Budget Cycles screen with demo analytics" loading="lazy" /></Box>
+            <Box className="screenshot-frame screenshot-mobile"><Box component="img" src={previewAsset('entry', mode)} alt={`Kippa Fast Entry screen in ${mode} mode with demo categories and accounts`} loading="lazy" /></Box>
+            <Box className="screenshot-frame screenshot-mobile"><Box component="img" src={previewAsset('cycles', mode)} alt={`Kippa Budget Cycles screen in ${mode} mode with demo analytics`} loading="lazy" /></Box>
           </Box>
         </Container>
 
