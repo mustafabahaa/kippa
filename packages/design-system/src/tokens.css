@@ -1,0 +1,71 @@
+:root,
+[data-theme='light'] {
+  color-scheme: light;
+  --kippa-bg: #f4f5f7;
+  --kippa-surface: #ffffff;
+  --kippa-surface-low: #f8f9fa;
+  --kippa-surface-high: #f2f2f4;
+  --kippa-text: #131b2e;
+  --kippa-text-muted: #4a5160;
+  --kippa-border: #ecedf0;
+  --kippa-primary: #0f766e;
+  --kippa-primary-strong: #005c55;
+  --kippa-primary-soft: #e0f4f1;
+  --kippa-brand-panel: #dcefeb;
+  --kippa-brand-panel-text: #131b2e;
+  --kippa-brand-panel-muted: #4a5160;
+  --kippa-secondary: #a6e32b;
+  --kippa-on-secondary: #183200;
+  --kippa-on-secondary-muted: #294f00;
+  --kippa-on-primary: #ffffff;
+  --kippa-card-radius: 20px;
+  --kippa-control-radius: 12px;
+  --kippa-pill-radius: 48px;
+  --kippa-shadow: 0 18px 48px rgba(24, 53, 34, 0.08);
+}
+
+[data-theme='dark'] {
+  color-scheme: dark;
+  --kippa-bg: #070908;
+  --kippa-surface: #0e1110;
+  --kippa-surface-low: #101312;
+  --kippa-surface-high: #1f2423;
+  --kippa-text: #f4f7f2;
+  --kippa-text-muted: #b8c1b9;
+  --kippa-border: #252b29;
+  --kippa-primary: #80d5cb;
+  --kippa-primary-strong: #9cf2e8;
+  --kippa-primary-soft: #102d29;
+  --kippa-brand-panel: #0e302b;
+  --kippa-brand-panel-text: #f4f7f2;
+  --kippa-brand-panel-muted: #c4d1cb;
+  --kippa-secondary: #a6e32b;
+  --kippa-on-secondary: #183200;
+  --kippa-on-secondary-muted: #294f00;
+  --kippa-on-primary: #09201d;
+  --kippa-shadow: 0 18px 48px rgba(0, 0, 0, 0.32);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
+    --kippa-bg: #070908;
+    --kippa-surface: #0e1110;
+    --kippa-surface-low: #101312;
+    --kippa-surface-high: #1f2423;
+    --kippa-text: #f4f7f2;
+    --kippa-text-muted: #b8c1b9;
+    --kippa-border: #252b29;
+    --kippa-primary: #80d5cb;
+    --kippa-primary-strong: #9cf2e8;
+    --kippa-primary-soft: #102d29;
+    --kippa-brand-panel: #0e302b;
+    --kippa-brand-panel-text: #f4f7f2;
+    --kippa-brand-panel-muted: #c4d1cb;
+    --kippa-secondary: #a6e32b;
+    --kippa-on-secondary: #183200;
+    --kippa-on-secondary-muted: #294f00;
+    --kippa-on-primary: #09201d;
+    --kippa-shadow: 0 18px 48px rgba(0, 0, 0, 0.32);
+  }
+}

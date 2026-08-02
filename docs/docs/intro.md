@@ -23,12 +23,13 @@ Kippa is a ledger-first household finance PWA designed for fast expense entry, s
 kippa/
 ├── frontend/
 │   ├── web/          # Product PWA
-│   ├── landing/      # Public marketing site
-│   └── docs/         # This Docusaurus site
+│   └── landing/      # Public marketing site
 ├── backend/
 │   └── functions/    # Firebase Functions
+├── docs/              # Full-system Docusaurus site
 └── packages/
-    └── domain/       # Shared type contracts
+    ├── design-system/ # Shared visual foundations
+    └── domain/        # Shared type contracts
 ```
 
 The [landing page](https://mustafabahaa.github.io/kippa/) provides the public product overview. The [GitHub repository](https://github.com/mustafabahaa/kippa) contains the full source.

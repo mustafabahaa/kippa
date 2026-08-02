@@ -100,6 +100,7 @@ npm run deploy       # build + firebase deploy (hosting + firestore + functions)
 │   └── functions/             # Cloud Functions (cron reminders, FCM fanout, derived data)
 ├── docs/                       # Full-system Docusaurus documentation
 ├── packages/
+│   ├── design-system/         # Shared visual tokens and component themes
 │   └── domain/                # Shared cross-runtime contracts
 ├── GETTING_STARTED.md          # End-to-end setup guide (CLIs → deploy)
 ├── .firebaserc.example

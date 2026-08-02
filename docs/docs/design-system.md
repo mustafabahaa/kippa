@@ -1,7 +1,12 @@
-# Design System - Workspace Productivity System
+# Kippa Design System
 
-> **Canonical Source:** Google Stitch Design System, asset ID `d778924a54e1410caa5f4bc7d35e5bca` (project `5833365205671877695`).
-> All design tokens (colors, typography, spacing, elevation) are derived from this Stitch asset. Do not add ad-hoc values.
+> **Canonical implementation:** `packages/design-system`.
+> The original direction came from Google Stitch asset `d778924a54e1410caa5f4bc7d35e5bca`, but the shared package is the production source of truth.
+
+- `src/foundations/` owns color, spacing, radius, typography, layout, and mode tokens.
+- `src/theme/` composes the MUI palette and typography.
+- `src/theme/components/` contains focused overrides for buttons, cards, chips, inputs, navigation, feedback, overlays, and tables.
+- `src/tokens.css` exposes semantic variables to Docusaurus and other non-MUI surfaces.
 
 ---
 

@@ -48,11 +48,11 @@ const config: Config = {
       logo: {
         alt: 'Kippa',
         src: 'img/favicon.svg',
+        srcDark: 'img/kippa-logo-dark.png',
       },
       items: [
         { type: 'docSidebar', sidebarId: 'mainSidebar', position: 'left', label: 'Guides' },
         { href: 'https://mustafabahaa.github.io/kippa/', label: 'Landing', position: 'right' },
-        { href: 'https://YOUR_FIREBASE_PROJECT_ID.web.app', label: 'Open app', position: 'right' },
         { href: 'https://github.com/mustafabahaa/kippa', label: 'GitHub', position: 'right' },
       ],
     },
@@ -63,7 +63,7 @@ const config: Config = {
           title: 'Product',
           items: [
             { label: 'Kippa landing', href: 'https://mustafabahaa.github.io/kippa/' },
-            { label: 'Open Kippa', href: 'https://YOUR_FIREBASE_PROJECT_ID.web.app' },
+            { label: 'Set up Kippa', to: '/getting-started' },
           ],
         },
         {

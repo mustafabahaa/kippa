@@ -41,7 +41,6 @@ kippa/
 │   │       ├── hooks/         # React Query queries and mutations
 │   │       ├── libs/          # Ledger services, calculators, and API helpers
 │   │       ├── features/      # Feature modules and their views/components
-│   │       ├── theme.ts       # Material UI theme setup
 │   │       ├── main.tsx       # Application bootstrap entrypoint
 │   │       └── App.tsx        # Layout shell, routing, and navigation
 │   └── landing/               # Public React + Vite landing page
@@ -54,6 +53,7 @@ kippa/
 │           └── index.ts       # Stable deployed function exports
 ├── docs/                       # Full-system Docusaurus documentation
 └── packages/
+    ├── design-system/         # Shared tokens, themes, and component overrides
     └── domain/                # Type-only contracts shared across runtimes
 ```
 
@@ -67,6 +67,13 @@ Canonical entities are declared in `packages/domain/src/index.d.ts`. Both the ap
 - `LedgerLine`: Double-entry record for balance sheets.
 - `BudgetCycle`: Period representing the salary duration.
 - `BudgetAllocation`: Category allocations per cycle.
+
+### `packages/design-system/`
+The visual source of truth shared by the product, landing page, and documentation:
+- `src/foundations/` contains tokens, responsive layout values, and light/dark mode resolution.
+- `src/theme/` composes the palette and typography into the MUI theme.
+- `src/theme/components/` keeps each component-family override in its own module.
+- `src/tokens.css` exposes the same semantic surface, text, border, and brand roles to non-MUI consumers.
 
 ### `frontend/web/src/libs/`
 This folder contains framework-agnostic business logic. **No UI components belong here.**

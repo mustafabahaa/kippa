@@ -1,7 +1,7 @@
 import { useMemo, lazy, Suspense } from 'react';
 import { Routes, Route, BrowserRouter } from 'react-router-dom';
 import { Box, ThemeProvider, CssBaseline } from '@mui/material';
-import { createAppTheme } from '@/theme';
+import { createAppTheme } from '@kippa/design-system';
 import { useThemeMode } from '@/hooks/useThemeMode';
 import { AppBackground } from '@/features/shared/components/AppBackground';
 import { useAppContext } from '@/hooks/useAppContext';
