@@ -9,6 +9,8 @@ import {
   useTransactions,
   useLedgerLines,
   useCards,
+  useDisplayRates,
+  useHouseholdBaseCurrency,
 } from '@/hooks/useFinance';
 import { useAppContext } from '@/hooks/useAppContext';
 import { EmptyLayout } from '@/features/shared/components/EmptyLayout';
@@ -17,6 +19,7 @@ import { CardDetail } from '@/features/cards/CardDetail';
 import { computeCardSummary } from '@/libs/cardSelectors';
 import { Money } from '@/components/Money';
 import type { Card as CardType } from '@kippa/domain';
+import { ForeignBalanceTooltip } from '@/features/shared/components/ForeignBalanceTooltip';
 
 export function MyAccountsCard() {
   const { householdId } = useAppContext();
@@ -24,6 +27,9 @@ export function MyAccountsCard() {
   const { data: transactions, isLoading: txsLoading } = useTransactions(householdId);
   const { data: ledgerLines, isLoading: linesLoading } = useLedgerLines(householdId);
   const { data: cards = [] } = useCards(householdId);
+  const baseCurrency = useHouseholdBaseCurrency();
+  const foreignCurrencies = Array.from(new Set((accounts ?? []).map(account => account.currency).filter(currency => currency !== baseCurrency)));
+  const { data: displayRates = {} } = useDisplayRates(baseCurrency, foreignCurrencies);
   const [detailCard, setDetailCard] = useState<CardType | null>(null);
 
   const getAccountIcon = (type: string) => {
@@ -108,7 +114,15 @@ export function MyAccountsCard() {
                   const linked = cards.filter(c => c.parentAccountId === acc.id || c.paymentAccountId === acc.id);
                   return (
                     <Box key={acc.id}>
-                      <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={2} sx={{ minHeight: 72, py: 1.5 }}>
+                      <ForeignBalanceTooltip amount={bal} currency={acc.currency} baseCurrency={baseCurrency} rate={displayRates[acc.currency]}>
+                      <Stack
+                        direction="row"
+                        alignItems="center"
+                        justifyContent="space-between"
+                        spacing={2}
+                        tabIndex={acc.currency === baseCurrency ? undefined : 0}
+                        sx={{ minHeight: 72, py: 1.5, cursor: acc.currency === baseCurrency ? 'default' : 'help' }}
+                      >
                         <Stack direction="row" spacing={1.5} alignItems="center" sx={{ minWidth: 0 }}>
                           <Box sx={{ width: 42, height: 42, flexShrink: 0, borderRadius: 2, bgcolor: 'action.hover', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'primary.main' }}>
                             {getAccountIcon(acc.type)}
@@ -122,6 +136,7 @@ export function MyAccountsCard() {
                           <Money amount={bal} code={acc.currency} maxDigits={2} />
                         </Typography>
                       </Stack>
+                      </ForeignBalanceTooltip>
 
                       {linked.length > 0 && (
                         <Box sx={{ pb: 2 }}>

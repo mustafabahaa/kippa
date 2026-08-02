@@ -36,6 +36,7 @@ import {
   useLedgerLines,
   useTransactions,
   useCardStatements,
+  useDisplayRates,
 } from '@/hooks/useFinance';
 import { Account, AccountType, CurrencyCode, Card as CardType } from '@kippa/domain';
 import { useAppContext } from '@/hooks/useAppContext';
@@ -47,6 +48,7 @@ import { CurrencySelect } from '@/features/shared/components/CurrencySelect';
 import { useHouseholdBaseCurrency } from '@/hooks/useFinance';
 import { Money } from '@/components/Money';
 import { EmptyLayout } from '@/features/shared/components/EmptyLayout';
+import { ForeignBalanceTooltip } from '@/features/shared/components/ForeignBalanceTooltip';
 
 export function Accounts() {
   const { householdId } = useAppContext();
@@ -72,6 +74,8 @@ export function Accounts() {
   const { data: ledgerLines = [] } = useLedgerLines(householdId);
   const { data: transactions = [] } = useTransactions(householdId);
   const { data: statements = [] } = useCardStatements(householdId);
+  const foreignCurrencies = Array.from(new Set(accounts.map(account => account.currency).filter(currency => currency !== baseCurrency)));
+  const { data: displayRates = {} } = useDisplayRates(baseCurrency, foreignCurrencies);
   const createAccountMutation = useCreateAccountMutation();
   const updateAccountMutation = useUpdateAccountMutation();
   const updateCard = useUpdateCardMutation();
@@ -202,7 +206,15 @@ export function Accounts() {
                   <Card key={acc.id} sx={{ overflow: 'hidden' }}>
                     <CardContent>
                       <Stack spacing={2.5}>
-                        <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={2}>
+                        <ForeignBalanceTooltip amount={bal} currency={acc.currency} baseCurrency={baseCurrency} rate={displayRates[acc.currency]}>
+                        <Stack
+                          direction="row"
+                          alignItems="center"
+                          justifyContent="space-between"
+                          spacing={2}
+                          tabIndex={acc.currency === baseCurrency ? undefined : 0}
+                          sx={{ cursor: acc.currency === baseCurrency ? 'default' : 'help' }}
+                        >
                           <Stack direction="row" spacing={1.5} alignItems="center" sx={{ minWidth: 0 }}>
                             <Box sx={{ width: 44, height: 44, borderRadius: 3, bgcolor: 'action.hover', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                               {getAccountIcon(acc.type)}
@@ -223,6 +235,7 @@ export function Accounts() {
                             </IconButton>
                           </Stack>
                         </Stack>
+                        </ForeignBalanceTooltip>
 
                         {canHoldCard && (
                           <Box>

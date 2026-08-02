@@ -98,13 +98,13 @@ export function SideNav() {
             mb: 0.25,
             px: 1.25,
             borderRadius: '10px',
-            color: active ? 'text.primary' : 'text.secondary',
+            color: 'text.primary',
             transition: 'background-color 160ms ease, color 160ms ease',
             '&.Mui-selected': { bgcolor: 'action.selected' },
             '&.Mui-selected:hover': { bgcolor: 'action.selected' },
           }}
         >
-          <ListItemIcon sx={{ minWidth: 34, color: active ? 'primary.dark' : 'text.secondary' }}>
+          <ListItemIcon sx={{ minWidth: 34, color: active ? 'primary.dark' : 'text.primary' }}>
             <Icon fontSize="small" variant={active ? 'Bold' : 'Linear'} />
           </ListItemIcon>
           <ListItemText primary={item.label} slotProps={{ primary: { fontSize: 13.5, lineHeight: 1.2, fontWeight: active ? 700 : 500 } }} />
@@ -117,7 +117,7 @@ export function SideNav() {
                 event.stopPropagation();
                 setExpanded(current => ({ ...current, [item.label]: !current[item.label] }));
               }}
-              sx={{ p: 0.75, mr: -0.75, color: 'text.secondary', cursor: 'pointer' }}
+              sx={{ p: 0.75, mr: -0.75, color: 'text.primary', cursor: 'pointer' }}
             >
               <ExpandLessIcon sx={{ fontSize: 17, transform: isExpanded ? 'none' : 'rotate(180deg)', transition: 'transform 160ms ease' }} />
             </Box>
@@ -148,7 +148,7 @@ export function SideNav() {
                     px: 1,
                     py: 0.5,
                     borderRadius: 2,
-                    color: childActive ? 'text.primary' : 'text.secondary',
+                    color: 'text.primary',
                     '&::before': { content: '""', position: 'absolute', left: -18, top: '50%', width: 12, height: '1px', bgcolor: 'divider' },
                     '&.Mui-selected': { bgcolor: 'transparent', color: 'primary.main' },
                     '&.Mui-selected:hover': { bgcolor: 'action.hover' },

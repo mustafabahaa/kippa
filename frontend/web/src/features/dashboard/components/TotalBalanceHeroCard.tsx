@@ -15,6 +15,7 @@ import { Money } from '@/components/Money';
 import { useAppContext } from '@/hooks/useAppContext';
 import { InfoTooltip } from '@/features/shared/components/InfoTooltip';
 import { metricExplanations } from '@/features/shared/constants/metricExplanations';
+import { ForeignBalanceTooltip } from '@/features/shared/components/ForeignBalanceTooltip';
 
 export function TotalBalanceHeroCard() {
   const { householdId } = useAppContext();
@@ -92,17 +93,32 @@ export function TotalBalanceHeroCard() {
               {accounts.map(account => {
                 const balance = balanceFor(account.id);
                 return (
-                <Stack
+                <ForeignBalanceTooltip
                   key={account.id}
-                  sx={{ minWidth: 0, bgcolor: 'action.hover', px: 1, py: 0.7, borderRadius: '9px' }}
+                  amount={balance}
+                  currency={account.currency}
+                  baseCurrency={baseCurrency}
+                  rate={displayRates[account.currency]}
                 >
-                  <Typography noWrap sx={{ color: 'text.secondary', fontSize: 9.5, fontWeight: 600 }}>
-                    {account.name}
-                  </Typography>
-                  <Typography noWrap sx={{ color: account.type === 'credit' && balance < 0 ? 'error.main' : 'text.primary', fontSize: 11, fontWeight: 750 }}>
-                    <Money amount={balance} code={account.currency} maxDigits={2} />
-                  </Typography>
-                </Stack>
+                  <Stack
+                    tabIndex={account.currency === baseCurrency ? undefined : 0}
+                    sx={{
+                      minWidth: 0,
+                      bgcolor: 'action.hover',
+                      px: 1,
+                      py: 0.7,
+                      borderRadius: '9px',
+                      cursor: account.currency === baseCurrency ? 'default' : 'help',
+                    }}
+                  >
+                    <Typography noWrap sx={{ color: 'text.secondary', fontSize: 9.5, fontWeight: 600 }}>
+                      {account.name}
+                    </Typography>
+                    <Typography noWrap sx={{ color: account.type === 'credit' && balance < 0 ? 'error.main' : 'text.primary', fontSize: 11, fontWeight: 750 }}>
+                      <Money amount={balance} code={account.currency} maxDigits={2} />
+                    </Typography>
+                  </Stack>
+                </ForeignBalanceTooltip>
               );
               })}
             </Box>

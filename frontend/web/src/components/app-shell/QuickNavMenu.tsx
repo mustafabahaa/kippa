@@ -12,8 +12,8 @@ import { ReceiptLongIcon } from '@/components/AppIcon';
 import { CategoryIcon } from '@/components/AppIcon';
 import { HomeIcon } from '@/components/AppIcon';
 import { NotificationsActiveIcon } from '@/components/AppIcon';
-import { HourglassEmptyIcon } from '@/components/AppIcon';
 import { HistoryIcon } from '@/components/AppIcon';
+import { CalendarMonthIcon } from '@/components/AppIcon';
 
 interface QuickNavMenuProps {
   anchorEl: HTMLElement | null;
@@ -32,7 +32,7 @@ const menuItemStyle = {
   },
   '& .MuiListItemIcon-root': {
     minWidth: 30,
-    color: 'text.secondary',
+    color: 'text.primary',
   },
   '& .MuiListItemText-primary': {
     fontSize: '0.875rem',
@@ -62,8 +62,13 @@ const SECTIONS = [
     items: [
       { label: 'Bank Accounts', icon: <AccountBalanceIcon fontSize="small" />, path: '/accounts' },
       { label: 'Transactions', icon: <ReceiptLongIcon fontSize="small" />, path: '/transactions' },
-      { label: 'Pending Review', icon: <HourglassEmptyIcon fontSize="small" />, path: '/pending' },
       { label: 'Categories', icon: <CategoryIcon fontSize="small" />, path: '/categories' },
+    ],
+  },
+  {
+    title: 'Planning',
+    items: [
+      { label: 'Budget Cycles', icon: <CalendarMonthIcon fontSize="small" />, path: '/cycles' },
     ],
   },
   {

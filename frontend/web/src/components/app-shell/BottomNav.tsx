@@ -1,12 +1,14 @@
-import { Paper, Box, Typography, useTheme, alpha } from '@mui/material';
+import { Paper, Box, Typography, useTheme, alpha, Badge } from '@mui/material';
 import { DashboardIcon } from '@/components/AppIcon';
 import { SyncAltIcon } from '@/components/AppIcon';
-import { CalendarMonthIcon } from '@/components/AppIcon';
 import { ReceiptLongIcon } from '@/components/AppIcon';
 import { AddIcon } from '@/components/AppIcon';
+import { HourglassEmptyIcon } from '@/components/AppIcon';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useState, useEffect, useRef } from 'react';
 import type { ReactNode } from 'react';
+import { useAppContext } from '@/hooks/useAppContext';
+import { usePendingFinancialMessages } from '@/hooks/useFinance';
 
 interface NavItem {
   label: string;
@@ -21,13 +23,16 @@ const LEFT_ITEMS: NavItem[] = [
 
 const RIGHT_ITEMS: NavItem[] = [
   { label: 'Transactions', path: '/transactions', icon: <ReceiptLongIcon /> },
-  { label: 'Cycles', path: '/cycles', icon: <CalendarMonthIcon /> },
+  { label: 'Pending', path: '/pending', icon: <HourglassEmptyIcon /> },
 ];
 
 export function BottomNav() {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const theme = useTheme();
+  const { householdId } = useAppContext();
+  const { data: pendingItems = [] } = usePendingFinancialMessages(householdId);
+  const pendingCount = pendingItems.length;
 
   const isEntry = pathname === '/entry';
   const isDark = theme.palette.mode === 'dark';
@@ -49,11 +54,18 @@ export function BottomNav() {
 
   const renderNavItem = (item: NavItem) => {
     const isActive = pathname === item.path;
+    const isPending = item.path === '/pending';
     return (
       <Box
+        component="button"
+        type="button"
         key={item.path}
         onClick={() => navigate(item.path)}
+        aria-label={isPending && pendingCount > 0 ? `Pending review, ${pendingCount} items require attention` : item.label}
         sx={{
+          border: 0,
+          bgcolor: 'transparent',
+          font: 'inherit',
           flex: 1,
           minWidth: 0,
           display: 'flex',
@@ -65,7 +77,7 @@ export function BottomNav() {
           px: { xs: 1, sm: 1.5 },
           borderRadius: '24px',
           cursor: 'pointer',
-          color: isActive ? 'primary.main' : 'text.secondary',
+          color: isActive ? 'primary.main' : 'text.primary',
           transition: 'all 0.2s ease',
           '&:hover': { transform: 'scale(1.08)' },
           '&:active': { transform: 'scale(0.92)' },
@@ -75,7 +87,26 @@ export function BottomNav() {
           },
         }}
       >
-        {item.icon}
+        {isPending ? (
+          <Badge
+            color="warning"
+            badgeContent={pendingCount}
+            max={99}
+            invisible={pendingCount === 0}
+            overlap="circular"
+            sx={{
+              '& .MuiBadge-badge': {
+                minWidth: 18,
+                height: 18,
+                px: 0.5,
+                fontSize: 10,
+                fontWeight: 800,
+              },
+            }}
+          >
+            {item.icon}
+          </Badge>
+        ) : item.icon}
         <Typography
           sx={{
             fontSize: '10px',

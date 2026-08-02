@@ -49,7 +49,7 @@ const menuItemStyle = {
   },
   '& .MuiListItemIcon-root': {
     minWidth: 30,
-    color: 'text.secondary',
+    color: 'text.primary',
   },
   '& .MuiListItemText-primary': {
     fontSize: '0.875rem',
