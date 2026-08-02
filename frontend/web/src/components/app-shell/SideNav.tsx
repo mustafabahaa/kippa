@@ -21,6 +21,7 @@ import {
   HomeIcon,
   ReceiptLongIcon,
   SearchIcon,
+  NotesIcon,
 } from '@/components/AppIcon';
 
 type NavChild = { label: string; path: string };
@@ -28,6 +29,7 @@ type NavItem = { label: string; path: string; icon: typeof DashboardIcon; childr
 
 const menuItems: NavItem[] = [
   { label: 'Dashboard', path: '/', icon: DashboardIcon },
+  { label: 'Ask Kip', path: '/ai', icon: NotesIcon },
   {
     label: 'Analytics',
     path: '/cycles',

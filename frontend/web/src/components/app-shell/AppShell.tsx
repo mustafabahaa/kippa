@@ -21,6 +21,7 @@ const PAGE_TITLES: Record<string, string> = {
   '/household': 'Household',
   '/categories': 'Categories',
   '/notifications': 'Notifications',
+  '/ai': 'Kip',
 };
 
 export function AppShell() {
@@ -35,7 +36,7 @@ export function AppShell() {
   return (
     <>
       <title>{pageTitle ? `Kippa — ${pageTitle}` : 'Kippa'}</title>
-      <Box sx={{ position: 'relative', zIndex: 1, minHeight: '100dvh', pb: { xs: 10, md: 0 }, bgcolor: 'transparent', overflowX: 'clip' }}>
+      <Box sx={{ position: 'relative', zIndex: 1, minHeight: '100dvh', pb: pathname === '/ai' ? 0 : { xs: 10, md: 0 }, bgcolor: 'transparent', overflowX: 'clip' }}>
         <OfflineBanner isOnline={isOnline} />
         <SideNav />
         <Box component="main" sx={{ ml: { md: '264px' }, minHeight: '100dvh', bgcolor: 'background.paper', overflowX: 'clip' }}>
@@ -50,10 +51,10 @@ export function AppShell() {
             logout={logout}
           />
           <Container
-            maxWidth="lg"
+            maxWidth={pathname === '/ai' ? false : 'lg'}
             sx={{
-              py: { xs: 2, sm: 3 },
-              px: { xs: 2, sm: 3 },
+              py: pathname === '/ai' ? 0 : { xs: 2, sm: 3 },
+              px: pathname === '/ai' ? 0 : { xs: 2, sm: 3 },
               '& > .MuiContainer-root': {
                 maxWidth: 'none !important',
                 p: '0 !important',

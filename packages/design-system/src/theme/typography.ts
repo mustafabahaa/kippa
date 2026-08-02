@@ -13,4 +13,7 @@ export const typography: ThemeOptions['typography'] = {
   fieldHint: { fontSize: '11px', lineHeight: '16px', fontWeight: 600, letterSpacing: 0 },
   amountValue: { fontSize: '32px', lineHeight: '38px', fontWeight: 700, letterSpacing: 0 },
   amountCurrency: { fontSize: '20px', lineHeight: '28px', fontWeight: 600, letterSpacing: 0 },
+  assistantPromptLabel: { fontSize: '10px', lineHeight: '14px', fontWeight: 750, letterSpacing: '0.065em', textTransform: 'uppercase' },
+  assistantPromptTitle: { fontSize: '15px', lineHeight: '21px', fontWeight: 750, letterSpacing: '-0.015em' },
+  assistantMessage: { fontSize: '14px', lineHeight: '24px', fontWeight: 500, letterSpacing: 0 },
 };

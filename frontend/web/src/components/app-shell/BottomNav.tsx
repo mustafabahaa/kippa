@@ -1,6 +1,6 @@
 import { Paper, Box, Typography, useTheme, alpha, Badge } from '@mui/material';
 import { DashboardIcon } from '@/components/AppIcon';
-import { SyncAltIcon } from '@/components/AppIcon';
+import { NotesIcon } from '@/components/AppIcon';
 import { ReceiptLongIcon } from '@/components/AppIcon';
 import { AddIcon } from '@/components/AppIcon';
 import { HourglassEmptyIcon } from '@/components/AppIcon';
@@ -18,7 +18,7 @@ interface NavItem {
 
 const LEFT_ITEMS: NavItem[] = [
   { label: 'Dashboard', path: '/', icon: <DashboardIcon /> },
-  { label: 'Reconcile', path: '/reconciliation', icon: <SyncAltIcon /> },
+  { label: 'Kip', path: '/ai', icon: <NotesIcon /> },
 ];
 
 const RIGHT_ITEMS: NavItem[] = [

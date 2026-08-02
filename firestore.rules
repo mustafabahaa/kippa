@@ -19,7 +19,62 @@ service cloud.firestore {
         && get(/databases/$(database)/documents/households/$(householdId)/householdInfo/info).data.createdBy == request.auth.uid;
     }
 
+    function isValidAiMemory(data, householdId) {
+      return data.keys().hasOnly(['id', 'householdId', 'scope', 'userId', 'kind', 'content', 'confidence', 'sourceMessageIds', 'createdAt', 'updatedAt', 'lastConfirmedAt', 'supersededBy'])
+        && data.householdId == householdId
+        && data.scope == 'user'
+        && data.userId == request.auth.uid
+        && data.kind in ['fact', 'preference', 'goal', 'decision', 'correction', 'pattern', 'outcome']
+        && data.content is string
+        && data.content.size() >= 3
+        && data.content.size() <= 500
+        && data.confidence is number
+        && data.confidence >= 0
+        && data.confidence <= 1
+        && data.sourceMessageIds is list
+        && data.sourceMessageIds.size() <= 20
+        && data.createdAt is string
+        && data.updatedAt is string;
+    }
+
     match /households/{householdId} {
+      // AI messages are user-authored nested records. The parent conversation
+      // stores createdBy; members may only access their own conversation threads.
+      match /aiConversations/{conversationId} {
+        allow read: if isHouseholdMember(householdId)
+          && resource.data.createdBy == request.auth.uid;
+        allow create: if isHouseholdMember(householdId)
+          && request.resource.data.createdBy == request.auth.uid;
+        allow update, delete: if isHouseholdMember(householdId)
+          && resource.data.createdBy == request.auth.uid
+          && request.resource.data.createdBy == resource.data.createdBy;
+
+        match /messages/{messageId} {
+          allow read: if isHouseholdMember(householdId)
+            && get(/databases/$(database)/documents/households/$(householdId)/aiConversations/$(conversationId)).data.createdBy == request.auth.uid;
+          allow create: if isHouseholdMember(householdId)
+            && get(/databases/$(database)/documents/households/$(householdId)/aiConversations/$(conversationId)).data.createdBy == request.auth.uid
+            && request.resource.data.conversationId == conversationId;
+          allow update, delete: if false;
+        }
+      }
+
+      match /aiMemories/{memoryId} {
+        allow create: if isHouseholdMember(householdId)
+          && request.resource.data.id == memoryId
+          && isValidAiMemory(request.resource.data, householdId);
+        allow read: if isHouseholdMember(householdId)
+          && request.auth.uid == resource.data.userId;
+        allow update: if isHouseholdMember(householdId)
+          && request.auth.uid == resource.data.userId
+          && request.resource.data.userId == resource.data.userId
+          && request.resource.data.householdId == resource.data.householdId
+          && request.resource.data.id == resource.data.id
+          && request.resource.data.createdAt == resource.data.createdAt
+          && isValidAiMemory(request.resource.data, householdId);
+        allow delete: if false;
+      }
+
       // Default: only members can read/write household data.
       // (notificationSettings, fcmTokens, accounts, transactions, etc.)
       match /pendingFinancialMessages/{pendingId} {
@@ -32,6 +87,8 @@ service cloud.firestore {
       // ledger writes must be atomic.
       match /{collectionName}/{documentId} {
         allow read, write: if collectionName != 'pendingFinancialMessages'
+          && collectionName != 'aiConversations'
+          && collectionName != 'aiMemories'
           && isHouseholdMember(householdId);
       }
 

@@ -21,6 +21,7 @@ const Notifications = lazy(() => import('@/features/notifications/Notifications'
 const TransactionHistory = lazy(() => import('@/features/transactions/TransactionHistory').then(m => ({ default: m.TransactionHistory })));
 const AuditLog = lazy(() => import('@/features/activity/AuditLog').then(m => ({ default: m.AuditLog })));
 const PendingTransactions = lazy(() => import('@/features/pending-transactions/PendingTransactions').then(m => ({ default: m.PendingTransactions })));
+const AiAssistant = lazy(() => import('@/features/ai/AiAssistant').then(m => ({ default: m.AiAssistant })));
 
 
 export default function App() {
@@ -69,6 +70,7 @@ export default function App() {
               <Route path="household" element={<Household />} />
               <Route path="categories" element={<Categories />} />
               <Route path="notifications" element={<Notifications />} />
+              <Route path="ai" element={<AiAssistant />} />
             </Route>
           </Routes>
         </Suspense>

@@ -20,6 +20,9 @@ declare module '@mui/material/Button' {
     keypadBack: true;
     compactField: true;
     primaryAction: true;
+    assistantPrompt: true;
+    assistantPromptFeatured: true;
+    assistantSend: true;
   }
 }
 
@@ -29,6 +32,15 @@ declare module '@mui/material/Paper' {
     amountPanelInactive: true;
     selectable: true;
     selectableSelected: true;
+    assistantAvatar: true;
+    assistantComposer: true;
+    assistantUserMessage: true;
+    assistantReply: true;
+    assistantMessageAvatar: true;
+    assistantHeader: true;
+    assistantCooldown: true;
+    assistantAction: true;
+    assistantChart: true;
   }
 }
 
@@ -38,6 +50,9 @@ declare module '@mui/material/styles' {
     fieldHint: React.CSSProperties;
     amountValue: React.CSSProperties;
     amountCurrency: React.CSSProperties;
+    assistantPromptLabel: React.CSSProperties;
+    assistantPromptTitle: React.CSSProperties;
+    assistantMessage: React.CSSProperties;
   }
 
   interface TypographyVariantsOptions {
@@ -45,6 +60,9 @@ declare module '@mui/material/styles' {
     fieldHint?: React.CSSProperties;
     amountValue?: React.CSSProperties;
     amountCurrency?: React.CSSProperties;
+    assistantPromptLabel?: React.CSSProperties;
+    assistantPromptTitle?: React.CSSProperties;
+    assistantMessage?: React.CSSProperties;
   }
 }
 
@@ -54,5 +72,8 @@ declare module '@mui/material/Typography' {
     fieldHint: true;
     amountValue: true;
     amountCurrency: true;
+    assistantPromptLabel: true;
+    assistantPromptTitle: true;
+    assistantMessage: true;
   }
 }

@@ -12,7 +12,7 @@ const sidebars: SidebarsConfig = {
     {
       type: 'category',
       label: 'Engineering',
-      items: ['architecture-and-folder-structure', 'firebase-architecture', 'data-model'],
+      items: ['architecture-and-folder-structure', 'firebase-architecture', 'data-model', 'ai-architecture'],
     },
     'design-system',
   ],
