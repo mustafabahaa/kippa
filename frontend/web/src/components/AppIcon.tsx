@@ -12,6 +12,17 @@ type IconsaxVariant = 'Linear' | 'Outline' | 'Broken' | 'Bold' | 'Bulk' | 'TwoTo
 type IconsaxComponent = ComponentType<{ color?: string; size?: string | number; variant?: IconsaxVariant }>;
 type AppIconProps = SvgIconProps & { variant?: IconsaxVariant };
 
+const semanticIconColors: Partial<Record<NonNullable<SvgIconProps['color']>, string>> = {
+  action: 'action.active',
+  disabled: 'action.disabled',
+  error: 'error.main',
+  info: 'info.main',
+  primary: 'primary.main',
+  secondary: 'secondary.main',
+  success: 'success.main',
+  warning: 'warning.main',
+};
+
 /** MUI-compatible Iconsax adapter. Use these exports instead of direct icon-library imports. */
 function createAppIcon(Icon: IconsaxComponent) {
   const IconBox = Box as ElementType;
@@ -23,15 +34,26 @@ function createAppIcon(Icon: IconsaxComponent) {
     variant = 'Linear',
     ...props
   }, ref) {
-    const size = fontSize === 'small' ? 20 : fontSize === 'large' ? 35 : fontSize === 'inherit' ? '1em' : 24;
+    const fontSizeValue = fontSize === 'small' ? 20 : fontSize === 'large' ? 35 : fontSize === 'inherit' ? 'inherit' : 24;
+    const semanticColor = color === 'inherit' ? 'inherit' : semanticIconColors[color];
     return (
       <IconBox
         component={Icon as ElementType}
         ref={ref}
         variant={variant}
-        color={htmlColor ?? color}
-        size={size}
-        sx={[{ display: 'block', flexShrink: 0, width: size, height: size }, ...(Array.isArray(sx) ? sx : [sx]) ]}
+        color="currentColor"
+        size="1em"
+        sx={[
+          {
+            color: htmlColor ?? semanticColor,
+            display: 'block',
+            flexShrink: 0,
+            fontSize: fontSizeValue,
+            width: '1em',
+            height: '1em',
+          },
+          ...(Array.isArray(sx) ? sx : [sx]),
+        ]}
         {...props}
       />
     );

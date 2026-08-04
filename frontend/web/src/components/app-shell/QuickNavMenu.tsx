@@ -14,6 +14,7 @@ import { HomeIcon } from '@/components/AppIcon';
 import { NotificationsActiveIcon } from '@/components/AppIcon';
 import { HistoryIcon } from '@/components/AppIcon';
 import { CalendarMonthIcon } from '@/components/AppIcon';
+import { SyncAltIcon } from '@/components/AppIcon';
 
 interface QuickNavMenuProps {
   anchorEl: HTMLElement | null;
@@ -69,6 +70,7 @@ const SECTIONS = [
     title: 'Planning',
     items: [
       { label: 'Budget Cycles', icon: <CalendarMonthIcon fontSize="small" />, path: '/cycles' },
+      { label: 'Reconciliation', icon: <SyncAltIcon fontSize="small" />, path: '/reconciliation' },
     ],
   },
   {

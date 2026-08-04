@@ -10,7 +10,7 @@ export function useSaveFeedback() {
     if (timer.current) clearTimeout(timer.current);
     setContent({ title, amount, category, account });
     setOpen(true);
-    timer.current = setTimeout(() => setOpen(false), 2200);
+    timer.current = setTimeout(() => setOpen(false), 1650);
   };
   return { content, hide: () => setOpen(false), open, show };
 }
