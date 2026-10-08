@@ -4,11 +4,12 @@ import { CheckCircleIcon, DeleteIcon } from '@/components/AppIcon';
 import { Money } from '@/components/Money';
 import { calculateCardPayment } from '@/libs/cardPayment';
 import { DEFAULT_CARD_FEE_RATE } from '@/libs/creditCardFees';
+import { PendingCategoryPicker } from './PendingCategoryPicker';
 
-type Props = { accountId: string; accounts: Account[]; busy: boolean; categories: Category[]; categoryId: string; destinationAccountId: string; destinationAccounts: Account[]; item: PendingFinancialMessage | null; onAccountChange: (id: string) => void; onApprove: () => void; onCategoryChange: (id: string) => void; onClose: () => void; onDestinationChange: (id: string) => void; onDiscard: () => void; state: 'idle' | 'approving' | 'discarding' | 'settled' };
+type Props = { accountId: string; accounts: Account[]; busy: boolean; categories: Category[]; categoryId: string; destinationAccountId: string; destinationAccounts: Account[]; item: PendingFinancialMessage | null; onAccountChange: (id: string) => void; onApprove: () => void; onCategoryChange: (id: string) => void; onClose: () => void; onDestinationChange: (id: string) => void; onDiscard: () => void; state: 'idle' | 'approving' | 'discarding' | 'settled'; suggestedCategoryIds?: string[] };
 
 export function PendingReviewDialog(props: Props) {
-  const { accountId, accounts, busy, categories, categoryId, destinationAccountId, destinationAccounts, item, onAccountChange, onApprove, onCategoryChange, onClose, onDestinationChange, onDiscard, state } = props;
+  const { accountId, accounts, busy, categories, categoryId, destinationAccountId, destinationAccounts, item, onAccountChange, onApprove, onCategoryChange, onClose, onDestinationChange, onDiscard, state, suggestedCategoryIds = [] } = props;
   if (!item) return null;
   const transfer = item.kind === 'transfer';
   const crossCurrency = !!item.destinationCurrency && item.destinationCurrency !== item.currency;
@@ -48,7 +49,23 @@ export function PendingReviewDialog(props: Props) {
           </Box>
           <Divider />
           <Stack spacing={2}>
-            {!transfer && !loanPayment && <FormControl fullWidth><InputLabel id="pending-category-label">Category</InputLabel><Select labelId="pending-category-label" value={categoryId} label="Category" onChange={(event) => onCategoryChange(event.target.value)}>{categories.map((category) => <MenuItem key={category.id} value={category.id}>{category.name}</MenuItem>)}</Select></FormControl>}
+            {!transfer && !loanPayment && <>
+              {suggestedCategoryIds.length > 1 && <Box>
+                <Typography variant="sectionLabel" color="primary">This merchant fits more than one — pick one</Typography>
+                <Stack direction="row" spacing={1} sx={{ mt: 1, flexWrap: 'wrap', rowGap: 1 }}>
+                  {suggestedCategoryIds.map((id) => {
+                    const candidate = categories.find((category) => category.id === id);
+                    if (!candidate) return null;
+                    const picked = categoryId === id;
+                    return (
+                      <Chip key={id} label={candidate.name} variant={picked ? 'filterSelected' : 'filter'} onClick={() => onCategoryChange(id)} />
+                    );
+                  })}
+                </Stack>
+              </Box>}
+              <PendingCategoryPicker categories={categories} categoryId={categoryId} mode={item.kind === 'income' ? 'income' : 'expense'} onChange={onCategoryChange} />
+              {suggestedCategoryIds.length === 1 && categoryId === suggestedCategoryIds[0] && <Typography variant="fieldHint" color="primary" sx={{ mt: -0.5 }}>Category auto-filled from this merchant — tap another to change it.</Typography>}
+            </>}
             <FormControl fullWidth><InputLabel id="pending-account-label">{item.kind === 'income' ? 'To account' : 'From account'}</InputLabel><Select labelId="pending-account-label" value={accountId} label={item.kind === 'income' ? 'To account' : 'From account'} onChange={(event) => onAccountChange(event.target.value)}>{accounts.map((account) => <MenuItem key={account.id} value={account.id}>{account.name}</MenuItem>)}</Select></FormControl>
             {transfer && <FormControl fullWidth><InputLabel id="pending-destination-label">To account</InputLabel><Select labelId="pending-destination-label" value={destinationAccountId} label="To account" onChange={(event) => onDestinationChange(event.target.value)}>{destinationAccounts.map((account) => <MenuItem key={account.id} value={account.id}>{account.name}</MenuItem>)}</Select></FormControl>}
           </Stack>

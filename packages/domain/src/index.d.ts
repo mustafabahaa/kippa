@@ -202,6 +202,11 @@ export type Category = {
    *  review metrics can separate it from flexible/discretionary budget.
    *  Absent or false means the category is flexible. */
   essential?: boolean;
+  /** Merchant names/keywords that auto-suggest this category when reviewing
+   *  imported bank messages. Matched case-, symbol- and spacing-insensitively
+   *  against the message counterparty/description (e.g. "Seoudi" matches
+   *  "SEOUDI MARKET DREAM" and "SEOUDI-DREAM"). */
+  merchantKeywords?: string[];
   parentCategoryId?: string | null;
   createdAt: string;
 };

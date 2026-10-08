@@ -33,6 +33,7 @@ import {
   useRestoreDiscardedPendingFinancialMessageMutation,
 } from '@/hooks/useFinance';
 import type { PendingFinancialMessage } from '@kippa/domain';
+import { suggestCategoryIds } from '@/libs/merchantSuggestions';
 import { useMessageConnections } from './hooks/useMessageConnections';
 import { usePendingReviewState } from './hooks/usePendingReviewState';
 type PendingItemState = 'idle' | 'approving' | 'discarding' | 'settled';
@@ -72,7 +73,7 @@ export function PendingTransactions() {
   const restoreMutation = useRestoreDiscardedPendingFinancialMessageMutation();
   const { data: resolved = [], isLoading: historyLoading, isFetching: historyFetching } = useResolvedPendingFinancialMessages(householdId);
   const [tab, setTab] = useState<'review' | 'history'>('review');
-  const { accountId, categoryId, destinationAccountId, selected, setAccountId, setCategoryId, setDestinationAccountId, setSelected } = usePendingReviewState();
+  const { accountId, categoryId, destinationAccountId, selected, suggestedCategoryIds, setAccountId, setCategoryId, setDestinationAccountId, setSelected, setSuggestedCategoryIds } = usePendingReviewState();
   const [itemStates, setItemStates] = useState<Record<string, PendingItemState>>({});
   const [setupOpen, setSetupOpen] = useState(false);
   const connections = useMessageConnections(householdId);
@@ -106,7 +107,9 @@ export function PendingTransactions() {
   const openReview = (item: PendingFinancialMessage) => {
     if ((itemStates[item.id] ?? 'idle') !== 'idle') return;
     setSelected(item);
-    setCategoryId('');
+    const suggestions = suggestCategoryIds(item, categories);
+    setCategoryId(suggestions.length === 1 ? suggestions[0] : '');
+    setSuggestedCategoryIds(suggestions);
     setAccountId(item.suggestedAccountId ?? '');
     setDestinationAccountId(item.suggestedDestinationAccountId ?? '');
   };
@@ -344,7 +347,7 @@ export function PendingTransactions() {
         </Card>
       ))}
 
-      <PendingReviewDialog accountId={accountId} accounts={availableAccounts} busy={reviewBusy} categories={availableCategories} categoryId={categoryId} destinationAccountId={destinationAccountId} destinationAccounts={availableDestinationAccounts} item={selected} onAccountChange={setAccountId} onApprove={approve} onCategoryChange={setCategoryId} onClose={closeReview} onDestinationChange={setDestinationAccountId} onDiscard={discard} state={selectedState} />
+      <PendingReviewDialog accountId={accountId} accounts={availableAccounts} busy={reviewBusy} categories={availableCategories} categoryId={categoryId} destinationAccountId={destinationAccountId} destinationAccounts={availableDestinationAccounts} item={selected} onAccountChange={setAccountId} onApprove={approve} onCategoryChange={setCategoryId} onClose={closeReview} onDestinationChange={setDestinationAccountId} onDiscard={discard} state={selectedState} suggestedCategoryIds={suggestedCategoryIds} />
 
       <MessageConnectionDialog busy={connections.busy} credentials={connections.credentials} generated={connections.generated} onClose={() => setSetupOpen(false)} onCopy={connections.copy} onCreate={connections.create} onRevoke={connections.revoke} onDelete={connections.remove} open={setupOpen} />
     </Stack>

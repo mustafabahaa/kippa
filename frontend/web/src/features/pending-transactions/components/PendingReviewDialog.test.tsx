@@ -5,6 +5,9 @@ import type { Account, Category, PendingFinancialMessage } from '@kippa/domain';
 import { PrivacyModeProvider } from '@/hooks/PrivacyModeProvider';
 import { PendingReviewDialog } from './PendingReviewDialog';
 
+vi.mock('@/hooks/useAppContext', () => ({ useAppContext: () => ({ householdId: 'household' }) }));
+vi.mock('@/hooks/useFinance', () => ({ useCategoryFrequency: () => ({}) }));
+
 const creditAccount: Account = {
   id: 'hsbc-credit-debt',
   householdId: 'household',
@@ -42,6 +45,42 @@ const item: PendingFinancialMessage = {
   status: 'pending',
 };
 
+it('asks this-or-this when the merchant matches several categories', async () => {
+  const user = userEvent.setup();
+  const onCategoryChange = vi.fn();
+  const fuel = { ...category, id: 'sgayer', name: 'sgayer' };
+  const petrol = { ...category, id: 'bnzen', name: 'bnzen' };
+
+  render(
+    <PrivacyModeProvider>
+      <PendingReviewDialog
+        accountId={creditAccount.id}
+        accounts={[creditAccount]}
+        busy={false}
+        categories={[fuel, petrol]}
+        categoryId=""
+        destinationAccountId=""
+        destinationAccounts={[]}
+        item={{ ...item, description: 'FAWRY*MOBIL FARDOUS' }}
+        onAccountChange={vi.fn()}
+        onApprove={vi.fn()}
+        onCategoryChange={onCategoryChange}
+        onClose={vi.fn()}
+        onDestinationChange={vi.fn()}
+        onDiscard={vi.fn()}
+        state="idle"
+        suggestedCategoryIds={['sgayer', 'bnzen']}
+      />
+    </PrivacyModeProvider>,
+  );
+
+  expect(screen.getByText('This merchant fits more than one — pick one')).toBeInTheDocument();
+  // The chooser renders above the regular category chips, so take the first match.
+  const bnzenButtons = screen.getAllByRole('button', { name: 'bnzen' });
+  await user.click(bnzenButtons[0]);
+  expect(onCategoryChange).toHaveBeenCalledWith('bnzen');
+});
+
 it('shows the suggested account and commits a category selection', async () => {
   const user = userEvent.setup();
   const onCategoryChange = vi.fn();
@@ -70,8 +109,7 @@ it('shows the suggested account and commits a category selection', async () => {
 
   expect(screen.getByLabelText('From account')).toHaveTextContent('HSBC Credit Card Debt');
 
-  await user.click(screen.getByLabelText('Category'));
-  await user.click(screen.getByRole('option', { name: 'Apple Music' }));
+  await user.click(screen.getByRole('button', { name: 'Apple Music' }));
 
   expect(onCategoryChange).toHaveBeenCalledWith(category.id);
 });

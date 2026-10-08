@@ -1,5 +1,5 @@
 import { IconButton, List, ListItem, ListItemText, Stack, TextField } from '@mui/material';
-import { DeleteOutlineIcon, EditIcon } from '@/components/AppIcon';
+import { DeleteOutlineIcon } from '@/components/AppIcon';
 
 export interface AllocationRow {
   categoryId: string;
@@ -12,11 +12,10 @@ interface AllocationRowsProps {
   maskDigits: (value: string) => string;
   getCategoryName: (categoryId: string) => string;
   onAmountChange: (categoryId: string, value: string) => void;
-  onRename: (categoryId: string) => void;
   onRemove: (categoryId: string) => void;
 }
 
-export function AllocationRows({ rows, privacyMode, maskDigits, getCategoryName, onAmountChange, onRename, onRemove }: AllocationRowsProps) {
+export function AllocationRows({ rows, privacyMode, maskDigits, getCategoryName, onAmountChange, onRemove }: AllocationRowsProps) {
   return (
     <List disablePadding>
       {rows.map((row) => {
@@ -36,9 +35,6 @@ export function AllocationRows({ rows, privacyMode, maskDigits, getCategoryName,
                   slotProps={{ input: { disableUnderline: true }, htmlInput: { min: 0, style: { textAlign: 'right', fontWeight: 700, padding: '10px 12px' } } }}
                 />
                 <Stack className="allocation-actions" direction="row" spacing={0.25} sx={{ opacity: { xs: 1, md: 0 } }}>
-                  <IconButton aria-label={`Rename ${categoryName}`} size="small" onClick={() => onRename(row.categoryId)} sx={{ width: 30, height: 30 }}>
-                    <EditIcon fontSize="small" />
-                  </IconButton>
                   <IconButton aria-label={`Remove ${categoryName}`} size="small" onClick={() => onRemove(row.categoryId)} color="error" sx={{ width: 30, height: 30 }}>
                     <DeleteOutlineIcon fontSize="small" />
                   </IconButton>

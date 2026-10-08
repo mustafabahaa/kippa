@@ -24,12 +24,14 @@ import type { Category } from '@kippa/domain';
 import { CategoryIcon, EditIcon } from '@/components/AppIcon';
 import { CardHeading } from '@/features/shared/components/CardHeading';
 import { PageHeader } from '@/features/shared/components/PageHeader';
+import { dedupeMerchantKeywords } from '@/libs/merchantSuggestions';
 import { 
   useCategories, 
   useCreateCategoryMutation,
   useUpdateCategoryMutation,
 } from '@/hooks/useFinance';
-import { CategoryNameDialog } from '@/features/budget-cycles/components/CategoryNameDialog';
+import { CategoryNameDialog } from './components/CategoryNameDialog';
+import { MerchantKeywordsEditor } from './components/MerchantKeywordsEditor';
 
 import { useAppContext } from '@/hooks/useAppContext';
 
@@ -38,7 +40,8 @@ export function Categories() {
   const { enqueueSnackbar } = useSnackbar();
   const [newCatName, setNewCatName] = useState('');
   const [newCatType, setNewCatType] = useState<'income' | 'expense'>('expense');
-  const [renameCategory, setRenameCategory] = useState<{ id: string; name: string } | null>(null);
+  const [newCatMerchants, setNewCatMerchants] = useState<string[]>([]);
+  const [renameCategory, setRenameCategory] = useState<{ id: string; name: string; merchants: string[] } | null>(null);
 
   // Queries & Mutations
   const { data: categories = [], isLoading } = useCategories(householdId);
@@ -53,11 +56,13 @@ export function Categories() {
       category: {
         name: newCatName,
         type: newCatType,
-        isActive: true
+        isActive: true,
+        ...(newCatMerchants.length > 0 ? { merchantKeywords: dedupeMerchantKeywords(newCatMerchants) } : {}),
       }
     });
 
     setNewCatName('');
+    setNewCatMerchants([]);
   };
 
   const handleRenameCategory = async () => {
@@ -66,7 +71,10 @@ export function Categories() {
       await updateCategoryMutation.mutateAsync({
         householdId,
         categoryId: renameCategory.id,
-        updates: { name: renameCategory.name.trim() },
+        updates: {
+          name: renameCategory.name.trim(),
+          merchantKeywords: dedupeMerchantKeywords(renameCategory.merchants),
+        },
       });
       setRenameCategory(null);
     } catch (error) {
@@ -139,12 +147,12 @@ export function Categories() {
                         />
                       </Tooltip>
                     )}
-                    <Tooltip title="Rename">
+                    <Tooltip title="Edit name and merchants">
                       <IconButton
                         size="small"
                         className="category-row-action"
-                        aria-label={`Rename ${category.name}`}
-                        onClick={() => setRenameCategory({ id: category.id, name: category.name })}
+                        aria-label={`Edit ${category.name}`}
+                        onClick={() => setRenameCategory({ id: category.id, name: category.name, merchants: category.merchantKeywords ?? [] })}
                         sx={{ flexShrink: 0 }}
                       >
                         <EditIcon fontSize="small" />
@@ -195,6 +203,11 @@ export function Categories() {
                   <MenuItem value="income">Income</MenuItem>
                 </Select>
               </FormControl>
+              <MerchantKeywordsEditor
+                keywords={newCatMerchants}
+                onChange={setNewCatMerchants}
+                disabled={createCategoryMutation.isPending}
+              />
               <Button
                 fullWidth
                 variant="contained"
@@ -212,11 +225,13 @@ export function Categories() {
       </Stack>
       <CategoryNameDialog
         open={!!renameCategory}
-        title="Rename Category"
+        title="Edit Category"
         confirmLabel="Save"
         value={renameCategory?.name ?? ''}
+        merchants={renameCategory?.merchants ?? []}
         loading={updateCategoryMutation.isPending}
         onChange={(name) => setRenameCategory((current) => current ? { ...current, name } : current)}
+        onMerchantsChange={(merchants) => setRenameCategory((current) => current ? { ...current, merchants } : current)}
         onClose={() => { if (!updateCategoryMutation.isPending) setRenameCategory(null); }}
         onConfirm={handleRenameCategory}
       />

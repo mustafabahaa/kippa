@@ -3,18 +3,13 @@ import { useSnackbar } from 'notistack';
 import {
   Box,
   Button,
-  IconButton,
   Stack,
   Typography,
-  Chip,
-  Tooltip
+  Chip
 } from '@mui/material';
 import { ContentCopyIcon } from '@/components/AppIcon';
-import { AddIcon } from '@/components/AppIcon';
 import {
   useSaveAllocationsBatchMutation,
-  useCreateCategoryMutation,
-  useUpdateCategoryMutation,
   useHouseholdBaseCurrency
 } from '@/hooks/useFinance';
 import { Money } from '@/components/Money';
@@ -22,8 +17,6 @@ import { usePrivacyMask } from '@/hooks/usePrivacyMask';
 import { cyclesLib } from '@/libs/cycles';
 import { BudgetCycle, BudgetAllocation, Category } from '@kippa/domain';
 import { AllocationRow, AllocationRows } from './components/AllocationRows';
-import { CategoryNameDialog } from './components/CategoryNameDialog';
-import { useAllocationCategoryDialogs } from './hooks/useAllocationCategoryDialogs';
 
 interface BudgetAllocationsConfigProps {
   householdId: string;
@@ -74,14 +67,8 @@ export function BudgetAllocationsConfig({
     return initial;
   });
 
-  const categoryDialog = useAllocationCategoryDialogs();
-
   // Mutations
   const saveAllocationsBatchMutation = useSaveAllocationsBatchMutation();
-  const createCategoryMutation = useCreateCategoryMutation();
-  const updateCategoryMutation = useUpdateCategoryMutation();
-
-
 
   // Categories available to add (not already in rows)
   const usedCategoryIds = new Set(rows.map(r => r.categoryId));
@@ -99,32 +86,6 @@ export function BudgetAllocationsConfig({
     setRows(prev => prev.map(r =>
       r.categoryId === categoryId ? { ...r, plannedAmount: value } : r
     ));
-  };
-
-  const handleOpenRename = (categoryId: string) => {
-    const cat = categories.find(c => c.id === categoryId);
-    categoryDialog.openRename(categoryId, cat?.name || '');
-  };
-
-  const handleSaveRename = async () => {
-    if (!categoryDialog.categoryId || !categoryDialog.value.trim()) return;
-    await updateCategoryMutation.mutateAsync({
-      householdId,
-      categoryId: categoryDialog.categoryId,
-      updates: { name: categoryDialog.value.trim() },
-    });
-    categoryDialog.close();
-  };
-
-  const handleCreateNewCategory = async () => {
-    if (!categoryDialog.value.trim()) return;
-    const newId = await createCategoryMutation.mutateAsync({
-      householdId,
-      category: { name: categoryDialog.value.trim(), type: 'expense', isActive: true },
-    });
-    // Add to rows immediately
-    setRows(prev => [...prev, { categoryId: newId, plannedAmount: '0' }]);
-    categoryDialog.close();
   };
 
   const handleSaveAllocations = useCallback(async () => {
@@ -215,18 +176,17 @@ export function BudgetAllocationsConfig({
         maskDigits={maskDigits}
         getCategoryName={getCategoryName}
         onAmountChange={handleAmountChange}
-        onRename={handleOpenRename}
         onRemove={handleRemoveCategory}
       />
 
       {/* Category actions */}
       <Box sx={{ mt: 2.5, pt: 2.25, borderTop: 1, borderColor: 'divider' }}>
         <Stack spacing={0.25} sx={{ mb: 1.25 }}>
-          <Typography sx={{ color: 'text.primary', fontSize: 14, fontWeight: 700 }}>
+          <Typography variant="sectionLabel" sx={{ color: 'text.primary' }}>
             Add to cycle
           </Typography>
-          <Typography sx={{ color: 'text.secondary', fontSize: 12 }}>
-            Choose an existing category or create a new one.
+          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+            Choose an existing category. Categories are managed on the Categories page.
           </Typography>
         </Stack>
 
@@ -249,24 +209,6 @@ export function BudgetAllocationsConfig({
                 }}
               />
           ))}
-          <Tooltip title="Create a new category">
-            <IconButton
-              aria-label="Create a new category"
-              onClick={categoryDialog.openAdd}
-              sx={{
-                width: 36,
-                height: 36,
-                border: 1,
-                borderColor: 'divider',
-                borderRadius: '12px',
-                bgcolor: 'background.paper',
-                color: 'primary.main',
-                '&:hover': { bgcolor: 'action.hover', borderColor: 'primary.main' },
-              }}
-            >
-              <AddIcon sx={{ fontSize: 19 }} />
-            </IconButton>
-          </Tooltip>
         </Box>
       </Box>
 
@@ -282,9 +224,6 @@ export function BudgetAllocationsConfig({
         </Box>
         <Button variant="contained" onClick={handleSaveAllocations} loading={saveAllocationsBatchMutation.isPending}>Save</Button>
       </Box>}
-
-      <CategoryNameDialog open={categoryDialog.mode === 'rename'} title="Rename Category" confirmLabel="Save" value={categoryDialog.value} loading={updateCategoryMutation.isPending} onChange={categoryDialog.setValue} onClose={categoryDialog.close} onConfirm={handleSaveRename} />
-      <CategoryNameDialog open={categoryDialog.mode === 'add'} title="Add New Category" confirmLabel="Create & Add" value={categoryDialog.value} placeholder="e.g. Entertainment" loading={createCategoryMutation.isPending} onChange={categoryDialog.setValue} onClose={categoryDialog.close} onConfirm={handleCreateNewCategory} />
     </Box>
   );
 }

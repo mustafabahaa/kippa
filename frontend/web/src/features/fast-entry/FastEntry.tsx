@@ -26,7 +26,7 @@ import { useAppContext } from '@/hooks/useAppContext';
 import { PageHeader } from '@/features/shared/components/PageHeader';
 import { EmptyLayout } from '@/features/shared/components/EmptyLayout';
 import { AccountPicker } from '@/features/shared/components/AccountPicker';
-import { CategoryChips, CategoryDialog } from './components/CategoryPicker';
+import { CategoryChips, CategoryDialog } from '@/features/shared/components/CategoryPicker';
 import { SaveFeedbackOverlay } from './components/SaveFeedbackOverlay';
 import { EntryKeypad } from './components/EntryKeypad';
 import { buildFastEntryTransaction, type EntryMode } from '@/libs/fastEntryTransaction';

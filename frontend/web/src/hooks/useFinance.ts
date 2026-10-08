@@ -669,7 +669,7 @@ export function useUpdateCategoryMutation() {
     mutationFn: (data: {
       householdId: string;
       categoryId: string;
-      updates: Partial<Pick<Category, 'name' | 'isActive' | 'essential'>>;
+      updates: Partial<Pick<Category, 'name' | 'isActive' | 'essential' | 'merchantKeywords'>>;
     }) => ledgerLib.updateCategory(data.householdId, data.categoryId, data.updates, auditUser),
     onSuccess: (_, variables) => {
       notifyOfflineSuccess();
