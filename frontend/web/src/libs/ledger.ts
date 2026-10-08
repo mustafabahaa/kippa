@@ -89,7 +89,7 @@ export const ledgerLib = {
   async updateCategory(
     householdId: string,
     categoryId: string,
-    updates: Partial<Pick<Category, 'name' | 'isActive'>>,
+    updates: Partial<Pick<Category, 'name' | 'isActive' | 'essential'>>,
     auditUser?: AuditUser
   ): Promise<void> {
     const list = await dbLib.getDocs(householdId, 'categories');

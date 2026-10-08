@@ -19,7 +19,7 @@ export function CurrencySelect({ label = 'Currency', labelId, value, onChange }:
         value={value}
         label={label}
         onChange={(e: SelectChangeEvent) => onChange(e.target.value as CurrencyCode)}
-        sx={{ borderRadius: '12px' }}
+        sx={{ borderRadius: '12px', '& .MuiSelect-select': { whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' } }}
       >
         {CURRENCIES.map(c => (
           <MenuItem key={c.code} value={c.code}>

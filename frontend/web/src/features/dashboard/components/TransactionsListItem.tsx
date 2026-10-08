@@ -177,20 +177,22 @@ export const TransactionsListItem: React.FC<TransactionsListItemProps> = ({
       <Stack className="transaction-actions" direction="row" spacing={0.5} alignItems="center" sx={{ flexShrink: 0, opacity: { xs: 1, md: 0.42 }, transition: 'opacity 0.18s ease' }}>
         <IconButton
           size="small"
+          aria-label={tx.description ? `Edit ${tx.description}` : 'Edit transaction'}
           onClick={() => onEdit(tx)}
           disabled={tx.status === 'voided'}
-          sx={{ p: 0.5, width: 28, height: 28 }}
+          sx={{ width: 36, height: 36 }}
         >
-          <EditIcon sx={{ fontSize: '16px' }} />
+          <EditIcon sx={{ fontSize: '18px' }} />
         </IconButton>
         <IconButton
           size="small"
           color="error"
+          aria-label={tx.description ? `Delete ${tx.description}` : 'Delete transaction'}
           onClick={() => onVoid(tx.id)}
           disabled={tx.status === 'voided'}
-          sx={{ p: 0.5, width: 28, height: 28 }}
+          sx={{ width: 36, height: 36 }}
         >
-          <DeleteIcon sx={{ fontSize: '16px' }} />
+          <DeleteIcon sx={{ fontSize: '18px' }} />
         </IconButton>
       </Stack>
     </Box>

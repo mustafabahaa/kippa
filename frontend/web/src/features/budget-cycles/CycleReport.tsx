@@ -400,7 +400,7 @@ export function CycleReport() {
                     })}
                   </Stack>
 
-                  <TablePagination component="div" count={cycleTransactions.length} page={page} rowsPerPage={rowsPerPage} rowsPerPageOptions={[10, 25, 50]} onPageChange={(_, nextPage) => setPage(nextPage)} onRowsPerPageChange={event => { setRowsPerPage(Number(event.target.value)); setPage(0); }} />
+                  <TablePagination component="div" count={cycleTransactions.length} page={page} rowsPerPage={rowsPerPage} rowsPerPageOptions={[10, 25, 50]} onPageChange={(_, nextPage) => setPage(nextPage)} onRowsPerPageChange={event => { setRowsPerPage(Number(event.target.value)); setPage(0); }} sx={{ '& .MuiTablePagination-toolbar': { flexWrap: 'wrap' }, '& .MuiTablePagination-spacer': { display: { xs: 'none', sm: 'block' } } }} />
                 </>
               )}
             </Stack>

@@ -198,6 +198,10 @@ export type Category = {
   name: string;
   type: 'income' | 'expense';
   isActive: boolean;
+  /** Marks fixed/necessary spending (bills, rent, groceries) so financial
+   *  review metrics can separate it from flexible/discretionary budget.
+   *  Absent or false means the category is flexible. */
+  essential?: boolean;
   parentCategoryId?: string | null;
   createdAt: string;
 };

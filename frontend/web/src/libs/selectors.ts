@@ -219,17 +219,13 @@ export function computeDashboard(
   const daysDivider = Math.max(1, remDays);
 
   // Stricter Version: (available EGP cash & bank - essential remaining bills - saving target) / remaining days
-  const isEssentialCategory = (name: string) => {
-    const nameLower = name.toLowerCase();
-    const essentialKeywords = ['kahraba', '3\'az', 'rent', 'utility', 'utilities', 'net', 'bill', 'loan', 'telephone', 'mobile', 'credit card', 'syana'];
-    return essentialKeywords.some(kw => nameLower.includes(kw));
-  };
-
+  // Essential-ness is a data flag on the category (set in the category editor),
+  // not inferred from the display name — renames must never change the math.
   // Let's compute remaining flexible budget
   const flexibleAllocations = allocations.filter(alloc => {
     const cat = categories.find(c => c.id === alloc.categoryId);
     if (!cat) return false;
-    return !isEssentialCategory(cat.name) && !cat.name.toLowerCase().includes('saving') && !cat.name.toLowerCase().includes('invest');
+    return cat.essential !== true && !cat.name.toLowerCase().includes('saving') && !cat.name.toLowerCase().includes('invest');
   });
   
   const flexiblePlanned = flexibleAllocations.reduce((acc, curr) => acc + curr.plannedAmount, 0);
@@ -253,7 +249,7 @@ export function computeDashboard(
   const essentialAllocations = allocations.filter(alloc => {
     const cat = categories.find(c => c.id === alloc.categoryId);
     if (!cat) return false;
-    return isEssentialCategory(cat.name);
+    return cat.essential === true;
   });
   const essentialPlanned = essentialAllocations.reduce((acc, curr) => acc + curr.plannedAmount, 0);
   const essentialSpent = essentialAllocations.reduce((acc, curr) => {

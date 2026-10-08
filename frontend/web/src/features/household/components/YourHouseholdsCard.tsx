@@ -30,7 +30,7 @@ export function YourHouseholdsCard({ activeId, busy, households, loading, onLeav
             return (
               <Box key={household.id}>
                 {index > 0 && <Divider />}
-                <ListItem sx={{ px: 2.5, py: 1.5 }} secondaryAction={active ? <Chip label="Active" color="primary" size="small" /> : (
+                <ListItem sx={{ px: 2.5, pr: 12, py: 1.5 }} secondaryAction={active ? <Chip label="Active" color="primary" size="small" /> : (
                   <Stack direction="row" spacing={0.5}>
                     <Tooltip title="Switch to this household"><IconButton color="primary" onClick={() => onSwitch(household.id)}><SwitchAccountIcon fontSize="small" /></IconButton></Tooltip>
                     <Tooltip title="Leave this household"><IconButton color="error" onClick={() => onLeave(household)}><LogoutIcon fontSize="small" /></IconButton></Tooltip>

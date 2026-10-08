@@ -1,24 +1,26 @@
 import { useState } from 'react';
 import { useSnackbar } from 'notistack';
-import { 
-  Box, 
-  Card, 
-  CardContent, 
-  Container, 
-  Stack, 
-  Typography, 
-  Button, 
-  TextField, 
-  Select, 
-  MenuItem, 
-  FormControl, 
+import {
+  Box,
+  Card,
+  CardContent,
+  Container,
+  Stack,
+  Typography,
+  Button,
+  TextField,
+  Select,
+  MenuItem,
+  FormControl,
   InputLabel,
   Skeleton,
   Grid,
   Paper,
   IconButton,
   Tooltip,
+  Switch,
 } from '@mui/material';
+import type { Category } from '@kippa/domain';
 import { CategoryIcon, EditIcon } from '@/components/AppIcon';
 import { CardHeading } from '@/features/shared/components/CardHeading';
 import { PageHeader } from '@/features/shared/components/PageHeader';
@@ -72,6 +74,18 @@ export function Categories() {
     }
   };
 
+  const handleToggleEssential = async (category: Category) => {
+    try {
+      await updateCategoryMutation.mutateAsync({
+        householdId,
+        categoryId: category.id,
+        updates: { essential: category.essential !== true },
+      });
+    } catch (error) {
+      enqueueSnackbar(error instanceof Error ? error.message : 'Could not update category', { variant: 'error' });
+    }
+  };
+
   const renderCategoryGroup = (type: 'income' | 'expense', title: string) => {
     const items = categories.filter(category => category.type === type);
     return (
@@ -111,6 +125,20 @@ export function Categories() {
                     <Typography variant="cardSubtitle" sx={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {category.name}
                     </Typography>
+                    {type === 'expense' && (
+                      <Tooltip title={category.essential === true
+                        ? 'Essential — counted as a fixed bill; excluded from flexible budget and Safe Daily Spend'
+                        : 'Mark essential — fixed bills are excluded from flexible budget and Safe Daily Spend'}>
+                        <Switch
+                          size="small"
+                          checked={category.essential === true}
+                          disabled={updateCategoryMutation.isPending}
+                          onChange={() => handleToggleEssential(category)}
+                          inputProps={{ 'aria-label': `Mark ${category.name} as essential` }}
+                          sx={{ flexShrink: 0 }}
+                        />
+                      </Tooltip>
+                    )}
                     <Tooltip title="Rename">
                       <IconButton
                         size="small"

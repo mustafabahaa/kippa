@@ -14,7 +14,7 @@ export function CategoryPaceChart({ categories }: { categories: CategoryPace[] }
       <Box><Typography variant="sectionLabel">Category pace</Typography><Typography variant="body2" color="text.secondary">Every category compared by percentage of its plan used.</Typography></Box>
       <Chip label={`${visible.length} categories`} />
     </Stack>
-    <Box sx={{ display: 'grid', gridTemplateColumns: `repeat(${visible.length}, minmax(0, 1fr))`, columnGap: { xs: 0.25, sm: 0.75, lg: 1.25 }, alignItems: 'end' }}>
+    <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(64px, 1fr))', columnGap: { xs: 0.25, sm: 0.75, lg: 1.25 }, alignItems: 'end' }}>
       {visible.map(category => {
           const percent = category.planned > 0 ? (category.spent / category.planned) * 100 : 100;
           const fill = Math.max(category.spent > 0 ? 5 : 0, Math.min(100, percent));

@@ -121,13 +121,13 @@ export function BottomNav() {
     );
   };
 
-  // Generate notched path dynamically
+  // Generate notched path dynamically — full-width bar flush to the screen
+  // bottom with square corners; the top edge dips around the center + button.
   const getPathData = () => {
     const W = size.width;
     const H = size.height;
     if (W === 0) return '';
 
-    const R = 32; // Corner radius of the pill
     const cX = W / 2;
     const depth = 34; // Depth of the notch dip
     const notchWidth = 48; // Width from center to start of curve
@@ -139,19 +139,16 @@ export function BottomNav() {
     const x4 = cX + 20;
     const x5 = x3 - 20;
 
+    // Overshoot the viewport edges by 2px so the stroke only paints along the
+    // top edge and notch — the side/bottom strokes fall off-screen.
     return `
-      M ${R},0
+      M -2,-2
       L ${x0},0
       C ${x1},0 ${x2},${depth} ${cX},${depth}
       C ${x4},${depth} ${x5},0 ${x3},0
-      L ${W - R},0
-      A ${R},${R} 0 0 1 ${W},${R}
-      L ${W},${H - R}
-      A ${R},${R} 0 0 1 ${W - R},${H}
-      L ${R},${H}
-      A ${R},${R} 0 0 1 0,${H - R}
-      L 0,${R}
-      A ${R},${R} 0 0 1 ${R},0
+      L ${W + 2},0
+      L ${W + 2},${H + 2}
+      L -2,${H + 2}
       Z
     `.replace(/\s+/g, ' ').trim();
   };
@@ -163,19 +160,18 @@ export function BottomNav() {
       sx={{
         display: { xs: 'block', md: 'none' },
         position: 'fixed',
-        bottom: { xs: 16, md: 24 },
-        left: '50%',
-        transform: 'translateX(-50%)',
+        bottom: 0,
+        left: 0,
+        right: 0,
         zIndex: 1000,
         bgcolor: 'transparent',
         boxShadow: 'none',
-        padding: '6px',
-        maxWidth: 'calc(100vw - 24px)',
+        padding: '6px 6px calc(6px + env(safe-area-inset-bottom))',
         overflow: 'visible',
         animation: 'navFloatIn 0.35s cubic-bezier(0.22, 1, 0.36, 1)',
         '@keyframes navFloatIn': {
-          from: { opacity: 0, transform: 'translateX(-50%) translateY(20px)' },
-          to: { opacity: 1, transform: 'translateX(-50%) translateY(0)' },
+          from: { opacity: 0, transform: 'translateY(20px)' },
+          to: { opacity: 1, transform: 'translateY(0)' },
         },
       }}
     >

@@ -64,13 +64,13 @@ const PREVIEW_PENDING_ITEMS: PendingFinancialMessage[] = [
 export function PendingTransactions() {
   const { householdId } = useAppContext();
   const { closeSnackbar, enqueueSnackbar } = useSnackbar();
-  const { data: remotePending = [], isLoading: remoteLoading } = usePendingFinancialMessages(householdId);
+  const { data: remotePending = [], isLoading: remoteLoading, isFetching: remoteFetching } = usePendingFinancialMessages(householdId);
   const { data: accounts = [] } = useAccounts(householdId);
   const { data: categories = [] } = useCategories(householdId);
   const approveMutation = useApprovePendingFinancialMessageMutation();
   const discardMutation = useDiscardPendingFinancialMessageMutation();
   const restoreMutation = useRestoreDiscardedPendingFinancialMessageMutation();
-  const { data: resolved = [], isLoading: historyLoading } = useResolvedPendingFinancialMessages(householdId);
+  const { data: resolved = [], isLoading: historyLoading, isFetching: historyFetching } = useResolvedPendingFinancialMessages(householdId);
   const [tab, setTab] = useState<'review' | 'history'>('review');
   const { accountId, categoryId, destinationAccountId, selected, setAccountId, setCategoryId, setDestinationAccountId, setSelected } = usePendingReviewState();
   const [itemStates, setItemStates] = useState<Record<string, PendingItemState>>({});
@@ -78,7 +78,12 @@ export function PendingTransactions() {
   const connections = useMessageConnections(householdId);
   const previewMode = import.meta.env.DEV && new URLSearchParams(window.location.search).get('preview-pending') === '1';
   const pending = previewMode ? PREVIEW_PENDING_ITEMS : remotePending;
-  const isLoading = previewMode ? false : remoteLoading;
+  // Show the empty state only after a check has actually settled. The query
+  // is shared with the nav badge and polls every 30s, so a cached (possibly
+  // stale, possibly empty) list often renders first — keep the skeleton up
+  // while a fetch is in flight and we have nothing to show yet.
+  const reviewChecking = !previewMode && (remoteLoading || (remoteFetching && remotePending.length === 0));
+  const historyChecking = historyLoading || (historyFetching && resolved.length === 0);
 
 
   const availableCategories = useMemo(() => {
@@ -232,7 +237,7 @@ export function PendingTransactions() {
         <Tab value="history" label="History" icon={<HistoryIcon fontSize="small" />} iconPosition="start" />
       </Tabs>
 
-      {tab === 'review' && (isLoading ? (
+      {tab === 'review' && (reviewChecking ? (
         <Stack spacing={1}>
           {[0, 1, 2].map((item) => <Skeleton key={item} variant="rounded" height={76} />)}
         </Stack>
@@ -285,7 +290,7 @@ export function PendingTransactions() {
         </Card>
       ))}
 
-      {tab === 'history' && (historyLoading ? (
+      {tab === 'history' && (historyChecking ? (
         <Stack spacing={1}>
           {[0, 1, 2].map((item) => <Skeleton key={item} variant="rounded" height={76} />)}
         </Stack>

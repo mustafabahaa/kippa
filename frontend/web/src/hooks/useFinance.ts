@@ -7,6 +7,7 @@ import { loansLib, type LoanInput } from '@/libs/loans';
 import { cardsLib, type CardInput } from '@/libs/cards';
 import { auditLogLib } from '@/libs/auditLog';
 import { messageIngestionLib } from '@/libs/messageIngestion';
+import { dbLib } from '@/libs/db';
 import { authLib } from '@/libs/auth';
 import { currencyLib } from '@/libs/currency';
 import { detectBaseCurrency } from '@/libs/currencyMeta';
@@ -98,11 +99,23 @@ export function useTransactions(householdId: string, cycleId?: string) {
 }
 
 export function usePendingFinancialMessages(householdId: string) {
+  const queryClient = useQueryClient();
+  // Realtime: a Firestore listener keeps this cache live (new bank messages
+  // land server-side via the ingestion endpoint), so no refetchInterval is
+  // needed — the queryFn only seeds the very first load before/while the
+  // listener attaches.
+  useEffect(() => {
+    if (!householdId) return;
+    return dbLib.subscribeDocs(householdId, 'pendingFinancialMessages', (docs) => {
+      const items = (docs as PendingFinancialMessage[]).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+      queryClient.setQueryData(keys.pendingMessages(householdId), items);
+    });
+  }, [householdId, queryClient]);
   return useQuery({
     queryKey: keys.pendingMessages(householdId),
     queryFn: () => messageIngestionLib.getPending(householdId),
     enabled: !!householdId,
-    refetchInterval: 30_000,
+    staleTime: Infinity,
   });
 }
 
@@ -656,7 +669,7 @@ export function useUpdateCategoryMutation() {
     mutationFn: (data: {
       householdId: string;
       categoryId: string;
-      updates: Partial<Pick<Category, 'name' | 'isActive'>>;
+      updates: Partial<Pick<Category, 'name' | 'isActive' | 'essential'>>;
     }) => ledgerLib.updateCategory(data.householdId, data.categoryId, data.updates, auditUser),
     onSuccess: (_, variables) => {
       notifyOfflineSuccess();

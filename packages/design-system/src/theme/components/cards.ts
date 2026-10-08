@@ -16,7 +16,7 @@ export const cardOverrides = ({ mode, tokens: t }: OverrideContext): Components<
         backgroundColor: alpha(designTokens.color.primaryContainer, mode === 'dark' ? .12 : .06),
         '.category-dot': { width: 7, height: 7, borderRadius: '50%', backgroundColor: designTokens.color.primaryContainer, flexShrink: 0 },
         '&[data-category-type="income"] .category-dot': { backgroundColor: designTokens.color.success },
-        '.category-row-action': { width: 32, height: 32, color: designTokens.color.primaryContainer, opacity: 0, pointerEvents: 'none', transition: 'opacity .15s ease' },
+        '.category-row-action': { width: 36, height: 36, color: designTokens.color.primaryContainer, opacity: 0, pointerEvents: 'none', transition: 'opacity .15s ease' },
         '&:hover .category-row-action, &:focus-within .category-row-action': { opacity: 1, pointerEvents: 'auto' },
       } },
       { props: { variant: 'amountPanel' }, style: { borderRadius: 24, border: '1px solid transparent', backgroundColor: designTokens.color.primary, color: designTokens.color.onPrimary, boxShadow: designTokens.shadow.lifted, transition: 'all .2s ease' } },

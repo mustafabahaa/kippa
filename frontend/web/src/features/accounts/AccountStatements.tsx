@@ -203,6 +203,7 @@ export function AccountStatements() {
                     rowsPerPageOptions={[10, 25, 50]}
                     onPageChange={(_, nextPage) => setPage(nextPage)}
                     onRowsPerPageChange={event => { setRowsPerPage(Number(event.target.value)); setPage(0); }}
+                    sx={{ '& .MuiTablePagination-toolbar': { flexWrap: 'wrap' }, '& .MuiTablePagination-spacer': { display: { xs: 'none', sm: 'block' } } }}
                   />
                 </>
               )}

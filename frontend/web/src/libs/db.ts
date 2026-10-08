@@ -1,12 +1,13 @@
-import { 
-  collection, 
-  doc, 
-  getDoc as firestoreGetDoc, 
-  getDocs as firestoreGetDocs, 
-  setDoc as firestoreSetDoc, 
+import {
+  collection,
+  doc,
+  getDoc as firestoreGetDoc,
+  getDocs as firestoreGetDocs,
+  setDoc as firestoreSetDoc,
   writeBatch as firestoreWriteBatch,
-  query, 
+  query,
   where,
+  onSnapshot,
   Firestore
 } from 'firebase/firestore';
 import { db, isFirebaseConfigured } from '@/config/firebase';
@@ -54,8 +55,30 @@ export const dbLib = {
     return snapshot.docs.map(d => d.data());
   },
 
-  async setDoc(householdId: string, collectionName: string, docId: string, data: any): Promise<void> {
+  /**
+   * Realtime subscription over a household collection. Returns an unsubscribe
+   * function. Snapshots arrive immediately on attach and on every server-side
+   * change, so callers stay live without polling.
+   */
+  subscribeDocs(
+    householdId: string,
+    collectionName: string,
+    onUpdate: (docs: any[]) => void,
+    onError?: (error: Error) => void
+  ): () => void {
     const firestore = requireFirestore();
+    const path = householdId === 'system'
+      ? collectionName
+      : `households/${householdId}/${collectionName}`;
+    const colRef = collection(firestore, path);
+    return onSnapshot(
+      colRef,
+      (snapshot) => onUpdate(snapshot.docs.map(d => d.data())),
+      (error) => onError?.(error)
+    );
+  },
+
+  async setDoc(householdId: string, collectionName: string, docId: string, data: any): Promise<void> {    const firestore = requireFirestore();
     const path = householdId === 'system'
       ? `${collectionName}/${docId}`
       : `households/${householdId}/${collectionName}/${docId}`;

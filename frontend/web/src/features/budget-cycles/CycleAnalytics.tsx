@@ -153,7 +153,9 @@ export function CycleAnalytics() {
                 aria-label={`Cash flow by budget cycle in ${baseCurrency}`}
                 sx={{
                   height: { xs: 300, sm: 360 },
-                  minWidth: Math.max(620, cycleData.length * 92),
+                  // Mobile/tablet: fit the viewport so nothing is cut off;
+                  // desktop keeps the comfortable per-cycle spacing.
+                  minWidth: { xs: '100%', md: Math.max(620, cycleData.length * 92) },
                   position: 'relative',
                   display: 'flex',
                   alignItems: 'flex-end',
@@ -186,7 +188,7 @@ export function CycleAnalytics() {
                       key={cycle.id}
                       sx={{
                         flex: '1 1 0',
-                        minWidth: 54,
+                        minWidth: { xs: 34, sm: 54 },
                         height: '100%',
                         position: 'relative',
                         display: 'flex',
