@@ -113,7 +113,6 @@ export function BudgetPulseCard() {
             const remaining = Math.max(0, category.planned - category.spent);
             return (
               <Box key={category.categoryId} sx={{ flex: 1, minWidth: 0 }}>
-                <Box sx={{ height: 8, mb: 1, borderRadius: '999px', bgcolor: index === 0 ? 'primary.dark' : index === 1 ? 'secondary.main' : 'primary.light' }} />
                 <Box sx={{ height: 120 - index * 16, p: 1.25, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', borderRadius: '13px 13px 9px 9px', bgcolor: index === 0 ? 'primary.dark' : index === 1 ? 'secondary.main' : 'primary.light', color: index === 0 ? 'primary.contrastText' : index === 1 ? 'secondary.contrastText' : 'primary.dark' }}>
                   <Box>
                     <Typography sx={{ color: 'inherit', fontSize: used >= 100 ? 19 : 24, fontWeight: 500, lineHeight: 1 }}>{used}%</Typography>
