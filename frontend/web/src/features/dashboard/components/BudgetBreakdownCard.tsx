@@ -137,14 +137,6 @@ export function BudgetBreakdownCard() {
                     const percent = cat.planned > 0 ? (cat.spent / cat.planned) * 100 : (cat.spent > 0 ? 100 : 0);
                     const catColor = chartColors[idx % chartColors.length];
 
-                    const getCategoryStatusColor = (status: 'on-track' | 'warning' | 'over') => {
-                      if (status === 'on-track') return theme.palette.success.main;
-                      if (status === 'warning') return theme.palette.warning.main;
-                      return theme.palette.error.main;
-                    };
-
-                    const statusColor = getCategoryStatusColor(cat.status);
-
                     return (
                       <Box key={cat.categoryId} sx={{ px: 1, py: 1, borderRadius: 2, '&:hover': { bgcolor: 'action.hover' } }}>
                         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'minmax(140px, 1.4fr) minmax(150px, 1fr) repeat(3, minmax(84px, .7fr))' }, gap: { xs: 1.5, md: 2 }, alignItems: 'center' }}>
@@ -153,7 +145,7 @@ export function BudgetBreakdownCard() {
                             <Typography noWrap sx={{ fontSize: 12, lineHeight: '18px', fontWeight: 700, color: 'text.primary' }}>{cat.categoryName}</Typography>
                           </Stack>
                           <Stack direction="row" alignItems="center" spacing={1}>
-                            <LinearProgress variant="determinate" value={Math.min(100, percent)} sx={{ flex: 1, '& .MuiLinearProgress-bar': { bgcolor: statusColor } }} />
+                            <LinearProgress variant="determinate" value={Math.min(100, percent)} color={percent > 100 ? 'error' : 'success'} sx={{ flex: 1 }} />
                             <Typography sx={{ minWidth: 34, textAlign: 'right', fontSize: 10.5, fontWeight: 700, color: 'text.secondary' }}>{Math.round(percent)}%</Typography>
                           </Stack>
                           <Box sx={{ display: { xs: 'grid', md: 'contents' }, gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 1.5 }}>
