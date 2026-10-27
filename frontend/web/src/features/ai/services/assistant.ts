@@ -8,7 +8,7 @@ import { aiMemoryService } from './memory';
 import { functions } from '@/config/firebase';
 import { httpsCallable } from 'firebase/functions';
 import { z } from 'zod';
-import { isAiConnectionEnabled } from './connection';
+import { aiProvider, type AiProviderId } from './aiProvider';
 
 const SYSTEM_PROMPT = `You are Kip, Kippa's persistent financial companion inside a personal finance app. Be concise, factual, and action-oriented.
 Never invent balances, transactions, categories, dates, or calculations. Use tools for financial facts.
@@ -242,7 +242,12 @@ async function streamCodexReply(args: AssistantReplyRequest): Promise<string> {
   }
 }
 
-const assistantService = createAssistantService({ streamReply: isAiConnectionEnabled ? streamCodexReply : streamGeminiReply });
+const providers: Record<AiProviderId, AssistantProvider> = {
+  gemini: { streamReply: streamGeminiReply },
+  codex: { streamReply: streamCodexReply },
+};
+
+const assistantService = createAssistantService(providers[aiProvider.id]);
 
 export function streamAssistantReply(args: AssistantReplyRequest): Promise<string> {
   return assistantService.streamReply(args);

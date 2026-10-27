@@ -14,10 +14,7 @@ const { executeAction, savePendingActions, addMessage, clear } = vi.hoisted(() =
 
 vi.mock('@/hooks/useAppContext', () => ({ useAppContext: () => ({ householdId: 'h', userProfile: { uid: 'u', displayName: 'User' }, createHousehold: vi.fn(), switchHousehold: vi.fn(), requestToJoinHousehold: vi.fn(), decideJoinRequest: vi.fn(), leaveHousehold: vi.fn() }) }));
 vi.mock('@/notifications/useNotifications', () => ({ useNotifications: () => ({ requestPermission: vi.fn(), disable: vi.fn() }) }));
-vi.mock('./services/connection', async importOriginal => ({
-  ...(await importOriginal<typeof import('./services/connection')>()),
-  isAiConnectionEnabled: false,
-}));
+vi.mock('./services/aiProvider', () => ({ aiProvider: { id: 'gemini' as const, usesAccountConnection: false, subtitle: 'Your financial companion' }, requiresAiConnection: false }));
 vi.mock('./services/readTools', async importOriginal => ({ ...(await importOriginal<typeof import('./services/readTools')>()), executePendingAiAction: executeAction }));
 vi.mock('./services/conversations', () => ({ aiConversations: {
   list: vi.fn(async () => [{ id: 'c', householdId: 'h', createdBy: 'u', title: 'Test', createdAt: '', updatedAt: '', pendingActions: [{ id: 'a', toolName: 'createAccount', input: { name: 'Savings' }, summary: 'Create Savings (EGP)', risk: 'write' }] }]),

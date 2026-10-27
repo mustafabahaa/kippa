@@ -13,7 +13,8 @@ import { executePendingAiAction } from './services/readTools';
 import { AiChart } from './components/AiChart';
 import { AiError, type AiChartSpec, type AiConversation, type AiFailureKind, type AiMessage, type PendingAiAction } from './types';
 import { AiConnectionPanel, type AiConnectionStatus } from './AiConnectionPanel';
-import { disconnectAiConnection, isAiConnectionEnabled } from './services/connection';
+import { disconnectAiConnection } from './services/connection';
+import { aiProvider } from './services/aiProvider';
 
 const STARTERS = [
   { label: 'RIGHT NOW', prompt: 'What’s my total balance?', featured: true, Icon: AccountBalanceIcon },
@@ -75,7 +76,7 @@ export function AiAssistant() {
   const [executingActionId, setExecutingActionId] = useState<string | null>(null);
   const executingActionsRef = useRef(new Set<string>());
   const [connectionResult, setConnectionResult] = useState<{ endpoint: string; token: string } | null>(null);
-  const [aiConnectionStatus, setAiConnectionStatus] = useState<AiConnectionStatus>(isAiConnectionEnabled ? 'checking' : 'connected');
+  const [aiConnectionStatus, setAiConnectionStatus] = useState<AiConnectionStatus>(aiProvider.usesAccountConnection ? 'checking' : 'connected');
   const [isClearOpen, setIsClearOpen] = useState(false);
   const [isLoadingOlder, setIsLoadingOlder] = useState(false);
   const [olderCursor, setOlderCursor] = useState<string | null>(null);
@@ -288,12 +289,12 @@ export function AiAssistant() {
   return (
     <Box sx={{ height: { xs: 'calc(100dvh - 148px)', md: 'calc(100dvh - 76px)' }, minHeight: 420, display: 'flex', flexDirection: 'column', bgcolor: 'background.paper', overflow: 'hidden' }}>
       <Box sx={{ width: '100%', maxWidth: 760, mx: 'auto', px: { xs: 2, sm: 3 }, pt: { xs: 2, sm: 3 }, pb: 2, flexShrink: 0 }}>
-        <PageHeader title="Kip" subtitle={isAiConnectionEnabled && aiConnectionStatus === 'connected' ? 'Using your ChatGPT plan' : 'Your financial companion'} action={
+        <PageHeader title="Kip" subtitle={aiProvider.usesAccountConnection && aiConnectionStatus === 'connected' ? aiProvider.subtitle : 'Your financial companion'} action={
           <Stack direction="row" spacing={1} alignItems="center">
             {conversation && messages.length > 0 && (
               <Button variant="segmented" disabled={isSending} onClick={() => setIsClearOpen(true)}>Clear chat</Button>
             )}
-            {isAiConnectionEnabled && aiConnectionStatus === 'connected' && (
+            {aiProvider.usesAccountConnection && aiConnectionStatus === 'connected' && (
               <Button variant="segmented" disabled={isSending} onClick={() => void disconnectAiConnection().then(() => setAiConnectionStatus('disconnected')).catch(() => setError('Could not disconnect. Please try again.'))}>Disconnect</Button>
             )}
           </Stack>

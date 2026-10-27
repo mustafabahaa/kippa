@@ -1,5 +1,6 @@
 import { httpsCallable, type HttpsCallableStreamResult } from 'firebase/functions';
 import { functions } from '@/config/firebase';
+import { requiresAiConnection } from './aiProvider';
 
 export type AiProvider = 'codex';
 
@@ -14,8 +15,8 @@ export type AiConnectionDevice = {
   attemptId: string;
 };
 
-/** The connection gate is opt-in until the Firebase callables are deployed. */
-export const isAiConnectionEnabled = import.meta.env.VITE_AI_PROVIDER === 'codex';
+/** The connection gate is only meaningful for providers that need an account connection. */
+export const isAiConnectionEnabled = requiresAiConnection;
 
 type ConnectionRequest = { provider: AiProvider };
 type ConnectionStreamChunk = {
