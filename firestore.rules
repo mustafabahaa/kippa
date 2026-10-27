@@ -45,9 +45,11 @@ service cloud.firestore {
           && resource.data.createdBy == request.auth.uid;
         allow create: if isHouseholdMember(householdId)
           && request.resource.data.createdBy == request.auth.uid;
-        allow update, delete: if isHouseholdMember(householdId)
+        allow update: if isHouseholdMember(householdId)
           && resource.data.createdBy == request.auth.uid
           && request.resource.data.createdBy == resource.data.createdBy;
+        allow delete: if isHouseholdMember(householdId)
+          && resource.data.createdBy == request.auth.uid;
 
         match /messages/{messageId} {
           allow read: if isHouseholdMember(householdId)
@@ -55,7 +57,9 @@ service cloud.firestore {
           allow create: if isHouseholdMember(householdId)
             && get(/databases/$(database)/documents/households/$(householdId)/aiConversations/$(conversationId)).data.createdBy == request.auth.uid
             && request.resource.data.conversationId == conversationId;
-          allow update, delete: if false;
+          allow update: if false;
+          allow delete: if isHouseholdMember(householdId)
+            && get(/databases/$(database)/documents/households/$(householdId)/aiConversations/$(conversationId)).data.createdBy == request.auth.uid;
         }
       }
 

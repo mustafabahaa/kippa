@@ -1,8 +1,28 @@
 import { describe, expect, it } from 'vitest';
 import { APICallError } from 'ai';
-import { classifyProviderError, msUntilNextPacificReset, repairKnownToolAlias, retryAfterMsFromError, selectContextMessages } from './assistant';
+import { z } from 'zod';
+import { createAiToolRegistry } from './readTools';
+import { classifyProviderError, createAssistantService, msUntilNextPacificReset, repairKnownToolAlias, retryAfterMsFromError, selectContextMessages } from './assistant';
 
 describe('assistant provider errors', () => {
+  it('can represent every Kippa tool for the remote provider', () => {
+    for (const definition of Object.values(createAiToolRegistry())) {
+      expect(() => z.toJSONSchema(definition.inputSchema, { target: 'draft-7', unrepresentable: 'any' })).not.toThrow();
+    }
+  });
+  it('lets the chat use a different provider through the same streaming contract', async () => {
+    const received: string[] = [];
+    const service = createAssistantService({
+      async streamReply(request) {
+        request.onText('Hello');
+        return 'Hello';
+      },
+    });
+    const result = await service.streamReply({ householdId: 'h', userId: 'u', userDisplayName: 'User', messages: [], onText: text => received.push(text) });
+    expect(result).toBe('Hello');
+    expect(received).toEqual(['Hello']);
+  });
+
   it('extracts a fractional Gemini retry delay', () => {
     expect(retryAfterMsFromError('Please retry in 32.759941285s.')).toBe(32760);
   });

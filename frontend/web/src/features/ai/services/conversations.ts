@@ -1,4 +1,4 @@
-import { collection, getDocs, limit, orderBy, query, startAfter } from 'firebase/firestore';
+import { collection, deleteDoc, doc, getDocs, limit, orderBy, query, startAfter, writeBatch } from 'firebase/firestore';
 import { db, isFirebaseConfigured } from '@/config/firebase';
 import { dbLib } from '@/libs/db';
 import type { AiChartSpec, AiConversation, AiMessage, AiMessageRole, PendingAiAction } from '../types';
@@ -44,5 +44,17 @@ export const aiConversations = {
     const existing = await dbLib.getDoc(householdId, 'aiConversations', conversationId) as AiConversation | null;
     if (!existing) throw new Error('AI conversation not found.');
     await dbLib.setDoc(householdId, 'aiConversations', conversationId, { ...existing, pendingActions, updatedAt: new Date().toISOString() });
+  },
+  async clear(householdId: string, conversationId: string): Promise<void> {
+    if (!isFirebaseConfigured || !db) throw new Error('Firebase is not configured.');
+    const messageRefs = (await getDocs(collection(db, `households/${householdId}/aiConversations/${conversationId}/messages`))).docs.map(document => document.ref);
+    const conversationRef = doc(db, `households/${householdId}/aiConversations/${conversationId}`);
+    // Firestore batches cap at 500 operations; chunk the deletions to stay under it.
+    for (let index = 0; index < messageRefs.length; index += 450) {
+      const batch = writeBatch(db);
+      for (const ref of messageRefs.slice(index, index + 450)) batch.delete(ref);
+      await batch.commit();
+    }
+    await deleteDoc(conversationRef);
   },
 };

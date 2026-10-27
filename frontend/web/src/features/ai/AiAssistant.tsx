@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Alert, Box, Button, CircularProgress, InputBase, LinearProgress, Paper, Stack, Typography } from '@mui/material';
+import { Alert, Box, Button, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, InputBase, LinearProgress, Paper, Stack, Typography } from '@mui/material';
 import { useQueryClient } from '@tanstack/react-query';
 import { useNotifications } from '@/notifications/useNotifications';
 import Markdown from 'react-markdown';
@@ -12,6 +12,8 @@ import { streamAssistantReply } from './services/assistant';
 import { executePendingAiAction } from './services/readTools';
 import { AiChart } from './components/AiChart';
 import { AiError, type AiChartSpec, type AiConversation, type AiFailureKind, type AiMessage, type PendingAiAction } from './types';
+import { AiConnectionPanel, type AiConnectionStatus } from './AiConnectionPanel';
+import { disconnectAiConnection, isAiConnectionEnabled } from './services/connection';
 
 const STARTERS = [
   { label: 'RIGHT NOW', prompt: 'What’s my total balance?', featured: true, Icon: AccountBalanceIcon },
@@ -27,10 +29,16 @@ const COOLDOWN_MESSAGE = 'Kip has reached Gemini’s free usage limit. Your mess
 const QUOTA_MESSAGE = 'Kip’s free Gemini allowance has been used for today. It resets at midnight Pacific time, and your message is saved.';
 const createCooldownDeadline = (duration: number) => Date.now() + duration;
 
+export function mergeConversationMessages(history: AiMessage[], current: AiMessage[]): AiMessage[] {
+  const messages = new Map(history.map(message => [message.id, message]));
+  for (const message of current) messages.set(message.id, message);
+  return [...messages.values()].sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+}
+
 const FAILURE_TITLES: Record<AiFailureKind, string> = {
-  'rate-limit': 'Gemini is busy or the free limit was reached',
-  quota: 'Today’s free AI allowance is used',
-  authentication: 'Gemini is not configured correctly',
+  'rate-limit': 'The AI service is busy or the usage limit was reached',
+  quota: 'The AI usage allowance is used for now',
+  authentication: 'Kip’s AI connection needs attention',
   network: 'Connection interrupted',
   validation: 'Kippa blocked an unsafe request',
   provider: 'The assistant could not finish',
@@ -49,6 +57,7 @@ export function AiAssistant() {
   const [streamedCharts, setStreamedCharts] = useState<AiChartSpec[]>([]);
   const [error, setError] = useState('');
   const [turnFailure, setTurnFailure] = useState<TurnFailure | null>(() => {
+    if (isAiConnectionEnabled) return null;
     if (Number(localStorage.getItem(COOLDOWN_STORAGE_KEY)) <= Date.now()) return null;
     const kind = localStorage.getItem(COOLDOWN_KIND_STORAGE_KEY) === 'quota' ? 'quota' : 'rate-limit';
     return { kind, message: kind === 'quota' ? QUOTA_MESSAGE : COOLDOWN_MESSAGE };
@@ -58,11 +67,13 @@ export function AiAssistant() {
   const [executingActionId, setExecutingActionId] = useState<string | null>(null);
   const executingActionsRef = useRef(new Set<string>());
   const [connectionResult, setConnectionResult] = useState<{ endpoint: string; token: string } | null>(null);
+  const [aiConnectionStatus, setAiConnectionStatus] = useState<AiConnectionStatus>(isAiConnectionEnabled ? 'checking' : 'connected');
+  const [isClearOpen, setIsClearOpen] = useState(false);
   const [isLoadingOlder, setIsLoadingOlder] = useState(false);
   const [olderCursor, setOlderCursor] = useState<string | null>(null);
-  const [cooldownUntil, setCooldownUntil] = useState(() => Number(localStorage.getItem(COOLDOWN_STORAGE_KEY)) || 0);
+  const [cooldownUntil, setCooldownUntil] = useState(() => isAiConnectionEnabled ? 0 : Number(localStorage.getItem(COOLDOWN_STORAGE_KEY)) || 0);
   const [cooldownTotalMs, setCooldownTotalMs] = useState(60_000);
-  const [cooldownRemainingMs, setCooldownRemainingMs] = useState(() => Math.max(0, (Number(localStorage.getItem(COOLDOWN_STORAGE_KEY)) || 0) - Date.now()));
+  const [cooldownRemainingMs, setCooldownRemainingMs] = useState(() => isAiConnectionEnabled ? 0 : Math.max(0, (Number(localStorage.getItem(COOLDOWN_STORAGE_KEY)) || 0) - Date.now()));
   const endRef = useRef<HTMLDivElement>(null);
   const scrollerRef = useRef<HTMLDivElement>(null);
   const shouldStickToBottom = useRef(true);
@@ -132,7 +143,7 @@ export function AiAssistant() {
       const contextPage = await aiConversations.messagesPage(householdId, activeConversation.id, undefined, 100);
       const reply = await streamAssistantReply({
         householdId, userId: userProfile!.uid, userDisplayName: userProfile!.displayName, userPhotoURL: userProfile!.photoURL,
-        messages: contextPage.messages.length ? contextPage.messages : nextMessages, onText: setStreamedText,
+        messages: mergeConversationMessages(contextPage.messages, nextMessages), onText: setStreamedText,
         onActionProposed: action => setPendingActions(current => {
           const next = current.some(item => item.id === action.id) ? current : [...current, action];
           void aiConversations.savePendingActions(householdId, activeConversation.id, next);
@@ -221,6 +232,19 @@ export function AiAssistant() {
     }
   };
 
+  const clearChat = async () => {
+    if (!conversation || isSending) return;
+    try {
+      await aiConversations.clear(householdId, conversation.id);
+      setConversation(null);
+      setMessages([]); setPendingActions([]); setStreamedText(''); setStreamedCharts([]);
+      setOlderCursor(null); setTurnFailure(null); setError('');
+      setIsClearOpen(false);
+    } catch {
+      setError('Kippa could not clear this chat. Please try again.');
+    }
+  };
+
   const retryLastTurn = async () => {
     if (!conversation || isSending || cooldownRemainingMs > 0 || messages.at(-1)?.role !== 'user') return;
     setError('');
@@ -254,11 +278,22 @@ export function AiAssistant() {
   return (
     <Box sx={{ height: { xs: 'calc(100dvh - 148px)', md: 'calc(100dvh - 76px)' }, minHeight: 420, display: 'flex', flexDirection: 'column', bgcolor: 'background.paper', overflow: 'hidden' }}>
       <Box sx={{ width: '100%', maxWidth: 760, mx: 'auto', px: { xs: 2, sm: 3 }, pt: { xs: 2, sm: 3 }, pb: 2, flexShrink: 0 }}>
-        <PageHeader title="Kip" subtitle="Your financial companion" />
+        <PageHeader title="Kip" subtitle={isAiConnectionEnabled && aiConnectionStatus === 'connected' ? 'Using your ChatGPT plan' : 'Your financial companion'} action={
+          <Stack direction="row" spacing={1} alignItems="center">
+            {conversation && messages.length > 0 && (
+              <Button variant="segmented" disabled={isSending} onClick={() => setIsClearOpen(true)}>Clear chat</Button>
+            )}
+            {isAiConnectionEnabled && aiConnectionStatus === 'connected' && (
+              <Button variant="segmented" disabled={isSending} onClick={() => void disconnectAiConnection().then(() => setAiConnectionStatus('disconnected')).catch(() => setError('Could not disconnect. Please try again.'))}>Disconnect</Button>
+            )}
+          </Stack>
+        } />
       </Box>
       <Box ref={scrollerRef} onScroll={handleScroll} sx={{ flex: 1, minHeight: 0, overflowY: 'auto', overscrollBehavior: 'contain', scrollbarGutter: 'stable' }}>
         <Box sx={{ width: '100%', maxWidth: 760, minHeight: '100%', mx: 'auto', px: { xs: 2, sm: 3 }, py: { xs: 3, sm: 4 }, display: 'flex', flexDirection: 'column' }}>
-            {isHistoryLoading ? (
+            {aiConnectionStatus !== 'connected' ? (
+              <AiConnectionPanel onStatusChange={setAiConnectionStatus} />
+            ) : isHistoryLoading ? (
               <Stack alignItems="center" justifyContent="center" sx={{ flex: 1 }}><CircularProgress size={28} /></Stack>
             ) : messages.length === 0 && !streamedText ? (
               <Stack spacing={{ xs: 2, sm: 3 }} alignItems="center" justifyContent="center" sx={{ flex: 1, textAlign: 'center', py: { xs: 2, sm: 4 } }}>
@@ -326,7 +361,7 @@ export function AiAssistant() {
                 {turnFailure?.kind === 'quota' ? (
                   <Paper variant="assistantCooldown">
                     <Stack spacing={1.5}>
-                      <Box><Typography variant="sectionLabel">Free allowance used for today</Typography><Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>{turnFailure.message}</Typography></Box>
+                      <Box><Typography variant="sectionLabel">AI usage limit reached for today</Typography><Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>{turnFailure.message}</Typography></Box>
                       <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={2}>
                         <Typography variant="fieldHint" color="text.secondary">Available again around {new Date(cooldownUntil).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}</Typography>
                         <Button variant="segmented" disabled>Saved</Button>
@@ -366,7 +401,7 @@ export function AiAssistant() {
         </Box>
       </Box>
 
-      <Box sx={{ flexShrink: 0, bgcolor: 'background.paper', px: { xs: 2, sm: 3 }, pt: 1.5, pb: { xs: 1.5, md: 2 } }}>
+      {aiConnectionStatus === 'connected' && <Box sx={{ flexShrink: 0, bgcolor: 'background.paper', px: { xs: 2, sm: 3 }, pt: 1.5, pb: { xs: 1.5, md: 2 } }}>
         <Stack spacing={1} sx={{ width: '100%', maxWidth: 760, mx: 'auto' }}>
           {error && <Alert severity="warning" onClose={() => setError('')}>{error}</Alert>}
           <Paper variant="assistantComposer">
@@ -383,7 +418,17 @@ export function AiAssistant() {
           </Paper>
           <Typography sx={{ textAlign: 'center', fontSize: 10.5, lineHeight: 1.35, color: 'text.secondary' }}>Kip can make mistakes. Financial facts come from your Kippa records.</Typography>
         </Stack>
-      </Box>
+      </Box>}
+      <Dialog open={isClearOpen} onClose={() => setIsClearOpen(false)} fullWidth maxWidth="xs">
+        <DialogTitle>Clear this chat?<Typography component="span" variant="fieldHint" color="text.secondary" display="block">Every message in this conversation is permanently deleted.</Typography></DialogTitle>
+        <DialogContent dividers>
+          <Typography variant="body2" color="text.secondary">A fresh conversation starts with your next message. Your Kippa financial data is not affected.</Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setIsClearOpen(false)}>Cancel</Button>
+          <Button variant="contained" onClick={() => void clearChat()}>Clear chat</Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

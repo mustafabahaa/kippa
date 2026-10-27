@@ -5,23 +5,38 @@ import { ThemeProvider } from '@mui/material/styles';
 import { createKippaTheme } from '@kippa/design-system';
 import { describe, expect, it, vi } from 'vitest';
 
-const { executeAction, savePendingActions, addMessage } = vi.hoisted(() => ({
+const { executeAction, savePendingActions, addMessage, clear } = vi.hoisted(() => ({
   executeAction: vi.fn(async () => ({ ok: true })),
   savePendingActions: vi.fn(async () => undefined),
   addMessage: vi.fn(async (_householdId: string, conversationId: string, role: 'user' | 'assistant', content: string) => ({ id: 'done', householdId: 'h', conversationId, role, content, createdAt: new Date().toISOString() })),
+  clear: vi.fn(async () => undefined),
 }));
 
 vi.mock('@/hooks/useAppContext', () => ({ useAppContext: () => ({ householdId: 'h', userProfile: { uid: 'u', displayName: 'User' }, createHousehold: vi.fn(), switchHousehold: vi.fn(), requestToJoinHousehold: vi.fn(), decideJoinRequest: vi.fn(), leaveHousehold: vi.fn() }) }));
 vi.mock('@/notifications/useNotifications', () => ({ useNotifications: () => ({ requestPermission: vi.fn(), disable: vi.fn() }) }));
+vi.mock('./services/connection', async importOriginal => ({
+  ...(await importOriginal<typeof import('./services/connection')>()),
+  isAiConnectionEnabled: false,
+}));
 vi.mock('./services/readTools', async importOriginal => ({ ...(await importOriginal<typeof import('./services/readTools')>()), executePendingAiAction: executeAction }));
 vi.mock('./services/conversations', () => ({ aiConversations: {
   list: vi.fn(async () => [{ id: 'c', householdId: 'h', createdBy: 'u', title: 'Test', createdAt: '', updatedAt: '', pendingActions: [{ id: 'a', toolName: 'createAccount', input: { name: 'Savings' }, summary: 'Create Savings (EGP)', risk: 'write' }] }]),
   messagesPage: vi.fn(async () => ({ messages: [{ id: 'm', householdId: 'h', conversationId: 'c', role: 'assistant', content: 'Please confirm.', createdAt: '' }], nextCursor: null })),
   savePendingActions,
   addMessage,
+  clear,
 } }));
 
-import { AiAssistant } from './AiAssistant';
+import { AiAssistant, mergeConversationMessages } from './AiAssistant';
+
+describe('chat context', () => {
+  it('keeps the latest sent message when the persisted page is stale', () => {
+    const message = (id: string, createdAt: string) => ({ id, householdId: 'h', conversationId: 'c', role: 'user' as const, content: id, createdAt });
+    const old = message('old', '2026-01-01T00:00:00.000Z');
+    const latest = message('latest', '2026-01-01T00:00:01.000Z');
+    expect(mergeConversationMessages([old], [old, latest]).map(item => item.id)).toEqual(['old', 'latest']);
+  });
+});
 
 describe('AiAssistant confirmations', () => {
   it('restores a pending proposal and executes it only after an explicit click', async () => {
@@ -33,5 +48,16 @@ describe('AiAssistant confirmations', () => {
     await waitFor(() => expect(executeAction).toHaveBeenCalledTimes(1));
     expect(addMessage).toHaveBeenCalledWith('h', 'c', 'assistant', 'Done — Create Savings (EGP).');
     expect(savePendingActions).toHaveBeenCalledWith('h', 'c', []);
+  });
+
+  it('clears the conversation only after confirming the dialog', async () => {
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(<QueryClientProvider client={client}><ThemeProvider theme={createKippaTheme('light')}><AiAssistant /></ThemeProvider></QueryClientProvider>);
+    expect(await screen.findByText('Please confirm.')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Clear chat' }));
+    expect(clear).not.toHaveBeenCalled();
+    await userEvent.click(screen.getAllByRole('button', { name: 'Clear chat' }).at(-1)!);
+    await waitFor(() => expect(clear).toHaveBeenCalledWith('h', 'c'));
+    await waitFor(() => expect(screen.getByText('RIGHT NOW')).toBeInTheDocument());
   });
 });
