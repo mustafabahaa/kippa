@@ -52,7 +52,7 @@ process.on('message', async message => {
     sandbox = await createLocalProbeSandbox({ port });
     activeSandbox = sandbox;
     stage = 'agent';
-    const native = createCodex({ auth: 'direct', startupTimeoutMs: 45000, reasoningEffort: 'low', codexConfig: { cli_auth_credentials_store: 'file' } });
+    const native = createCodex({ auth: 'direct', startupTimeoutMs: 45000, reasoningEffort: 'medium', codexConfig: { cli_auth_credentials_store: 'file' } });
     const harness = { ...native, async getBootstrap() {
       const bootstrapDir = '.harness-bootstrap/codex';
       return { harnessId: 'codex', bootstrapDir, files: [
