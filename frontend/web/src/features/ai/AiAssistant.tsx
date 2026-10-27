@@ -25,9 +25,18 @@ type TurnFailure = { kind: AiFailureKind; message: string; retryAfterMs?: number
 
 const COOLDOWN_STORAGE_KEY = 'kippa.ai.cooldownUntil';
 const COOLDOWN_KIND_STORAGE_KEY = 'kippa.ai.cooldownKind';
+const COOLDOWN_MESSAGE_STORAGE_KEY = 'kippa.ai.cooldownMessage';
+const COOLDOWN_TOTAL_STORAGE_KEY = 'kippa.ai.cooldownTotal';
 const COOLDOWN_MESSAGE = 'Kip has reached Gemini’s free usage limit. Your message is saved and will be ready to retry when the cooldown ends.';
 const QUOTA_MESSAGE = 'Kip’s free Gemini allowance has been used for today. It resets at midnight Pacific time, and your message is saved.';
 const createCooldownDeadline = (duration: number) => Date.now() + duration;
+const formatCooldown = (ms: number) => {
+  const total = Math.ceil(ms / 1000);
+  const hours = Math.floor(total / 3600);
+  const minutes = Math.floor((total % 3600) / 60);
+  const seconds = total % 60;
+  return hours > 0 ? `${hours}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}` : `${minutes}:${String(seconds).padStart(2, '0')}`;
+};
 
 export function mergeConversationMessages(history: AiMessage[], current: AiMessage[]): AiMessage[] {
   const messages = new Map(history.map(message => [message.id, message]));
@@ -57,10 +66,9 @@ export function AiAssistant() {
   const [streamedCharts, setStreamedCharts] = useState<AiChartSpec[]>([]);
   const [error, setError] = useState('');
   const [turnFailure, setTurnFailure] = useState<TurnFailure | null>(() => {
-    if (isAiConnectionEnabled) return null;
     if (Number(localStorage.getItem(COOLDOWN_STORAGE_KEY)) <= Date.now()) return null;
     const kind = localStorage.getItem(COOLDOWN_KIND_STORAGE_KEY) === 'quota' ? 'quota' : 'rate-limit';
-    return { kind, message: kind === 'quota' ? QUOTA_MESSAGE : COOLDOWN_MESSAGE };
+    return { kind, message: localStorage.getItem(COOLDOWN_MESSAGE_STORAGE_KEY) ?? (kind === 'quota' ? QUOTA_MESSAGE : COOLDOWN_MESSAGE) };
   });
   const [isSending, setIsSending] = useState(false);
   const [pendingActions, setPendingActions] = useState<PendingAiAction[]>([]);
@@ -71,9 +79,9 @@ export function AiAssistant() {
   const [isClearOpen, setIsClearOpen] = useState(false);
   const [isLoadingOlder, setIsLoadingOlder] = useState(false);
   const [olderCursor, setOlderCursor] = useState<string | null>(null);
-  const [cooldownUntil, setCooldownUntil] = useState(() => isAiConnectionEnabled ? 0 : Number(localStorage.getItem(COOLDOWN_STORAGE_KEY)) || 0);
-  const [cooldownTotalMs, setCooldownTotalMs] = useState(60_000);
-  const [cooldownRemainingMs, setCooldownRemainingMs] = useState(() => isAiConnectionEnabled ? 0 : Math.max(0, (Number(localStorage.getItem(COOLDOWN_STORAGE_KEY)) || 0) - Date.now()));
+  const [cooldownUntil, setCooldownUntil] = useState(() => Number(localStorage.getItem(COOLDOWN_STORAGE_KEY)) || 0);
+  const [cooldownTotalMs, setCooldownTotalMs] = useState(() => Number(localStorage.getItem(COOLDOWN_TOTAL_STORAGE_KEY)) || 60_000);
+  const [cooldownRemainingMs, setCooldownRemainingMs] = useState(() => Math.max(0, (Number(localStorage.getItem(COOLDOWN_STORAGE_KEY)) || 0) - Date.now()));
   const endRef = useRef<HTMLDivElement>(null);
   const scrollerRef = useRef<HTMLDivElement>(null);
   const shouldStickToBottom = useRef(true);
@@ -103,7 +111,7 @@ export function AiAssistant() {
     const update = () => {
       const remaining = Math.max(0, cooldownUntil - Date.now());
       setCooldownRemainingMs(remaining);
-      if (remaining === 0) { localStorage.removeItem(COOLDOWN_STORAGE_KEY); localStorage.removeItem(COOLDOWN_KIND_STORAGE_KEY); }
+      if (remaining === 0) { localStorage.removeItem(COOLDOWN_STORAGE_KEY); localStorage.removeItem(COOLDOWN_KIND_STORAGE_KEY); localStorage.removeItem(COOLDOWN_MESSAGE_STORAGE_KEY); localStorage.removeItem(COOLDOWN_TOTAL_STORAGE_KEY); }
     };
     update();
     const timer = window.setInterval(update, 250);
@@ -165,6 +173,8 @@ export function AiAssistant() {
         setCooldownTotalMs(duration); setCooldownUntil(until); setCooldownRemainingMs(duration);
         localStorage.setItem(COOLDOWN_STORAGE_KEY, String(until));
         localStorage.setItem(COOLDOWN_KIND_STORAGE_KEY, failure.kind);
+        localStorage.setItem(COOLDOWN_MESSAGE_STORAGE_KEY, failure.message);
+        localStorage.setItem(COOLDOWN_TOTAL_STORAGE_KEY, String(duration));
       }
       setTurnFailure(failure);
     } finally {
@@ -361,10 +371,17 @@ export function AiAssistant() {
                 {turnFailure?.kind === 'quota' ? (
                   <Paper variant="assistantCooldown">
                     <Stack spacing={1.5}>
-                      <Box><Typography variant="sectionLabel">AI usage limit reached for today</Typography><Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>{turnFailure.message}</Typography></Box>
+                      <Stack direction="row" alignItems="flex-start" justifyContent="space-between" spacing={2}>
+                        <Box>
+                          <Typography variant="sectionLabel">AI usage limit reached for today</Typography>
+                          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>{turnFailure.message}</Typography>
+                        </Box>
+                        {cooldownRemainingMs > 0 && <Typography variant="sectionLabel" color="primary.main">{formatCooldown(cooldownRemainingMs)}</Typography>}
+                      </Stack>
+                      <LinearProgress color="secondary" variant="determinate" value={cooldownRemainingMs > 0 ? Math.min(100, 100 - (cooldownRemainingMs / cooldownTotalMs) * 100) : 100} />
                       <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={2}>
-                        <Typography variant="fieldHint" color="text.secondary">Available again around {new Date(cooldownUntil).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}</Typography>
-                        <Button variant="segmented" disabled>Saved</Button>
+                        <Typography variant="fieldHint" color="text.secondary">Available again around {new Date(cooldownUntil).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}.</Typography>
+                        <Button variant={cooldownRemainingMs > 0 ? 'segmented' : 'segmentedSelected'} onClick={() => void retryLastTurn()} disabled={cooldownRemainingMs > 0 || isSending}>{cooldownRemainingMs > 0 ? 'Available soon' : 'Retry now'}</Button>
                       </Stack>
                     </Stack>
                   </Paper>
@@ -376,7 +393,7 @@ export function AiAssistant() {
                           <Typography variant="sectionLabel">Kip is cooling down</Typography>
                           <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>{turnFailure.message}</Typography>
                         </Box>
-                        <Typography variant="sectionLabel" color="primary.main">{Math.ceil(cooldownRemainingMs / 1000)}s</Typography>
+                        <Typography variant="sectionLabel" color="primary.main">{formatCooldown(cooldownRemainingMs)}</Typography>
                       </Stack>
                       <LinearProgress color="secondary" variant="determinate" value={cooldownRemainingMs > 0 ? Math.min(100, 100 - (cooldownRemainingMs / cooldownTotalMs) * 100) : 100} />
                       <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={2}>
