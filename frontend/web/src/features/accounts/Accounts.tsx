@@ -66,7 +66,7 @@ export function Accounts() {
     const creditBalance = accountBalance(card.parentAccountId);
     const cardStmts = statements.filter((s) => s.cardId === card.id);
     const last = cardStmts[0] ?? null;
-    return computeCardSummary(card, creditBalance, last, cardStmts);
+    return computeCardSummary(card, creditBalance, last);
   };
 
   const handleOpenEdit = (acc: Account) => {

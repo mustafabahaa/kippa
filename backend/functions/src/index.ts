@@ -1,4 +1,5 @@
 import { initializeApp } from 'firebase-admin/app';
+import { createRequire } from 'node:module';
 
 initializeApp();
 
@@ -30,3 +31,10 @@ export {
   revokeMessageIngestionCredential,
   restoreDiscardedPendingFinancialMessage,
 } from './features/message-ingestion/messageIngestion.js';
+
+// The MCP endpoint bundles Kippa's real tool implementations for server-side
+// execution; see mcp/ and esbuild.mcp.mjs for how the frontend code is wired.
+const { kippaMcp, kippaMcpAuth } = createRequire(import.meta.url)('../dist-bundle/mcp.cjs');
+export { kippaMcp, kippaMcpAuth };
+
+export { createMcpCredential, listMcpCredentials, revokeMcpCredential } from './features/mcp/mcpCredentials.js';

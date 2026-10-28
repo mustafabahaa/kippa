@@ -56,7 +56,7 @@ export function LoanProgressCard() {
                   gap: { xs: 0.25, sm: 0.375 },
                 }}
               >
-                {Array.from({ length: loan.totalInstallments }, (_, index) => (
+                {Array.from({ length: loan.totalInstallments }, (...[, index]) => (
                   <Paper
                     key={index}
                     variant={index < progress.paidInstallments ? 'loanProgressSegmentPaid' : 'loanProgressSegment'}

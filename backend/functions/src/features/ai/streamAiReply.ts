@@ -1,5 +1,4 @@
 import { fork } from 'node:child_process';
-import { randomUUID } from 'node:crypto';
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -86,7 +85,7 @@ export const streamAiReply = onCall(
     if (!Array.isArray(households) || !households.includes(data.householdId))
       throw new HttpsError('permission-denied', 'Household access required');
 
-    return withProviderCredential(uid, 'codex', async (credential, save) => {
+    return withProviderCredential(uid, 'codex', async ({ credential, save }) => {
       if (!credential) throw new HttpsError('failed-precondition', 'Connect Codex first');
       const home = await mkdtemp(join(tmpdir(), 'kippa-ai-auth-'));
       const authPath = join(home, 'auth.json');
@@ -104,36 +103,37 @@ export const streamAiReply = onCall(
         child.kill('SIGTERM');
       };
       response.signal.addEventListener('abort', abort, { once: true });
-      child.on('message', (message: any) => {
+      child.on('message', (message: unknown) => {
+        const payload = message && typeof message === 'object' ? (message as Record<string, unknown>) : {};
         queue = queue
           .then(async () => {
-            if (message?.type === 'text' && typeof message.text === 'string')
-              await response.sendChunk({ type: 'text', text: message.text });
-            if (message?.type === 'error') {
+            if (payload.type === 'text' && typeof payload.text === 'string')
+              await response.sendChunk({ type: 'text', text: payload.text });
+            if (payload.type === 'error') {
               failed = true;
-              failureDetail = message;
+              failureDetail = payload;
               console.error(
                 'kippa:ai:runner-error',
                 JSON.stringify({
-                  stage: message.stage,
-                  name: message.name,
-                  code: message.code,
-                  message: message.message,
+                  stage: payload.stage,
+                  name: payload.name,
+                  code: payload.code,
+                  message: payload.message,
                 }),
               );
             }
-            if (message?.type === 'done') completed = true;
+            if (payload.type === 'done') completed = true;
             if (
-              message?.type === 'tool-call' &&
-              typeof message.id === 'string' &&
-              typeof message.name === 'string' &&
-              data.tools.some((t) => t.name === message.name)
+              payload.type === 'tool-call' &&
+              typeof payload.id === 'string' &&
+              typeof payload.name === 'string' &&
+              data.tools.some((t) => t.name === payload.name)
             ) {
-              const id = message.id;
+              const id = payload.id;
               pending.add(id);
               const ref = toolCalls().doc(id);
               await ref.create({ uid, state: 'waiting', expiresAt: Date.now() + 60_000 });
-              if (!(await response.sendChunk({ type: 'tool-call', id, name: message.name, input: message.input })))
+              if (!(await response.sendChunk({ type: 'tool-call', id, name: payload.name, input: payload.input })))
                 throw new Error('Stream ended');
               const answer = await waitForToolResult(ref, response.signal);
               if (child.connected) child.send({ type: 'tool-result', id, ...answer });

@@ -6,7 +6,7 @@ export const disablePushNotificationsTool = defineAiTool({
   inputSchema: emptyInput,
   risk: 'sensitive',
   confirmation: () => 'Disable notifications on this device',
-  execute: (_, context) => {
+  execute: (...[, context]) => {
     if (!context.appActions) throw new Error('Device notification actions are unavailable.');
     return context.appActions.disableNotifications();
   },

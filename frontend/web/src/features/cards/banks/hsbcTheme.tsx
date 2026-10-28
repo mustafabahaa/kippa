@@ -106,7 +106,7 @@ export function HsbcEmblem({ size = 28 }: { size?: number }) {
   );
 }
 
-export function HsbcLogo({ kind: _kind }: { kind: CardKind }) {
+export function HsbcLogo() {
   return (
     <Stack direction="row" alignItems="center" spacing={1.5}>
       <HsbcEmblem size={28} />

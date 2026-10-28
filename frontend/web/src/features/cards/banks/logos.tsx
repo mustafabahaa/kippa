@@ -1,5 +1,4 @@
 import { Box, Typography, Stack } from '@mui/material';
-import type { CardKind } from '@kippa/domain';
 
 /**
  * Hand-built SVG emblems + wordmarks for the built-in bank presets.
@@ -26,7 +25,7 @@ const smallNameStyle = {
 // ---------------------------------------------------------------------------
 // CIB — isometric cube / hexagon subdivided into 3 rhombus faces
 // ---------------------------------------------------------------------------
-export function CibLogo({ kind: _kind }: { kind: CardKind }) {
+export function CibLogo() {
   // Hexagon vertices (flat-top): center (12,12), radius ~10
   // Points: top-left, top-right, right, bottom-right, bottom-left, left
   // plus a Y from center dividing into 3 rhombi (top, lower-left, lower-right)
@@ -59,7 +58,7 @@ export function CibLogo({ kind: _kind }: { kind: CardKind }) {
 // ---------------------------------------------------------------------------
 // NBE — simplified Eagle of Saladin silhouette (symmetric heraldic)
 // ---------------------------------------------------------------------------
-export function NbeLogo({ kind: _kind }: { kind: CardKind }) {
+export function NbeLogo() {
   // A symmetric stylized eagle: wings spread upward, head center-top, body center.
   // Built from a mirrored pair of wing paths + body + head.
   return (
@@ -93,7 +92,7 @@ export function NbeLogo({ kind: _kind }: { kind: CardKind }) {
 // ---------------------------------------------------------------------------
 // Banque Misr — stylized lotus flower (pointed petals fanning upward)
 // ---------------------------------------------------------------------------
-export function BanqueMisrLogo({ kind: _kind }: { kind: CardKind }) {
+export function BanqueMisrLogo() {
   // 5 pointed petals radiating up from a base, symmetric.
   return (
     <Stack direction="row" alignItems="center" spacing={1}>
@@ -122,7 +121,7 @@ export function BanqueMisrLogo({ kind: _kind }: { kind: CardKind }) {
 // ---------------------------------------------------------------------------
 // QNB — 8-pointed star (two overlapping squares)
 // ---------------------------------------------------------------------------
-export function QnbLogo({ kind: _kind }: { kind: CardKind }) {
+export function QnbLogo() {
   // square A and square B rotated 45° relative, centered at (12,12), half-size ~8
   return (
     <Stack direction="row" alignItems="center" spacing={1}>
@@ -142,7 +141,7 @@ export function QnbLogo({ kind: _kind }: { kind: CardKind }) {
 // ---------------------------------------------------------------------------
 // Arab Bank — three interconnected rings (chained)
 // ---------------------------------------------------------------------------
-export function ArabBankLogo({ kind: _kind }: { kind: CardKind }) {
+export function ArabBankLogo() {
   // three circles in a row, overlapping (chained), ring outlines.
   // viewBox 30 wide to fit three rings.
   return (
@@ -163,7 +162,7 @@ export function ArabBankLogo({ kind: _kind }: { kind: CardKind }) {
 // ---------------------------------------------------------------------------
 // ADCB — two interlocking triangles (one outline, one filled, offset/dynamic)
 // ---------------------------------------------------------------------------
-export function AdcbLogo({ kind: _kind }: { kind: CardKind }) {
+export function AdcbLogo() {
   // up-triangle filled (semi-transparent), down-triangle outline, overlapping.
   return (
     <Stack direction="row" alignItems="center" spacing={1}>
@@ -187,7 +186,7 @@ export function AdcbLogo({ kind: _kind }: { kind: CardKind }) {
 // ---------------------------------------------------------------------------
 // AAIB — divided diamond with a gold accent line
 // ---------------------------------------------------------------------------
-export function AaibLogo({ kind: _kind }: { kind: CardKind }) {
+export function AaibLogo() {
   // rhombus divided into 4 triangles meeting at center, gold vertical accent.
   return (
     <Stack direction="row" alignItems="center" spacing={1}>
@@ -213,7 +212,7 @@ export function AaibLogo({ kind: _kind }: { kind: CardKind }) {
 // ---------------------------------------------------------------------------
 // FABMISR — wordmark-dominant with a 3-vertical-pillars mark
 // ---------------------------------------------------------------------------
-export function FabmisrLogo({ kind: _kind }: { kind: CardKind }) {
+export function FabmisrLogo() {
   return (
     <Stack direction="row" alignItems="center" spacing={1.2}>
       <svg viewBox="0 0 16 24" width={16} height={24} style={{ flexShrink: 0 }}>
@@ -232,7 +231,7 @@ export function FabmisrLogo({ kind: _kind }: { kind: CardKind }) {
 // ---------------------------------------------------------------------------
 // EGBank — two interlocking rounded loops (infinity / chain link)
 // ---------------------------------------------------------------------------
-export function EgbankLogo({ kind: _kind }: { kind: CardKind }) {
+export function EgbankLogo() {
   // two rounded loops interlocking like an infinity symbol.
   return (
     <Stack direction="row" alignItems="center" spacing={1}>
@@ -263,7 +262,7 @@ export function EgbankLogo({ kind: _kind }: { kind: CardKind }) {
 // ---------------------------------------------------------------------------
 // Other — generic fallback
 // ---------------------------------------------------------------------------
-export function OtherLogo({ kind: _kind }: { kind: CardKind }) {
+export function OtherLogo() {
   return (
     <Stack direction="row" alignItems="center" spacing={1}>
       <Box

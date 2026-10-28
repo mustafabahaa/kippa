@@ -1,6 +1,6 @@
 import { useMemo, lazy, Suspense } from 'react';
-import { Routes, Route, BrowserRouter } from 'react-router-dom';
-import { Box, ThemeProvider, CssBaseline } from '@mui/material';
+import { Routes, Route, BrowserRouter, Navigate } from 'react-router-dom';
+import { ThemeProvider, CssBaseline } from '@mui/material';
 import { createAppTheme } from '@kippa/design-system';
 import { useThemeMode } from '@/hooks/useThemeMode';
 import { AppBackground } from '@/features/shared/components/AppBackground';
@@ -39,6 +39,7 @@ const PendingTransactions = lazy(() =>
 );
 const AiAssistant = lazy(() => import('@/features/ai/AiAssistant').then((m) => ({ default: m.AiAssistant })));
 const Loans = lazy(() => import('@/features/loans/Loans').then((m) => ({ default: m.Loans })));
+const McpConsentPage = lazy(() => import('@/features/mcp/McpConsentPage').then((m) => ({ default: m.McpConsentPage })));
 
 export default function App() {
   const { userProfile, householdId, isAuthLoading } = useAppContext();
@@ -53,20 +54,6 @@ export default function App() {
 
   if (isAuthLoading) return <AppLoadingScreen theme={theme} />;
 
-  if (!userProfile || !householdId) {
-    return (
-      <ThemeProvider theme={theme}>
-        <CssBaseline />
-        <AppBackground />
-        <Box sx={{ position: 'relative', zIndex: 1 }}>
-          <Suspense fallback={<AppLoadingScreen theme={theme} />}>
-            <AuthScreen />
-          </Suspense>
-        </Box>
-      </ThemeProvider>
-    );
-  }
-
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
@@ -74,23 +61,32 @@ export default function App() {
       <BrowserRouter>
         <Suspense fallback={<AppLoadingScreen theme={theme} />}>
           <Routes>
-            <Route element={<AppShell />}>
-              <Route index element={<Dashboard />} />
-              <Route path="entry" element={<FastEntry />} />
-              <Route path="reconciliation" element={<Reconciliation />} />
-              <Route path="cycles" element={<BudgetCycles />} />
-              <Route path="cycles/report" element={<CycleReport />} />
-              <Route path="transactions" element={<TransactionHistory />} />
-              <Route path="pending" element={<PendingTransactions />} />
-              <Route path="activity" element={<AuditLog />} />
-              <Route path="accounts" element={<Accounts />} />
-              <Route path="accounts/statements" element={<AccountStatements />} />
-              <Route path="household" element={<Household />} />
-              <Route path="categories" element={<Categories />} />
-              <Route path="notifications" element={<Notifications />} />
-              <Route path="ai" element={<AiAssistant />} />
-              <Route path="loans" element={<Loans />} />
-            </Route>
+            <Route
+              path="/mcp/authorize"
+              element={userProfile && householdId ? <McpConsentPage /> : <AuthScreen />}
+            />
+            {userProfile && householdId ? (
+              <Route element={<AppShell />}>
+                <Route index element={<Dashboard />} />
+                <Route path="entry" element={<FastEntry />} />
+                <Route path="reconciliation" element={<Reconciliation />} />
+                <Route path="cycles" element={<BudgetCycles />} />
+                <Route path="cycles/report" element={<CycleReport />} />
+                <Route path="transactions" element={<TransactionHistory />} />
+                <Route path="pending" element={<PendingTransactions />} />
+                <Route path="activity" element={<AuditLog />} />
+                <Route path="accounts" element={<Accounts />} />
+                <Route path="accounts/statements" element={<AccountStatements />} />
+                <Route path="household" element={<Household />} />
+                <Route path="categories" element={<Categories />} />
+                <Route path="notifications" element={<Notifications />} />
+                <Route path="ai" element={<AiAssistant />} />
+                <Route path="loans" element={<Loans />} />
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Route>
+            ) : (
+              <Route path="*" element={<AuthScreen />} />
+            )}
           </Routes>
         </Suspense>
       </BrowserRouter>

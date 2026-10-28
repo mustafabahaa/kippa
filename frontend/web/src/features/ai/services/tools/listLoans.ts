@@ -7,5 +7,5 @@ export const listLoansTool = defineAiTool({
     'List every loan contract, its fixed schedule, paying account, and status. Loans are direct commitments, not categories.',
   inputSchema: emptyInput,
   risk: 'read',
-  execute: (_, context) => loansLib.getLoans(context.householdId),
+  execute: (...[, context]) => loansLib.getLoans(context.householdId),
 });

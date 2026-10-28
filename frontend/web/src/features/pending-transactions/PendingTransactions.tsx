@@ -303,7 +303,7 @@ export function PendingTransactions() {
         </Button>
       </Box>
 
-      <Tabs value={tab} onChange={(_, value: 'review' | 'history') => setTab(value)} variant="fullWidth">
+      <Tabs value={tab} onChange={(...[, value]) => setTab(value)} variant="fullWidth">
         <Tab value="review" label="Review" />
         <Tab value="history" label="History" icon={<HistoryIcon fontSize="small" />} iconPosition="start" />
       </Tabs>

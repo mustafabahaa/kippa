@@ -715,7 +715,7 @@ export function CycleReport() {
                     page={page}
                     rowsPerPage={rowsPerPage}
                     rowsPerPageOptions={[10, 25, 50]}
-                    onPageChange={(_, nextPage) => setPage(nextPage)}
+                    onPageChange={(...[, nextPage]) => setPage(nextPage)}
                     onRowsPerPageChange={(event) => {
                       setRowsPerPage(Number(event.target.value));
                       setPage(0);

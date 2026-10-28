@@ -167,7 +167,7 @@ describe('credit card fee enrichment', () => {
     expect(dashboard.accountBalances[0].balance).toBe(-1029.99);
     expect(dashboard.totalBaseEquivalent).toBe(-1029.99);
     expect(
-      computeCardSummary({ creditLimit: 2000 } as any, dashboard.accountBalances[0].balance, null, []),
+      computeCardSummary({ creditLimit: 2000 } as any, dashboard.accountBalances[0].balance, null),
     ).toMatchObject({ currentDebt: 1029.99, availableCredit: 970.01 });
   });
 });

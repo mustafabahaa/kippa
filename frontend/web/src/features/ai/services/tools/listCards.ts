@@ -6,5 +6,5 @@ export const listCardsTool = defineAiTool({
   description: 'List debit and credit cards and their linked accounts.',
   inputSchema: emptyInput,
   risk: 'read',
-  execute: (_, context) => cardsLib.getCards(context.householdId),
+  execute: (...[, context]) => cardsLib.getCards(context.householdId),
 });

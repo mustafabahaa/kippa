@@ -130,7 +130,7 @@ export function CycleAnalytics() {
             trailing={
               <Tabs
                 value={activeTab}
-                onChange={(_, val) => setActiveTab(val)}
+                onChange={(...[, val]) => setActiveTab(val)}
                 sx={{
                   minHeight: 36,
                   '& .MuiTabs-indicator': { display: 'none' },

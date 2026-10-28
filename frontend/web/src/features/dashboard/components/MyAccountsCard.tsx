@@ -84,7 +84,7 @@ export function MyAccountsCard() {
 
   const summaryFor = (card: CardType) => {
     const creditBalance = balancesMap[card.parentAccountId] ?? 0;
-    return computeCardSummary(card, creditBalance, null, []);
+    return computeCardSummary(card, creditBalance, null);
   };
 
   return (

@@ -3,7 +3,6 @@ import { getFirestore } from 'firebase-admin/firestore';
 import type {
   FinanceTransaction,
   LedgerLine,
-  BudgetCycle,
   BudgetAllocation,
   NotificationSettings,
   NotificationState,
@@ -121,7 +120,6 @@ async function checkCategoryWarning(
     .limit(1)
     .get();
   if (cycleSnap.empty) return;
-  const cycle = cycleSnap.docs[0].data() as BudgetCycle;
   const cycleId = cycleSnap.docs[0].id;
 
   // Find the allocation for this category
@@ -165,7 +163,6 @@ async function checkCategoryWarning(
 
   // Check velocity spike — split transactions into earlier/recent periods
   const today = new Date();
-  const cycleStart = new Date(cycle.startDate + 'T00:00:00Z');
   const msPerDay = 1000 * 60 * 60 * 24;
   const cutoffDate = new Date(today.getTime() - 7 * msPerDay);
   const cutoffStr = cutoffDate.toISOString().slice(0, 10);

@@ -132,7 +132,7 @@ export const BANKS: Record<string, BankDef> = {
   hsbc: {
     id: 'hsbc',
     name: 'HSBC',
-    logo: ({ kind }) => <HsbcLogo kind={kind} />,
+    logo: () => <HsbcLogo />,
     background: ({ kind, tierId }) => ({
       // tierGradient special-cases hsbc premier/advance; platinum/cashback use universal tier colors.
       css: tierGradient(tierId, 'hsbc'),
@@ -144,7 +144,7 @@ export const BANKS: Record<string, BankDef> = {
   cib: {
     id: 'cib',
     name: 'CIB',
-    logo: ({ kind }) => <CibLogo kind={kind} />,
+    logo: () => <CibLogo />,
     background: ({ tierId }) => ({ css: tierGradient(tierId, 'cib'), overlay: <CibPattern /> }),
     tiers: CIB_TIERS,
     accentColor: '#1F4F7A',
@@ -152,7 +152,7 @@ export const BANKS: Record<string, BankDef> = {
   nbe: {
     id: 'nbe',
     name: 'NBE',
-    logo: ({ kind }) => <NbeLogo kind={kind} />,
+    logo: () => <NbeLogo />,
     background: ({ tierId }) => ({ css: tierGradient(tierId, 'nbe'), overlay: <NbePattern /> }),
     tiers: NBE_TIERS,
     accentColor: '#2E7D32',
@@ -160,7 +160,7 @@ export const BANKS: Record<string, BankDef> = {
   'banque-misr': {
     id: 'banque-misr',
     name: 'Banque Misr',
-    logo: ({ kind }) => <BanqueMisrLogo kind={kind} />,
+    logo: () => <BanqueMisrLogo />,
     background: ({ tierId }) => ({ css: tierGradient(tierId, 'banque-misr'), overlay: <BanqueMisrPattern /> }),
     tiers: BANQUE_MISR_TIERS,
     accentColor: '#C62828',
@@ -168,7 +168,7 @@ export const BANKS: Record<string, BankDef> = {
   qnb: {
     id: 'qnb',
     name: 'QNB',
-    logo: ({ kind }) => <QnbLogo kind={kind} />,
+    logo: () => <QnbLogo />,
     background: ({ tierId }) => ({ css: tierGradient(tierId, 'qnb'), overlay: <QnbPattern /> }),
     tiers: QNB_TIERS,
     accentColor: '#5B2C83',
@@ -176,7 +176,7 @@ export const BANKS: Record<string, BankDef> = {
   'arab-bank': {
     id: 'arab-bank',
     name: 'Arab Bank',
-    logo: ({ kind }) => <ArabBankLogo kind={kind} />,
+    logo: () => <ArabBankLogo />,
     background: ({ tierId }) => ({ css: tierGradient(tierId, 'arab-bank'), overlay: <ArabBankPattern /> }),
     tiers: ARAB_BANK_TIERS,
     accentColor: '#1976D2',
@@ -184,7 +184,7 @@ export const BANKS: Record<string, BankDef> = {
   adcb: {
     id: 'adcb',
     name: 'ADCB',
-    logo: ({ kind }) => <AdcbLogo kind={kind} />,
+    logo: () => <AdcbLogo />,
     background: ({ tierId }) => ({ css: tierGradient(tierId, 'adcb'), overlay: <AdcbPattern /> }),
     tiers: ADCB_TIERS,
     accentColor: '#D32F2F',
@@ -192,7 +192,7 @@ export const BANKS: Record<string, BankDef> = {
   aaib: {
     id: 'aaib',
     name: 'AAIB',
-    logo: ({ kind }) => <AaibLogo kind={kind} />,
+    logo: () => <AaibLogo />,
     background: ({ tierId }) => ({ css: tierGradient(tierId, 'aaib'), overlay: <AaibPattern /> }),
     tiers: AAIB_TIERS,
     accentColor: '#1565C0',
@@ -200,7 +200,7 @@ export const BANKS: Record<string, BankDef> = {
   fabmisr: {
     id: 'fabmisr',
     name: 'FABMISR',
-    logo: ({ kind }) => <FabmisrLogo kind={kind} />,
+    logo: () => <FabmisrLogo />,
     background: ({ tierId }) => ({ css: tierGradient(tierId, 'fabmisr'), overlay: <FabmisrPattern /> }),
     tiers: FABMISR_TIERS,
     accentColor: '#6A1B9A',
@@ -208,7 +208,7 @@ export const BANKS: Record<string, BankDef> = {
   egbank: {
     id: 'egbank',
     name: 'EGBank',
-    logo: ({ kind }) => <EgbankLogo kind={kind} />,
+    logo: () => <EgbankLogo />,
     background: ({ tierId }) => ({ css: tierGradient(tierId, 'egbank'), overlay: <EgbankPattern /> }),
     tiers: EGBANK_TIERS,
     accentColor: '#00695C',
@@ -216,7 +216,7 @@ export const BANKS: Record<string, BankDef> = {
   other: {
     id: 'other',
     name: 'Other bank',
-    logo: ({ kind }) => <OtherLogo kind={kind} />,
+    logo: () => <OtherLogo />,
     background: ({ tierId }) => ({ css: tierGradient(tierId, 'other') }),
     tiers: [],
     accentColor: '#495167',

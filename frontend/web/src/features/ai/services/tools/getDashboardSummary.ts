@@ -12,7 +12,7 @@ export const getDashboardSummaryTool = defineAiTool({
     'Get the same actionable current-cycle summary used by the dashboard: balances converted to base currency, spending, income, savings status, safe daily spend, and category status.',
   inputSchema: emptyInput,
   risk: 'read',
-  async execute(_, context) {
+  async execute(...[, context]) {
     const [accounts, categories, cycles, transactions, ledgerLines, allocations, expectedIncomes, household, loans] =
       await Promise.all([
         ledgerLib.getAccounts(context.householdId),

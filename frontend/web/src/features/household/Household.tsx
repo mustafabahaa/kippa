@@ -323,7 +323,7 @@ export function Household() {
                 />
               </CardContent>
               <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-                <Tabs value={tabValue} onChange={(_, val) => setTabValue(val)} variant="fullWidth">
+                <Tabs value={tabValue} onChange={(...[, val]) => setTabValue(val)} variant="fullWidth">
                   <Tab icon={<AddHomeIcon sx={{ fontSize: '18px' }} />} iconPosition="start" label="Create" />
                   <Tab icon={<GroupAddIcon sx={{ fontSize: '18px' }} />} iconPosition="start" label="Join" />
                 </Tabs>

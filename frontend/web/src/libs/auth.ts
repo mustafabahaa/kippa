@@ -142,7 +142,7 @@ export const authLib = {
    * Request to join a household. Creates a pending joinRequest the owner must
    * approve — does NOT grant membership.
    */
-  async requestToJoinHousehold(_userId: string, householdId: string): Promise<JoinStatus> {
+  async requestToJoinHousehold(householdId: string): Promise<JoinStatus> {
     requireAuth();
     const requestFn = httpsCallable<{ householdId: string }, { status: JoinStatus }>(
       functions!,
@@ -156,7 +156,6 @@ export const authLib = {
    * Owner approves or rejects a pending join request.
    */
   async decideJoinRequest(
-    _userId: string,
     householdId: string,
     requesterUid: string,
     decision: 'approve' | 'reject',
@@ -223,7 +222,7 @@ export const authLib = {
    * Server-side because Firestore rules restrict users/{uid} reads to the doc
    * owner — a client-side query across members would be denied.
    */
-  async listHouseholdMembers(_userId: string, householdId: string): Promise<HouseholdMember[]> {
+  async listHouseholdMembers(householdId: string): Promise<HouseholdMember[]> {
     requireAuth();
     const listFn = httpsCallable<{ householdId: string }, { members: HouseholdMember[] }>(
       functions!,

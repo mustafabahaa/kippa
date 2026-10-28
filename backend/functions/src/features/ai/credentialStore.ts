@@ -67,7 +67,10 @@ export async function hasProviderCredential(uid: string, provider: AiProvider): 
 export async function withProviderCredential<T>(
   uid: string,
   provider: AiProvider,
-  callback: (credential: ProviderCredential | null, save: (next: ProviderCredential) => Promise<void>) => Promise<T>,
+  callback: (access: {
+    credential: ProviderCredential | null;
+    save: (next: ProviderCredential) => Promise<void>;
+  }) => Promise<T>,
 ): Promise<T> {
   assertUid(uid);
   const document = ref(uid, provider);
@@ -115,7 +118,7 @@ export async function withProviderCredential<T>(
   };
   try {
     latest = current?.ciphertext ? decrypt(current, uid, provider) : null;
-    return await callback(latest, save);
+    return await callback({ credential: latest, save });
   } finally {
     stopped = true;
     clearInterval(heartbeat);

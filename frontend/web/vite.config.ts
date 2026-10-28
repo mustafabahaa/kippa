@@ -71,6 +71,13 @@ export default defineConfig({
       manifest: false,
       workbox: {
         maximumFileSizeToCacheInBytes: 5000000,
+        // OAuth and MCP endpoints must reach the server rather than the offline app shell.
+        navigateFallbackDenylist: [
+          /^\/(?:authorize|token|register|revoke)(?:[/?]|$)/,
+          /^\/\.well-known\//,
+          /^\/mcp-auth\//,
+          /^\/mcp(?:[?]|$)/,
+        ],
         importScripts: ['/firebase-messaging-sw.js'],
       },
     }),

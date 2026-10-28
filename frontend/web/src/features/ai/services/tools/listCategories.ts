@@ -6,5 +6,5 @@ export const listCategoriesTool = defineAiTool({
   description: 'List active income and expense categories with stable IDs needed by transaction and budget tools.',
   inputSchema: emptyInput,
   risk: 'read',
-  execute: (_, context) => ledgerLib.getCategories(context.householdId),
+  execute: (...[, context]) => ledgerLib.getCategories(context.householdId),
 });

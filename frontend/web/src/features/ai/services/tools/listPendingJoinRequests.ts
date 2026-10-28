@@ -6,7 +6,7 @@ export const listPendingJoinRequestsTool = defineAiTool({
   description: 'List pending requests to join the active household. Only the household owner can read them.',
   inputSchema: emptyInput,
   risk: 'read',
-  async execute(_, context) {
+  async execute(...[, context]) {
     const requests = await dbLib.getDocs(context.householdId, 'joinRequests', [
       { field: 'status', op: '==', value: 'pending' },
     ]);

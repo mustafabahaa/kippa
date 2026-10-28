@@ -98,7 +98,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     queryKey: ['householdMembers', householdId],
     queryFn: async () => {
       if (!householdId || !userProfile) return [];
-      return authLib.listHouseholdMembers(userProfile.uid, householdId);
+      return authLib.listHouseholdMembers(householdId);
     },
     enabled: !!householdId && isOwner && !!userProfile,
   });
@@ -133,7 +133,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const requestToJoinHousehold = async (id: string): Promise<JoinStatus> => {
     if (!userProfile) throw new Error('Not authenticated');
-    return authLib.requestToJoinHousehold(userProfile.uid, id);
+    return authLib.requestToJoinHousehold(id);
   };
 
   const decideJoinRequest = async (
@@ -142,7 +142,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     decision: 'approve' | 'reject',
   ): Promise<void> => {
     if (!userProfile) throw new Error('Not authenticated');
-    await authLib.decideJoinRequest(userProfile.uid, householdId, requesterUid, decision);
+    await authLib.decideJoinRequest(householdId, requesterUid, decision);
     // Invalidate any queries that list members/requests.
     queryClient.invalidateQueries({ queryKey: ['householdMembers', householdId] });
   };

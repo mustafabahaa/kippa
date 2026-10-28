@@ -4,13 +4,13 @@ import type { AiMemory } from '../types';
 const store = new Map<string, AiMemory>();
 vi.mock('@/libs/db', () => ({
   dbLib: {
-    getDocs: vi.fn(async (_householdId: string, _collection: string, filters?: Array<{ value: string }>) =>
+    getDocs: vi.fn(async (...[, , filters]: [string, string, Array<{ value: string }>?]) =>
       [...store.values()].filter((memory) => !filters?.length || memory.userId === filters[0].value),
     ),
-    setDoc: vi.fn(async (_householdId: string, _collection: string, id: string, value: AiMemory) => {
+    setDoc: vi.fn(async (...[, , id, value]: [string, string, string, AiMemory]) => {
       store.set(id, value);
     }),
-    executeBatch: vi.fn(async (_householdId: string, operations: Array<{ docId: string; data: AiMemory }>) => {
+    executeBatch: vi.fn(async (...[, operations]: [string, Array<{ docId: string; data: AiMemory }>]) => {
       operations.forEach((operation) => store.set(operation.docId, operation.data));
     }),
   },

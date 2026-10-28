@@ -7,7 +7,7 @@ export const listMyHouseholdsTool = defineAiTool({
   description: 'List households the current user belongs to and identify the active household.',
   inputSchema: emptyInput,
   risk: 'read',
-  async execute(_, context) {
+  async execute(...[, context]) {
     const profile = await authLib.getUserProfile(context.userId);
     const householdIds = profile?.householdIds ?? [];
     const households = await Promise.all(householdIds.map((householdId) => ledgerLib.getHouseholdInfo(householdId)));

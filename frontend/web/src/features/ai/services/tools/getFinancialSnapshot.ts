@@ -9,7 +9,7 @@ export const getFinancialSnapshotTool = defineAiTool({
     'Get current active account balances and household base currency. Use for balance and available-money questions.',
   inputSchema: emptyInput,
   risk: 'read',
-  async execute(_, context) {
+  async execute(...[, context]) {
     const [accounts, transactions, ledgerLines, household] = await Promise.all([
       ledgerLib.getAccounts(context.householdId),
       ledgerLib.getTransactions(context.householdId),

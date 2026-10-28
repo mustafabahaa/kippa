@@ -200,7 +200,7 @@ describe('cardsLib.payCard', () => {
   });
 
   it('grosses up selected original charges and creates the full payment in one batch', async () => {
-    vi.mocked(dbLib.getDocs).mockImplementation(async (_householdId, collectionName) =>
+    vi.mocked(dbLib.getDocs).mockImplementation(async (...[, collectionName]) =>
       collectionName === 'transactions'
         ? [{ id: 'charge-id', status: 'posted', type: 'expense' }]
         : [
@@ -247,7 +247,7 @@ describe('cardsLib.payCard', () => {
   });
 
   it('allocates fee and base across multiple selected charges in cents', async () => {
-    vi.mocked(dbLib.getDocs).mockImplementation(async (_householdId, collectionName) =>
+    vi.mocked(dbLib.getDocs).mockImplementation(async (...[, collectionName]) =>
       collectionName === 'transactions'
         ? [
             { id: 'a', status: 'posted' },
@@ -285,7 +285,7 @@ describe('cardsLib.payCard', () => {
   });
 
   it('uses existing card fee metadata as the base and rejects missing charges before writing', async () => {
-    vi.mocked(dbLib.getDocs).mockImplementation(async (_householdId, collectionName) =>
+    vi.mocked(dbLib.getDocs).mockImplementation(async (...[, collectionName]) =>
       collectionName === 'transactions'
         ? [{ id: 'charge-id', status: 'posted' }]
         : [

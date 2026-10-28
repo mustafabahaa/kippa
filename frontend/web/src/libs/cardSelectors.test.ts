@@ -65,7 +65,7 @@ describe('currentCyclePurchases', () => {
 
 describe('computeCardSummary', () => {
   it('computes debt, available credit, utilization from credit account balance', () => {
-    const summary = computeCardSummary(card, -2500, null, []);
+    const summary = computeCardSummary(card, -2500, null);
     expect(summary.currentDebt).toBe(2500);
     expect(summary.availableCredit).toBe(7500);
     expect(summary.utilization).toBeCloseTo(0.25);
@@ -73,7 +73,7 @@ describe('computeCardSummary', () => {
 
   it('reports nextDueDate from the last statement', () => {
     const stmt = { dueDate: '2026-07-05', statementDate: '2026-06-15', statementBalance: 700 } as CardStatement;
-    const summary = computeCardSummary(card, -2500, stmt, []);
+    const summary = computeCardSummary(card, -2500, stmt);
     expect(summary.nextDueDate).toBe('2026-07-05');
     expect(summary.lastStatementBalance).toBe(700);
   });

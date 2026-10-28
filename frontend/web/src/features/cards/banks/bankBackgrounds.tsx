@@ -29,8 +29,8 @@ export const CibPattern: FC = () => (
     >
       {/* rows of small pointy-top hexagons (~12px across), stroke white 0.05 */}
       <g fill="none" stroke="#ffffff" strokeWidth="0.5" opacity="0.05">
-        {Array.from({ length: 7 }).map((_, row) =>
-          Array.from({ length: 10 }).map((__, col) => {
+        {Array.from({ length: 7 }).map((...[, row]) =>
+          Array.from({ length: 10 }).map((...[, col]) => {
             const r = 7;
             const w = r * Math.sqrt(3);
             const x = col * w + (row % 2 ? w / 2 : 0) - 4;
@@ -64,7 +64,7 @@ export const NbePattern: FC = () => (
         <polyline points="0,90 20,82 40,90 60,82 80,90 100,82 120,90 140,82 160,90" />
       </g>
       <g fill="#E0B341" opacity="0.05">
-        {Array.from({ length: 9 }).map((_, i) => (
+        {Array.from({ length: 9 }).map((...[, i]) => (
           <circle key={i} cx={10 + i * 18} cy={66} r={1.2} />
         ))}
       </g>
@@ -83,7 +83,7 @@ export const BanqueMisrPattern: FC = () => (
       style={{ display: 'block' }}
     >
       <g fill="#ffffff" opacity="0.05">
-        {Array.from({ length: 8 }).map((_, i) => {
+        {Array.from({ length: 8 }).map((...[, i]) => {
           const cx = 10 + i * 20;
           return (
             <g key={i} transform={`translate(${cx},86)`}>
@@ -113,7 +113,7 @@ export const QnbPattern: FC = () => {
         style={{ display: 'block' }}
       >
         <g stroke="#ffffff" strokeWidth="0.8" opacity="0.05">
-          {Array.from({ length: 14 }).map((_, i) => {
+          {Array.from({ length: 14 }).map((...[, i]) => {
             const angle = (Math.PI * i) / 14; // 0..PI pointing left/down from top-right
             const len = 130;
             const x2 = cx - Math.cos(angle) * len;
@@ -174,10 +174,10 @@ export const AaibPattern: FC = () => (
       style={{ display: 'block' }}
     >
       <g fill="none" stroke="#E0B341" strokeWidth="0.6" opacity="0.05">
-        {Array.from({ length: 12 }).map((_, i) => (
+        {Array.from({ length: 12 }).map((...[, i]) => (
           <line key={`a${i}`} x1={-40 + i * 20} y1={0} x2={20 + i * 20} y2={100} />
         ))}
-        {Array.from({ length: 12 }).map((_, i) => (
+        {Array.from({ length: 12 }).map((...[, i]) => (
           <line key={`b${i}`} x1={20 + i * 20} y1={0} x2={-40 + i * 20} y2={100} />
         ))}
       </g>

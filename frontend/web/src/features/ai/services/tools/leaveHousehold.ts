@@ -6,7 +6,7 @@ export const leaveHouseholdTool = defineAiTool({
   inputSchema: emptyInput,
   risk: 'sensitive',
   confirmation: () => 'Leave the active household',
-  execute: (_, context) => {
+  execute: (...[, context]) => {
     if (!context.appActions) throw new Error('Household actions are unavailable.');
     return context.appActions.leaveHousehold(context.householdId);
   },

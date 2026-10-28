@@ -1,8 +1,61 @@
 {
   "hosting": {
     "public": "frontend/web/dist",
-    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
     "rewrites": [
+      {
+        "source": "/mcp",
+        "function": {
+          "functionId": "kippaMcp",
+          "region": "us-central1"
+        }
+      },
+      {
+        "source": "/.well-known/**",
+        "function": {
+          "functionId": "kippaMcpAuth",
+          "region": "us-central1"
+        }
+      },
+      {
+        "source": "/authorize",
+        "function": {
+          "functionId": "kippaMcpAuth",
+          "region": "us-central1"
+        }
+      },
+      {
+        "source": "/token",
+        "function": {
+          "functionId": "kippaMcpAuth",
+          "region": "us-central1"
+        }
+      },
+      {
+        "source": "/register",
+        "function": {
+          "functionId": "kippaMcpAuth",
+          "region": "us-central1"
+        }
+      },
+      {
+        "source": "/revoke",
+        "function": {
+          "functionId": "kippaMcpAuth",
+          "region": "us-central1"
+        }
+      },
+      {
+        "source": "/mcp-auth/**",
+        "function": {
+          "functionId": "kippaMcpAuth",
+          "region": "us-central1"
+        }
+      },
       {
         "source": "**",
         "destination": "/index.html"

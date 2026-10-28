@@ -49,7 +49,7 @@ const item: PendingFinancialMessage = {
 it('orders chips by frequency, opens the More dialog with search, and commits a selection', async () => {
   const user = userEvent.setup();
   const onCategoryChange = vi.fn();
-  const categories = Array.from({ length: 10 }, (_, i) => makeCategory(i + 1));
+  const categories = Array.from({ length: 10 }, (...[, i]) => makeCategory(i + 1));
 
   render(
     <PrivacyModeProvider>

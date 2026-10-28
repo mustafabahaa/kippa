@@ -8,5 +8,5 @@ export const createMessageConnectionTool = defineAiTool({
   inputSchema: emptyInput,
   risk: 'sensitive',
   confirmation: () => 'Create a secure message connection',
-  execute: (_, context) => messageIngestionLib.createCredential(context.householdId),
+  execute: (...[, context]) => messageIngestionLib.createCredential(context.householdId),
 });

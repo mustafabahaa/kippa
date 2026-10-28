@@ -12,7 +12,7 @@ export const getCycleAnalyticsTool = defineAiTool({
     'Get income, expense, planned-budget, expected-income, and savings totals across all budget cycles. Use this before rendering cycle trend charts.',
   inputSchema: emptyInput,
   risk: 'read',
-  async execute(_, context) {
+  async execute(...[, context]) {
     const [accounts, cycles, transactions, ledgerLines, allocations, expectedIncomes, household, loans] =
       await Promise.all([
         ledgerLib.getAccounts(context.householdId),

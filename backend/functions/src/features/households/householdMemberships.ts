@@ -238,14 +238,12 @@ export const leaveHousehold = onCall(async (req) => {
   const remaining = user.householdIds.filter((id) => id !== householdId);
   const nextActiveId = user.householdId === householdId ? (remaining[0] ?? null) : user.householdId;
 
-  let nextRole: UserProfile['role'] = 'member';
+  let nextRole: UserProfile['role'];
   if (nextActiveId) {
     const nextHhSnap = await db.doc(`households/${nextActiveId}/householdInfo/info`).get();
     const nextHh = nextHhSnap.data() as Partial<Household> | undefined;
     nextRole = nextHh?.createdBy === uid ? 'owner' : 'member';
-  } else {
-    nextRole = 'owner';
-  }
+  } else nextRole = 'owner';
 
   await db.doc(`users/${uid}`).set(
     {

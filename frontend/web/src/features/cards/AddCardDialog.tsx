@@ -222,7 +222,7 @@ function AddCardDialogInner({
                   exclusive
                   fullWidth
                   value={kind}
-                  onChange={(_, v: CardKind | null) => v && handleKindChange(v)}
+                  onChange={(...[, v]) => v && handleKindChange(v)}
                   sx={{
                     gap: 1,
                     '& .MuiToggleButton-root': {

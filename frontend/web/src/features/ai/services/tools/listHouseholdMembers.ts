@@ -7,5 +7,5 @@ export const listHouseholdMembersTool = defineAiTool({
     'List members of the active household. Owner authorization is enforced by the existing application service.',
   inputSchema: emptyInput,
   risk: 'read',
-  execute: (_, context) => authLib.listHouseholdMembers(context.userId, context.householdId),
+  execute: (...[, context]) => authLib.listHouseholdMembers(context.householdId),
 });

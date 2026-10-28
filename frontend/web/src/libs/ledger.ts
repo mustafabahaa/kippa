@@ -146,7 +146,7 @@ export const ledgerLib = {
   },
 
   // Raw Lines & Transactions Fetchers
-  async getLedgerLines(householdId: string, _cycleId?: string): Promise<LedgerLine[]> {
+  async getLedgerLines(householdId: string): Promise<LedgerLine[]> {
     // Ledger lines don't have a budgetCycleId field — only transactions do.
     // Callers already match lines to transactions in-memory via transactionId.
     const [lines, accounts, transactions] = await Promise.all([

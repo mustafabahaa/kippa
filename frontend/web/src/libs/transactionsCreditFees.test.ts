@@ -134,7 +134,7 @@ describe('transaction and ledger credit-card fee integration', () => {
       currency: 'EGP',
       createdAt: '',
     };
-    dbMocks.getDocs.mockImplementation(async (_householdId: string, collection: string) =>
+    dbMocks.getDocs.mockImplementation(async (...[, collection]: [string, string]) =>
       collection === 'accounts' ? [credit] : collection === 'transactions' ? [tx] : [legacyLine],
     );
     const lines = await ledgerLib.getLedgerLines('h');

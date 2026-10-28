@@ -6,5 +6,5 @@ export const listBudgetCyclesTool = defineAiTool({
   description: 'List all budget cycles and their statuses.',
   inputSchema: emptyInput,
   risk: 'read',
-  execute: (_, context) => cyclesLib.getCycles(context.householdId),
+  execute: (...[, context]) => cyclesLib.getCycles(context.householdId),
 });

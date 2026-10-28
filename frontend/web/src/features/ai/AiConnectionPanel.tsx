@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Alert, Box, Button, CircularProgress, Paper, Stack, Typography } from '@mui/material';
 import { CheckCircleIcon, CloseIcon, ContentCopyIcon, KeyIcon, NotesIcon } from '@/components/AppIcon';
 import { cancelAiConnection, getAiConnection, startAiConnection, type AiConnectionDevice } from './services/connection';
@@ -16,10 +16,10 @@ export function AiConnectionPanel({ onStatusChange }: Props) {
   const [error, setError] = useState('');
   const abortRef = useRef<AbortController | null>(null);
 
-  const updateStatus = (next: AiConnectionStatus) => {
+  const updateStatus = useCallback((next: AiConnectionStatus) => {
     setStatus(next);
     onStatusChange(next);
-  };
+  }, [onStatusChange]);
 
   useEffect(() => {
     let active = true;
@@ -37,7 +37,7 @@ export function AiConnectionPanel({ onStatusChange }: Props) {
       active = false;
       abortRef.current?.abort();
     };
-  }, []);
+  }, [updateStatus]);
 
   const connect = async () => {
     abortRef.current?.abort();

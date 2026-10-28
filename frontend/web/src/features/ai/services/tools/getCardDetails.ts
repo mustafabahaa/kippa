@@ -27,7 +27,7 @@ export const getCardDetailsTool = defineAiTool({
     if (!card) throw new Error('Card not found.');
     const balances = calculateAccountBalances(accounts, transactions, ledgerLines);
     const lastStatement = statements[0] ?? null;
-    const summary = computeCardSummary(card, balances[card.parentAccountId] ?? 0, lastStatement, statements);
+    const summary = computeCardSummary(card, balances[card.parentAccountId] ?? 0, lastStatement);
     summary.currentCyclePurchases = currentCyclePurchases(
       ledgerLines,
       transactions,

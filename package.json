@@ -13,7 +13,7 @@
     "build": "npm run functions:build && npm run build --workspace=kippa-app",
     "preview": "npm run preview --workspace=kippa-app",
     "typecheck": "npm run typecheck --workspace=kippa-app",
-    "lint": "npm run lint --workspace=kippa-app",
+    "lint": "npm run lint --workspace=kippa-functions && npm run lint --workspace=kippa-app",
     "test": "npm run functions:test && npm run test --workspace=kippa-app",
     "test:watch": "npm run test:watch --workspace=kippa-app",
     "landing:dev": "npm run dev --workspace=kippa-landing",

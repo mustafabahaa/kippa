@@ -6,5 +6,5 @@ export const listMessageConnectionsTool = defineAiTool({
   description: 'List iPhone message-ingestion connections. Tokens are never returned.',
   inputSchema: emptyInput,
   risk: 'read',
-  execute: (_, context) => messageIngestionLib.listCredentials(context.householdId),
+  execute: (...[, context]) => messageIngestionLib.listCredentials(context.householdId),
 });

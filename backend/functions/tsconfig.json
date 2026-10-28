@@ -3,7 +3,9 @@
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "target": "ES2021",
-    "lib": ["ES2021"],
+    "lib": [
+      "ES2021"
+    ],
     "outDir": "dist",
     "rootDir": "src",
     "strict": true,
@@ -12,11 +14,20 @@
     "resolveJsonModule": true,
     "baseUrl": ".",
     "paths": {
-      "@kippa/domain": ["../../packages/domain/src/index.d.ts"]
+      "@kippa/domain": [
+        "../../packages/domain/src/index.d.ts"
+      ]
     },
     "declaration": false,
-    "sourceMap": true
+    "sourceMap": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true
   },
-  "include": ["src"],
-  "exclude": ["node_modules", "src/**/*.test.ts"]
+  "include": [
+    "src"
+  ],
+  "exclude": [
+    "node_modules",
+    "src/**/*.test.ts"
+  ]
 }

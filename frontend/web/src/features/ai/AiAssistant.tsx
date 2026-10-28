@@ -46,6 +46,7 @@ import {
 import { AiConnectionPanel, type AiConnectionStatus } from './AiConnectionPanel';
 import { disconnectAiConnection } from './services/connection';
 import { aiProvider } from './services/aiProvider';
+import { mergeConversationMessages } from './conversationUtils';
 
 const STARTERS = [
   { label: 'RIGHT NOW', prompt: 'What’s my total balance?', featured: true, Icon: AccountBalanceIcon },
@@ -73,12 +74,6 @@ const formatCooldown = (ms: number) => {
     ? `${hours}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
     : `${minutes}:${String(seconds).padStart(2, '0')}`;
 };
-
-export function mergeConversationMessages(history: AiMessage[], current: AiMessage[]): AiMessage[] {
-  const messages = new Map(history.map((message) => [message.id, message]));
-  for (const message of current) messages.set(message.id, message);
-  return [...messages.values()].sort((a, b) => a.createdAt.localeCompare(b.createdAt));
-}
 
 const FAILURE_TITLES: Record<AiFailureKind, string> = {
   'rate-limit': 'The AI service is busy or the usage limit was reached',

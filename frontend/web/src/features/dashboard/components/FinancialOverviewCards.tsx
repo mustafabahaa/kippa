@@ -183,7 +183,7 @@ export function FinancialOverviewCard({ variant }: { variant: 'income' | 'expens
                 <Typography sx={{ color: 'text.primary', fontSize: 10 }}>100</Typography>
               </Stack>
               <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(24, 1fr)', gap: '4px' }}>
-                {Array.from({ length: 24 }, (_, index) => {
+                {Array.from({ length: 24 }, (...[, index]) => {
                   const active = index < Math.round((meterPercent / 100) * 24);
                   return (
                     <Box

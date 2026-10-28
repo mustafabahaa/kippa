@@ -1,3 +1,4 @@
+import { stripVTControlCharacters } from 'node:util';
 import { promises as fs } from 'node:fs';
 import { spawn } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
@@ -43,7 +44,7 @@ async function runDeviceLogin(
   let sent = false;
   let deviceMessage: Promise<void> | undefined;
   const consume = (chunk: Buffer) => {
-    output += chunk.toString().replace(/\u001b\[[0-9;]*m/g, '');
+    output += stripVTControlCharacters(chunk.toString());
     if (output.length > 32_000) output = output.slice(-32_000);
     if (!sent) {
       const url = output.match(/https:\/\/(?:auth\.openai\.com|chatgpt\.com)\/codex\/device/)?.[0];
@@ -119,7 +120,7 @@ export const startAiConnection = onCall(
         if (!controller.signal.aborted) await response.sendChunk({ type: 'device', verificationUrl, code, attemptId });
       });
       const credential = await readAuth(home);
-      await withProviderCredential(uid, selected, async (_existing, save) => {
+      await withProviderCredential(uid, selected, async ({ save }) => {
         await save(credential);
       });
     } catch (error) {

@@ -122,6 +122,16 @@ service cloud.firestore {
 
     // Shortcut credentials and deduplication receipts are server-only. The
     // client sees only redacted credential summaries through callable functions.
+    match /mcpOAuthGrants/{id} { allow read, write: if false; }
+    match /mcpOAuthClients/{id} { allow read, write: if false; }
+    match /mcpOAuthRequests/{id} { allow read, write: if false; }
+    match /mcpOAuthCodes/{id} { allow read, write: if false; }
+    match /mcpOAuthRefreshTokens/{id} { allow read, write: if false; }
+
+    match /mcpCredentials/{credentialId} {
+      allow read, write: if false;
+    }
+
     match /messageIngestionCredentials/{credentialId} {
       allow read, write: if false;
     }

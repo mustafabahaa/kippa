@@ -35,3 +35,4 @@ frontend/web/public/firebase-messaging-sw.js
 # Brainstorming visual companion
 .superpowers/
 .zcode/plans/
+dist-bundle/

@@ -9,7 +9,7 @@ const { executeAction, savePendingActions, addMessage, clear } = vi.hoisted(() =
   executeAction: vi.fn(async () => ({ ok: true })),
   savePendingActions: vi.fn(async () => undefined),
   addMessage: vi.fn(
-    async (_householdId: string, conversationId: string, role: 'user' | 'assistant', content: string) => ({
+    async (...[, conversationId, role, content]: [string, string, 'user' | 'assistant', string]) => ({
       id: 'done',
       householdId: 'h',
       conversationId,
@@ -83,7 +83,8 @@ vi.mock('./services/conversations', () => ({
   },
 }));
 
-import { AiAssistant, mergeConversationMessages } from './AiAssistant';
+import { AiAssistant } from './AiAssistant';
+import { mergeConversationMessages } from './conversationUtils';
 
 describe('chat context', () => {
   it('keeps the latest sent message when the persisted page is stale', () => {

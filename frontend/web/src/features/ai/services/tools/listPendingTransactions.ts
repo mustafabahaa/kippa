@@ -6,5 +6,5 @@ export const listPendingTransactionsTool = defineAiTool({
   description: 'List pending imported financial messages waiting for review.',
   inputSchema: emptyInput,
   risk: 'read',
-  execute: (_, context) => messageIngestionLib.getPending(context.householdId),
+  execute: (...[, context]) => messageIngestionLib.getPending(context.householdId),
 });
