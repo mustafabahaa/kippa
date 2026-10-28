@@ -6,10 +6,7 @@
  */
 import type { ReactNode } from 'react';
 import type { CardKind, CardNetwork } from '@kippa/domain';
-import {
-  HsbcLionBackground,
-  HsbcLogo,
-} from './hsbcTheme';
+import { HsbcLionBackground, HsbcLogo } from './hsbcTheme';
 import {
   CibLogo,
   NbeLogo,

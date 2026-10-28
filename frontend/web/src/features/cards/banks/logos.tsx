@@ -169,7 +169,13 @@ export function AdcbLogo({ kind: _kind }: { kind: CardKind }) {
     <Stack direction="row" alignItems="center" spacing={1}>
       <svg viewBox="0 0 24 24" width={24} height={24} style={{ flexShrink: 0 }}>
         {/* up triangle (filled, semi-transparent white) */}
-        <polygon points="12,3 21,19 3,19" fill="rgba(255,255,255,0.35)" stroke="#ffffff" strokeWidth="1" strokeLinejoin="round" />
+        <polygon
+          points="12,3 21,19 3,19"
+          fill="rgba(255,255,255,0.35)"
+          stroke="#ffffff"
+          strokeWidth="1"
+          strokeLinejoin="round"
+        />
         {/* down triangle (outline), offset for a dynamic Star-of-David-ish look */}
         <polygon points="12,21 21,6 3,6" fill="none" stroke="#ffffff" strokeWidth="1" strokeLinejoin="round" />
       </svg>
@@ -240,17 +246,15 @@ export function EgbankLogo({ kind: _kind }: { kind: CardKind }) {
           strokeLinecap="round"
         />
         {/* cyan accent line following the crossing */}
-        <path
-          d="M14,7 C14,7 14,7 14,7"
-          fill="none"
-          stroke="#22D3EE"
-          strokeWidth="1.8"
-          strokeLinecap="round"
-        />
+        <path d="M14,7 C14,7 14,7 14,7" fill="none" stroke="#22D3EE" strokeWidth="1.8" strokeLinecap="round" />
       </svg>
       <Typography sx={nameStyle}>
-        <Box component="span" sx={{ fontWeight: 900 }}>EG</Box>
-        <Box component="span" sx={{ fontWeight: 700, opacity: 0.9 }}>Bank</Box>
+        <Box component="span" sx={{ fontWeight: 900 }}>
+          EG
+        </Box>
+        <Box component="span" sx={{ fontWeight: 700, opacity: 0.9 }}>
+          Bank
+        </Box>
       </Typography>
     </Stack>
   );

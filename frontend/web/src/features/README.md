@@ -14,4 +14,3 @@ Suggested folders:
 - `notifications`
 
 Keep finance calculations in selectors/services, not inside presentational UI components.
-

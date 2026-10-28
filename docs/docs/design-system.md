@@ -12,13 +12,14 @@
 
 ---
 
-*Inspired by Google Workspace*
+_Inspired by Google Workspace_
 
 ## 1. Visual Theme & Atmosphere
 
 Google Workspace's design system embodies clean, minimalist collaboration with a focus on productivity and clarity. The aesthetic is modern and professional, prioritizing information hierarchy and accessible readability over decorative elements. The interface conveys trust through spacious layouts, subtle interactions, and a restrained color palette that emphasizes focus on content. Every visual element serves a functional purpose-whether guiding users through tasks, highlighting collaborative features, or drawing attention to actionable moments. The design balances efficiency with an approachable, human-centered feel, making complex data management and real-time collaboration feel intuitive and empowering.
 
 **Key Characteristics**
+
 - Clean, grid-based layout with generous whitespace
 - Minimal use of color for maximum semantic clarity
 - Typography-driven hierarchy with bold display text
@@ -31,18 +32,22 @@ Google Workspace's design system embodies clean, minimalist collaboration with a
 ## 2. Color Palette & Roles
 
 ### Primary
+
 - **Google Teal** (`#005c55`): Primary interactive elements, primary CTAs, and trusted actions
 - **Google Dark Teal** (`#0f766e`): Hover and active states for primary actions
 
 ### Accent Colors
+
 - **Google Green** (`#1E8E3E`): Success states, positive indicators, and confirmations
 - **Google Amber** (`#F9AB00`): Warning states, alerts, and cautionary information
 
 ### Interactive
+
 - **Hyperlink Blue** (`#0000EE`): Standard web links and tertiary CTAs
 - **Icon Gray** (`#5F6368`): Interactive icons and secondary UI elements in default state
 
 ### Neutral Scale
+
 - **Charcoal** (`#202124`): Primary text, headings, and dominant interface elements (most frequent)
 - **Dark Gray** (`#3C4043`): Secondary text and supporting copy
 - **Medium Gray** (`#49454F`): Tertiary text and subtle labels
@@ -51,6 +56,7 @@ Google Workspace's design system embodies clean, minimalist collaboration with a
 - **Border Gray** (`#DADCE0`): Dividers, borders, and subtle separators
 
 ### Surface & Borders
+
 - **Pure White** (`#FFFFFF`): Primary surface background
 - **Pale Blue** (`#E8F0FE`): Light background for informational callouts
 - **Surface Gray** (`#E8EAED`): Secondary surface backgrounds and containers
@@ -58,25 +64,27 @@ Google Workspace's design system embodies clean, minimalist collaboration with a
 ## 3. Typography Rules
 
 ### Font Family
+
 - **Primary Font:** Plus Jakarta Sans (https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700), with fallback `system-ui, -apple-system, sans-serif`
 - **Secondary Font:** Plus Jakarta Sans (same family, body weight 400), with fallback `system-ui, -apple-system, sans-serif`
 - **UI Font:** Plus Jakarta Sans (medium weight 500), with fallback `sans-serif`
 
 ### Hierarchy
 
-| Role | Font | Size | Weight | Line Height | Letter Spacing | Notes |
-|------|------|------|--------|-------------|-----------------|-------|
-| Display / H1 | Google Sans | 54px | 700 | 64px | 0px | Hero headings, page titles |
-| Heading H2 | Google Sans | 40px | 500 | 50px | 0px | Section headings, feature titles |
-| Heading H3 | Google Sans | 20px | 500 | 28px | 0px | Subsection titles, card headers |
-| Body / Paragraph | Google Sans Text | 14px | 400 | 22px | 0px | Main content, descriptions |
-| Body Bold | Google Sans Text | 14px | 500 | 22px | 0px | Emphasized body text, labels |
-| Caption / Small | Google Sans Text | 12px | 500 | 19px | 0px | Metadata, timestamps, captions |
-| List Item | Google Sans Text | 16px | 400 | 24px | 0px | List content, enumerated items |
-| Link | Google Sans Text | 14px | 400 | 22px | 0px | Hyperlinks with underline |
-| Button | Arial | 13.33px | 400 | normal | 0px | Button labels, interactive text |
+| Role             | Font             | Size    | Weight | Line Height | Letter Spacing | Notes                            |
+| ---------------- | ---------------- | ------- | ------ | ----------- | -------------- | -------------------------------- |
+| Display / H1     | Google Sans      | 54px    | 700    | 64px        | 0px            | Hero headings, page titles       |
+| Heading H2       | Google Sans      | 40px    | 500    | 50px        | 0px            | Section headings, feature titles |
+| Heading H3       | Google Sans      | 20px    | 500    | 28px        | 0px            | Subsection titles, card headers  |
+| Body / Paragraph | Google Sans Text | 14px    | 400    | 22px        | 0px            | Main content, descriptions       |
+| Body Bold        | Google Sans Text | 14px    | 500    | 22px        | 0px            | Emphasized body text, labels     |
+| Caption / Small  | Google Sans Text | 12px    | 500    | 19px        | 0px            | Metadata, timestamps, captions   |
+| List Item        | Google Sans Text | 16px    | 400    | 24px        | 0px            | List content, enumerated items   |
+| Link             | Google Sans Text | 14px    | 400    | 22px        | 0px            | Hyperlinks with underline        |
+| Button           | Arial            | 13.33px | 400    | normal      | 0px            | Button labels, interactive text  |
 
 ### Principles
+
 - Use **Google Sans** exclusively for display and heading hierarchy to establish visual prominence
 - Maintain consistent line-height ratios (1.2-1.5 multiplier) to ensure readability and rhythm
 - Limit font weights to 400, 500, and 700 to avoid visual fragmentation
@@ -88,6 +96,7 @@ Google Workspace's design system embodies clean, minimalist collaboration with a
 ### Buttons
 
 **Primary Button**
+
 - Background: `#005c55`
 - Text Color: `#FFFFFF`
 - Font: Arial, 13.33px, weight 400
@@ -100,6 +109,7 @@ Google Workspace's design system embodies clean, minimalist collaboration with a
 - Disabled State: Background `#F1F3F4`, Text Color `#79747E`
 
 **Secondary Button**
+
 - Background: `#F7F9FE`
 - Text Color: `#202124`
 - Font: Google Sans Text, 14px, weight 400
@@ -111,6 +121,7 @@ Google Workspace's design system embodies clean, minimalist collaboration with a
 - Active State: Background `#E8EAED`
 
 **Ghost Button (Text-Only)**
+
 - Background: `transparent`
 - Text Color: `#202124`
 - Font: Google Sans Text, 14px, weight 400
@@ -121,6 +132,7 @@ Google Workspace's design system embodies clean, minimalist collaboration with a
 - Hover State: Background `#F1F3F4`
 
 **Icon Button**
+
 - Background: `transparent`
 - Text Color: `#5F6368`
 - Font: Arial, 13.33px, weight 400
@@ -135,6 +147,7 @@ Google Workspace's design system embodies clean, minimalist collaboration with a
 ### Cards & Containers
 
 **Flat Card**
+
 - Background: `transparent`
 - Text Color: `#202124`
 - Font: Google Sans Text, 16px, weight 400
@@ -146,6 +159,7 @@ Google Workspace's design system embodies clean, minimalist collaboration with a
 - Use Case: Content sections, layout containers
 
 **Bordered Card**
+
 - Background: `#FFFFFF`
 - Text Color: `#202124`
 - Font: Google Sans Text, 16px, weight 400
@@ -157,6 +171,7 @@ Google Workspace's design system embodies clean, minimalist collaboration with a
 - Hover State: Border `1px solid #5F6368`, subtle elevation
 
 **Callout Card (Informational)**
+
 - Background: `#E8F0FE`
 - Text Color: `#202124`
 - Font: Google Sans Text, 14px, weight 400
@@ -170,6 +185,7 @@ Google Workspace's design system embodies clean, minimalist collaboration with a
 ### Inputs & Forms
 
 **Text Input**
+
 - Background: `#EEEEEE`
 - Text Color: `#202124`
 - Font: Arial (fallback Roboto), 13.33px, weight 400
@@ -183,6 +199,7 @@ Google Workspace's design system embodies clean, minimalist collaboration with a
 - Placeholder Color: `#79747E`
 
 **Dropdown / Select**
+
 - Background: `#FFFFFF`
 - Text Color: `#202124`
 - Font: Google Sans Text, 14px, weight 400
@@ -196,6 +213,7 @@ Google Workspace's design system embodies clean, minimalist collaboration with a
 ### Navigation
 
 **Primary Navigation**
+
 - Background: `#FFFFFF`
 - Text Color: `#202124`
 - Font: Google Sans Text, 14px, weight 400
@@ -209,6 +227,7 @@ Google Workspace's design system embodies clean, minimalist collaboration with a
 - Hover Link Color: `#0f766e`
 
 **Navigation Item Spacing**
+
 - Horizontal Padding: `16px`
 - Vertical Padding: `16px`
 - Gap Between Items: `16px`
@@ -216,6 +235,7 @@ Google Workspace's design system embodies clean, minimalist collaboration with a
 ### Links
 
 **Standard Link**
+
 - Background: `transparent`
 - Text Color: `#0000EE`
 - Font: Google Sans Text, 14px, weight 400
@@ -228,6 +248,7 @@ Google Workspace's design system embodies clean, minimalist collaboration with a
 - Visited State: Color `#681DA8`
 
 **Navigation Link**
+
 - Background: `transparent`
 - Text Color: `#202124`
 - Font: Google Sans Text, 14px, weight 400
@@ -244,6 +265,7 @@ Google Workspace's design system embodies clean, minimalist collaboration with a
 ### Spacing System
 
 The spacing system uses `4px` as the base unit, scaling in multiples for consistent visual rhythm:
+
 - **Micro (4px, 8px):** Icon spacing, tight component gutters
 - **Small (12px, 16px):** Input padding, button internal spacing, list gaps
 - **Medium (20px, 24px):** Section padding, card spacing, component spacing
@@ -251,6 +273,7 @@ The spacing system uses `4px` as the base unit, scaling in multiples for consist
 - **Extra Large (64px):** Hero section spacing, page-level sections
 
 **Context Usage**
+
 - Cards and containers: `20px` padding minimum
 - Button/input padding: `12px` to `16px`
 - Section margins: `48px` to `64px` (vertical)
@@ -271,6 +294,7 @@ The spacing system uses `4px` as the base unit, scaling in multiples for consist
 ### Whitespace Philosophy
 
 Generous whitespace is central to Google Workspace's clarity. Maintain clear visual separation between content regions through:
+
 - 48px minimum gap between major section blocks
 - 24px gap between related card groups
 - 16px padding inside cards and containers as a minimum
@@ -287,12 +311,12 @@ Generous whitespace is central to Google Workspace's clarity. Maintain clear vis
 
 ## 6. Depth & Elevation
 
-| Level | Treatment | Use |
-|-------|-----------|-----|
-| **Flat (Base)** | No shadow, border only | Cards, containers, sections at rest |
-| **Raised (Elevation 1)** | `rgba(0, 0, 0, 0.12) 0px 2px 6px 0px, rgb(218, 220, 224) 0px -1px 0px 0px inset` | Navigation bars, subtle hover states |
-| **Lifted (Elevation 2)** | `rgba(0, 0, 0, 0.15) 0px 4px 12px 0px` | Modals, overlays, floating panels |
-| **Floating (Elevation 3)** | `rgba(0, 0, 0, 0.2) 0px 8px 20px 0px` | Dropdowns, tooltips, priority floating elements |
+| Level                      | Treatment                                                                        | Use                                             |
+| -------------------------- | -------------------------------------------------------------------------------- | ----------------------------------------------- |
+| **Flat (Base)**            | No shadow, border only                                                           | Cards, containers, sections at rest             |
+| **Raised (Elevation 1)**   | `rgba(0, 0, 0, 0.12) 0px 2px 6px 0px, rgb(218, 220, 224) 0px -1px 0px 0px inset` | Navigation bars, subtle hover states            |
+| **Lifted (Elevation 2)**   | `rgba(0, 0, 0, 0.15) 0px 4px 12px 0px`                                           | Modals, overlays, floating panels               |
+| **Floating (Elevation 3)** | `rgba(0, 0, 0, 0.2) 0px 8px 20px 0px`                                            | Dropdowns, tooltips, priority floating elements |
 
 **Shadow Philosophy**
 
@@ -330,12 +354,12 @@ Google Workspace employs subtle, restrained shadows to indicate layering without
 
 ### Breakpoints
 
-| Breakpoint | Width | Key Changes |
-|------------|-------|-------------|
-| **Mobile** | ≤ 480px | Single column, 16px padding, stacked navigation, full-width cards, 24px gap |
-| **Tablet** | 481px - 768px | Two-column grid, 20px padding, collapsible navigation, 36px gap |
-| **Small Desktop** | 769px - 1024px | Three-column grid, 24px padding, expanded navigation visible, 48px gap |
-| **Large Desktop** | ≥ 1025px | Four-column grid, max 1200px container, full navigation, 48px gap |
+| Breakpoint        | Width          | Key Changes                                                                 |
+| ----------------- | -------------- | --------------------------------------------------------------------------- |
+| **Mobile**        | ≤ 480px        | Single column, 16px padding, stacked navigation, full-width cards, 24px gap |
+| **Tablet**        | 481px - 768px  | Two-column grid, 20px padding, collapsible navigation, 36px gap             |
+| **Small Desktop** | 769px - 1024px | Three-column grid, 24px padding, expanded navigation visible, 48px gap      |
+| **Large Desktop** | ≥ 1025px       | Four-column grid, max 1200px container, full navigation, 48px gap           |
 
 ### Touch Targets
 

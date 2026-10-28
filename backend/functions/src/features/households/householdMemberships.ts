@@ -1,12 +1,6 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
-import type {
-  UserProfile,
-  Household,
-  NotificationSettings,
-  JoinRequest,
-  JoinStatus,
-} from '@kippa/domain';
+import type { UserProfile, Household, NotificationSettings, JoinRequest, JoinStatus } from '@kippa/domain';
 import { buildMessagePayload } from '../../domain/notifications/payload.js';
 import { getTokensForUsers, sendToMany } from '../../libs/notifications/sendToMany.js';
 
@@ -81,10 +75,7 @@ export const requestToJoinHousehold = onCall(async (req) => {
   const userSnap = await db.doc(`users/${uid}`).get();
   const user = userSnap.data() as Partial<UserProfile> | undefined;
   if (user?.householdIds?.includes(householdId)) {
-    throw new HttpsError(
-      'failed-precondition',
-      'You are already a member of this household.',
-    );
+    throw new HttpsError('failed-precondition', 'You are already a member of this household.');
   }
 
   const now = Date.now();
@@ -123,10 +114,7 @@ export const decideJoinRequest = onCall(async (req) => {
   const requesterUid = data?.requesterUid?.trim();
   const decision = data?.decision;
   if (!householdId || !requesterUid || !decision) {
-    throw new HttpsError(
-      'invalid-argument',
-      'householdId, requesterUid, decision are required.',
-    );
+    throw new HttpsError('invalid-argument', 'householdId, requesterUid, decision are required.');
   }
   if (decision !== 'approve' && decision !== 'reject') {
     throw new HttpsError('invalid-argument', "decision must be 'approve' or 'reject'.");
@@ -139,16 +127,11 @@ export const decideJoinRequest = onCall(async (req) => {
   }
   const household = hhSnap.data() as Household;
   if (household.createdBy !== callerUid) {
-    throw new HttpsError(
-      'permission-denied',
-      'Only the household owner can decide join requests.',
-    );
+    throw new HttpsError('permission-denied', 'Only the household owner can decide join requests.');
   }
 
   // Load the request; must exist and be pending
-  const reqSnap = await db
-    .doc(`households/${householdId}/joinRequests/${requesterUid}`)
-    .get();
+  const reqSnap = await db.doc(`households/${householdId}/joinRequests/${requesterUid}`).get();
   if (!reqSnap.exists) {
     throw new HttpsError('not-found', 'Join request not found.');
   }
@@ -213,10 +196,7 @@ export const listHouseholdMembers = onCall(async (req) => {
     throw new HttpsError('permission-denied', 'You are not a member of this household.');
   }
 
-  const membersSnap = await db
-    .collection('users')
-    .where('householdIds', 'array-contains', householdId)
-    .get();
+  const membersSnap = await db.collection('users').where('householdIds', 'array-contains', householdId).get();
 
   const hhSnap = await db.doc(`households/${householdId}/householdInfo/info`).get();
   const household = hhSnap.data() as Partial<Household> | undefined;
@@ -256,14 +236,11 @@ export const leaveHousehold = onCall(async (req) => {
   }
 
   const remaining = user.householdIds.filter((id) => id !== householdId);
-  const nextActiveId =
-    user.householdId === householdId ? (remaining[0] ?? null) : user.householdId;
+  const nextActiveId = user.householdId === householdId ? (remaining[0] ?? null) : user.householdId;
 
   let nextRole: UserProfile['role'] = 'member';
   if (nextActiveId) {
-    const nextHhSnap = await db
-      .doc(`households/${nextActiveId}/householdInfo/info`)
-      .get();
+    const nextHhSnap = await db.doc(`households/${nextActiveId}/householdInfo/info`).get();
     const nextHh = nextHhSnap.data() as Partial<Household> | undefined;
     nextRole = nextHh?.createdBy === uid ? 'owner' : 'member';
   } else {
@@ -284,16 +261,10 @@ export const leaveHousehold = onCall(async (req) => {
 
 // --- Notification helpers ---
 
-async function maybeNotifyOwner(
-  householdId: string,
-  ownerUid: string,
-  requesterName: string,
-): Promise<void> {
+async function maybeNotifyOwner(householdId: string, ownerUid: string, requesterName: string): Promise<void> {
   const db = getFirestore();
   try {
-    const settingsSnap = await db
-      .doc(`households/${householdId}/notificationSettings/${ownerUid}`)
-      .get();
+    const settingsSnap = await db.doc(`households/${householdId}/notificationSettings/${ownerUid}`).get();
     const settings = settingsSnap.data() as Partial<NotificationSettings> | undefined;
     if (settings?.joinRequestEnabled === false) return;
 
@@ -323,9 +294,7 @@ async function maybeNotifyRequester(
 ): Promise<void> {
   const db = getFirestore();
   try {
-    const settingsSnap = await db
-      .doc(`households/${householdId}/notificationSettings/${requesterUid}`)
-      .get();
+    const settingsSnap = await db.doc(`households/${householdId}/notificationSettings/${requesterUid}`).get();
     const settings = settingsSnap.data() as Partial<NotificationSettings> | undefined;
     if (settings?.joinRequestEnabled === false) return;
 

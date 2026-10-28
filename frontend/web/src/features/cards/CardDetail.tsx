@@ -14,13 +14,7 @@ import {
 } from '@mui/material';
 import { CloseIcon } from '@/components/AppIcon';
 import { useAppContext } from '@/hooks/useAppContext';
-import {
-  useTransactions,
-  useLedgerLines,
-  usePayCardMutation,
-  useCategories,
-  useCycles,
-} from '@/hooks/useFinance';
+import { useTransactions, useLedgerLines, usePayCardMutation, useCategories, useCycles } from '@/hooks/useFinance';
 import type { Card } from '@kippa/domain';
 import { CardBackground, BankLogo, NetworkLogo, TierLabel, CardChip, ContactlessIcon } from './CardDesign';
 import { Money } from '@/components/Money';
@@ -41,42 +35,73 @@ export function CardDetail({ card, onClose }: { card: Card; onClose: () => void 
   const payCard = usePayCardMutation();
   const { data: categories = [] } = useCategories(householdId);
   const { data: allCycles = [] } = useCycles(householdId);
-  const activeCycle = allCycles.find(c => c.status === 'open') || null;
+  const activeCycle = allCycles.find((c) => c.status === 'open') || null;
 
-  const { feeAmountOverride, setFeeAmountOverride, amount: payAmount, feeRate: payFeeRate, setFeeRate: setPayFeeRate, label: payLabel, open: payOpen, setAmount: setPayAmount, setLabel: setPayLabel, setOpen: setPayOpen, setSettlesChargeIds: setPaySettlesChargeIds, setSettlesDescriptions: setPaySettlesDescriptions, settlesChargeIds: paySettlesChargeIds, settlesDescriptions: paySettlesDescriptions } = useCardPaymentState();
+  const {
+    feeAmountOverride,
+    setFeeAmountOverride,
+    amount: payAmount,
+    feeRate: payFeeRate,
+    setFeeRate: setPayFeeRate,
+    label: payLabel,
+    open: payOpen,
+    setAmount: setPayAmount,
+    setLabel: setPayLabel,
+    setOpen: setPayOpen,
+    setSettlesChargeIds: setPaySettlesChargeIds,
+    setSettlesDescriptions: setPaySettlesDescriptions,
+    settlesChargeIds: paySettlesChargeIds,
+    settlesDescriptions: paySettlesDescriptions,
+  } = useCardPaymentState();
 
   const calculatedPayment = calculateCardPayment(payAmount, payFeeRate);
-  const payment = calculatedPayment.valid && feeAmountOverride != null
-    ? { ...calculatedPayment, feeAmount: feeAmountOverride, totalAmount: Number((calculatedPayment.baseAmount + feeAmountOverride).toFixed(2)) }
-    : calculatedPayment;
+  const payment =
+    calculatedPayment.valid && feeAmountOverride != null
+      ? {
+          ...calculatedPayment,
+          feeAmount: feeAmountOverride,
+          totalAmount: Number((calculatedPayment.baseAmount + feeAmountOverride).toFixed(2)),
+        }
+      : calculatedPayment;
 
   const isCredit = card.kind === 'credit';
   const creditAccountId = card.parentAccountId;
-  const { accountBalance, charges, cycleGroups, totalDebt } = calculateCardActivity(creditAccountId, allTransactions, allLines, allCycles);
+  const { accountBalance, charges, cycleGroups, totalDebt } = calculateCardActivity(
+    creditAccountId,
+    allTransactions,
+    allLines,
+    allCycles,
+  );
 
-  const utilizationPct = card.creditLimit != null && card.creditLimit > 0
-    ? Math.min(100, Math.round((totalDebt / card.creditLimit) * 100))
-    : null;
+  const utilizationPct =
+    card.creditLimit != null && card.creditLimit > 0
+      ? Math.min(100, Math.round((totalDebt / card.creditLimit) * 100))
+      : null;
 
   const [visibleCycleCount, setVisibleCycleCount] = useState(1);
 
   const loadNextCycle = () => {
-    setVisibleCycleCount(prev => prev + 1);
+    setVisibleCycleCount((prev) => prev + 1);
   };
-
 
   const openPayAll = () => {
     // Record every currently-unpaid charge this lump payment will settle, so
     // the UI can mark them paid as a fact instead of guessing by FIFO later.
-    const unpaid = charges.filter(c => !c.paid);
-    const settlesIds = unpaid.map(c => c.txId);
-    const descriptions = unpaid.map(c => c.description ?? c.txType);
+    const unpaid = charges.filter((c) => !c.paid);
+    const settlesIds = unpaid.map((c) => c.txId);
+    const descriptions = unpaid.map((c) => c.description ?? c.txType);
     const baseAmount = unpaid.reduce((sum, charge) => sum + (charge.baseAmount ?? charge.amount), 0);
     const feeAmount = totalDebt - baseAmount;
     setPayAmount(Number(baseAmount.toFixed(2)));
     setPayLabel('Pay all');
-    const rates = new Set(unpaid.map(charge => charge.feeRate ?? DEFAULT_CARD_FEE_RATE));
-    setPayFeeRate(rates.size === 1 ? [...rates][0] : baseAmount > 0 ? Number((feeAmount / baseAmount * 100).toFixed(6)) : DEFAULT_CARD_FEE_RATE);
+    const rates = new Set(unpaid.map((charge) => charge.feeRate ?? DEFAULT_CARD_FEE_RATE));
+    setPayFeeRate(
+      rates.size === 1
+        ? [...rates][0]
+        : baseAmount > 0
+          ? Number(((feeAmount / baseAmount) * 100).toFixed(6))
+          : DEFAULT_CARD_FEE_RATE,
+    );
     setFeeAmountOverride(Number(feeAmount.toFixed(2)));
     setPaySettlesChargeIds(settlesIds);
     setPaySettlesDescriptions(descriptions);
@@ -88,7 +113,9 @@ export function CardDetail({ card, onClose }: { card: Card; onClose: () => void 
     setPayAmount(Number((charge.baseAmount ?? charge.amount).toFixed(2)));
     setPayLabel(`Pay ${desc}`);
     setPayFeeRate(charge.feeRate ?? DEFAULT_CARD_FEE_RATE);
-    setFeeAmountOverride(charge.baseAmount != null ? Number((charge.amount - charge.baseAmount).toFixed(2)) : undefined);
+    setFeeAmountOverride(
+      charge.baseAmount != null ? Number((charge.amount - charge.baseAmount).toFixed(2)) : undefined,
+    );
     setPaySettlesChargeIds([charge.txId]);
     setPaySettlesDescriptions([desc]);
     setPayOpen(true);
@@ -98,7 +125,8 @@ export function CardDetail({ card, onClose }: { card: Card; onClose: () => void 
     if (!payment.valid || payFeeRate === '' || payCard.isPending) return;
     try {
       await payCard.mutateAsync({
-        householdId, card,
+        householdId,
+        card,
         amount: payment.totalAmount,
         fee: { amount: payment.feeAmount, rate: payFeeRate },
         settlesChargeIds: paySettlesChargeIds,
@@ -162,7 +190,16 @@ export function CardDetail({ card, onClose }: { card: Card; onClose: () => void 
               <CloseIcon sx={{ fontSize: 18 }} />
             </IconButton>
 
-            <Box sx={{ position: 'relative', zIndex: 1, flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+            <Box
+              sx={{
+                position: 'relative',
+                zIndex: 1,
+                flex: 1,
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+              }}
+            >
               {/* Top Row: Bank Logo */}
               <Stack direction="row" justifyContent="flex-end" sx={{ mr: 4 }}>
                 <BankLogo bankId={card.bankId} kind={card.kind} />
@@ -230,10 +267,27 @@ export function CardDetail({ card, onClose }: { card: Card; onClose: () => void 
                   <Box sx={{ flex: 1, mr: 2 }}>
                     {isCredit ? (
                       <>
-                        <Typography sx={{ fontSize: '28px', fontWeight: 800, color: '#ffffff', letterSpacing: '-0.5px', lineHeight: 1.2 }}>
+                        <Typography
+                          sx={{
+                            fontSize: '28px',
+                            fontWeight: 800,
+                            color: '#ffffff',
+                            letterSpacing: '-0.5px',
+                            lineHeight: 1.2,
+                          }}
+                        >
                           <Money amount={totalDebt} code={card.currency} maxDigits={2} />
                         </Typography>
-                        <Typography sx={{ fontSize: '10px', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '1px', color: 'rgba(255,255,255,0.7)', mt: 0.5 }}>
+                        <Typography
+                          sx={{
+                            fontSize: '10px',
+                            fontWeight: 500,
+                            textTransform: 'uppercase',
+                            letterSpacing: '1px',
+                            color: 'rgba(255,255,255,0.7)',
+                            mt: 0.5,
+                          }}
+                        >
                           Outstanding Balance
                         </Typography>
                         {utilizationPct != null && (
@@ -246,7 +300,8 @@ export function CardDetail({ card, onClose }: { card: Card; onClose: () => void 
                                 borderRadius: 3,
                                 bgcolor: 'rgba(255,255,255,0.25)',
                                 '& .MuiLinearProgress-bar': {
-                                  bgcolor: utilizationPct > 95 ? '#ef4444' : utilizationPct > 80 ? '#F9AB00' : '#4ade80',
+                                  bgcolor:
+                                    utilizationPct > 95 ? '#ef4444' : utilizationPct > 80 ? '#F9AB00' : '#4ade80',
                                   borderRadius: 3,
                                 },
                               }}
@@ -283,10 +338,27 @@ export function CardDetail({ card, onClose }: { card: Card; onClose: () => void 
                       </>
                     ) : (
                       <>
-                        <Typography sx={{ fontSize: '28px', fontWeight: 800, color: '#ffffff', letterSpacing: '-0.5px', lineHeight: 1.2 }}>
+                        <Typography
+                          sx={{
+                            fontSize: '28px',
+                            fontWeight: 800,
+                            color: '#ffffff',
+                            letterSpacing: '-0.5px',
+                            lineHeight: 1.2,
+                          }}
+                        >
                           {formattedBalance}
                         </Typography>
-                        <Typography sx={{ fontSize: '10px', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '1px', color: 'rgba(255,255,255,0.7)', mt: 0.5 }}>
+                        <Typography
+                          sx={{
+                            fontSize: '10px',
+                            fontWeight: 500,
+                            textTransform: 'uppercase',
+                            letterSpacing: '1px',
+                            color: 'rgba(255,255,255,0.7)',
+                            mt: 0.5,
+                          }}
+                        >
                           Available Balance
                         </Typography>
                       </>
@@ -301,12 +373,27 @@ export function CardDetail({ card, onClose }: { card: Card; onClose: () => void 
 
         {/* ── Activity Section ─────────────────────────────────────── */}
         <DialogContent sx={{ px: 3, pb: 3, pt: 2 }}>
-          <CardActivityList card={card} categories={categories} groups={cycleGroups} mask={maskDigits} onLoadMore={loadNextCycle} onPay={openPayOne} visibleCount={visibleCycleCount} />
+          <CardActivityList
+            card={card}
+            categories={categories}
+            groups={cycleGroups}
+            mask={maskDigits}
+            onLoadMore={loadNextCycle}
+            onPay={openPayOne}
+            visibleCount={visibleCycleCount}
+          />
         </DialogContent>
       </Dialog>
 
       {/* ── Pay Confirm Dialog ────────────────────────────────────── */}
-      <Dialog open={payOpen} onClose={() => { if (!payCard.isPending) setPayOpen(false); }} maxWidth="xs" fullWidth>
+      <Dialog
+        open={payOpen}
+        onClose={() => {
+          if (!payCard.isPending) setPayOpen(false);
+        }}
+        maxWidth="xs"
+        fullWidth
+      >
         <DialogTitle>{payLabel}</DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ pt: 1 }}>
@@ -314,7 +401,10 @@ export function CardDetail({ card, onClose }: { card: Card; onClose: () => void 
               type="number"
               label={`Message amount (${card.currency})`}
               value={payAmount}
-              onChange={e => { setFeeAmountOverride(undefined); setPayAmount(e.target.value ? Number(e.target.value) : ''); }}
+              onChange={(e) => {
+                setFeeAmountOverride(undefined);
+                setPayAmount(e.target.value ? Number(e.target.value) : '');
+              }}
               helperText="Enter the amount before bank fees."
               slotProps={{ htmlInput: { min: 0.01, step: 0.01 } }}
               disabled={payCard.isPending}
@@ -325,7 +415,10 @@ export function CardDetail({ card, onClose }: { card: Card; onClose: () => void 
               type="number"
               label="Bank fee (%)"
               value={payFeeRate}
-              onChange={e => { setFeeAmountOverride(undefined); setPayFeeRate(e.target.value ? Number(e.target.value) : ''); }}
+              onChange={(e) => {
+                setFeeAmountOverride(undefined);
+                setPayFeeRate(e.target.value ? Number(e.target.value) : '');
+              }}
               helperText="Default 3%. Set to 0 for no fee or if fees are already included."
               slotProps={{ htmlInput: { min: 0, max: 100, step: 0.01 } }}
               error={payFeeRate !== '' && (!Number.isFinite(payFeeRate) || payFeeRate < 0 || payFeeRate > 100)}
@@ -334,16 +427,22 @@ export function CardDetail({ card, onClose }: { card: Card; onClose: () => void 
             />
             <Stack direction="row" justifyContent="space-between">
               <Typography variant="body2">Bank fee</Typography>
-              <Typography variant="body2">{payment.valid ? formatMoney(payment.feeAmount, card.currency, 2) : '—'}</Typography>
+              <Typography variant="body2">
+                {payment.valid ? formatMoney(payment.feeAmount, card.currency, 2) : '—'}
+              </Typography>
             </Stack>
             <Stack direction="row" justifyContent="space-between">
               <Typography variant="sectionLabel">Total payment</Typography>
-              <Typography variant="sectionLabel">{payment.valid ? formatMoney(payment.totalAmount, card.currency, 2) : '—'}</Typography>
+              <Typography variant="sectionLabel">
+                {payment.valid ? formatMoney(payment.totalAmount, card.currency, 2) : '—'}
+              </Typography>
             </Stack>
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button disabled={payCard.isPending} onClick={() => setPayOpen(false)}>Cancel</Button>
+          <Button disabled={payCard.isPending} onClick={() => setPayOpen(false)}>
+            Cancel
+          </Button>
           <Button variant="contained" disabled={payCard.isPending || !payment.valid} onClick={handlePay}>
             {payCard.isPending ? 'Saving…' : 'Confirm'}
           </Button>

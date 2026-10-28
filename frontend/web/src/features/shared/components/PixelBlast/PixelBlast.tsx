@@ -1,11 +1,20 @@
 // Component inspired by github.com/zavalit/bayer-dithering-webgl-demo
-  
+
 import { Effect, EffectComposer, EffectPass, RenderPass } from 'postprocessing';
 import React, { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import './PixelBlast.css';
 
-import { createLiquidEffect, createTouchTexture, FRAGMENT_SRC, MAX_CLICKS, SHAPE_MAP, VERTEX_SRC, type PixelBlastProps, type ReinitConfig } from './pixelBlastEngine';
+import {
+  createLiquidEffect,
+  createTouchTexture,
+  FRAGMENT_SRC,
+  MAX_CLICKS,
+  SHAPE_MAP,
+  VERTEX_SRC,
+  type PixelBlastProps,
+  type ReinitConfig,
+} from './pixelBlastEngine';
 
 const PixelBlast: React.FC<PixelBlastProps> = ({
   variant = 'square',
@@ -29,7 +38,7 @@ const PixelBlast: React.FC<PixelBlastProps> = ({
   speed = 0.5,
   transparent = true,
   edgeFade = 0.5,
-  noiseAmount = 0
+  noiseAmount = 0,
 }) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const visibilityRef = useRef({ visible: true });
@@ -101,7 +110,7 @@ const PixelBlast: React.FC<PixelBlastProps> = ({
         canvas,
         antialias,
         alpha: true,
-        powerPreference: 'high-performance'
+        powerPreference: 'high-performance',
       });
       renderer.domElement.style.width = '100%';
       renderer.domElement.style.height = '100%';
@@ -114,7 +123,7 @@ const PixelBlast: React.FC<PixelBlastProps> = ({
         uTime: { value: 0 },
         uColor: { value: new THREE.Color(color) },
         uClickPos: {
-          value: Array.from({ length: MAX_CLICKS }, () => new THREE.Vector2(-1, -1))
+          value: Array.from({ length: MAX_CLICKS }, () => new THREE.Vector2(-1, -1)),
         },
         uClickTimes: { value: new Float32Array(MAX_CLICKS) },
         uShapeType: { value: SHAPE_MAP[variant] ?? 0 },
@@ -126,7 +135,7 @@ const PixelBlast: React.FC<PixelBlastProps> = ({
         uRippleSpeed: { value: rippleSpeed },
         uRippleThickness: { value: rippleThickness },
         uRippleIntensity: { value: rippleIntensityScale },
-        uEdgeFade: { value: edgeFade }
+        uEdgeFade: { value: edgeFade },
       };
       const scene = new THREE.Scene();
       const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
@@ -137,7 +146,7 @@ const PixelBlast: React.FC<PixelBlastProps> = ({
         transparent: true,
         depthTest: false,
         depthWrite: false,
-        glslVersion: THREE.GLSL3
+        glslVersion: THREE.GLSL3,
       });
 
       const quadGeom = new THREE.PlaneGeometry(2, 2);
@@ -175,7 +184,7 @@ const PixelBlast: React.FC<PixelBlastProps> = ({
         const renderPass = new RenderPass(scene, camera);
         liquidEffect = createLiquidEffect(touch.texture, {
           strength: liquidStrength,
-          freq: liquidWobbleSpeed
+          freq: liquidWobbleSpeed,
         });
         const effectPass = new EffectPass(camera, liquidEffect);
         effectPass.renderToScreen = true;
@@ -193,14 +202,14 @@ const PixelBlast: React.FC<PixelBlastProps> = ({
           {
             uniforms: new Map<string, THREE.Uniform>([
               ['uTime', new THREE.Uniform(0)],
-              ['uAmount', new THREE.Uniform(noiseAmount)]
-            ])
-          }
+              ['uAmount', new THREE.Uniform(noiseAmount)],
+            ]),
+          },
         );
         const noisePass = new EffectPass(camera, noiseEffect);
         noisePass.renderToScreen = true;
         if (composer && composer.passes.length > 0) {
-          composer.passes.forEach(p => {
+          composer.passes.forEach((p) => {
             const pass = p as { renderToScreen?: boolean };
             pass.renderToScreen = false;
           });
@@ -218,7 +227,7 @@ const PixelBlast: React.FC<PixelBlastProps> = ({
           fx,
           fy,
           w: renderer.domElement.width,
-          h: renderer.domElement.height
+          h: renderer.domElement.height,
         };
       };
       const onPointerDown = (e: PointerEvent) => {
@@ -234,10 +243,10 @@ const PixelBlast: React.FC<PixelBlastProps> = ({
         touch.addTouch({ x: fx / w, y: fy / h });
       };
       renderer.domElement.addEventListener('pointerdown', onPointerDown, {
-        passive: true
+        passive: true,
       });
       renderer.domElement.addEventListener('pointermove', onPointerMove, {
-        passive: true
+        passive: true,
       });
       let raf: number;
       const animate = () => {
@@ -254,10 +263,10 @@ const PixelBlast: React.FC<PixelBlastProps> = ({
         }
         if (composer) {
           if (touch) touch.update();
-          composer.passes.forEach(p => {
+          composer.passes.forEach((p) => {
             const pass = p as { effects?: Array<Effect & { uniforms: Map<string, THREE.Uniform> }> };
             if (pass.effects) {
-              pass.effects.forEach(eff => {
+              pass.effects.forEach((eff) => {
                 const timeUniform = eff.uniforms?.get('uTime');
                 if (timeUniform) timeUniform.value = uniforms.uTime.value;
               });
@@ -282,7 +291,7 @@ const PixelBlast: React.FC<PixelBlastProps> = ({
         timeOffset,
         composer,
         touch,
-        liquidEffect
+        liquidEffect,
       };
     } else {
       const t = threeRef.current!;
@@ -343,7 +352,7 @@ const PixelBlast: React.FC<PixelBlastProps> = ({
     autoPauseOffscreen,
     variant,
     color,
-    speed
+    speed,
   ]);
 
   return (

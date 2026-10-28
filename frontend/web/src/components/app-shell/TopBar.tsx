@@ -42,7 +42,7 @@ export function TopBar({
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const currentHousehold = userHouseholds.find(hh => hh.id === householdId);
+  const currentHousehold = userHouseholds.find((hh) => hh.id === householdId);
   const householdName = currentHousehold ? currentHousehold.name : 'Personal Household';
 
   return (
@@ -53,7 +53,7 @@ export function TopBar({
         elevation={scrolled ? 1 : 0}
         sx={{
           top: 0,
-          zIndex: theme => theme.zIndex.appBar,
+          zIndex: (theme) => theme.zIndex.appBar,
           py: 0.5,
           bgcolor: scrolled ? 'background.default' : 'transparent',
           backdropFilter: scrolled ? 'blur(12px)' : 'none',
@@ -76,10 +76,11 @@ export function TopBar({
             </Typography>
           </Stack>
 
-
           {/* Right: Activity Bell, Quick Nav & Profile */}
           <Stack direction="row" spacing={1} alignItems="center">
-            <Stack sx={{ display: { xs: 'flex', md: 'none' } }}><ActivityBell onClick={() => navigate('/activity')} /></Stack>
+            <Stack sx={{ display: { xs: 'flex', md: 'none' } }}>
+              <ActivityBell onClick={() => navigate('/activity')} />
+            </Stack>
             <Tooltip title="Navigate">
               <IconButton
                 onClick={(e) => setNavAnchorEl(e.currentTarget)}
@@ -125,11 +126,7 @@ export function TopBar({
         logout={logout}
       />
 
-      <QuickNavMenu
-        anchorEl={navAnchorEl}
-        open={isNavMenuOpen}
-        onClose={() => setNavAnchorEl(null)}
-      />
+      <QuickNavMenu anchorEl={navAnchorEl} open={isNavMenuOpen} onClose={() => setNavAnchorEl(null)} />
     </>
   );
 }

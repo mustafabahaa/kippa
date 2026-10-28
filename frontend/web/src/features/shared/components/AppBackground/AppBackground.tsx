@@ -46,11 +46,7 @@ export default function AppBackground() {
       }}
     >
       <Aurora
-        colorStops={[
-          theme.palette.primary.main,
-          theme.palette.primary.light,
-          theme.palette.secondary.main,
-        ]}
+        colorStops={[theme.palette.primary.main, theme.palette.primary.light, theme.palette.secondary.main]}
         amplitude={0.8}
         blend={0.55}
         speed={0.55}

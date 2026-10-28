@@ -30,18 +30,24 @@ export function MyAccountsCard() {
   const { data: ledgerLines, isLoading: linesLoading } = useLedgerLines(householdId);
   const { data: cards = [] } = useCards(householdId);
   const baseCurrency = useHouseholdBaseCurrency();
-  const foreignCurrencies = Array.from(new Set((accounts ?? []).map(account => account.currency).filter(currency => currency !== baseCurrency)));
+  const foreignCurrencies = Array.from(
+    new Set((accounts ?? []).map((account) => account.currency).filter((currency) => currency !== baseCurrency)),
+  );
   const { data: displayRates = {} } = useDisplayRates(baseCurrency, foreignCurrencies);
   const [detailCard, setDetailCard] = useState<CardType | null>(null);
 
   const getAccountIcon = (type: string) => {
     switch (type) {
-      case 'savings': return <SavingsIcon variant="Bulk" />;
+      case 'savings':
+        return <SavingsIcon variant="Bulk" />;
       case 'cash':
-      case 'wallet': return <PaymentsIcon variant="Bulk" />;
-      case 'credit': return <CreditCardIcon variant="Bulk" />;
+      case 'wallet':
+        return <PaymentsIcon variant="Bulk" />;
+      case 'credit':
+        return <CreditCardIcon variant="Bulk" />;
       case 'running':
-      default: return <AccountBalanceIcon variant="Bulk" />;
+      default:
+        return <AccountBalanceIcon variant="Bulk" />;
     }
   };
 
@@ -52,7 +58,7 @@ export function MyAccountsCard() {
       <Box>
         <Skeleton variant="text" width="30%" height={24} animation="wave" sx={{ mb: 1.5 }} />
         <Stack spacing={1}>
-          {[1, 2].map(i => (
+          {[1, 2].map((i) => (
             <Card key={i} sx={{ borderRadius: '16px' }}>
               <CardContent sx={{ p: 1.5, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <Stack direction="row" spacing={1.5} alignItems="center" sx={{ width: '60%' }}>
@@ -74,7 +80,7 @@ export function MyAccountsCard() {
   const balancesMap = calculateAccountBalances(accounts, transactions, ledgerLines);
 
   // Credit accounts are debt buckets — hide from the accounts list.
-  const visibleAccounts = accounts.filter(a => a.type !== 'credit');
+  const visibleAccounts = accounts.filter((a) => a.type !== 'credit');
 
   const summaryFor = (card: CardType) => {
     const creditBalance = balancesMap[card.parentAccountId] ?? 0;
@@ -86,45 +92,78 @@ export function MyAccountsCard() {
       <Card>
         <CardContent>
           <Stack spacing={2.5}>
-            <DashboardCardHeading icon={<AccountBalanceIcon variant="Bulk" />} title="My Accounts" subtitle="Cash, banks and linked cards" trailing={<Chip label={`${visibleAccounts.length} accounts`} />} />
+            <DashboardCardHeading
+              icon={<AccountBalanceIcon variant="Bulk" />}
+              title="My Accounts"
+              subtitle="Cash, banks and linked cards"
+              trailing={<Chip label={`${visibleAccounts.length} accounts`} />}
+            />
 
             {visibleAccounts.length === 0 ? (
               <EmptyLayout title="No accounts yet" description="Add an account to start tracking your balances." />
             ) : (
               <Stack divider={<Divider />}>
-                {visibleAccounts.map(acc => {
+                {visibleAccounts.map((acc) => {
                   const bal = balancesMap[acc.id] || 0;
-                  const linked = cards.filter(c => c.parentAccountId === acc.id || c.paymentAccountId === acc.id);
+                  const linked = cards.filter((c) => c.parentAccountId === acc.id || c.paymentAccountId === acc.id);
                   return (
                     <Box key={acc.id}>
-                      <ForeignBalanceTooltip amount={bal} currency={acc.currency} baseCurrency={baseCurrency} rate={displayRates[acc.currency]}>
-                      <Stack
-                        direction="row"
-                        alignItems="center"
-                        justifyContent="space-between"
-                        spacing={2}
-                        tabIndex={acc.currency === baseCurrency ? undefined : 0}
-                        sx={{ minHeight: 72, py: 1.5, cursor: acc.currency === baseCurrency ? 'default' : 'help' }}
+                      <ForeignBalanceTooltip
+                        amount={bal}
+                        currency={acc.currency}
+                        baseCurrency={baseCurrency}
+                        rate={displayRates[acc.currency]}
                       >
-                        <Stack direction="row" spacing={1.5} alignItems="center" sx={{ minWidth: 0 }}>
-                          <Paper variant="cardHeaderIcon">
-                            {getAccountIcon(acc.type)}
-                          </Paper>
-                          <Box sx={{ minWidth: 0 }}>
-                            <Typography noWrap sx={{ fontSize: 13, lineHeight: '20px', fontWeight: 800, color: 'text.primary' }}>{acc.name}</Typography>
-                            <Typography sx={{ fontSize: 11, lineHeight: '16px', fontWeight: 600, color: 'text.secondary', textTransform: 'capitalize' }}>{acc.type}</Typography>
-                          </Box>
+                        <Stack
+                          direction="row"
+                          alignItems="center"
+                          justifyContent="space-between"
+                          spacing={2}
+                          tabIndex={acc.currency === baseCurrency ? undefined : 0}
+                          sx={{ minHeight: 72, py: 1.5, cursor: acc.currency === baseCurrency ? 'default' : 'help' }}
+                        >
+                          <Stack direction="row" spacing={1.5} alignItems="center" sx={{ minWidth: 0 }}>
+                            <Paper variant="cardHeaderIcon">{getAccountIcon(acc.type)}</Paper>
+                            <Box sx={{ minWidth: 0 }}>
+                              <Typography
+                                noWrap
+                                sx={{ fontSize: 13, lineHeight: '20px', fontWeight: 800, color: 'text.primary' }}
+                              >
+                                {acc.name}
+                              </Typography>
+                              <Typography
+                                sx={{
+                                  fontSize: 11,
+                                  lineHeight: '16px',
+                                  fontWeight: 600,
+                                  color: 'text.secondary',
+                                  textTransform: 'capitalize',
+                                }}
+                              >
+                                {acc.type}
+                              </Typography>
+                            </Box>
+                          </Stack>
+                          <Typography
+                            noWrap
+                            sx={{
+                              fontSize: 15,
+                              lineHeight: '22px',
+                              fontWeight: 800,
+                              color: bal < 0 ? 'error.main' : 'text.primary',
+                              fontVariantNumeric: 'tabular-nums',
+                              textAlign: 'right',
+                            }}
+                          >
+                            <Money amount={bal} code={acc.currency} maxDigits={2} />
+                          </Typography>
                         </Stack>
-                        <Typography noWrap sx={{ fontSize: 15, lineHeight: '22px', fontWeight: 800, color: bal < 0 ? 'error.main' : 'text.primary', fontVariantNumeric: 'tabular-nums', textAlign: 'right' }}>
-                          <Money amount={bal} code={acc.currency} maxDigits={2} />
-                        </Typography>
-                      </Stack>
                       </ForeignBalanceTooltip>
 
                       {linked.length > 0 && (
                         <Box sx={{ pb: 2 }}>
                           <Box sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 2 }}>
-                            {linked.map(card => (
+                            {linked.map((card) => (
                               <CardTile
                                 key={card.id}
                                 card={card}

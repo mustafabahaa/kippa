@@ -27,16 +27,17 @@ function roundCents(value: number): number {
  */
 export function calculateCreditCardLedgerAmount(input: CreditCardFeeInput): CreditCardFeeResult {
   const baseAmount = roundCents(Math.abs(input.amount));
-  const qualifies = input.transactionType === 'expense'
-    && !input.isLoanPayment
-    && input.accountType === 'credit'
-    && input.currency.toUpperCase() === 'EGP'
-    && baseAmount > 0;
+  const qualifies =
+    input.transactionType === 'expense' &&
+    !input.isLoanPayment &&
+    input.accountType === 'credit' &&
+    input.currency.toUpperCase() === 'EGP' &&
+    baseAmount > 0;
 
   if (!qualifies) return { signedAmount: input.transactionType === 'income' ? input.amount : -input.amount };
 
   const rate = input.rate ?? CREDIT_CARD_FEE_RATE;
-  const fee = roundCents(baseAmount * rate / 100);
+  const fee = roundCents((baseAmount * rate) / 100);
   return {
     signedAmount: -roundCents(baseAmount + fee),
     cardFee: { baseAmount, rate },

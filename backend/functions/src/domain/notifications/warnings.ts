@@ -8,10 +8,7 @@ export function spentPercentage(spent: number, planned: number): number {
 /**
  * Returns the highest crossed threshold (80 or 100), or null if below 80%.
  */
-export function checkPercentageThresholds(
-  spent: number,
-  planned: number,
-): 80 | 100 | null {
+export function checkPercentageThresholds(spent: number, planned: number): 80 | 100 | null {
   if (planned <= 0) return null;
   const ratio = spent / planned;
   if (ratio >= 1.0) return 100;

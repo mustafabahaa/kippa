@@ -11,13 +11,22 @@ export const aiConversations = {
   async create(householdId: string, userId: string, firstMessage: string): Promise<AiConversation> {
     const now = new Date().toISOString();
     const conversation: AiConversation = {
-      id: crypto.randomUUID(), householdId, createdBy: userId,
-      title: firstMessage.trim().slice(0, 60) || 'New conversation', createdAt: now, updatedAt: now,
+      id: crypto.randomUUID(),
+      householdId,
+      createdBy: userId,
+      title: firstMessage.trim().slice(0, 60) || 'New conversation',
+      createdAt: now,
+      updatedAt: now,
     };
     await dbLib.setDoc(householdId, 'aiConversations', conversation.id, conversation);
     return conversation;
   },
-  async messagesPage(householdId: string, conversationId: string, before?: string, pageSize = 40): Promise<{ messages: AiMessage[]; nextCursor: string | null }> {
+  async messagesPage(
+    householdId: string,
+    conversationId: string,
+    before?: string,
+    pageSize = 40,
+  ): Promise<{ messages: AiMessage[]; nextCursor: string | null }> {
     if (!isFirebaseConfigured || !db) throw new Error('Firebase is not configured.');
     const safePageSize = Math.min(Math.max(Math.trunc(pageSize), 1), 100);
     const messagesRef = collection(db, `households/${householdId}/aiConversations/${conversationId}/messages`);
@@ -25,29 +34,52 @@ export const aiConversations = {
       ? query(messagesRef, orderBy('createdAt', 'desc'), startAfter(before), limit(safePageSize + 1))
       : query(messagesRef, orderBy('createdAt', 'desc'), limit(safePageSize + 1));
     const snapshot = await getDocs(pageQuery);
-    const rows = snapshot.docs.map(document => document.data() as AiMessage);
+    const rows = snapshot.docs.map((document) => document.data() as AiMessage);
     const hasMore = rows.length > safePageSize;
     const page = rows.slice(0, safePageSize).reverse();
-    return { messages: page, nextCursor: hasMore ? page[0]?.createdAt ?? null : null };
+    return { messages: page, nextCursor: hasMore ? (page[0]?.createdAt ?? null) : null };
   },
-  async addMessage(householdId: string, conversationId: string, role: AiMessageRole, content: string, charts?: AiChartSpec[]): Promise<AiMessage> {
+  async addMessage(
+    householdId: string,
+    conversationId: string,
+    role: AiMessageRole,
+    content: string,
+    charts?: AiChartSpec[],
+  ): Promise<AiMessage> {
     const message: AiMessage = {
-      id: crypto.randomUUID(), householdId, conversationId, role, content: content.trim(), ...(charts?.length ? { charts } : {}), createdAt: new Date().toISOString(),
+      id: crypto.randomUUID(),
+      householdId,
+      conversationId,
+      role,
+      content: content.trim(),
+      ...(charts?.length ? { charts } : {}),
+      createdAt: new Date().toISOString(),
     };
     if (!message.content) throw new Error('Cannot save an empty AI message.');
     await dbLib.setDoc(householdId, `aiConversations/${conversationId}/messages`, message.id, message);
-    const existing = await dbLib.getDoc(householdId, 'aiConversations', conversationId) as AiConversation | null;
-    if (existing) await dbLib.setDoc(householdId, 'aiConversations', conversationId, { ...existing, updatedAt: message.createdAt });
+    const existing = (await dbLib.getDoc(householdId, 'aiConversations', conversationId)) as AiConversation | null;
+    if (existing)
+      await dbLib.setDoc(householdId, 'aiConversations', conversationId, { ...existing, updatedAt: message.createdAt });
     return message;
   },
-  async savePendingActions(householdId: string, conversationId: string, pendingActions: PendingAiAction[]): Promise<void> {
-    const existing = await dbLib.getDoc(householdId, 'aiConversations', conversationId) as AiConversation | null;
+  async savePendingActions(
+    householdId: string,
+    conversationId: string,
+    pendingActions: PendingAiAction[],
+  ): Promise<void> {
+    const existing = (await dbLib.getDoc(householdId, 'aiConversations', conversationId)) as AiConversation | null;
     if (!existing) throw new Error('AI conversation not found.');
-    await dbLib.setDoc(householdId, 'aiConversations', conversationId, { ...existing, pendingActions, updatedAt: new Date().toISOString() });
+    await dbLib.setDoc(householdId, 'aiConversations', conversationId, {
+      ...existing,
+      pendingActions,
+      updatedAt: new Date().toISOString(),
+    });
   },
   async clear(householdId: string, conversationId: string): Promise<void> {
     if (!isFirebaseConfigured || !db) throw new Error('Firebase is not configured.');
-    const messageRefs = (await getDocs(collection(db, `households/${householdId}/aiConversations/${conversationId}/messages`))).docs.map(document => document.ref);
+    const messageRefs = (
+      await getDocs(collection(db, `households/${householdId}/aiConversations/${conversationId}/messages`))
+    ).docs.map((document) => document.ref);
     const conversationRef = doc(db, `households/${householdId}/aiConversations/${conversationId}`);
     // Firestore batches cap at 500 operations; chunk the deletions to stay under it.
     for (let index = 0; index < messageRefs.length; index += 450) {

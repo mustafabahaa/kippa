@@ -12,10 +12,21 @@ const mocks = vi.hoisted(() => ({
 vi.mock('@/hooks/useAppContext', () => ({ useAppContext: () => ({ householdId: 'household' }) }));
 vi.mock('notistack', () => ({ useSnackbar: () => ({ enqueueSnackbar: mocks.enqueueSnackbar }) }));
 vi.mock('@/hooks/useFinance', () => ({
-  useCategories: () => ({ data: [
-    { id: 'income-1', householdId: 'household', name: 'Salary', type: 'income', isActive: true, createdAt: '' },
-    { id: 'expense-1', householdId: 'household', name: 'Subscriptions', type: 'expense', isActive: true, createdAt: '', merchantKeywords: ['Netflix'] },
-  ], isLoading: false }),
+  useCategories: () => ({
+    data: [
+      { id: 'income-1', householdId: 'household', name: 'Salary', type: 'income', isActive: true, createdAt: '' },
+      {
+        id: 'expense-1',
+        householdId: 'household',
+        name: 'Subscriptions',
+        type: 'expense',
+        isActive: true,
+        createdAt: '',
+        merchantKeywords: ['Netflix'],
+      },
+    ],
+    isLoading: false,
+  }),
   useCreateCategoryMutation: () => ({ isPending: false, mutateAsync: mocks.createAsync }),
   useUpdateCategoryMutation: () => ({ isPending: false, mutateAsync: mocks.mutateAsync }),
 }));

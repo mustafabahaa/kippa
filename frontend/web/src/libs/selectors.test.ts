@@ -3,16 +3,36 @@ import { computeDashboard } from './selectors';
 import type { Account, FinanceTransaction, LedgerLine, Loan } from '@kippa/domain';
 
 const mkAccount = (id: string, currency: string, type: Account['type'] = 'running'): Account => ({
-  id, householdId: 'h', name: id, type, currency, isActive: true, sortOrder: 1, createdAt: '',
+  id,
+  householdId: 'h',
+  name: id,
+  type,
+  currency,
+  isActive: true,
+  sortOrder: 1,
+  createdAt: '',
 });
 
 const mkLine = (id: string, accId: string, amount: number, currency: string): LedgerLine => ({
-  id, householdId: 'h', transactionId: id, accountId: accId, signedAmount: amount, currency, createdAt: '',
+  id,
+  householdId: 'h',
+  transactionId: id,
+  accountId: accId,
+  signedAmount: amount,
+  currency,
+  createdAt: '',
 });
 
 // A posted transaction that matches a ledger line's transactionId (line id == tx id in mkLine).
 const mkTx = (id: string): FinanceTransaction => ({
-  id, householdId: 'h', type: 'income', date: '2026-01-01', status: 'posted', createdBy: 'u', createdAt: '', updatedAt: '',
+  id,
+  householdId: 'h',
+  type: 'income',
+  date: '2026-01-01',
+  status: 'posted',
+  createdBy: 'u',
+  createdAt: '',
+  updatedAt: '',
 });
 
 describe('computeDashboard (base-currency agnostic)', () => {
@@ -45,13 +65,61 @@ describe('computeDashboard (base-currency agnostic)', () => {
 
   it('counts a loan as a cycle commitment without adding it to category performance', () => {
     const accounts = [mkAccount('bank', 'EGP')];
-    const loan: Loan = { id: 'loan-1', householdId: 'h', name: 'Fixed loan', currency: 'EGP', originalTotal: 3600, installmentAmount: 100, totalInstallments: 36, firstPaymentDate: '2026-01-01', dueDay: 1, paymentAccountId: 'bank', status: 'active', createdAt: '', updatedAt: '' };
-    const transaction: FinanceTransaction = { id: 'payment', householdId: 'h', type: 'expense', date: '2026-08-01', budgetCycleId: 'cycle', categoryId: null, loanId: loan.id, loanInstallmentNumber: 8, status: 'posted', createdBy: 'u', createdAt: '', updatedAt: '' };
-    const line: LedgerLine = { id: 'line', householdId: 'h', transactionId: transaction.id, accountId: 'bank', signedAmount: -100, currency: 'EGP', createdAt: '' };
-    const data = computeDashboard(accounts, [transaction], [line], [], { id: 'cycle', householdId: 'h', name: 'August', startDate: '2026-08-01', endDate: '2026-08-31', status: 'open' }, [], [], {}, 'EGP', [loan]);
+    const loan: Loan = {
+      id: 'loan-1',
+      householdId: 'h',
+      name: 'Fixed loan',
+      currency: 'EGP',
+      originalTotal: 3600,
+      installmentAmount: 100,
+      totalInstallments: 36,
+      firstPaymentDate: '2026-01-01',
+      dueDay: 1,
+      paymentAccountId: 'bank',
+      status: 'active',
+      createdAt: '',
+      updatedAt: '',
+    };
+    const transaction: FinanceTransaction = {
+      id: 'payment',
+      householdId: 'h',
+      type: 'expense',
+      date: '2026-08-01',
+      budgetCycleId: 'cycle',
+      categoryId: null,
+      loanId: loan.id,
+      loanInstallmentNumber: 8,
+      status: 'posted',
+      createdBy: 'u',
+      createdAt: '',
+      updatedAt: '',
+    };
+    const line: LedgerLine = {
+      id: 'line',
+      householdId: 'h',
+      transactionId: transaction.id,
+      accountId: 'bank',
+      signedAmount: -100,
+      currency: 'EGP',
+      createdAt: '',
+    };
+    const data = computeDashboard(
+      accounts,
+      [transaction],
+      [line],
+      [],
+      { id: 'cycle', householdId: 'h', name: 'August', startDate: '2026-08-01', endDate: '2026-08-31', status: 'open' },
+      [],
+      [],
+      {},
+      'EGP',
+      [loan],
+    );
     expect(data.spending.plannedBudget).toBe(100);
     expect(data.spending.actual).toBe(100);
     expect(data.categoryStatus).toEqual([]);
-    expect(data.loanCommitments).toEqual([{ loanId: 'loan-1', loanName: 'Fixed loan', planned: 100, paid: 100, currency: 'EGP' }]);
+    expect(data.loanCommitments).toEqual([
+      { loanId: 'loan-1', loanName: 'Fixed loan', planned: 100, paid: 100, currency: 'EGP' },
+    ]);
   });
 });

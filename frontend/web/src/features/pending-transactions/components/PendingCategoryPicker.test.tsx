@@ -6,24 +6,44 @@ import { PrivacyModeProvider } from '@/hooks/PrivacyModeProvider';
 import { PendingReviewDialog } from './PendingReviewDialog';
 
 vi.mock('@/hooks/useAppContext', () => ({ useAppContext: () => ({ householdId: 'household' }) }));
-const frequency = vi.fn(() => ({ 'cat-3': 5, 'cat-1': 2 } as Record<string, number>));
+const frequency = vi.fn(() => ({ 'cat-3': 5, 'cat-1': 2 }) as Record<string, number>);
 vi.mock('@/hooks/useFinance', () => ({ useCategoryFrequency: () => frequency() }));
 
 const account: Account = {
-  id: 'acc-1', householdId: 'household', name: 'EGP Bank', type: 'running',
-  currency: 'EGP', isActive: true, sortOrder: 0, createdAt: '2026-08-02T00:00:00.000Z',
+  id: 'acc-1',
+  householdId: 'household',
+  name: 'EGP Bank',
+  type: 'running',
+  currency: 'EGP',
+  isActive: true,
+  sortOrder: 0,
+  createdAt: '2026-08-02T00:00:00.000Z',
 };
 
 const makeCategory = (i: number): Category => ({
-  id: `cat-${i}`, householdId: 'household', name: `Category ${i}`, type: 'expense',
-  isActive: true, createdAt: '2026-08-02T00:00:00.000Z',
+  id: `cat-${i}`,
+  householdId: 'household',
+  name: `Category ${i}`,
+  type: 'expense',
+  isActive: true,
+  createdAt: '2026-08-02T00:00:00.000Z',
 });
 
 const item: PendingFinancialMessage = {
-  id: 'pending-1', householdId: 'household', receivedBy: 'user', kind: 'expense',
-  source: 'ios-shortcut', provider: 'hsbc', amount: 100, currency: 'EGP', date: '2026-08-02',
-  description: 'TEST MERCHANT', messagePreview: 'HSBC card purchase',
-  suggestedAccountId: null, createdAt: '2026-08-02T00:00:00.000Z', status: 'pending',
+  id: 'pending-1',
+  householdId: 'household',
+  receivedBy: 'user',
+  kind: 'expense',
+  source: 'ios-shortcut',
+  provider: 'hsbc',
+  amount: 100,
+  currency: 'EGP',
+  date: '2026-08-02',
+  description: 'TEST MERCHANT',
+  messagePreview: 'HSBC card purchase',
+  suggestedAccountId: null,
+  createdAt: '2026-08-02T00:00:00.000Z',
+  status: 'pending',
 };
 
 it('orders chips by frequency, opens the More dialog with search, and commits a selection', async () => {

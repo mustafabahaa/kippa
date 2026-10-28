@@ -41,9 +41,7 @@ export function InfoTooltip({ text, label, iconSize = 14, sx }: InfoTooltipProps
         }}
       >
         {label}
-        <InfoOutlinedIcon
-          sx={{ fontSize: `${iconSize}px`, color: 'text.secondary', opacity: 0.7 }}
-        />
+        <InfoOutlinedIcon sx={{ fontSize: `${iconSize}px`, color: 'text.secondary', opacity: 0.7 }} />
       </Box>
     </Tooltip>
   );

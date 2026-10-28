@@ -3,23 +3,46 @@ import { computeCardSummary, currentCyclePurchases } from './cardSelectors';
 import type { Card, CardStatement, LedgerLine, FinanceTransaction } from '@kippa/domain';
 
 const card: Card = {
-  id: 'card', householdId: 'h', kind: 'credit', parentAccountId: 'credit',
-  name: 'HSBC', bankId: 'hsbc', tierId: 'advance', currency: 'EGP', isActive: true, createdAt: '', creditLimit: 10000, paymentAccountId: 'bank',
+  id: 'card',
+  householdId: 'h',
+  kind: 'credit',
+  parentAccountId: 'credit',
+  name: 'HSBC',
+  bankId: 'hsbc',
+  tierId: 'advance',
+  currency: 'EGP',
+  isActive: true,
+  createdAt: '',
+  creditLimit: 10000,
+  paymentAccountId: 'bank',
 };
 
 const tx = (id: string, date: string): FinanceTransaction => ({
-  id, householdId: 'h', type: 'expense', date, createdBy: 'u', createdAt: '', updatedAt: '', status: 'posted',
+  id,
+  householdId: 'h',
+  type: 'expense',
+  date,
+  createdBy: 'u',
+  createdAt: '',
+  updatedAt: '',
+  status: 'posted',
 });
 const line = (id: string, acc: string, amt: number): LedgerLine => ({
-  id, householdId: 'h', transactionId: id, accountId: acc, signedAmount: amt, currency: 'EGP', createdAt: '',
+  id,
+  householdId: 'h',
+  transactionId: id,
+  accountId: acc,
+  signedAmount: amt,
+  currency: 'EGP',
+  createdAt: '',
 });
 
 describe('currentCyclePurchases', () => {
   it('sums expenses on credit account after last statement date', () => {
     const lines = [
-      line('1', 'credit', -100),   // after statement
-      line('2', 'credit', -250),   // after statement
-      line('3', 'bank', -50),      // not credit
+      line('1', 'credit', -100), // after statement
+      line('2', 'credit', -250), // after statement
+      line('3', 'bank', -50), // not credit
     ];
     const txs = [tx('1', '2026-06-20'), tx('2', '2026-06-25'), tx('3', '2026-06-22')];
     const lastStmt = { statementDate: '2026-06-15' } as CardStatement;

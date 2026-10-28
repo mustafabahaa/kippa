@@ -31,8 +31,12 @@ export function Dashboard() {
       </Box>
 
       <Grid container spacing={{ xs: 2, md: 3 }} alignItems="flex-start">
-        <Grid size={{ xs: 12, md: 5 }}><MyAccountsCard /></Grid>
-        <Grid size={{ xs: 12, md: 7 }}><TransactionsCard /></Grid>
+        <Grid size={{ xs: 12, md: 5 }}>
+          <MyAccountsCard />
+        </Grid>
+        <Grid size={{ xs: 12, md: 7 }}>
+          <TransactionsCard />
+        </Grid>
       </Grid>
 
       <BudgetBreakdownCard />

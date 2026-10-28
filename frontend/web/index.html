@@ -22,10 +22,10 @@
     <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
     <link rel="manifest" href="/manifest.webmanifest" />
     <title>Kippa</title>
-    
+
     <!-- Theme Detection Script to prevent visual flash -->
     <script>
-      (function() {
+      (function () {
         try {
           var key = 'finance_theme_mode';
           var pref = localStorage.getItem(key) || 'system';
@@ -50,7 +50,11 @@
         width: 100vw;
         height: 100vh;
         z-index: 9999;
-        font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+        font-family:
+          'Plus Jakarta Sans',
+          system-ui,
+          -apple-system,
+          sans-serif;
         background: #f4f5f7;
         color: #131b2e;
       }
@@ -106,7 +110,7 @@
         margin-top: 6px;
         margin-bottom: 0;
       }
-      
+
       html.theme-dark .splash-subtitle {
         color: #9e9bb0;
       }
@@ -133,13 +137,23 @@
       }
 
       @keyframes splashContentIn {
-        from { opacity: 0; transform: translateY(8px); }
-        to { opacity: 1; transform: translateY(0); }
+        from {
+          opacity: 0;
+          transform: translateY(8px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
       }
 
       @keyframes splashProgress {
-        from { transform: translateX(-110%); }
-        to { transform: translateX(250%); }
+        from {
+          transform: translateX(-110%);
+        }
+        to {
+          transform: translateX(250%);
+        }
       }
 
       @media (prefers-reduced-motion: reduce) {
@@ -174,7 +188,7 @@
       </div>
       <script>
         // Set correct logo src immediately based on theme preference
-        (function() {
+        (function () {
           try {
             var mode = document.documentElement.getAttribute('data-theme') || 'light';
             var img = document.getElementById('splash-logo-img');

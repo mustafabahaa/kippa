@@ -15,7 +15,14 @@ interface AllocationRowsProps {
   onRemove: (categoryId: string) => void;
 }
 
-export function AllocationRows({ rows, privacyMode, maskDigits, getCategoryName, onAmountChange, onRemove }: AllocationRowsProps) {
+export function AllocationRows({
+  rows,
+  privacyMode,
+  maskDigits,
+  getCategoryName,
+  onAmountChange,
+  onRemove,
+}: AllocationRowsProps) {
   return (
     <List disablePadding>
       {rows.map((row) => {
@@ -23,7 +30,12 @@ export function AllocationRows({ rows, privacyMode, maskDigits, getCategoryName,
         return (
           <ListItem
             key={row.categoryId}
-            sx={{ px: 0, py: 0.5, minHeight: 48, '&:hover .allocation-actions, &:focus-within .allocation-actions': { opacity: 1 } }}
+            sx={{
+              px: 0,
+              py: 0.5,
+              minHeight: 48,
+              '&:hover .allocation-actions, &:focus-within .allocation-actions': { opacity: 1 },
+            }}
             secondaryAction={
               <Stack direction="row" alignItems="center" spacing={0.75}>
                 <TextField
@@ -32,10 +44,19 @@ export function AllocationRows({ rows, privacyMode, maskDigits, getCategoryName,
                   value={privacyMode && row.plannedAmount ? maskDigits(row.plannedAmount) : row.plannedAmount}
                   onChange={(event) => onAmountChange(row.categoryId, event.target.value)}
                   sx={{ width: 104 }}
-                  slotProps={{ input: { disableUnderline: true }, htmlInput: { min: 0, style: { textAlign: 'right', fontWeight: 700, padding: '10px 12px' } } }}
+                  slotProps={{
+                    input: { disableUnderline: true },
+                    htmlInput: { min: 0, style: { textAlign: 'right', fontWeight: 700, padding: '10px 12px' } },
+                  }}
                 />
                 <Stack className="allocation-actions" direction="row" spacing={0.25} sx={{ opacity: { xs: 1, md: 0 } }}>
-                  <IconButton aria-label={`Remove ${categoryName}`} size="small" onClick={() => onRemove(row.categoryId)} color="error" sx={{ width: 30, height: 30 }}>
+                  <IconButton
+                    aria-label={`Remove ${categoryName}`}
+                    size="small"
+                    onClick={() => onRemove(row.categoryId)}
+                    color="error"
+                    sx={{ width: 30, height: 30 }}
+                  >
                     <DeleteOutlineIcon fontSize="small" />
                   </IconButton>
                 </Stack>

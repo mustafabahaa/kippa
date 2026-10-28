@@ -2,7 +2,14 @@ import { describe, expect, it } from 'vitest';
 import { APICallError } from 'ai';
 import { z } from 'zod';
 import { createAiToolRegistry } from './readTools';
-import { classifyProviderError, createAssistantService, msUntilNextPacificReset, repairKnownToolAlias, retryAfterMsFromError, selectContextMessages } from './assistant';
+import {
+  classifyProviderError,
+  createAssistantService,
+  msUntilNextPacificReset,
+  repairKnownToolAlias,
+  retryAfterMsFromError,
+  selectContextMessages,
+} from './assistant';
 
 describe('assistant provider errors', () => {
   it('can represent every Kippa tool for the remote provider', () => {
@@ -18,7 +25,13 @@ describe('assistant provider errors', () => {
         return 'Hello';
       },
     });
-    const result = await service.streamReply({ householdId: 'h', userId: 'u', userDisplayName: 'User', messages: [], onText: text => received.push(text) });
+    const result = await service.streamReply({
+      householdId: 'h',
+      userId: 'u',
+      userDisplayName: 'User',
+      messages: [],
+      onText: (text) => received.push(text),
+    });
     expect(result).toBe('Hello');
     expect(received).toEqual(['Hello']);
   });
@@ -36,7 +49,18 @@ describe('assistant provider errors', () => {
   });
 
   it('distinguishes daily quota exhaustion from a temporary rate limit', () => {
-    const error = new APICallError({ message: 'You exceeded your current quota.', url: 'https://example.invalid', requestBodyValues: {}, statusCode: 429, responseBody: JSON.stringify({ error: { status: 'RESOURCE_EXHAUSTED', details: [{ violations: [{ quotaId: 'GenerateRequestsPerDayPerProjectPerModel-FreeTier' }] }] } }) });
+    const error = new APICallError({
+      message: 'You exceeded your current quota.',
+      url: 'https://example.invalid',
+      requestBodyValues: {},
+      statusCode: 429,
+      responseBody: JSON.stringify({
+        error: {
+          status: 'RESOURCE_EXHAUSTED',
+          details: [{ violations: [{ quotaId: 'GenerateRequestsPerDayPerProjectPerModel-FreeTier' }] }],
+        },
+      }),
+    });
     const classified = classifyProviderError(error);
     expect(classified.kind).toBe('quota');
     expect(classified.retryAfterMs).toBeGreaterThan(60_000);
@@ -59,7 +83,17 @@ describe('assistant provider errors', () => {
   });
 
   it('keeps the newest complete messages inside the context budget', () => {
-    const messages = ['old message', 'middle message', 'new message'].map((content, index) => ({ id: String(index), householdId: 'h', conversationId: 'c', role: index % 2 ? 'assistant' as const : 'user' as const, content, createdAt: '' }));
-    expect(selectContextMessages(messages, 25).map(message => message.content)).toEqual(['middle message', 'new message']);
+    const messages = ['old message', 'middle message', 'new message'].map((content, index) => ({
+      id: String(index),
+      householdId: 'h',
+      conversationId: 'c',
+      role: index % 2 ? ('assistant' as const) : ('user' as const),
+      content,
+      createdAt: '',
+    }));
+    expect(selectContextMessages(messages, 25).map((message) => message.content)).toEqual([
+      'middle message',
+      'new message',
+    ]);
   });
 });

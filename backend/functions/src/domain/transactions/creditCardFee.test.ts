@@ -16,7 +16,9 @@ describe('calculateCreditCardLedgerAmount', () => {
   });
 
   it('leaves transfers and income unchanged', () => {
-    expect(calculateCreditCardLedgerAmount({ ...base, transactionType: 'transfer' })).toEqual({ signedAmount: -999.99 });
+    expect(calculateCreditCardLedgerAmount({ ...base, transactionType: 'transfer' })).toEqual({
+      signedAmount: -999.99,
+    });
     expect(calculateCreditCardLedgerAmount({ ...base, transactionType: 'income' })).toEqual({ signedAmount: 999.99 });
   });
 

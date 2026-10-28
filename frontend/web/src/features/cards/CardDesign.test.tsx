@@ -4,8 +4,7 @@ import { CardTile } from './CardTile';
 import { PrivacyModeProvider } from '@/hooks/PrivacyModeProvider';
 import type { Card } from '@kippa/domain';
 
-const renderWithProvider = (ui: React.ReactElement) =>
-  render(<PrivacyModeProvider>{ui}</PrivacyModeProvider>);
+const renderWithProvider = (ui: React.ReactElement) => render(<PrivacyModeProvider>{ui}</PrivacyModeProvider>);
 
 const baseCard = {
   id: 'c',

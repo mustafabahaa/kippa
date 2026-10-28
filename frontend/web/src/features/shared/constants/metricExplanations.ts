@@ -20,8 +20,7 @@ export const metricExplanations: Record<string, ReactNode> = {
     'An estimate of what your total spending will be by the end of the cycle, ' +
     'based on your pace so far. Compared against your planned budget target.',
 
-  plannedBudget:
-    'The total amount you planned to spend across all categories in this cycle.',
+  plannedBudget: 'The total amount you planned to spend across all categories in this cycle.',
 
   safeDaily:
     'A suggested daily spending limit for the rest of the cycle, calculated from ' +
@@ -37,24 +36,17 @@ export const metricExplanations: Record<string, ReactNode> = {
 
   totalBaseEquivalent:
     'The combined balance of all your accounts, converted to your base currency ' +
-    'at today\'s display rate so you can see everything in one currency.',
+    "at today's display rate so you can see everything in one currency.",
 
   savingStatus: {
-    onTrack:
-      'On Track — your projected savings for this cycle meet or exceed your target.',
-    warning:
-      'Pace Warning — you\'re projected to fall short of your saving target. ' +
-      'Slow down spending.',
+    onTrack: 'On Track — your projected savings for this cycle meet or exceed your target.',
+    warning: "Pace Warning — you're projected to fall short of your saving target. " + 'Slow down spending.',
     overspending:
-      'Over Budgeting — at this pace you will miss your saving target by a wide ' +
-      'margin. Cut spending now.',
+      'Over Budgeting — at this pace you will miss your saving target by a wide ' + 'margin. Cut spending now.',
   } as unknown as ReactNode,
 
-  budgetBreakdownPlanned:
-    'The amount you allocated to this category for the cycle.',
-  budgetBreakdownSpent:
-    'What you have actually spent in this category so far this cycle.',
+  budgetBreakdownPlanned: 'The amount you allocated to this category for the cycle.',
+  budgetBreakdownSpent: 'What you have actually spent in this category so far this cycle.',
   budgetBreakdownRemaining:
-    'Planned minus Spent. Positive means you still have room; ' +
-    'negative (red) means you have gone over.',
+    'Planned minus Spent. Positive means you still have room; ' + 'negative (red) means you have gone over.',
 };

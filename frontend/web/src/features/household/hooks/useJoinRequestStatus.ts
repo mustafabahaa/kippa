@@ -10,7 +10,10 @@ export function useJoinRequestStatus(householdId: string, userId?: string) {
     const id = householdId.trim();
     if (!id || !userId || !db) return;
     return onSnapshot(doc(db, `households/${id}/joinRequests/${userId}`), (snapshot) => {
-      setSnapshot({ key: `${id}:${userId}`, status: snapshot.exists() ? (snapshot.data() as JoinRequest).status : null });
+      setSnapshot({
+        key: `${id}:${userId}`,
+        status: snapshot.exists() ? (snapshot.data() as JoinRequest).status : null,
+      });
     });
   }, [householdId, userId]);
   return snapshot.key === key ? snapshot.status : null;

@@ -18,14 +18,11 @@ const NUMBER_MASK = DOT;
 export function usePrivacyMask() {
   const { privacyMode } = usePrivacyMode();
 
-  const maskNumber = (value: number | string) =>
-    privacyMode ? NUMBER_MASK : String(value);
+  const maskNumber = (value: number | string) => (privacyMode ? NUMBER_MASK : String(value));
 
-  const maskText = (value: string) =>
-    privacyMode ? DOT : value;
+  const maskText = (value: string) => (privacyMode ? DOT : value);
 
-  const maskDigits = (value: string) =>
-    privacyMode ? value.replace(/[0-9]/g, '•') : value;
+  const maskDigits = (value: string) => (privacyMode ? value.replace(/[0-9]/g, '•') : value);
 
   return { privacyMode, maskNumber, maskText, maskDigits };
 }

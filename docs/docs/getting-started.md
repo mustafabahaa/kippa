@@ -8,12 +8,12 @@ End-to-end setup for Kippa - from an empty machine to a deployed, hosted PWA on 
 
 ## 0. Prerequisites (what you need installed first)
 
-| Tool | Why | Required version |
-| --- | --- | --- |
-| **Node.js** | Run the app + functions build | 20 LTS or newer (22 recommended for Functions runtime) |
-| **npm** | Install dependencies | comes with Node |
-| **Firebase CLI** | Create project, deploy, configure | latest (`>=13`) |
-| **Google Cloud CLI (`gcloud`)** | Enable APIs, manage auth provider config | latest |
+| Tool                            | Why                                      | Required version                                       |
+| ------------------------------- | ---------------------------------------- | ------------------------------------------------------ |
+| **Node.js**                     | Run the app + functions build            | 20 LTS or newer (22 recommended for Functions runtime) |
+| **npm**                         | Install dependencies                     | comes with Node                                        |
+| **Firebase CLI**                | Create project, deploy, configure        | latest (`>=13`)                                        |
+| **Google Cloud CLI (`gcloud`)** | Enable APIs, manage auth provider config | latest                                                 |
 
 ### Install the Firebase CLI
 
@@ -31,6 +31,7 @@ firebase --version
 ### Install the Google Cloud CLI (`gcloud`)
 
 **macOS (Apple Silicon):**
+
 ```bash
 curl -O https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-cli-darwin-arm.tar.gz
 tar -xf google-cloud-cli-darwin-arm.tar.gz
@@ -41,6 +42,7 @@ exec -l $SHELL   # reload shell so gcloud is on PATH
 **macOS (Intel):** replace `darwin-arm` with `darwin-x86_64` above.
 
 **Linux:**
+
 ```bash
 curl -O https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-cli-linux-x86_64.tar.gz
 tar -xf google-cloud-cli-linux-x86_64.tar.gz
@@ -51,6 +53,7 @@ exec -l $SHELL
 **Windows:** download and run the installer from the [Google Cloud CLI installation guide](https://cloud.google.com/sdk/docs/install).
 
 Verify:
+
 ```bash
 gcloud --version
 ```
@@ -71,9 +74,11 @@ gcloud auth login
 A browser window opens - complete the OAuth flow for each. The Firebase CLI uses its own account login; `gcloud` is needed for project-level API and OAuth provider configuration in step 4.
 
 > **Agent/headless mode (optional):** instead of `firebase login`, you can set `GOOGLE_APPLICATION_CREDENTIALS` to point at a service-account JSON key. This is the right path for CI/CD and AI agents without a browser.
+>
 > ```bash
 > export GOOGLE_APPLICATION_CREDENTIALS="/absolute/path/to/service-account.json"
 > ```
+>
 > Generate the key in Google Cloud Console → IAM & Admin → Service accounts → your account → Keys → Add key → JSON.
 
 ---
@@ -128,7 +133,7 @@ The SDK config output above includes `messagingSenderId`. Note it.
 
 ## 4. Enable Firebase services
 
-> ⚠️ **Blaze plan required (must-do before this step).** Kippa uses Cloud Functions for cron reminders, FCM fanout, and derived data, plus a scheduled (`dailyReminderCron`) function. **Cloud Functions and Cloud Scheduler are only available on the Firebase Blaze (pay-as-you-go) plan - the free Spark plan will not work.** Upgrade now in Firebase Console → *Build → Functions* (or ⚙️ → *Usage and billing*) before continuing, otherwise the `gcloud services enable cloudfunctions.googleapis.com cloudscheduler.googleapis.com` step and any `firebase deploy --only functions` will fail.
+> ⚠️ **Blaze plan required (must-do before this step).** Kippa uses Cloud Functions for cron reminders, FCM fanout, and derived data, plus a scheduled (`dailyReminderCron`) function. **Cloud Functions and Cloud Scheduler are only available on the Firebase Blaze (pay-as-you-go) plan - the free Spark plan will not work.** Upgrade now in Firebase Console → _Build → Functions_ (or ⚙️ → _Usage and billing_) before continuing, otherwise the `gcloud services enable cloudfunctions.googleapis.com cloudscheduler.googleapis.com` step and any `firebase deploy --only functions` will fail.
 
 The app needs Auth, Firestore, Hosting, and Cloud Functions. Enable everything up front so deploys don't fail later.
 
@@ -159,7 +164,7 @@ gcloud services enable \
 
 Kippa authenticates via Google sign-in.
 
-**Console path (simplest):** Firebase Console → *Build → Authentication → Sign-in method → Google → Enable.*
+**Console path (simplest):** Firebase Console → _Build → Authentication → Sign-in method → Google → Enable._
 
 **gcloud path (scriptable):** the Identity Toolkit API handles this; for the standard Google provider you typically enable it in the Console. If you've already done so, no further action is needed.
 
@@ -182,7 +187,7 @@ firebase apps:web:get-web-push-config --project "$PROJECT_ID" || true
 
 If a key pair doesn't exist yet, generate one:
 
-**Console path:** Firebase Console → *Project settings → Cloud Messaging → Web Push certificates → Generate key pair.*
+**Console path:** Firebase Console → _Project settings → Cloud Messaging → Web Push certificates → Generate key pair._
 
 Copy the resulting **public key** (long string starting with `B…`). You'll paste it as `VITE_FIREBASE_VAPID_KEY` below.
 
@@ -341,9 +346,9 @@ firebase deploy --only firestore:indexes   # indexes only
 After your first deploy, confirm:
 
 - [ ] Opening `https://<PROJECT_ID>.web.app` shows the Kippa app and login screen.
-- [ ] Google sign-in completes (if it fails, check *Authentication → Authorized domains* includes your `.web.app` domain).
+- [ ] Google sign-in completes (if it fails, check _Authentication → Authorized domains_ includes your `.web.app` domain).
 - [ ] Signing in creates a `users/{uid}` document in Firestore (check Console → Firestore).
-- [ ] The daily reminder scheduled function appears under *Functions → Schedules* in the Console.
+- [ ] The daily reminder scheduled function appears under _Functions → Schedules_ in the Console.
 - [ ] Firestore indexes are building (Console → Firestore → Indexes). Composite indexes can take a few minutes.
 - [ ] On a phone, "Add to Home Screen" installs the PWA.
 
@@ -351,16 +356,16 @@ After your first deploy, confirm:
 
 ## Troubleshooting
 
-| Symptom | Fix |
-| --- | --- |
-| `firebase login` opens a browser that won't load | Use `firebase login --no-localhost` and paste the OAuth code manually. |
-| `Permission denied` on deploy | Run `firebase login` again; ensure you're an Owner/Editor on the Firebase project. |
-| Firestore composite-index errors at runtime | Re-run `firebase deploy --only firestore:indexes` and wait a few minutes. |
-| Google sign-in blocked | Add your domain under *Authentication → Settings → Authorized domains*. |
-| Functions deploy fails on `cloudfunctions.googleapis.com` | Run the `gcloud services enable …` block from step 4 again. |
-| `dailyReminderCron` schedule not created | The Cloud Scheduler API must be enabled (step 4) and the project must be on the Blaze (pay-as-you-go) plan. Scheduled functions require Blaze. |
-| Push notifications silently fail | Verify `VITE_FIREBASE_VAPID_KEY` and the inlined values in `firebase-messaging-sw.js` match your project. |
-| `gcloud: command not found` after install | Reload your shell: `exec -l $SHELL`, or open a new terminal. |
+| Symptom                                                   | Fix                                                                                                                                            |
+| --------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `firebase login` opens a browser that won't load          | Use `firebase login --no-localhost` and paste the OAuth code manually.                                                                         |
+| `Permission denied` on deploy                             | Run `firebase login` again; ensure you're an Owner/Editor on the Firebase project.                                                             |
+| Firestore composite-index errors at runtime               | Re-run `firebase deploy --only firestore:indexes` and wait a few minutes.                                                                      |
+| Google sign-in blocked                                    | Add your domain under _Authentication → Settings → Authorized domains_.                                                                        |
+| Functions deploy fails on `cloudfunctions.googleapis.com` | Run the `gcloud services enable …` block from step 4 again.                                                                                    |
+| `dailyReminderCron` schedule not created                  | The Cloud Scheduler API must be enabled (step 4) and the project must be on the Blaze (pay-as-you-go) plan. Scheduled functions require Blaze. |
+| Push notifications silently fail                          | Verify `VITE_FIREBASE_VAPID_KEY` and the inlined values in `firebase-messaging-sw.js` match your project.                                      |
+| `gcloud: command not found` after install                 | Reload your shell: `exec -l $SHELL`, or open a new terminal.                                                                                   |
 
 ---
 

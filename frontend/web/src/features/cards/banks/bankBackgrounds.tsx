@@ -20,7 +20,13 @@ const overlayBoxSx = {
 // CIB — faint hexagon grid tessellation
 export const CibPattern: FC = () => (
   <Box sx={overlayBoxSx}>
-    <svg viewBox="0 0 160 100" width="100%" height="100%" preserveAspectRatio="xMidYMid slice" style={{ display: 'block' }}>
+    <svg
+      viewBox="0 0 160 100"
+      width="100%"
+      height="100%"
+      preserveAspectRatio="xMidYMid slice"
+      style={{ display: 'block' }}
+    >
       {/* rows of small pointy-top hexagons (~12px across), stroke white 0.05 */}
       <g fill="none" stroke="#ffffff" strokeWidth="0.5" opacity="0.05">
         {Array.from({ length: 7 }).map((_, row) =>
@@ -45,7 +51,13 @@ export const CibPattern: FC = () => (
 // NBE — subtle gold hieroglyphic-style chevrons across middle-bottom
 export const NbePattern: FC = () => (
   <Box sx={overlayBoxSx}>
-    <svg viewBox="0 0 160 100" width="100%" height="100%" preserveAspectRatio="xMidYMid slice" style={{ display: 'block' }}>
+    <svg
+      viewBox="0 0 160 100"
+      width="100%"
+      height="100%"
+      preserveAspectRatio="xMidYMid slice"
+      style={{ display: 'block' }}
+    >
       <g stroke="#E0B341" strokeWidth="1" opacity="0.06" fill="none">
         <polyline points="0,78 20,70 40,78 60,70 80,78 100,70 120,78 140,70 160,78" />
         <polyline points="0,84 20,76 40,84 60,76 80,84 100,76 120,84 140,76 160,84" />
@@ -63,7 +75,13 @@ export const NbePattern: FC = () => (
 // Banque Misr — row of small lotus/papyrus silhouettes along the bottom edge
 export const BanqueMisrPattern: FC = () => (
   <Box sx={overlayBoxSx}>
-    <svg viewBox="0 0 160 100" width="100%" height="100%" preserveAspectRatio="xMidYMid slice" style={{ display: 'block' }}>
+    <svg
+      viewBox="0 0 160 100"
+      width="100%"
+      height="100%"
+      preserveAspectRatio="xMidYMid slice"
+      style={{ display: 'block' }}
+    >
       <g fill="#ffffff" opacity="0.05">
         {Array.from({ length: 8 }).map((_, i) => {
           const cx = 10 + i * 20;
@@ -87,7 +105,13 @@ export const QnbPattern: FC = () => {
   const cy = 0;
   return (
     <Box sx={overlayBoxSx}>
-      <svg viewBox="0 0 160 100" width="100%" height="100%" preserveAspectRatio="xMidYMid slice" style={{ display: 'block' }}>
+      <svg
+        viewBox="0 0 160 100"
+        width="100%"
+        height="100%"
+        preserveAspectRatio="xMidYMid slice"
+        style={{ display: 'block' }}
+      >
         <g stroke="#ffffff" strokeWidth="0.8" opacity="0.05">
           {Array.from({ length: 14 }).map((_, i) => {
             const angle = (Math.PI * i) / 14; // 0..PI pointing left/down from top-right
@@ -105,7 +129,13 @@ export const QnbPattern: FC = () => {
 // Arab Bank — three large faint overlapping ring outlines centered-right
 export const ArabBankPattern: FC = () => (
   <Box sx={overlayBoxSx}>
-    <svg viewBox="0 0 160 100" width="100%" height="100%" preserveAspectRatio="xMidYMid slice" style={{ display: 'block' }}>
+    <svg
+      viewBox="0 0 160 100"
+      width="100%"
+      height="100%"
+      preserveAspectRatio="xMidYMid slice"
+      style={{ display: 'block' }}
+    >
       <g fill="none" stroke="#ffffff" strokeWidth="1.2" opacity="0.05">
         <circle cx="90" cy="50" r="30" />
         <circle cx="120" cy="50" r="30" />
@@ -118,7 +148,13 @@ export const ArabBankPattern: FC = () => (
 // ADCB — two large faint interlocking triangles centered-left
 export const AdcbPattern: FC = () => (
   <Box sx={overlayBoxSx}>
-    <svg viewBox="0 0 160 100" width="100%" height="100%" preserveAspectRatio="xMidYMid slice" style={{ display: 'block' }}>
+    <svg
+      viewBox="0 0 160 100"
+      width="100%"
+      height="100%"
+      preserveAspectRatio="xMidYMid slice"
+      style={{ display: 'block' }}
+    >
       <g fill="none" stroke="#ffffff" strokeWidth="1.4" opacity="0.05" strokeLinejoin="round">
         <polygon points="50,18 86,70 14,70" />
         <polygon points="50,82 86,30 14,30" />
@@ -130,7 +166,13 @@ export const AdcbPattern: FC = () => (
 // AAIB — faint diagonal diamond/grid pattern (gold)
 export const AaibPattern: FC = () => (
   <Box sx={overlayBoxSx}>
-    <svg viewBox="0 0 160 100" width="100%" height="100%" preserveAspectRatio="xMidYMid slice" style={{ display: 'block' }}>
+    <svg
+      viewBox="0 0 160 100"
+      width="100%"
+      height="100%"
+      preserveAspectRatio="xMidYMid slice"
+      style={{ display: 'block' }}
+    >
       <g fill="none" stroke="#E0B341" strokeWidth="0.6" opacity="0.05">
         {Array.from({ length: 12 }).map((_, i) => (
           <line key={`a${i}`} x1={-40 + i * 20} y1={0} x2={20 + i * 20} y2={100} />
@@ -146,7 +188,13 @@ export const AaibPattern: FC = () => (
 // FABMISR — faint vertical pillar lines
 export const FabmisrPattern: FC = () => (
   <Box sx={overlayBoxSx}>
-    <svg viewBox="0 0 160 100" width="100%" height="100%" preserveAspectRatio="xMidYMid slice" style={{ display: 'block' }}>
+    <svg
+      viewBox="0 0 160 100"
+      width="100%"
+      height="100%"
+      preserveAspectRatio="xMidYMid slice"
+      style={{ display: 'block' }}
+    >
       <g stroke="#ffffff" strokeWidth="3" opacity="0.04">
         {[20, 50, 80, 110, 140].map((x) => (
           <line key={x} x1={x} y1={0} x2={x} y2={100} />
@@ -159,9 +207,19 @@ export const FabmisrPattern: FC = () => (
 // EGBank — large faint infinity/loop watermark centered (cyan)
 export const EgbankPattern: FC = () => (
   <Box sx={overlayBoxSx}>
-    <svg viewBox="0 0 160 100" width="100%" height="100%" preserveAspectRatio="xMidYMid slice" style={{ display: 'block' }}>
+    <svg
+      viewBox="0 0 160 100"
+      width="100%"
+      height="100%"
+      preserveAspectRatio="xMidYMid slice"
+      style={{ display: 'block' }}
+    >
       <g fill="none" stroke="#22D3EE" strokeWidth="2.5" opacity="0.06" strokeLinecap="round">
-        <path d="M55,50 C40,30 10,30 10,50 C10,70 40,70 55,50 C70,30 100,30 100,50 C100,70 70,70 55,50 Z" transform="translate(25,0) scale(1.4)" transform-origin="55 50" />
+        <path
+          d="M55,50 C40,30 10,30 10,50 C10,70 40,70 55,50 C70,30 100,30 100,50 C100,70 70,70 55,50 Z"
+          transform="translate(25,0) scale(1.4)"
+          transform-origin="55 50"
+        />
       </g>
     </svg>
   </Box>

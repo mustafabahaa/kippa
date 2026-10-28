@@ -34,10 +34,9 @@ const writeCache = (from: string, to: string, rate: number) => {
 
 const fetchFrankfurter = async (from: string, to: string): Promise<number | null> => {
   try {
-    const res = await fetch(
-      `https://api.frankfurter.app/latest?from=${from}&to=${to}`,
-      { signal: AbortSignal.timeout(TIMEOUT_MS) }
-    );
+    const res = await fetch(`https://api.frankfurter.app/latest?from=${from}&to=${to}`, {
+      signal: AbortSignal.timeout(TIMEOUT_MS),
+    });
     if (!res.ok) return null;
     const data = await res.json();
     const rate = data?.rates?.[to];
@@ -49,10 +48,7 @@ const fetchFrankfurter = async (from: string, to: string): Promise<number | null
 
 const fetchErApi = async (from: string, to: string): Promise<number | null> => {
   try {
-    const res = await fetch(
-      `https://open.er-api.com/v6/latest/${from}`,
-      { signal: AbortSignal.timeout(TIMEOUT_MS) }
-    );
+    const res = await fetch(`https://open.er-api.com/v6/latest/${from}`, { signal: AbortSignal.timeout(TIMEOUT_MS) });
     if (!res.ok) return null;
     const data = await res.json();
     const rate = data?.rates?.[to];
@@ -90,14 +86,9 @@ export const currencyLib = {
    * Bulk-fetch rates for a set of foreign currencies into `base`.
    * Returns { [foreignCode]: rate }. The base currency itself is omitted.
    */
-  async getRatesToBase(
-    base: CurrencyCode,
-    foreignCodes: CurrencyCode[]
-  ): Promise<Record<string, number>> {
-    const distinct = Array.from(new Set(foreignCodes.filter(c => c !== base)));
-    const entries = await Promise.all(
-      distinct.map(async c => [c, await this.getRate(c, base)] as const)
-    );
+  async getRatesToBase(base: CurrencyCode, foreignCodes: CurrencyCode[]): Promise<Record<string, number>> {
+    const distinct = Array.from(new Set(foreignCodes.filter((c) => c !== base)));
+    const entries = await Promise.all(distinct.map(async (c) => [c, await this.getRate(c, base)] as const));
     return Object.fromEntries(entries);
   },
 };

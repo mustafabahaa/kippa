@@ -3,12 +3,7 @@ import clsx from 'clsx';
 import { ThemeClassNames } from '@docusaurus/theme-common';
 import type { Props } from '@theme/Footer/Layout';
 
-export default function FooterLayout({
-  style,
-  links,
-  logo,
-  copyright,
-}: Props): ReactNode {
+export default function FooterLayout({ style, links, logo, copyright }: Props): ReactNode {
   return (
     <footer
       className={clsx(ThemeClassNames.layout.footer.container, 'footer', {

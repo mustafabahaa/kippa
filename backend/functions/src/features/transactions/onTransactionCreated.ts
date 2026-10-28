@@ -43,10 +43,7 @@ export const onTransactionCreated = onDocumentCreated(
     const db = getFirestore();
 
     // --- 1. Fetch all household members ---
-    const membersSnap = await db
-      .collection('users')
-      .where('householdId', '==', householdId)
-      .get();
+    const membersSnap = await db.collection('users').where('householdId', '==', householdId).get();
     const members = membersSnap.docs.map((d) => ({
       uid: d.id,
       ...(d.data() as Omit<UserProfile, 'uid'>),
@@ -76,9 +73,7 @@ export const onTransactionCreated = onDocumentCreated(
       let categoryName = '';
       if (txn.categoryId) {
         try {
-          const categorySnap = await db
-            .doc(`households/${householdId}/categories/${txn.categoryId}`)
-            .get();
+          const categorySnap = await db.doc(`households/${householdId}/categories/${txn.categoryId}`).get();
           if (categorySnap.exists) {
             categoryName = categorySnap.data()?.name ?? '';
           }
@@ -207,9 +202,7 @@ async function checkCategoryWarning(
   if (!threshold && !velocityContext) return;
 
   // Dedup check
-  const householdStateRef = db.doc(
-    `households/${householdId}/notificationState/_household`,
-  );
+  const householdStateRef = db.doc(`households/${householdId}/notificationState/_household`);
   const stateSnap = await householdStateRef.get();
   const state = (stateSnap.data() as NotificationState) ?? {};
 
@@ -237,9 +230,7 @@ async function checkCategoryWarning(
   // Fetch category name
   let categoryName = '';
   try {
-    const categorySnap = await db
-      .doc(`households/${householdId}/categories/${categoryId}`)
-      .get();
+    const categorySnap = await db.doc(`households/${householdId}/categories/${categoryId}`).get();
     if (categorySnap.exists) {
       categoryName = categorySnap.data()?.name ?? '';
     }
@@ -262,9 +253,7 @@ async function checkCategoryWarning(
     .collection(`households/${householdId}/notificationSettings`)
     .where('categoryWarningEnabled', '==', true)
     .get();
-  const settingsUids = settingsSnap.docs.map(
-    (d) => (d.data() as NotificationSettings).userId,
-  );
+  const settingsUids = settingsSnap.docs.map((d) => (d.data() as NotificationSettings).userId);
 
   if (settingsUids.length > 0) {
     const tokens = await getTokensForUsers(householdId, settingsUids);

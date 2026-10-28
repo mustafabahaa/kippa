@@ -31,9 +31,7 @@ export const dailyReminderCron = onSchedule('0 9 * * *', async () => {
     const noExpensesToday = txnsTodaySnap.empty;
 
     // Get all notification settings for this household (single read)
-    const settingsSnap = await db
-      .collection(`households/${householdId}/notificationSettings`)
-      .get();
+    const settingsSnap = await db.collection(`households/${householdId}/notificationSettings`).get();
 
     for (const settingsDoc of settingsSnap.docs) {
       const settings = settingsDoc.data() as NotificationSettings;
@@ -66,8 +64,7 @@ export const dailyReminderCron = onSchedule('0 9 * * *', async () => {
 
       // --- Card expiry warning? (spec §9.4) ---
       if (settings.cardExpiryWarningEnabled) {
-        const cardsSnap = await db.collection(`households/${householdId}/cards`)
-          .where('isActive', '==', true).get();
+        const cardsSnap = await db.collection(`households/${householdId}/cards`).where('isActive', '==', true).get();
         for (const cardDoc of cardsSnap.docs) {
           const card = cardDoc.data() as Card;
           if (!card.expiryMonth || !card.expiryYear) continue;
@@ -79,12 +76,17 @@ export const dailyReminderCron = onSchedule('0 9 * * *', async () => {
             const yy = String(card.expiryYear).slice(-2);
             const tokens = await getTokensForUsers(householdId, [userId]);
             if (tokens.length > 0) {
-              await sendToMany(householdId, tokens, buildMessagePayload({
-                type: 'card_expiry',
-                title: 'Card expiring soon',
-                body: `Your ${card.name} expires ${mm}/${yy}. Watch for the replacement and add the new card.`,
-                householdId, deepLink: '/accounts',
-              }));
+              await sendToMany(
+                householdId,
+                tokens,
+                buildMessagePayload({
+                  type: 'card_expiry',
+                  title: 'Card expiring soon',
+                  body: `Your ${card.name} expires ${mm}/${yy}. Watch for the replacement and add the new card.`,
+                  householdId,
+                  deepLink: '/accounts',
+                }),
+              );
             }
             await cardDoc.ref.set({ notifiedCardExpiryAt: todayUtc }, { merge: true });
           }

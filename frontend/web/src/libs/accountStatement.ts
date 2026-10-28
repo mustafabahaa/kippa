@@ -15,9 +15,9 @@ export interface AccountStatementFilters {
 }
 
 function compareTransactions(a: FinanceTransaction, b: FinanceTransaction) {
-  return a.date.localeCompare(b.date)
-    || (a.createdAt ?? '').localeCompare(b.createdAt ?? '')
-    || a.id.localeCompare(b.id);
+  return (
+    a.date.localeCompare(b.date) || (a.createdAt ?? '').localeCompare(b.createdAt ?? '') || a.id.localeCompare(b.id)
+  );
 }
 
 /**
@@ -32,11 +32,13 @@ export function buildAccountStatement(
   filters: AccountStatementFilters = {},
 ): AccountStatementEntry[] {
   const transactionById = new Map(
-    transactions.filter(transaction => transaction.status === 'posted').map(transaction => [transaction.id, transaction]),
+    transactions
+      .filter((transaction) => transaction.status === 'posted')
+      .map((transaction) => [transaction.id, transaction]),
   );
   const amountByTransaction = new Map<string, number>();
 
-  ledgerLines.forEach(line => {
+  ledgerLines.forEach((line) => {
     if (line.accountId !== accountId || !transactionById.has(line.transactionId)) return;
     amountByTransaction.set(line.transactionId, (amountByTransaction.get(line.transactionId) ?? 0) + line.signedAmount);
   });
@@ -71,10 +73,10 @@ export function calculateStatementOpeningBalance(
 ) {
   const eligibleTransactionIds = new Set(
     transactions
-      .filter(transaction => transaction.status === 'posted' && transaction.date < dateFrom)
-      .map(transaction => transaction.id),
+      .filter((transaction) => transaction.status === 'posted' && transaction.date < dateFrom)
+      .map((transaction) => transaction.id),
   );
   return ledgerLines
-    .filter(line => line.accountId === accountId && eligibleTransactionIds.has(line.transactionId))
+    .filter((line) => line.accountId === accountId && eligibleTransactionIds.has(line.transactionId))
     .reduce((total, line) => total + line.signedAmount, 0);
 }

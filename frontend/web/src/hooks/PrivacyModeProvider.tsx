@@ -1,9 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import {
-  PrivacyModeContext,
-  readStoredPrivacyMode,
-  storePrivacyMode,
-} from '@/contexts/privacyModeContext';
+import { PrivacyModeContext, readStoredPrivacyMode, storePrivacyMode } from '@/contexts/privacyModeContext';
 
 /**
  * Provides the privacy mode state. When active, sensitive monetary values
@@ -18,14 +14,7 @@ export function PrivacyModeProvider({ children }: { children: React.ReactNode })
     storePrivacyMode(value);
   }, []);
 
-  const value = React.useMemo(
-    () => ({ privacyMode, setPrivacyMode }),
-    [privacyMode, setPrivacyMode]
-  );
+  const value = React.useMemo(() => ({ privacyMode, setPrivacyMode }), [privacyMode, setPrivacyMode]);
 
-  return (
-    <PrivacyModeContext.Provider value={value}>
-      {children}
-    </PrivacyModeContext.Provider>
-  );
+  return <PrivacyModeContext.Provider value={value}>{children}</PrivacyModeContext.Provider>;
 }

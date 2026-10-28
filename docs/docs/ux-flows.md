@@ -120,4 +120,3 @@ Close summary:
 - ending balances
 - saving result
 - categories over budget
-

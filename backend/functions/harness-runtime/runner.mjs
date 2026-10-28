@@ -31,10 +31,13 @@ process.on('SIGTERM', () => {
   })();
 });
 
-process.on('message', async message => {
+process.on('message', async (message) => {
   if (message?.type === 'tool-result') {
     const waiter = pending.get(message.id);
-    if (waiter) { pending.delete(message.id); message.error ? waiter.reject(new Error('Client tool failed')) : waiter.resolve(message.result); }
+    if (waiter) {
+      pending.delete(message.id);
+      message.error ? waiter.reject(new Error('Client tool failed')) : waiter.resolve(message.result);
+    }
     return;
   }
   if (message?.type !== 'start' || started) return;
@@ -52,24 +55,54 @@ process.on('message', async message => {
     sandbox = await createLocalProbeSandbox({ port });
     activeSandbox = sandbox;
     stage = 'agent';
-    const native = createCodex({ auth: 'direct', startupTimeoutMs: 45000, reasoningEffort: 'medium', codexConfig: { cli_auth_credentials_store: 'file' } });
-    const harness = { ...native, async getBootstrap() {
-      const bootstrapDir = '.harness-bootstrap/codex';
-      return { harnessId: 'codex', bootstrapDir, files: [
-        { path: `${bootstrapDir}/package.json`, content: bridgePackage },
-        { path: `${bootstrapDir}/bridge.mjs`, content: bridge },
-      ], commands: [{ command: `mkdir -p node_modules/@openai && ln -s ${shellQuote(wsDir)} node_modules/ws && ln -s ${shellQuote(codexDir)} node_modules/@openai/codex` }] };
-    } };
-    const tools = Object.fromEntries(message.tools.map(definition => [definition.name, {
-      description: definition.description,
-      inputSchema: jsonSchema(definition.schema),
-      execute: input => new Promise((resolve, reject) => {
-        const id = randomUUID();
-        pending.set(id, { resolve, reject });
-        process.send?.({ type: 'tool-call', id, name: definition.name, input });
-      }),
-    }]));
-    const agent = new HarnessAgent({ harness, model: message.model, permissionMode: 'allow-all', inactiveTools: ['bash', 'apply_patch', 'view_image', 'webSearch'], instructions: message.system, tools });
+    const native = createCodex({
+      auth: 'direct',
+      startupTimeoutMs: 45000,
+      reasoningEffort: 'medium',
+      codexConfig: { cli_auth_credentials_store: 'file' },
+    });
+    const harness = {
+      ...native,
+      async getBootstrap() {
+        const bootstrapDir = '.harness-bootstrap/codex';
+        return {
+          harnessId: 'codex',
+          bootstrapDir,
+          files: [
+            { path: `${bootstrapDir}/package.json`, content: bridgePackage },
+            { path: `${bootstrapDir}/bridge.mjs`, content: bridge },
+          ],
+          commands: [
+            {
+              command: `mkdir -p node_modules/@openai && ln -s ${shellQuote(wsDir)} node_modules/ws && ln -s ${shellQuote(codexDir)} node_modules/@openai/codex`,
+            },
+          ],
+        };
+      },
+    };
+    const tools = Object.fromEntries(
+      message.tools.map((definition) => [
+        definition.name,
+        {
+          description: definition.description,
+          inputSchema: jsonSchema(definition.schema),
+          execute: (input) =>
+            new Promise((resolve, reject) => {
+              const id = randomUUID();
+              pending.set(id, { resolve, reject });
+              process.send?.({ type: 'tool-call', id, name: definition.name, input });
+            }),
+        },
+      ]),
+    );
+    const agent = new HarnessAgent({
+      harness,
+      model: message.model,
+      permissionMode: 'allow-all',
+      inactiveTools: ['bash', 'apply_patch', 'view_image', 'webSearch'],
+      instructions: message.system,
+      tools,
+    });
     stage = 'session';
     session = await agent.createSession({ sandboxSession: sandbox, abortSignal: AbortSignal.timeout(120000) });
     activeSession = session;
@@ -82,7 +115,13 @@ process.on('message', async message => {
     }
     process.send?.({ type: 'done' });
   } catch (error) {
-    process.send?.({ type: 'error', stage, name: error?.name ?? 'Error', code: error?.code, message: String(error?.message ?? error ?? 'Unknown harness error').slice(0, 400) });
+    process.send?.({
+      type: 'error',
+      stage,
+      name: error?.name ?? 'Error',
+      code: error?.code,
+      message: String(error?.message ?? error ?? 'Unknown harness error').slice(0, 400),
+    });
   } finally {
     for (const waiter of pending.values()) waiter.reject(new Error('Request ended'));
     await session?.destroy?.().catch(() => {});
@@ -91,11 +130,16 @@ process.on('message', async message => {
   }
 });
 
-function shellQuote(value) { return `'${String(value).replaceAll("'", "'\\''")}'`; }
+function shellQuote(value) {
+  return `'${String(value).replaceAll("'", "'\\''")}'`;
+}
 function freePort() {
   return new Promise((resolve, reject) => {
     const server = createServer();
     server.once('error', reject);
-    server.listen(0, '127.0.0.1', () => { const port = server.address().port; server.close(error => error ? reject(error) : resolve(port)); });
+    server.listen(0, '127.0.0.1', () => {
+      const port = server.address().port;
+      server.close((error) => (error ? reject(error) : resolve(port)));
+    });
   });
 }

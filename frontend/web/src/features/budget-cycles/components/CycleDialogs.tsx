@@ -65,21 +65,42 @@ export function CreateCycleDialog({ busy, onClose, onCreate, open }: CreateCycle
           />
           <Grid container spacing={2}>
             <Grid size={6}>
-              <TextField fullWidth type="date" label="Start Date" value={values.startDate} onChange={(event) => update('startDate', event.target.value)} slotProps={{ inputLabel: { shrink: true } }} />
+              <TextField
+                fullWidth
+                type="date"
+                label="Start Date"
+                value={values.startDate}
+                onChange={(event) => update('startDate', event.target.value)}
+                slotProps={{ inputLabel: { shrink: true } }}
+              />
             </Grid>
             <Grid size={6}>
-              <TextField fullWidth type="date" label="Target End Date" value={values.endDate} onChange={(event) => update('endDate', event.target.value)} slotProps={{ inputLabel: { shrink: true } }} />
+              <TextField
+                fullWidth
+                type="date"
+                label="Target End Date"
+                value={values.endDate}
+                onChange={(event) => update('endDate', event.target.value)}
+                slotProps={{ inputLabel: { shrink: true } }}
+              />
             </Grid>
           </Grid>
           <FormControlLabel
-            control={<Checkbox checked={values.status === 'open'} onChange={(event) => update('status', event.target.checked ? 'open' : 'planned')} />}
+            control={
+              <Checkbox
+                checked={values.status === 'open'}
+                onChange={(event) => update('status', event.target.checked ? 'open' : 'planned')}
+              />
+            }
             label="Set as active immediately (will close current active cycle)"
           />
         </Stack>
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>Cancel</Button>
-        <Button onClick={handleCreate} variant="contained" loading={busy}>Create</Button>
+        <Button onClick={handleCreate} variant="contained" loading={busy}>
+          Create
+        </Button>
       </DialogActions>
     </Dialog>
   );
@@ -103,7 +124,7 @@ export function CloseCycleDialog({ busy, onClose, onConfirm, open }: CloseCycleD
   const canConfirm = confirmed.every(Boolean);
 
   const handleConfirm = async () => {
-    if (canConfirm && await onConfirm()) setConfirmed(CONFIRMATIONS.map(() => false));
+    if (canConfirm && (await onConfirm())) setConfirmed(CONFIRMATIONS.map(() => false));
   };
 
   return (
@@ -117,7 +138,16 @@ export function CloseCycleDialog({ busy, onClose, onConfirm, open }: CloseCycleD
           {CONFIRMATIONS.map((label, index) => (
             <FormControlLabel
               key={label}
-              control={<Checkbox checked={confirmed[index]} onChange={(event) => setConfirmed((current) => current.map((value, itemIndex) => itemIndex === index ? event.target.checked : value))} />}
+              control={
+                <Checkbox
+                  checked={confirmed[index]}
+                  onChange={(event) =>
+                    setConfirmed((current) =>
+                      current.map((value, itemIndex) => (itemIndex === index ? event.target.checked : value)),
+                    )
+                  }
+                />
+              }
               label={label}
             />
           ))}
@@ -125,7 +155,9 @@ export function CloseCycleDialog({ busy, onClose, onConfirm, open }: CloseCycleD
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>Cancel</Button>
-        <Button onClick={handleConfirm} disabled={!canConfirm} loading={busy} variant="contained" color="error">Confirm &amp; Close</Button>
+        <Button onClick={handleConfirm} disabled={!canConfirm} loading={busy} variant="contained" color="error">
+          Confirm &amp; Close
+        </Button>
       </DialogActions>
     </Dialog>
   );

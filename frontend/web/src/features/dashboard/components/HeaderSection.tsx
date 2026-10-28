@@ -6,7 +6,7 @@ export function HeaderSection() {
   const { householdId } = useAppContext();
   const { data: householdName = 'My Household' } = useHouseholdName(householdId);
   const { data: cycles = [] } = useCycles(householdId);
-  const activeCycle = cycles.find(c => c.status === 'open') || null;
+  const activeCycle = cycles.find((c) => c.status === 'open') || null;
 
   return (
     <PageHeader

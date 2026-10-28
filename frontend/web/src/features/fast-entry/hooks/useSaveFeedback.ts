@@ -2,10 +2,20 @@ import { useEffect, useRef, useState } from 'react';
 import type { SaveFeedbackContent } from '../components/SaveFeedbackOverlay';
 
 export function useSaveFeedback() {
-  const [content, setContent] = useState<SaveFeedbackContent>({ title: 'Entry logged', amount: '', category: '', account: '' });
+  const [content, setContent] = useState<SaveFeedbackContent>({
+    title: 'Entry logged',
+    amount: '',
+    category: '',
+    account: '',
+  });
   const [open, setOpen] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
+  useEffect(
+    () => () => {
+      if (timer.current) clearTimeout(timer.current);
+    },
+    [],
+  );
   const show = (title: string, amount: string, category: string, account: string) => {
     if (timer.current) clearTimeout(timer.current);
     setContent({ title, amount, category, account });

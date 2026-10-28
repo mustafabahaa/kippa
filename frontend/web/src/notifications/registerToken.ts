@@ -28,11 +28,7 @@ function detectDeviceType(): DeviceType {
  * Returns the token on success, or null if permission was denied / messaging
  * is unavailable.
  */
-export async function registerFcmToken(
-  householdId: string,
-  uid: string,
-  vapidKey: string,
-): Promise<string | null> {
+export async function registerFcmToken(householdId: string, uid: string, vapidKey: string): Promise<string | null> {
   // 1. Request permission FIRST to preserve the user gesture on iOS/Safari.
   // Any async operation (like getMessagingAsync()) prior to requestPermission()
   // breaks the user gesture trust chain, causing Safari to silently ignore the prompt and hang.
@@ -85,11 +81,7 @@ export async function registerFcmToken(
   // Clean up any other old tokens for this same physical device/browser
   try {
     const tokensColl = collection(db, `households/${householdId}/fcmTokens`);
-    const q = query(
-      tokensColl,
-      where('uid', '==', uid),
-      where('deviceId', '==', deviceId)
-    );
+    const q = query(tokensColl, where('uid', '==', uid), where('deviceId', '==', deviceId));
     const snap = await getDocs(q);
     const batch = writeBatch(db);
     let hasDeletes = false;
@@ -115,7 +107,9 @@ function getOrCreateDeviceId(): string {
   }
   let deviceId = localStorage.getItem('kippa_device_id');
   if (!deviceId) {
-    deviceId = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2) + Date.now().toString(36);
+    deviceId = crypto.randomUUID
+      ? crypto.randomUUID()
+      : Math.random().toString(36).substring(2) + Date.now().toString(36);
     localStorage.setItem('kippa_device_id', deviceId);
   }
   return deviceId;
@@ -124,10 +118,7 @@ function getOrCreateDeviceId(): string {
 /**
  * Deletes the FCM token from Firestore (on logout).
  */
-export async function unregisterFcmToken(
-  householdId: string,
-  token: string,
-): Promise<void> {
+export async function unregisterFcmToken(householdId: string, token: string): Promise<void> {
   const db = getFirestore();
   const tokenRef = doc(db, `households/${householdId}/fcmTokens`, token);
   await deleteDoc(tokenRef).catch(() => {
@@ -138,10 +129,7 @@ export async function unregisterFcmToken(
 /**
  * Updates lastSeenAt on app open (heartbeat for stale cleanup).
  */
-export async function touchFcmToken(
-  householdId: string,
-  token: string,
-): Promise<void> {
+export async function touchFcmToken(householdId: string, token: string): Promise<void> {
   const db = getFirestore();
   const tokenRef = doc(db, `households/${householdId}/fcmTokens`, token);
   await setDoc(tokenRef, { lastSeenAt: new Date().toISOString() }, { merge: true });
@@ -156,10 +144,7 @@ export async function touchFcmToken(
  * device's registration so the server can no longer target it. To re-enable,
  * the user taps "Enable notifications" again, which re-registers a fresh token.
  */
-export async function disableNotifications(
-  householdId: string,
-  token: string,
-): Promise<void> {
+export async function disableNotifications(householdId: string, token: string): Promise<void> {
   const messaging = await getMessagingAsync();
   if (messaging) {
     try {
@@ -171,4 +156,3 @@ export async function disableNotifications(
   }
   await unregisterFcmToken(householdId, token);
 }
-

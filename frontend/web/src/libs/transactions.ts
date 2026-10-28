@@ -11,7 +11,7 @@ export const transactionsLib = {
     transaction: Omit<FinanceTransaction, 'id' | 'householdId' | 'createdAt' | 'updatedAt' | 'status'>,
     lines: Omit<LedgerLine, 'id' | 'householdId' | 'transactionId' | 'createdAt'>[],
     conversionDetails?: Omit<ConversionDetails, 'transactionId'>,
-    auditUser?: AuditUser
+    auditUser?: AuditUser,
   ): Promise<string> {
     const transactionId = crypto.randomUUID();
     const nowStr = new Date().toISOString();
@@ -19,7 +19,7 @@ export const transactionsLib = {
     // Strip undefined values — Firestore rejects explicit `undefined` field values
     // (e.g. `description: someString || undefined` from callers).
     const cleanTransaction = Object.fromEntries(
-      Object.entries(transaction).filter(([, v]) => v !== undefined)
+      Object.entries(transaction).filter(([, v]) => v !== undefined),
     ) as FinanceTransaction;
 
     const newTransaction: FinanceTransaction = {
@@ -31,12 +31,21 @@ export const transactionsLib = {
       updatedAt: nowStr,
     };
 
-    const feeAdjustedLines = await Promise.all(lines.map(async line => {
-      if (transaction.type !== 'expense' || transaction.loanId || line.cardFee || line.signedAmount >= 0 || line.currency !== 'EGP') return line;
-      const account = await dbLib.getDoc(householdId, 'accounts', line.accountId) as Account | undefined;
-      return withDefaultCardFee(line, account, transaction.type);
-    }));
-    const newLines: LedgerLine[] = feeAdjustedLines.map(line => ({
+    const feeAdjustedLines = await Promise.all(
+      lines.map(async (line) => {
+        if (
+          transaction.type !== 'expense' ||
+          transaction.loanId ||
+          line.cardFee ||
+          line.signedAmount >= 0 ||
+          line.currency !== 'EGP'
+        )
+          return line;
+        const account = (await dbLib.getDoc(householdId, 'accounts', line.accountId)) as Account | undefined;
+        return withDefaultCardFee(line, account, transaction.type);
+      }),
+    );
+    const newLines: LedgerLine[] = feeAdjustedLines.map((line) => ({
       ...line,
       id: crypto.randomUUID(),
       householdId,
@@ -51,7 +60,7 @@ export const transactionsLib = {
         docId: transactionId,
         data: newTransaction,
       },
-      ...newLines.map(line => ({
+      ...newLines.map((line) => ({
         type: 'set' as const,
         collectionName: 'ledgerLines',
         docId: line.id,
@@ -85,7 +94,7 @@ export const transactionsLib = {
         auditUser,
         'transaction_created',
         `${auditUser.displayName} logged ${transaction.type}: ${amount} ${currency}${desc ? ` — ${desc}` : ''}`,
-        { transactionId, type: transaction.type, amount, currency }
+        { transactionId, type: transaction.type, amount, currency },
       );
     }
 
@@ -93,7 +102,7 @@ export const transactionsLib = {
   },
 
   async voidTransaction(householdId: string, transactionId: string, auditUser?: AuditUser): Promise<void> {
-    const transaction = await dbLib.getDoc(householdId, 'transactions', transactionId) as FinanceTransaction | null;
+    const transaction = (await dbLib.getDoc(householdId, 'transactions', transactionId)) as FinanceTransaction | null;
     if (!transaction) throw new Error('Transaction not found');
 
     const updatedTransaction: FinanceTransaction = {
@@ -114,7 +123,7 @@ export const transactionsLib = {
         auditUser,
         'transaction_voided',
         `${auditUser.displayName} voided transaction: ${desc}`,
-        { transactionId, type: transaction.type }
+        { transactionId, type: transaction.type },
       );
     }
   },
@@ -124,33 +133,33 @@ export const transactionsLib = {
     transactionId: string,
     transactionUpdates: Partial<FinanceTransaction>,
     lineUpdates: { accountId: string; signedAmount: number; currency: CurrencyCode; cardFee?: LedgerLine['cardFee'] },
-    auditUser?: AuditUser
+    auditUser?: AuditUser,
   ): Promise<void> {
-    const transaction = await dbLib.getDoc(householdId, 'transactions', transactionId) as FinanceTransaction | null;
+    const transaction = (await dbLib.getDoc(householdId, 'transactions', transactionId)) as FinanceTransaction | null;
     if (!transaction) throw new Error('Transaction not found');
 
     // Strip undefined values from updates — Firestore rejects explicit `undefined`.
     const cleanUpdates = Object.fromEntries(
-      Object.entries(transactionUpdates).filter(([, v]) => v !== undefined)
+      Object.entries(transactionUpdates).filter(([, v]) => v !== undefined),
     ) as Partial<FinanceTransaction>;
 
     const updatedTransaction: FinanceTransaction = {
       ...transaction,
       ...cleanUpdates,
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString(),
     };
 
     // Get current ledger lines for this transaction
-    const allLines = await dbLib.getDocs(householdId, 'ledgerLines') as LedgerLine[];
-    const txLines = allLines.filter(l => l.transactionId === transactionId);
+    const allLines = (await dbLib.getDocs(householdId, 'ledgerLines')) as LedgerLine[];
+    const txLines = allLines.filter((l) => l.transactionId === transactionId);
 
     const operations: { type: 'set' | 'delete'; collectionName: string; docId: string; data?: any }[] = [
       {
         type: 'set',
         collectionName: 'transactions',
         docId: transactionId,
-        data: updatedTransaction
-      }
+        data: updatedTransaction,
+      },
     ];
 
     if (txLines.length > 0) {
@@ -162,13 +171,13 @@ export const transactionsLib = {
         ...(lineUpdates.cardFee ? { cardFee: lineUpdates.cardFee } : {}),
         accountId: lineUpdates.accountId,
         signedAmount: lineUpdates.signedAmount,
-        currency: lineUpdates.currency
+        currency: lineUpdates.currency,
       };
       operations.push({
         type: 'set',
         collectionName: 'ledgerLines',
         docId: firstLine.id,
-        data: updatedLine
+        data: updatedLine,
       });
     }
 
@@ -182,8 +191,8 @@ export const transactionsLib = {
         auditUser,
         'transaction_updated',
         `${auditUser.displayName} updated transaction: ${desc}`,
-        { transactionId, type: updatedTransaction.type }
+        { transactionId, type: updatedTransaction.type },
       );
     }
-  }
+  },
 };

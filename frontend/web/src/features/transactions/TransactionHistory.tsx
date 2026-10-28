@@ -30,7 +30,7 @@ import {
   useVoidTransactionMutation,
   useCycles,
   useActiveCycle,
-  useHouseholdBaseCurrency
+  useHouseholdBaseCurrency,
 } from '@/hooks/useFinance';
 import { useAppContext } from '@/hooks/useAppContext';
 import { usePrivacyMask } from '@/hooks/usePrivacyMask';
@@ -45,20 +45,45 @@ export function TransactionHistory() {
   const { householdId } = useAppContext();
   const baseCurrency = useHouseholdBaseCurrency();
   const { maskDigits } = usePrivacyMask();
-  
+
   // Filter States
-  const { editingTx, loadMore, resetPage, searchTerm, selectedAccount, selectedCategory, selectedCycleId, setEditingTx, setSearchTerm, setSelectedAccount, setSelectedCategory, setSelectedCycleId, visibleCount } = useTransactionHistoryUi();
+  const {
+    editingTx,
+    loadMore,
+    resetPage,
+    searchTerm,
+    selectedAccount,
+    selectedCategory,
+    selectedCycleId,
+    setEditingTx,
+    setSearchTerm,
+    setSelectedAccount,
+    setSelectedCategory,
+    setSelectedCycleId,
+    visibleCount,
+  } = useTransactionHistoryUi();
   const selectedType = searchParams.get('type') ?? 'all';
 
-  const handleSearch = (value: string) => { setSearchTerm(value); resetPage(); };
-  const handleCategoryChange = (value: string) => { setSelectedCategory(value); resetPage(); };
-  const handleAccountChange = (value: string) => { setSelectedAccount(value); resetPage(); };
+  const handleSearch = (value: string) => {
+    setSearchTerm(value);
+    resetPage();
+  };
+  const handleCategoryChange = (value: string) => {
+    setSelectedCategory(value);
+    resetPage();
+  };
+  const handleAccountChange = (value: string) => {
+    setSelectedAccount(value);
+    resetPage();
+  };
   const handleTypeChange = (value: string) => {
     setSearchParams(value === 'all' ? {} : { type: value });
     resetPage();
   };
-  const handleCycleChange = (value: string) => { setSelectedCycleId(value); resetPage(); };
-
+  const handleCycleChange = (value: string) => {
+    setSelectedCycleId(value);
+    resetPage();
+  };
 
   // Queries & Mutations
   const { data: accounts = [], isLoading: accountsLoading } = useAccounts(householdId);
@@ -90,10 +115,10 @@ export function TransactionHistory() {
   };
 
   // Filtering Logic
-  const filteredTxs = transactions.filter(tx => {
+  const filteredTxs = transactions.filter((tx) => {
     // 1. Text Search
     const searchMatch = (tx.description || '').toLowerCase().includes(searchTerm.toLowerCase());
-    
+
     // 2. Category Filter
     let catMatch = true;
     if (selectedCategory !== 'all') {
@@ -103,8 +128,8 @@ export function TransactionHistory() {
     // 3. Account Filter
     let accMatch = true;
     if (selectedAccount !== 'all') {
-      const txLines = ledgerLines.filter(l => l.transactionId === tx.id);
-      accMatch = txLines.some(l => l.accountId === selectedAccount);
+      const txLines = ledgerLines.filter((l) => l.transactionId === tx.id);
+      accMatch = txLines.some((l) => l.accountId === selectedAccount);
     }
 
     // 4. Type Filter
@@ -148,7 +173,7 @@ export function TransactionHistory() {
           <TextField
             placeholder="Search description..."
             value={searchTerm}
-            onChange={e => handleSearch(e.target.value)}
+            onChange={(e) => handleSearch(e.target.value)}
             fullWidth
             slotProps={{
               input: {
@@ -173,38 +198,66 @@ export function TransactionHistory() {
           >
             <FormControl fullWidth>
               <InputLabel id="history-cycle-label">Budget Cycle</InputLabel>
-              <Select labelId="history-cycle-label" value={selectedCycleId} label="Budget Cycle" onChange={e => handleCycleChange(e.target.value)}>
+              <Select
+                labelId="history-cycle-label"
+                value={selectedCycleId}
+                label="Budget Cycle"
+                onChange={(e) => handleCycleChange(e.target.value)}
+              >
                 <MenuItem value="all">All Cycles</MenuItem>
                 <MenuItem value="active">Active Cycle</MenuItem>
-                {cycles.filter(c => c.status !== 'open').map(c => (
-                  <MenuItem key={c.id} value={c.id}>{c.name} ({c.status})</MenuItem>
-                ))}
+                {cycles
+                  .filter((c) => c.status !== 'open')
+                  .map((c) => (
+                    <MenuItem key={c.id} value={c.id}>
+                      {c.name} ({c.status})
+                    </MenuItem>
+                  ))}
               </Select>
             </FormControl>
 
             <FormControl fullWidth>
               <InputLabel id="history-account-label">Account</InputLabel>
-              <Select labelId="history-account-label" value={selectedAccount} label="Account" onChange={e => handleAccountChange(e.target.value)}>
+              <Select
+                labelId="history-account-label"
+                value={selectedAccount}
+                label="Account"
+                onChange={(e) => handleAccountChange(e.target.value)}
+              >
                 <MenuItem value="all">All Accounts</MenuItem>
-                {accounts.map(a => (
-                  <MenuItem key={a.id} value={a.id}>{a.name}</MenuItem>
+                {accounts.map((a) => (
+                  <MenuItem key={a.id} value={a.id}>
+                    {a.name}
+                  </MenuItem>
                 ))}
               </Select>
             </FormControl>
 
             <FormControl fullWidth>
               <InputLabel id="history-category-label">Category</InputLabel>
-              <Select labelId="history-category-label" value={selectedCategory} label="Category" onChange={e => handleCategoryChange(e.target.value)}>
+              <Select
+                labelId="history-category-label"
+                value={selectedCategory}
+                label="Category"
+                onChange={(e) => handleCategoryChange(e.target.value)}
+              >
                 <MenuItem value="all">All Categories</MenuItem>
-                {categories.map(c => (
-                  <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>
+                {categories.map((c) => (
+                  <MenuItem key={c.id} value={c.id}>
+                    {c.name}
+                  </MenuItem>
                 ))}
               </Select>
             </FormControl>
 
             <FormControl fullWidth>
               <InputLabel id="history-type-label">Type</InputLabel>
-              <Select labelId="history-type-label" value={selectedType} label="Type" onChange={e => handleTypeChange(e.target.value)}>
+              <Select
+                labelId="history-type-label"
+                value={selectedType}
+                label="Type"
+                onChange={(e) => handleTypeChange(e.target.value)}
+              >
                 <MenuItem value="all">All Types</MenuItem>
                 <MenuItem value="expense">Expense</MenuItem>
                 <MenuItem value="income">Income</MenuItem>
@@ -216,15 +269,24 @@ export function TransactionHistory() {
         </Stack>
 
         {/* Table Container */}
-        <TableContainer component={Card} sx={{ border: 0, boxShadow: 'none', overflow: 'hidden', '&:hover': { transform: 'none', boxShadow: 'none' } }}>
+        <TableContainer
+          component={Card}
+          sx={{ border: 0, boxShadow: 'none', overflow: 'hidden', '&:hover': { transform: 'none', boxShadow: 'none' } }}
+        >
           <Table sx={{ tableLayout: { xs: 'fixed', md: 'auto' } }}>
             <TableHead>
               <TableRow>
-                <TableCell align="center" sx={{ width: 64, py: 1.75 }}>Type</TableCell>
+                <TableCell align="center" sx={{ width: 64, py: 1.75 }}>
+                  Type
+                </TableCell>
                 <TableCell sx={{ py: 1.75 }}>Transaction</TableCell>
                 <TableCell sx={{ py: 1.75, display: { xs: 'none', md: 'table-cell' } }}>Account Info</TableCell>
-                <TableCell align="right" sx={{ width: { xs: 120, sm: 160 }, py: 1.75 }}>Amount</TableCell>
-                <TableCell align="center" sx={{ width: { xs: 92, sm: 112 }, py: 1.75 }}>Actions</TableCell>
+                <TableCell align="right" sx={{ width: { xs: 120, sm: 160 }, py: 1.75 }}>
+                  Amount
+                </TableCell>
+                <TableCell align="center" sx={{ width: { xs: 92, sm: 112 }, py: 1.75 }}>
+                  Actions
+                </TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -239,7 +301,21 @@ export function TransactionHistory() {
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredTxs.slice(0, visibleCount).map((transaction) => <TransactionHistoryRow key={transaction.id} transaction={transaction} accounts={accounts} categories={categories} ledgerLines={ledgerLines} baseCurrency={baseCurrency} maskDigits={maskDigits} onEdit={setEditingTx} onVoid={handleVoid} />)
+                filteredTxs
+                  .slice(0, visibleCount)
+                  .map((transaction) => (
+                    <TransactionHistoryRow
+                      key={transaction.id}
+                      transaction={transaction}
+                      accounts={accounts}
+                      categories={categories}
+                      ledgerLines={ledgerLines}
+                      baseCurrency={baseCurrency}
+                      maskDigits={maskDigits}
+                      onEdit={setEditingTx}
+                      onVoid={handleVoid}
+                    />
+                  ))
               )}
             </TableBody>
           </Table>
@@ -258,11 +334,7 @@ export function TransactionHistory() {
       </Stack>
 
       {/* Shared Edit Dialog */}
-      <EditTransactionDialog
-        open={Boolean(editingTx)}
-        transaction={editingTx}
-        onClose={() => setEditingTx(null)}
-      />
+      <EditTransactionDialog open={Boolean(editingTx)} transaction={editingTx} onClose={() => setEditingTx(null)} />
     </Box>
   );
 }

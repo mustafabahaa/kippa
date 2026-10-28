@@ -19,12 +19,16 @@ export function PendingCategoryPicker({ categories, categoryId, mode, onChange }
   const [search, setSearch] = useState('');
   const frequencyScores = useCategoryFrequency(householdId, mode);
 
-  const sortedCategories = useMemo(() => categories
-    .map((category) => ({ ...category, score: frequencyScores[category.id] ?? 0 }))
-    .sort((a, b) => {
-      if (b.score !== a.score) return b.score - a.score; // score DESC
-      return a.name.localeCompare(b.name); // name ASC tiebreak
-    }), [categories, frequencyScores]);
+  const sortedCategories = useMemo(
+    () =>
+      categories
+        .map((category) => ({ ...category, score: frequencyScores[category.id] ?? 0 }))
+        .sort((a, b) => {
+          if (b.score !== a.score) return b.score - a.score; // score DESC
+          return a.name.localeCompare(b.name); // name ASC tiebreak
+        }),
+    [categories, frequencyScores],
+  );
 
   const selectedCategory = sortedCategories.find((category) => category.id === categoryId) ?? null;
 

@@ -1,15 +1,6 @@
 import { useState } from 'react';
 import { useSnackbar } from 'notistack';
-import {
-  Box,
-  Card,
-  CardContent,
-  Stack,
-  Typography,
-  Button,
-  Switch,
-  Skeleton
-} from '@mui/material';
+import { Box, Card, CardContent, Stack, Typography, Button, Switch, Skeleton } from '@mui/material';
 import { NotificationSettings } from '@kippa/domain';
 import { useNotifications } from '@/notifications/useNotifications';
 import { IosInstallBanner } from '@/notifications/IosInstallBanner';
@@ -25,12 +16,7 @@ interface NotificationSettingsFormProps {
   householdId: string;
 }
 
-export function NotificationSettingsForm({
-  dbSettings,
-  onSave,
-  isSaving,
-  householdId
-}: NotificationSettingsFormProps) {
+export function NotificationSettingsForm({ dbSettings, onSave, isSaving, householdId }: NotificationSettingsFormProps) {
   const { enqueueSnackbar } = useSnackbar();
   const [notifSettings, setNotifSettings] = useState<NotificationSettings>(dbSettings);
   const { status: notifStatus, requestPermission, disable } = useNotifications(householdId);
@@ -105,31 +91,61 @@ export function NotificationSettingsForm({
             hence the explicit button rather than an auto-prompt. */}
         {notifStatus === 'ios-not-installed' && <IosInstallBanner />}
 
-        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'minmax(0, 7fr) minmax(300px, 4fr)' }, gap: 3, alignItems: 'start' }}>
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', lg: 'minmax(0, 7fr) minmax(300px, 4fr)' },
+            gap: 3,
+            alignItems: 'start',
+          }}
+        >
           <Card>
             <CardContent>
               <Stack spacing={2.5}>
-                <CardHeading icon={<NotificationsActiveIcon variant="Bulk" />} title="Alert preferences" subtitle="Only enable the updates that help you act." />
+                <CardHeading
+                  icon={<NotificationsActiveIcon variant="Bulk" />}
+                  title="Alert preferences"
+                  subtitle="Only enable the updates that help you act."
+                />
                 <Stack divider={<Box sx={{ height: '1px', bgcolor: 'divider' }} />}>
                   {preferences.map(({ key, title, description, Icon }) => (
                     <Stack key={key} direction="row" spacing={1.5} alignItems="center" sx={{ py: 1.5 }}>
-                      <Box sx={{ width: 40, height: 40, borderRadius: 2.5, bgcolor: 'action.hover', color: 'primary.main', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <Box
+                        sx={{
+                          width: 40,
+                          height: 40,
+                          borderRadius: 2.5,
+                          bgcolor: 'action.hover',
+                          color: 'primary.main',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0,
+                        }}
+                      >
                         <Icon sx={{ fontSize: 20 }} />
                       </Box>
                       <Box sx={{ flex: 1, minWidth: 0 }}>
                         <Typography sx={{ fontSize: 14, fontWeight: 700, color: 'text.primary' }}>{title}</Typography>
-                        <Typography sx={{ mt: 0.25, fontSize: 12, lineHeight: 1.5, color: 'text.secondary' }}>{description}</Typography>
+                        <Typography sx={{ mt: 0.25, fontSize: 12, lineHeight: 1.5, color: 'text.secondary' }}>
+                          {description}
+                        </Typography>
                       </Box>
                       <Switch
                         checked={notifSettings[key]}
-                        onChange={event => setNotifSettings({ ...notifSettings, [key]: event.target.checked })}
+                        onChange={(event) => setNotifSettings({ ...notifSettings, [key]: event.target.checked })}
                         slotProps={{ input: { 'aria-label': title } }}
                       />
                     </Stack>
                   ))}
                 </Stack>
                 <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-                  <Button variant="contained" onClick={handleSaveNotifications} loading={isSaving} sx={{ minWidth: { xs: '100%', sm: 190 } }}>
+                  <Button
+                    variant="contained"
+                    onClick={handleSaveNotifications}
+                    loading={isSaving}
+                    sx={{ minWidth: { xs: '100%', sm: 190 } }}
+                  >
                     Save preferences
                   </Button>
                 </Box>
@@ -141,12 +157,25 @@ export function NotificationSettingsForm({
             <CardContent>
               <Stack spacing={2.5}>
                 <Stack direction="row" spacing={1.5} alignItems="center">
-                  <Box sx={{ width: 44, height: 44, borderRadius: 3, bgcolor: 'action.hover', color: notifStatus === 'enabled' ? 'success.main' : 'primary.main', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Box
+                    sx={{
+                      width: 44,
+                      height: 44,
+                      borderRadius: 3,
+                      bgcolor: 'action.hover',
+                      color: notifStatus === 'enabled' ? 'success.main' : 'primary.main',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
                     <NotificationsActiveIcon />
                   </Box>
                   <Box>
                     <Typography sx={{ fontSize: 16, fontWeight: 800, color: 'text.primary' }}>Push delivery</Typography>
-                    <Typography sx={{ fontSize: 12, color: 'text.secondary' }}>Device-level notification status</Typography>
+                    <Typography sx={{ fontSize: 12, color: 'text.secondary' }}>
+                      Device-level notification status
+                    </Typography>
                   </Box>
                 </Stack>
 
@@ -160,7 +189,13 @@ export function NotificationSettingsForm({
                   <>
                     <Box sx={{ p: 2, borderRadius: 3, bgcolor: 'surfaceContainerLow' }}>
                       <Typography sx={{ fontSize: 14, fontWeight: 700, color: 'text.primary' }}>
-                        {notifStatus === 'enabled' ? 'Notifications are enabled' : notifStatus === 'permission-denied' ? 'Notifications are blocked' : notifStatus === 'unsupported' ? 'Push is unavailable here' : 'Notifications are not enabled'}
+                        {notifStatus === 'enabled'
+                          ? 'Notifications are enabled'
+                          : notifStatus === 'permission-denied'
+                            ? 'Notifications are blocked'
+                            : notifStatus === 'unsupported'
+                              ? 'Push is unavailable here'
+                              : 'Notifications are not enabled'}
                       </Typography>
                       <Typography sx={{ mt: 0.5, fontSize: 12, lineHeight: 1.55, color: 'text.secondary' }}>
                         {notifStatus === 'enabled'

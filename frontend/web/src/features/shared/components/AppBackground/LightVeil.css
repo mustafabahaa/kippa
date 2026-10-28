@@ -42,20 +42,34 @@
 }
 
 @keyframes lightveil-drift-a {
-  0%   { transform: translate(0, 0) scale(1); }
-  100% { transform: translate(6vw, 4vh) scale(1.1); }
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+  100% {
+    transform: translate(6vw, 4vh) scale(1.1);
+  }
 }
 
 @keyframes lightveil-drift-b {
-  0%   { transform: translate(0, 0) scale(1); }
-  100% { transform: translate(-5vw, -4vh) scale(1.1); }
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+  100% {
+    transform: translate(-5vw, -4vh) scale(1.1);
+  }
 }
 
 @keyframes lightveil-drift-c {
-  0%   { transform: translate(0, 0) scale(1); }
-  100% { transform: translate(8vw, -6vh) scale(1.15); }
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+  100% {
+    transform: translate(8vw, -6vh) scale(1.15);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .lightveil__blob { animation: none; }
+  .lightveil__blob {
+    animation: none;
+  }
 }

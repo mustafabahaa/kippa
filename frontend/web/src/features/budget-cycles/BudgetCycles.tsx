@@ -1,15 +1,6 @@
 import { useState, useMemo, useRef } from 'react';
 import { useSnackbar } from 'notistack';
-import {
-  Box,
-  Container,
-  Stack,
-  Typography,
-  Button,
-  Grid,
-  Skeleton,
-  IconButton,
-} from '@mui/material';
+import { Box, Container, Stack, Typography, Button, Grid, Skeleton, IconButton } from '@mui/material';
 import { EmptyLayout } from '@/features/shared/components/EmptyLayout';
 import { AddIcon } from '@/components/AppIcon';
 import { HistoryIcon } from '@/components/AppIcon';
@@ -25,7 +16,7 @@ import {
   useBudgetAllocations,
   useCreateCycleMutation,
   useUpdateCycleStatusMutation,
-  useHouseholdBaseCurrency
+  useHouseholdBaseCurrency,
 } from '@/hooks/useFinance';
 import { CycleAnalytics } from '@/features/budget-cycles/CycleAnalytics';
 import { useAppContext } from '@/hooks/useAppContext';
@@ -59,10 +50,13 @@ export function BudgetCycles() {
   const { data: categories = [], isLoading: categoriesLoading } = useCategories(householdId);
   const { data: cycles = [], isLoading: cyclesLoading } = useCycles(householdId);
 
-  const activeCycle = cycles.find(c => c.status === 'open') || null;
+  const activeCycle = cycles.find((c) => c.status === 'open') || null;
 
   // Fetch allocations for whichever cycle is being edited
-  const { data: dbAllocations = [], isLoading: allocsLoading } = useBudgetAllocations(householdId, editingCycleId ?? undefined);
+  const { data: dbAllocations = [], isLoading: allocsLoading } = useBudgetAllocations(
+    householdId,
+    editingCycleId ?? undefined,
+  );
 
   // Per-cycle analytics (planned/spent/saved) + transaction counts for history cards.
   // Mirrors the data already computed in CycleAnalytics so no new queries beyond what
@@ -72,13 +66,21 @@ export function BudgetCycles() {
   const { data: allAllocations = [] } = useAllBudgetAllocations(householdId);
   const { data: allExpectedIncomes = [] } = useAllExpectedIncomes(householdId);
   const { data: accounts = [] } = useAccounts(householdId);
-  const foreignCodes = Array.from(new Set(accounts.map(a => a.currency).filter(c => c !== baseCurrency)));
+  const foreignCodes = Array.from(new Set(accounts.map((a) => a.currency).filter((c) => c !== baseCurrency)));
   const { data: displayRates = {} } = useDisplayRates(baseCurrency, foreignCodes);
 
   const cycleStatsById = useMemo(() => {
     const map = new Map<string, CycleHistoryStats>();
     if (cycles.length === 0) return map;
-    const cycleData = calculateCycleData(cycles, transactions, ledgerLines, allAllocations, allExpectedIncomes, baseCurrency, displayRates);
+    const cycleData = calculateCycleData(
+      cycles,
+      transactions,
+      ledgerLines,
+      allAllocations,
+      allExpectedIncomes,
+      baseCurrency,
+      displayRates,
+    );
     cycleData.forEach((datum) => {
       map.set(datum.id, {
         baseCurrency,
@@ -90,7 +92,7 @@ export function BudgetCycles() {
   }, [cycles, transactions, ledgerLines, allAllocations, allExpectedIncomes, displayRates, baseCurrency]);
 
   // The cycle object being edited
-  const editingCycle = editingCycleId ? cycles.find(c => c.id === editingCycleId) : null;
+  const editingCycle = editingCycleId ? cycles.find((c) => c.id === editingCycleId) : null;
 
   // Mutations
   const createCycleMutation = useCreateCycleMutation();
@@ -99,7 +101,7 @@ export function BudgetCycles() {
   // Sorted cycles: planned first, then closed by start date desc
   const sortedHistory = useMemo(() => {
     return [...cycles]
-      .filter(c => c.status !== 'open')
+      .filter((c) => c.status !== 'open')
       .sort((a, b) => {
         if (a.status === 'planned' && b.status !== 'planned') return -1;
         if (b.status === 'planned' && a.status !== 'planned') return 1;
@@ -115,8 +117,8 @@ export function BudgetCycles() {
           cycleId: activeCycle.id,
           status: 'closed',
           extra: {
-            endDate: new Date().toISOString().split('T')[0]
-          }
+            endDate: new Date().toISOString().split('T')[0],
+          },
         });
       }
 
@@ -127,7 +129,7 @@ export function BudgetCycles() {
           startDate: values.startDate,
           endDate: values.endDate || null,
           status: values.status,
-        }
+        },
       });
 
       setOpenCreateDialog(false);
@@ -142,7 +144,12 @@ export function BudgetCycles() {
   const handleCloseCycle = async () => {
     if (!activeCycle) return false;
     try {
-      await updateCycleStatusMutation.mutateAsync({ householdId, cycleId: activeCycle.id, status: 'closed', extra: { endDate: new Date().toISOString().split('T')[0], closedAt: new Date().toISOString() } });
+      await updateCycleStatusMutation.mutateAsync({
+        householdId,
+        cycleId: activeCycle.id,
+        status: 'closed',
+        extra: { endDate: new Date().toISOString().split('T')[0], closedAt: new Date().toISOString() },
+      });
       setOpenCloseDialog(false);
       return true;
     } catch (err: any) {
@@ -152,7 +159,7 @@ export function BudgetCycles() {
   };
 
   const handleToggleBudgetForCycle = (cycleId: string) => {
-    setEditingCycleId(prev => prev === cycleId ? null : cycleId);
+    setEditingCycleId((prev) => (prev === cycleId ? null : cycleId));
   };
 
   const isLoading = categoriesLoading || cyclesLoading;
@@ -180,10 +187,7 @@ export function BudgetCycles() {
         {/* Page Header */}
         <PageHeader
           title="Budget Cycles"
-          subtitle={activeCycle
-            ? `Active: ${activeCycle.name}`
-            : 'No active cycle'
-          }
+          subtitle={activeCycle ? `Active: ${activeCycle.name}` : 'No active cycle'}
           action={
             <IconButton
               onClick={() => setOpenCreateDialog(true)}
@@ -202,7 +206,9 @@ export function BudgetCycles() {
         />
 
         <Grid container spacing={3} alignItems="flex-start">
-          <Grid size={{ xs: 12, lg: 8 }}><CycleAnalytics /></Grid>
+          <Grid size={{ xs: 12, lg: 8 }}>
+            <CycleAnalytics />
+          </Grid>
           <Grid size={{ xs: 12, lg: 4 }}>
             {activeCycle ? (
               <ActiveCycleCard
@@ -216,13 +222,31 @@ export function BudgetCycles() {
               <EmptyLayout
                 title="No active budget cycle"
                 description="Create a new cycle to start allocating budgets and tracking expenses."
-                action={<Button variant="contained" startIcon={<AddIcon />} onClick={() => setOpenCreateDialog(true)}>New Cycle</Button>}
+                action={
+                  <Button variant="contained" startIcon={<AddIcon />} onClick={() => setOpenCreateDialog(true)}>
+                    New Cycle
+                  </Button>
+                }
               />
             )}
           </Grid>
         </Grid>
 
-        <BudgetAllocationDialog allocations={dbAllocations} categories={categories} cycle={editingCycle} cycles={cycles} currency={baseCurrency} householdId={householdId} isLoading={allocsLoading} isSaving={isSavingBudget} saveRef={saveBudgetRef} totalBudget={totalBudget} onClose={() => setEditingCycleId(null)} onSavingChange={setIsSavingBudget} onTotalChange={setTotalBudget} />
+        <BudgetAllocationDialog
+          allocations={dbAllocations}
+          categories={categories}
+          cycle={editingCycle}
+          cycles={cycles}
+          currency={baseCurrency}
+          householdId={householdId}
+          isLoading={allocsLoading}
+          isSaving={isSavingBudget}
+          saveRef={saveBudgetRef}
+          totalBudget={totalBudget}
+          onClose={() => setEditingCycleId(null)}
+          onSavingChange={setIsSavingBudget}
+          onTotalChange={setTotalBudget}
+        />
 
         {/* ── Cycle History Timeline ── */}
         <Box>
@@ -235,22 +259,23 @@ export function BudgetCycles() {
 
           {sortedHistory.length > 0 ? (
             <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'repeat(2, minmax(0, 1fr))' }, gap: 2 }}>
-              {sortedHistory.map(cycle => (
+              {sortedHistory.map((cycle) => (
                 <CycleHistoryCard
                   key={cycle.id}
                   cycle={cycle}
                   isEditing={editingCycleId === cycle.id}
                   onToggleBudget={() => handleToggleBudgetForCycle(cycle.id)}
-                  onViewReport={cycle.status === 'closed' ? () => navigate(`/cycles/report?cycle=${encodeURIComponent(cycle.id)}`) : undefined}
+                  onViewReport={
+                    cycle.status === 'closed'
+                      ? () => navigate(`/cycles/report?cycle=${encodeURIComponent(cycle.id)}`)
+                      : undefined
+                  }
                   stats={cycleStatsById.get(cycle.id)}
                 />
               ))}
             </Box>
           ) : (
-            <EmptyLayout
-              title="No previous cycles found"
-              description="Closed budget cycles will be listed here."
-            />
+            <EmptyLayout title="No previous cycles found" description="Closed budget cycles will be listed here." />
           )}
         </Box>
       </Stack>

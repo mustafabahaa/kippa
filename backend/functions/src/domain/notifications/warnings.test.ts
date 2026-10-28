@@ -54,77 +54,54 @@ describe('checkPercentageThresholds', () => {
 
 describe('checkVelocitySpike', () => {
   it('returns true when recent 7-day avg is >2x earlier avg', () => {
-    const earlier = makeEntries(
-      Array.from({ length: 13 }, (_, i) => ({ amount: 100, day: i + 1 })),
-    );
-    const recent = makeEntries(
-      Array.from({ length: 7 }, (_, i) => ({ amount: 300, day: 14 + i })),
-    );
+    const earlier = makeEntries(Array.from({ length: 13 }, (_, i) => ({ amount: 100, day: i + 1 })));
+    const recent = makeEntries(Array.from({ length: 7 }, (_, i) => ({ amount: 300, day: 14 + i })));
     expect(checkVelocitySpike(earlier, recent, 3000)).toBe(true);
   });
 
   it('returns false when recent avg is <2x earlier avg', () => {
-    const earlier = makeEntries(
-      Array.from({ length: 13 }, (_, i) => ({ amount: 100, day: i + 1 })),
-    );
-    const recent = makeEntries(
-      Array.from({ length: 7 }, (_, i) => ({ amount: 150, day: 14 + i })),
-    );
+    const earlier = makeEntries(Array.from({ length: 13 }, (_, i) => ({ amount: 100, day: i + 1 })));
+    const recent = makeEntries(Array.from({ length: 7 }, (_, i) => ({ amount: 150, day: 14 + i })));
     expect(checkVelocitySpike(earlier, recent, 3000)).toBe(false);
   });
 
   it('returns false when earlier avg is zero (no baseline)', () => {
     const earlier: SpendingEntry[] = [];
-    const recent = makeEntries(
-      Array.from({ length: 7 }, (_, i) => ({ amount: 200, day: 14 + i })),
-    );
+    const recent = makeEntries(Array.from({ length: 7 }, (_, i) => ({ amount: 200, day: 14 + i })));
     expect(checkVelocitySpike(earlier, recent, 3000)).toBe(false);
   });
 
   it('returns false when recent daily avg is below minimum absolute threshold', () => {
-    const earlier = makeEntries(
-      Array.from({ length: 13 }, (_, i) => ({ amount: 10, day: i + 1 })),
-    );
-    const recent = makeEntries(
-      Array.from({ length: 7 }, (_, i) => ({ amount: 50, day: 14 + i })),
-    );
+    const earlier = makeEntries(Array.from({ length: 13 }, (_, i) => ({ amount: 10, day: i + 1 })));
+    const recent = makeEntries(Array.from({ length: 7 }, (_, i) => ({ amount: 50, day: 14 + i })));
     // Budget 30,000, planned/30 = 1000/day. Recent avg = 50/day (< threshold).
     expect(checkVelocitySpike(earlier, recent, 30000)).toBe(false);
   });
 
   it('returns false when not enough recent data (fewer than 2 days)', () => {
-    const earlier = makeEntries(
-      Array.from({ length: 13 }, (_, i) => ({ amount: 100, day: i + 1 })),
-    );
+    const earlier = makeEntries(Array.from({ length: 13 }, (_, i) => ({ amount: 100, day: i + 1 })));
     const recent = makeEntries([{ amount: 500, day: 14 }]);
     expect(checkVelocitySpike(earlier, recent, 3000)).toBe(false);
   });
 
   it('returns false when not enough earlier data (fewer than 3 days)', () => {
-    const earlier = makeEntries([{ amount: 100, day: 1 }, { amount: 100, day: 2 }]);
-    const recent = makeEntries(
-      Array.from({ length: 7 }, (_, i) => ({ amount: 300, day: 3 + i })),
-    );
+    const earlier = makeEntries([
+      { amount: 100, day: 1 },
+      { amount: 100, day: 2 },
+    ]);
+    const recent = makeEntries(Array.from({ length: 7 }, (_, i) => ({ amount: 300, day: 3 + i })));
     expect(checkVelocitySpike(earlier, recent, 3000)).toBe(false);
   });
 
   it('returns false when recent spending is zero', () => {
-    const earlier = makeEntries(
-      Array.from({ length: 13 }, (_, i) => ({ amount: 100, day: i + 1 })),
-    );
-    const recent = makeEntries(
-      Array.from({ length: 7 }, (_, i) => ({ amount: 0, day: 14 + i })),
-    );
+    const earlier = makeEntries(Array.from({ length: 13 }, (_, i) => ({ amount: 100, day: i + 1 })));
+    const recent = makeEntries(Array.from({ length: 7 }, (_, i) => ({ amount: 0, day: 14 + i })));
     expect(checkVelocitySpike(earlier, recent, 3000)).toBe(false);
   });
 
   it('returns false when planned is zero', () => {
-    const earlier = makeEntries(
-      Array.from({ length: 13 }, (_, i) => ({ amount: 100, day: i + 1 })),
-    );
-    const recent = makeEntries(
-      Array.from({ length: 7 }, (_, i) => ({ amount: 300, day: 14 + i })),
-    );
+    const earlier = makeEntries(Array.from({ length: 13 }, (_, i) => ({ amount: 100, day: i + 1 })));
+    const recent = makeEntries(Array.from({ length: 7 }, (_, i) => ({ amount: 300, day: 14 + i })));
     expect(checkVelocitySpike(earlier, recent, 0)).toBe(false);
   });
 });
@@ -242,7 +219,11 @@ describe('buildCategoryWarningNotification', () => {
 
 describe('sumAmounts', () => {
   it('sums all entry amounts', () => {
-    const entries = makeEntries([{ amount: 100, day: 1 }, { amount: 200, day: 2 }, { amount: 50, day: 3 }]);
+    const entries = makeEntries([
+      { amount: 100, day: 1 },
+      { amount: 200, day: 2 },
+      { amount: 50, day: 3 },
+    ]);
     expect(sumAmounts(entries)).toBe(350);
   });
   it('returns 0 for empty array', () => {
@@ -252,7 +233,11 @@ describe('sumAmounts', () => {
 
 describe('countUniqueDays', () => {
   it('counts unique dates', () => {
-    const entries = makeEntries([{ amount: 100, day: 1 }, { amount: 200, day: 1 }, { amount: 50, day: 2 }]);
+    const entries = makeEntries([
+      { amount: 100, day: 1 },
+      { amount: 200, day: 1 },
+      { amount: 50, day: 2 },
+    ]);
     expect(countUniqueDays(entries)).toBe(2);
   });
   it('returns 0 for empty array', () => {

@@ -1,5 +1,20 @@
-import { Account, FinanceTransaction, LedgerLine, BudgetCycle, BudgetAllocation, ExpectedIncome, Category, CurrencyCode, Loan } from '@kippa/domain';
-import { calculateAccountBalances, convertToBaseCurrency, getPostedLedgerLines, getPostedTransactions } from './financeCalculations';
+import {
+  Account,
+  FinanceTransaction,
+  LedgerLine,
+  BudgetCycle,
+  BudgetAllocation,
+  ExpectedIncome,
+  Category,
+  CurrencyCode,
+  Loan,
+} from '@kippa/domain';
+import {
+  calculateAccountBalances,
+  convertToBaseCurrency,
+  getPostedLedgerLines,
+  getPostedTransactions,
+} from './financeCalculations';
 import { loanHasPaymentDueInCycle } from './loanCalculations';
 
 export interface DashboardData {
@@ -61,14 +76,14 @@ export function computeDashboard(
   // 2. Account balances
   const balancesMap = calculateAccountBalances(accounts, transactions, ledgerLines);
 
-  const accountBalances = accounts.map(acc => ({
+  const accountBalances = accounts.map((acc) => ({
     accountId: acc.id,
     balance: balancesMap[acc.id] || 0,
   }));
 
   // 3. Total base-currency equivalent
   let totalBaseEquivalent = 0;
-  accounts.forEach(acc => {
+  accounts.forEach((acc) => {
     const bal = balancesMap[acc.id] || 0;
     const rate = acc.currency === baseCurrency ? 1 : (displayRates[acc.currency] ?? 1);
     totalBaseEquivalent += bal * rate;
@@ -78,16 +93,21 @@ export function computeDashboard(
   let cycleProgress: DashboardData['cycleProgress'] = null;
   if (activeCycle) {
     const start = new Date(activeCycle.startDate);
-    const end = activeCycle.endDate ? new Date(activeCycle.endDate) : new Date(start.getTime() + 30 * 24 * 60 * 60 * 1000);
+    const end = activeCycle.endDate
+      ? new Date(activeCycle.endDate)
+      : new Date(start.getTime() + 30 * 24 * 60 * 60 * 1000);
     const today = new Date();
-    
+
     // Set to midnight for date comparison
     start.setHours(0, 0, 0, 0);
     end.setHours(0, 0, 0, 0);
     today.setHours(0, 0, 0, 0);
 
     const totalDays = Math.max(1, Math.round((end.getTime() - start.getTime()) / (24 * 60 * 60 * 1000)) + 1);
-    const elapsedDays = Math.max(1, Math.min(totalDays, Math.round((today.getTime() - start.getTime()) / (24 * 60 * 60 * 1000)) + 1));
+    const elapsedDays = Math.max(
+      1,
+      Math.min(totalDays, Math.round((today.getTime() - start.getTime()) / (24 * 60 * 60 * 1000)) + 1),
+    );
     const remainingDays = Math.max(0, totalDays - elapsedDays);
     const ratio = elapsedDays / totalDays;
 
@@ -101,25 +121,23 @@ export function computeDashboard(
 
   // 5. Filter transactions belonging to current cycle
   const cycleTxIds = new Set(
-    activeTxs
-      .filter(t => activeCycle ? t.budgetCycleId === activeCycle.id : false)
-      .map(t => t.id)
+    activeTxs.filter((t) => (activeCycle ? t.budgetCycleId === activeCycle.id : false)).map((t) => t.id),
   );
-  const cycleLines = activeLines.filter(line => cycleTxIds.has(line.transactionId));
-  const cycleTxsList = activeTxs.filter(t => activeCycle ? t.budgetCycleId === activeCycle.id : false);
+  const cycleLines = activeLines.filter((line) => cycleTxIds.has(line.transactionId));
+  const cycleTxsList = activeTxs.filter((t) => (activeCycle ? t.budgetCycleId === activeCycle.id : false));
 
   // 6. Category Calculations & Burn Rates
   // Sum up expenses per category in the current cycle
   const catSpent: Record<string, number> = {};
-  categories.forEach(cat => {
+  categories.forEach((cat) => {
     catSpent[cat.id] = 0;
   });
 
-  cycleTxsList.forEach(tx => {
+  cycleTxsList.forEach((tx) => {
     if (tx.type === 'expense' && tx.categoryId && !tx.loanId) {
       // Find the ledger line for this expense
-      const linesForTx = cycleLines.filter(l => l.transactionId === tx.id);
-      linesForTx.forEach(l => {
+      const linesForTx = cycleLines.filter((l) => l.transactionId === tx.id);
+      linesForTx.forEach((l) => {
         // Expense is negative, sum the absolute base-currency equivalent value
         const amountBase = Math.abs(convertToBaseCurrency(l.signedAmount, l.currency, baseCurrency, displayRates));
         catSpent[tx.categoryId!] = (catSpent[tx.categoryId!] || 0) + amountBase;
@@ -127,13 +145,13 @@ export function computeDashboard(
     }
   });
 
-  const categoryStatus: DashboardData['categoryStatus'] = allocations.map(alloc => {
-    const cat = categories.find(c => c.id === alloc.categoryId);
+  const categoryStatus: DashboardData['categoryStatus'] = allocations.map((alloc) => {
+    const cat = categories.find((c) => c.id === alloc.categoryId);
     const spent = catSpent[alloc.categoryId] || 0;
     const ratio = alloc.plannedAmount > 0 ? spent / alloc.plannedAmount : 0;
     const progRatio = cycleProgress ? cycleProgress.ratio : 0.5;
 
-    const tolerance = 0.10;
+    const tolerance = 0.1;
     let status: 'on-track' | 'warning' | 'over' = 'on-track';
 
     if (ratio > progRatio + tolerance) {
@@ -152,57 +170,91 @@ export function computeDashboard(
     };
   });
 
-  const loanCommitments = activeCycle ? loans
-    .filter(loan => loanHasPaymentDueInCycle(loan, activeCycle.startDate, activeCycle.endDate))
-    .map(loan => {
-      const paid = cycleTxsList.filter(transaction => transaction.type === 'expense' && transaction.loanId === loan.id).reduce((sum, transaction) => {
-        return sum + cycleLines.filter(line => line.transactionId === transaction.id && line.signedAmount < 0).reduce((lineSum, line) => lineSum + Math.abs(convertToBaseCurrency(line.signedAmount, line.currency, baseCurrency, displayRates)), 0);
-      }, 0);
-      return { loanId: loan.id, loanName: loan.name, planned: convertToBaseCurrency(loan.installmentAmount, loan.currency, baseCurrency, displayRates), paid, currency: loan.currency };
-    }) : [];
+  const loanCommitments = activeCycle
+    ? loans
+        .filter((loan) => loanHasPaymentDueInCycle(loan, activeCycle.startDate, activeCycle.endDate))
+        .map((loan) => {
+          const paid = cycleTxsList
+            .filter((transaction) => transaction.type === 'expense' && transaction.loanId === loan.id)
+            .reduce((sum, transaction) => {
+              return (
+                sum +
+                cycleLines
+                  .filter((line) => line.transactionId === transaction.id && line.signedAmount < 0)
+                  .reduce(
+                    (lineSum, line) =>
+                      lineSum +
+                      Math.abs(convertToBaseCurrency(line.signedAmount, line.currency, baseCurrency, displayRates)),
+                    0,
+                  )
+              );
+            }, 0);
+          return {
+            loanId: loan.id,
+            loanName: loan.name,
+            planned: convertToBaseCurrency(loan.installmentAmount, loan.currency, baseCurrency, displayRates),
+            paid,
+            currency: loan.currency,
+          };
+        })
+    : [];
 
   // 7. Spending totals. Loan commitments count in the cycle plan and cash
   // outflow, but remain outside category performance.
-  const actualSpending = cycleTxsList.filter(transaction => transaction.type === 'expense').reduce((sum, transaction) => sum + cycleLines.filter(line => line.transactionId === transaction.id && line.signedAmount < 0).reduce((lineSum, line) => lineSum + Math.abs(convertToBaseCurrency(line.signedAmount, line.currency, baseCurrency, displayRates)), 0), 0);
-  const plannedBudget = allocations.reduce((acc, curr) => acc + curr.plannedAmount, 0) + loanCommitments.reduce((sum, commitment) => sum + commitment.planned, 0);
+  const actualSpending = cycleTxsList
+    .filter((transaction) => transaction.type === 'expense')
+    .reduce(
+      (sum, transaction) =>
+        sum +
+        cycleLines
+          .filter((line) => line.transactionId === transaction.id && line.signedAmount < 0)
+          .reduce(
+            (lineSum, line) =>
+              lineSum + Math.abs(convertToBaseCurrency(line.signedAmount, line.currency, baseCurrency, displayRates)),
+            0,
+          ),
+      0,
+    );
+  const plannedBudget =
+    allocations.reduce((acc, curr) => acc + curr.plannedAmount, 0) +
+    loanCommitments.reduce((sum, commitment) => sum + commitment.planned, 0);
   const progRatio = cycleProgress ? cycleProgress.ratio : 1;
 
   // Only project when at least 15% of the cycle has elapsed to avoid wild early extrapolation.
   // Below that threshold, show actual spending as the projection.
   const MIN_PROJECTION_RATIO = 0.15;
-  const projectedSpending = progRatio >= MIN_PROJECTION_RATIO
-    ? actualSpending / progRatio
-    : actualSpending;
+  const projectedSpending = progRatio >= MIN_PROJECTION_RATIO ? actualSpending / progRatio : actualSpending;
 
   // 8. Income totals
   let actualIncome = 0;
-  cycleTxsList.forEach(tx => {
+  cycleTxsList.forEach((tx) => {
     if (tx.type === 'income') {
-      const linesForTx = cycleLines.filter(l => l.transactionId === tx.id);
-      linesForTx.forEach(l => {
+      const linesForTx = cycleLines.filter((l) => l.transactionId === tx.id);
+      linesForTx.forEach((l) => {
         actualIncome += convertToBaseCurrency(l.signedAmount, l.currency, baseCurrency, displayRates);
       });
     }
   });
 
   const expectedIncomeSum = expectedIncomes
-    .filter(i => activeCycle ? i.budgetCycleId === activeCycle.id : false)
+    .filter((i) => (activeCycle ? i.budgetCycleId === activeCycle.id : false))
     .reduce((acc, curr) => {
-      const rate = curr.expectedRateToBaseCurrency || (curr.currency === baseCurrency ? 1 : (displayRates[curr.currency] ?? 1));
+      const rate =
+        curr.expectedRateToBaseCurrency || (curr.currency === baseCurrency ? 1 : (displayRates[curr.currency] ?? 1));
       return acc + curr.amount * rate;
     }, 0);
 
   // 9. Saving goals
   // Default target saving (e.g. 20% of income or allocations to category named 'saving' or 'invest')
   const savingAllocation = allocations
-    .filter(alloc => {
-      const cat = categories.find(c => c.id === alloc.categoryId);
+    .filter((alloc) => {
+      const cat = categories.find((c) => c.id === alloc.categoryId);
       const nameLower = cat?.name.toLowerCase() || '';
       return nameLower.includes('saving') || nameLower.includes('invest');
     })
     .reduce((acc, curr) => acc + curr.plannedAmount, 0);
 
-  const targetSaving = savingAllocation || (expectedIncomeSum * 0.2); // fallback to 20% of expected income
+  const targetSaving = savingAllocation || expectedIncomeSum * 0.2; // fallback to 20% of expected income
   const actualSaving = actualIncome - actualSpending;
   const projectedSaving = (expectedIncomeSum || actualIncome) - projectedSpending;
 
@@ -222,12 +274,14 @@ export function computeDashboard(
   // Essential-ness is a data flag on the category (set in the category editor),
   // not inferred from the display name — renames must never change the math.
   // Let's compute remaining flexible budget
-  const flexibleAllocations = allocations.filter(alloc => {
-    const cat = categories.find(c => c.id === alloc.categoryId);
+  const flexibleAllocations = allocations.filter((alloc) => {
+    const cat = categories.find((c) => c.id === alloc.categoryId);
     if (!cat) return false;
-    return cat.essential !== true && !cat.name.toLowerCase().includes('saving') && !cat.name.toLowerCase().includes('invest');
+    return (
+      cat.essential !== true && !cat.name.toLowerCase().includes('saving') && !cat.name.toLowerCase().includes('invest')
+    );
   });
-  
+
   const flexiblePlanned = flexibleAllocations.reduce((acc, curr) => acc + curr.plannedAmount, 0);
   const flexibleSpent = flexibleAllocations.reduce((acc, curr) => {
     const spent = catSpent[curr.categoryId] || 0;
@@ -238,7 +292,7 @@ export function computeDashboard(
 
   // Cash-Safe: Available base-currency bank + cash + wallet balance (foreign converted)
   let liquidBalance = 0;
-  accounts.forEach(acc => {
+  accounts.forEach((acc) => {
     if (acc.type === 'running' || acc.type === 'cash' || acc.type === 'wallet') {
       const bal = balancesMap[acc.id] || 0;
       const rate = acc.currency === baseCurrency ? 1 : (displayRates[acc.currency] ?? 1);
@@ -246,8 +300,8 @@ export function computeDashboard(
     }
   });
 
-  const essentialAllocations = allocations.filter(alloc => {
-    const cat = categories.find(c => c.id === alloc.categoryId);
+  const essentialAllocations = allocations.filter((alloc) => {
+    const cat = categories.find((c) => c.id === alloc.categoryId);
     if (!cat) return false;
     return cat.essential === true;
   });

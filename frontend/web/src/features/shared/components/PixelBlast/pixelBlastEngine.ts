@@ -135,7 +135,7 @@ export const createTouchTexture = (): TouchTexture => {
     get radiusScale() {
       return radius / (0.1 * size);
     },
-    size
+    size,
   };
 };
 
@@ -164,8 +164,8 @@ export const createLiquidEffect = (texture: THREE.Texture, opts?: { strength?: n
       ['uTexture', new THREE.Uniform(texture)],
       ['uStrength', new THREE.Uniform(opts?.strength ?? 0.025)],
       ['uTime', new THREE.Uniform(0)],
-      ['uFreq', new THREE.Uniform(opts?.freq ?? 4.5)]
-    ])
+      ['uFreq', new THREE.Uniform(opts?.freq ?? 4.5)],
+    ]),
   });
 };
 
@@ -173,7 +173,7 @@ export const SHAPE_MAP: Record<PixelBlastVariant, number> = {
   square: 0,
   circle: 1,
   triangle: 2,
-  diamond: 3
+  diamond: 3,
 };
 
 export const VERTEX_SRC = `

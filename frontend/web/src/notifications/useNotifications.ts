@@ -1,15 +1,20 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth, vapidKey } from '@/config/firebase';
-import { registerFcmToken, unregisterFcmToken, touchFcmToken, disableNotifications } from '@/notifications/registerToken';
+import {
+  registerFcmToken,
+  unregisterFcmToken,
+  touchFcmToken,
+  disableNotifications,
+} from '@/notifications/registerToken';
 
 export type NotificationStatus =
-  | 'unsupported'       // browser doesn't support service workers / push
+  | 'unsupported' // browser doesn't support service workers / push
   | 'ios-not-installed' // iOS Safari but not added to Home Screen
   | 'permission-denied' // user denied (must change in OS settings)
-  | 'enabled'           // token registered successfully
-  | 'pending'           // not yet requested (user gesture needed)
-  | 'checking';         // checking permission/token state on mount
+  | 'enabled' // token registered successfully
+  | 'pending' // not yet requested (user gesture needed)
+  | 'checking'; // checking permission/token state on mount
 
 function isIosSafari(): boolean {
   const ua = navigator.userAgent;
@@ -19,10 +24,7 @@ function isIosSafari(): boolean {
 }
 
 function isStandalone(): boolean {
-  return (
-    window.matchMedia('(display-mode: standalone)').matches ||
-    (window.navigator as any).standalone === true
-  );
+  return window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone === true;
 }
 
 /**

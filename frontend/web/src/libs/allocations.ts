@@ -48,16 +48,14 @@ export function dedupeAllocations(allocations: BudgetAllocation[]): BudgetAlloca
     }
 
     // Prefer the doc already living at the canonical id.
-    const canonical = bucket.find(a => a.id === key);
+    const canonical = bucket.find((a) => a.id === key);
     if (canonical) {
       result.push(canonical);
       continue;
     }
 
     // No canonical doc yet — keep the highest plannedAmount (latest intent).
-    const keeper = bucket.reduce((best, cur) =>
-      cur.plannedAmount > best.plannedAmount ? cur : best
-    );
+    const keeper = bucket.reduce((best, cur) => (cur.plannedAmount > best.plannedAmount ? cur : best));
     result.push(keeper);
   }
 

@@ -1,5 +1,15 @@
-
-import { Box, Card, CardContent, Chip, Skeleton, Stack, Typography, useTheme, LinearProgress, alpha } from '@mui/material';
+import {
+  Box,
+  Card,
+  CardContent,
+  Chip,
+  Skeleton,
+  Stack,
+  Typography,
+  useTheme,
+  LinearProgress,
+  alpha,
+} from '@mui/material';
 import {
   useAccounts,
   useTransactions,
@@ -9,7 +19,7 @@ import {
   useDisplayRates,
   useHouseholdBaseCurrency,
   useBudgetAllocations,
-  useLoans
+  useLoans,
 } from '@/hooks/useFinance';
 import { computeDashboard } from '@/libs/selectors';
 import { useAppContext } from '@/hooks/useAppContext';
@@ -34,10 +44,10 @@ export function BudgetBreakdownCard() {
   const { data: categories = [] } = useCategories(householdId);
   const { data: cycles = [] } = useCycles(householdId);
   const baseCurrency = useHouseholdBaseCurrency();
-  const foreignCodes = Array.from(new Set(accounts.map(a => a.currency).filter(c => c !== baseCurrency)));
+  const foreignCodes = Array.from(new Set(accounts.map((a) => a.currency).filter((c) => c !== baseCurrency)));
   const { data: displayRates = {} } = useDisplayRates(baseCurrency, foreignCodes);
 
-  const activeCycle = cycles.find(c => c.status === 'open') || null;
+  const activeCycle = cycles.find((c) => c.status === 'open') || null;
   const activeCycleId = activeCycle?.id;
 
   const { data: allocations, isLoading: allocsLoading } = useBudgetAllocations(householdId, activeCycleId);
@@ -76,14 +86,40 @@ export function BudgetBreakdownCard() {
     <Card>
       <CardContent>
         <Stack spacing={3}>
-          <DashboardCardHeading icon={<CategoryIcon variant="Bulk" />} title="Budget Breakdown" subtitle="Planned versus actual spending by category" trailing={activeCycle ? <Chip label={activeCycle.name} /> : undefined} />
+          <DashboardCardHeading
+            icon={<CategoryIcon variant="Bulk" />}
+            title="Budget Breakdown"
+            subtitle="Planned versus actual spending by category"
+            trailing={activeCycle ? <Chip label={activeCycle.name} /> : undefined}
+          />
 
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
             {[
-              { label: 'Planned budget', value: totalPlanned, valueColor: 'text.primary', accent: theme.palette.secondary.main, meta: `${data.categoryStatus.length} category allocations`, Icon: PaymentsIcon },
-              { label: 'Total spent', value: totalSpent, valueColor: totalSpent > totalPlanned ? 'error.main' : 'text.primary', accent: totalSpent > totalPlanned ? theme.palette.error.main : theme.palette.primary.main, meta: `${spentPercent}% of the cycle plan`, Icon: BarChartIcon },
-              { label: totalRemaining < 0 ? 'Over budget' : 'Remaining', value: Math.abs(totalRemaining), valueColor: totalRemaining < 0 ? 'error.main' : 'success.main', accent: totalRemaining < 0 ? theme.palette.error.main : theme.palette.success.main, meta: totalRemaining < 0 ? 'Requires budget attention' : 'Available to spend', Icon: SavingsIcon },
-            ].map(metric => (
+              {
+                label: 'Planned budget',
+                value: totalPlanned,
+                valueColor: 'text.primary',
+                accent: theme.palette.secondary.main,
+                meta: `${data.categoryStatus.length} category allocations`,
+                Icon: PaymentsIcon,
+              },
+              {
+                label: 'Total spent',
+                value: totalSpent,
+                valueColor: totalSpent > totalPlanned ? 'error.main' : 'text.primary',
+                accent: totalSpent > totalPlanned ? theme.palette.error.main : theme.palette.primary.main,
+                meta: `${spentPercent}% of the cycle plan`,
+                Icon: BarChartIcon,
+              },
+              {
+                label: totalRemaining < 0 ? 'Over budget' : 'Remaining',
+                value: Math.abs(totalRemaining),
+                valueColor: totalRemaining < 0 ? 'error.main' : 'success.main',
+                accent: totalRemaining < 0 ? theme.palette.error.main : theme.palette.success.main,
+                meta: totalRemaining < 0 ? 'Requires budget attention' : 'Available to spend',
+                Icon: SavingsIcon,
+              },
+            ].map((metric) => (
               <Box
                 key={metric.label}
                 sx={{
@@ -97,73 +133,215 @@ export function BudgetBreakdownCard() {
               >
                 <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={1.5}>
                   <Box sx={{ minWidth: 0 }}>
-                    <Typography sx={{ color: 'text.secondary', fontSize: 10.5, fontWeight: 650 }}>{metric.label}</Typography>
-                    <Typography noWrap sx={{ color: metric.valueColor, fontSize: 19, lineHeight: 1.25, fontWeight: 780, mt: 0.5, fontVariantNumeric: 'tabular-nums' }}>
+                    <Typography sx={{ color: 'text.secondary', fontSize: 10.5, fontWeight: 650 }}>
+                      {metric.label}
+                    </Typography>
+                    <Typography
+                      noWrap
+                      sx={{
+                        color: metric.valueColor,
+                        fontSize: 19,
+                        lineHeight: 1.25,
+                        fontWeight: 780,
+                        mt: 0.5,
+                        fontVariantNumeric: 'tabular-nums',
+                      }}
+                    >
                       <Money amount={metric.value} code={baseCurrency} maxDigits={0} />
                     </Typography>
                   </Box>
-                  <Box sx={{ width: 36, height: 36, flexShrink: 0, borderRadius: '10px', display: 'grid', placeItems: 'center', color: metric.accent, bgcolor: alpha(metric.accent, 0.1) }}>
+                  <Box
+                    sx={{
+                      width: 36,
+                      height: 36,
+                      flexShrink: 0,
+                      borderRadius: '10px',
+                      display: 'grid',
+                      placeItems: 'center',
+                      color: metric.accent,
+                      bgcolor: alpha(metric.accent, 0.1),
+                    }}
+                  >
                     <metric.Icon fontSize="small" />
                   </Box>
                 </Stack>
-                <Typography noWrap sx={{ color: 'text.secondary', fontSize: 9.5, fontWeight: 600, mt: 1.25 }}>{metric.meta}</Typography>
+                <Typography noWrap sx={{ color: 'text.secondary', fontSize: 9.5, fontWeight: 600, mt: 1.25 }}>
+                  {metric.meta}
+                </Typography>
               </Box>
             ))}
           </Stack>
 
-          {data.loanCommitments.length > 0 && <Stack spacing={1.5}>
-            <Typography variant="sectionLabel">Fixed commitments</Typography>
-            {data.loanCommitments.map(commitment => <Stack key={commitment.loanId} direction={{ xs: 'column', sm: 'row' }} alignItems={{ sm: 'center' }} justifyContent="space-between" spacing={1}>
-              <Stack direction="row" alignItems="center" spacing={1}><PaymentsIcon color="primary" /><Box><Typography variant="body1">{commitment.loanName}</Typography><Typography variant="body2" color="text.secondary">Included in this cycle outside category spending</Typography></Box></Stack>
-              <Chip label={commitment.paid > 0 ? `Paid ${commitment.paid.toLocaleString()} ${baseCurrency}` : `Due ${commitment.planned.toLocaleString()} ${baseCurrency}`} color={commitment.paid >= commitment.planned ? 'success' : 'warning'} />
-            </Stack>)}
-          </Stack>}
+          {data.loanCommitments.length > 0 && (
+            <Stack spacing={1.5}>
+              <Typography variant="sectionLabel">Fixed commitments</Typography>
+              {data.loanCommitments.map((commitment) => (
+                <Stack
+                  key={commitment.loanId}
+                  direction={{ xs: 'column', sm: 'row' }}
+                  alignItems={{ sm: 'center' }}
+                  justifyContent="space-between"
+                  spacing={1}
+                >
+                  <Stack direction="row" alignItems="center" spacing={1}>
+                    <PaymentsIcon color="primary" />
+                    <Box>
+                      <Typography variant="body1">{commitment.loanName}</Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Included in this cycle outside category spending
+                      </Typography>
+                    </Box>
+                  </Stack>
+                  <Chip
+                    label={
+                      commitment.paid > 0
+                        ? `Paid ${commitment.paid.toLocaleString()} ${baseCurrency}`
+                        : `Due ${commitment.planned.toLocaleString()} ${baseCurrency}`
+                    }
+                    color={commitment.paid >= commitment.planned ? 'success' : 'warning'}
+                  />
+                </Stack>
+              ))}
+            </Stack>
+          )}
 
           <CategoryPaceChart categories={data.categoryStatus} />
 
           <Stack spacing={1.5} aria-label="Budget breakdown details">
-            <Box sx={{ display: { xs: 'none', md: 'grid' }, gridTemplateColumns: 'minmax(140px, 1.4fr) minmax(150px, 1fr) repeat(3, minmax(84px, .7fr))', gap: 2, px: 1 }}>
+            <Box
+              sx={{
+                display: { xs: 'none', md: 'grid' },
+                gridTemplateColumns: 'minmax(140px, 1.4fr) minmax(150px, 1fr) repeat(3, minmax(84px, .7fr))',
+                gap: 2,
+                px: 1,
+              }}
+            >
               {['Category', 'Progress', 'Planned', 'Spent', 'Remaining'].map((label, index) => (
-                <Typography key={label} sx={{ fontSize: 10.5, lineHeight: '16px', fontWeight: 700, color: 'text.secondary', textAlign: index > 1 ? 'right' : 'left' }}>{label}</Typography>
+                <Typography
+                  key={label}
+                  sx={{
+                    fontSize: 10.5,
+                    lineHeight: '16px',
+                    fontWeight: 700,
+                    color: 'text.secondary',
+                    textAlign: index > 1 ? 'right' : 'left',
+                  }}
+                >
+                  {label}
+                </Typography>
               ))}
             </Box>
 
             {data.categoryStatus.length === 0 ? (
-              <Typography align="center" sx={{ py: 4, color: 'text.secondary', fontSize: 12 }}>No budget allocations found for this cycle.</Typography>
+              <Typography align="center" sx={{ py: 4, color: 'text.secondary', fontSize: 12 }}>
+                No budget allocations found for this cycle.
+              </Typography>
             ) : (
               data.categoryStatus.map((cat, idx) => {
-                    const remaining = cat.planned - cat.spent;
-                    const isOver = remaining < 0;
-                    const percent = cat.planned > 0 ? (cat.spent / cat.planned) * 100 : (cat.spent > 0 ? 100 : 0);
-                    const catColor = chartColors[idx % chartColors.length];
+                const remaining = cat.planned - cat.spent;
+                const isOver = remaining < 0;
+                const percent = cat.planned > 0 ? (cat.spent / cat.planned) * 100 : cat.spent > 0 ? 100 : 0;
+                const catColor = chartColors[idx % chartColors.length];
 
-                    return (
-                      <Box key={cat.categoryId} sx={{ px: 1, py: 1, borderRadius: 2, '&:hover': { bgcolor: 'action.hover' } }}>
-                        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'minmax(140px, 1.4fr) minmax(150px, 1fr) repeat(3, minmax(84px, .7fr))' }, gap: { xs: 1.5, md: 2 }, alignItems: 'center' }}>
-                          <Stack direction="row" alignItems="center" spacing={1} sx={{ minWidth: 0 }}>
-                            <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: catColor, flexShrink: 0 }} />
-                            <Typography noWrap sx={{ fontSize: 12, lineHeight: '18px', fontWeight: 700, color: 'text.primary' }}>{cat.categoryName}</Typography>
-                          </Stack>
-                          <Stack direction="row" alignItems="center" spacing={1}>
-                            <LinearProgress variant="determinate" value={Math.min(100, percent)} color={percent > 100 ? 'error' : 'success'} sx={{ flex: 1 }} />
-                            <Typography sx={{ minWidth: 34, textAlign: 'right', fontSize: 10.5, fontWeight: 700, color: 'text.secondary' }}>{Math.round(percent)}%</Typography>
-                          </Stack>
-                          <Box sx={{ display: { xs: 'grid', md: 'contents' }, gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 1.5 }}>
-                            {[
-                              { label: 'Planned', value: formatMaskedValue(cat.planned, maskNumber), color: 'text.primary' },
-                              { label: 'Spent', value: cat.spent > 0 ? formatMaskedValue(cat.spent, maskNumber) : '—', color: cat.spent > 0 ? 'text.primary' : 'text.disabled' },
-                              { label: 'Remaining', value: `${isOver ? '' : '+'}${formatMaskedValue(remaining, maskNumber)}`, color: isOver ? 'error.main' : remaining > 0 ? 'success.main' : 'text.secondary' },
-                            ].map(item => (
-                              <Box key={item.label} sx={{ minWidth: 0, textAlign: { xs: 'left', md: 'right' } }}>
-                                <Typography sx={{ display: { md: 'none' }, fontSize: 9.5, lineHeight: '14px', fontWeight: 600, color: 'text.secondary' }}>{item.label}</Typography>
-                                <Typography noWrap sx={{ fontSize: 11.5, lineHeight: '18px', fontWeight: 700, color: item.color, fontVariantNumeric: 'tabular-nums' }}>{item.value}</Typography>
-                              </Box>
-                            ))}
+                return (
+                  <Box
+                    key={cat.categoryId}
+                    sx={{ px: 1, py: 1, borderRadius: 2, '&:hover': { bgcolor: 'action.hover' } }}
+                  >
+                    <Box
+                      sx={{
+                        display: 'grid',
+                        gridTemplateColumns: {
+                          xs: '1fr',
+                          md: 'minmax(140px, 1.4fr) minmax(150px, 1fr) repeat(3, minmax(84px, .7fr))',
+                        },
+                        gap: { xs: 1.5, md: 2 },
+                        alignItems: 'center',
+                      }}
+                    >
+                      <Stack direction="row" alignItems="center" spacing={1} sx={{ minWidth: 0 }}>
+                        <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: catColor, flexShrink: 0 }} />
+                        <Typography
+                          noWrap
+                          sx={{ fontSize: 12, lineHeight: '18px', fontWeight: 700, color: 'text.primary' }}
+                        >
+                          {cat.categoryName}
+                        </Typography>
+                      </Stack>
+                      <Stack direction="row" alignItems="center" spacing={1}>
+                        <LinearProgress
+                          variant="determinate"
+                          value={Math.min(100, percent)}
+                          color={percent > 100 ? 'error' : 'success'}
+                          sx={{ flex: 1 }}
+                        />
+                        <Typography
+                          sx={{
+                            minWidth: 34,
+                            textAlign: 'right',
+                            fontSize: 10.5,
+                            fontWeight: 700,
+                            color: 'text.secondary',
+                          }}
+                        >
+                          {Math.round(percent)}%
+                        </Typography>
+                      </Stack>
+                      <Box
+                        sx={{
+                          display: { xs: 'grid', md: 'contents' },
+                          gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+                          gap: 1.5,
+                        }}
+                      >
+                        {[
+                          {
+                            label: 'Planned',
+                            value: formatMaskedValue(cat.planned, maskNumber),
+                            color: 'text.primary',
+                          },
+                          {
+                            label: 'Spent',
+                            value: cat.spent > 0 ? formatMaskedValue(cat.spent, maskNumber) : '—',
+                            color: cat.spent > 0 ? 'text.primary' : 'text.disabled',
+                          },
+                          {
+                            label: 'Remaining',
+                            value: `${isOver ? '' : '+'}${formatMaskedValue(remaining, maskNumber)}`,
+                            color: isOver ? 'error.main' : remaining > 0 ? 'success.main' : 'text.secondary',
+                          },
+                        ].map((item) => (
+                          <Box key={item.label} sx={{ minWidth: 0, textAlign: { xs: 'left', md: 'right' } }}>
+                            <Typography
+                              sx={{
+                                display: { md: 'none' },
+                                fontSize: 9.5,
+                                lineHeight: '14px',
+                                fontWeight: 600,
+                                color: 'text.secondary',
+                              }}
+                            >
+                              {item.label}
+                            </Typography>
+                            <Typography
+                              noWrap
+                              sx={{
+                                fontSize: 11.5,
+                                lineHeight: '18px',
+                                fontWeight: 700,
+                                color: item.color,
+                                fontVariantNumeric: 'tabular-nums',
+                              }}
+                            >
+                              {item.value}
+                            </Typography>
                           </Box>
-                        </Box>
+                        ))}
                       </Box>
-                    );
-                  })
+                    </Box>
+                  </Box>
+                );
+              })
             )}
           </Stack>
         </Stack>

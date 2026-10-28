@@ -16,7 +16,10 @@ export function findPrimaryLedgerLine(transactionId: string, ledgerLines: Ledger
   return transactionLines.find((line) => line.signedAmount !== 0) ?? transactionLines[0];
 }
 
-export function createTransactionEditFields(transaction: FinanceTransaction, ledgerLines: LedgerLine[]): TransactionEditFields {
+export function createTransactionEditFields(
+  transaction: FinanceTransaction,
+  ledgerLines: LedgerLine[],
+): TransactionEditFields {
   const primaryLine = findPrimaryLedgerLine(transaction.id, ledgerLines);
   return {
     description: transaction.description ?? '',
@@ -28,7 +31,12 @@ export function createTransactionEditFields(transaction: FinanceTransaction, led
   };
 }
 
-export function resolveEditedSignedAmount(amount: number, type: EditableTransactionType, originalLine: LedgerLine | undefined, isRegular: boolean) {
+export function resolveEditedSignedAmount(
+  amount: number,
+  type: EditableTransactionType,
+  originalLine: LedgerLine | undefined,
+  isRegular: boolean,
+) {
   if (isRegular) return type === 'income' ? amount : -amount;
   return amount * (originalLine && originalLine.signedAmount >= 0 ? 1 : -1);
 }

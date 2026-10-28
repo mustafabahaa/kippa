@@ -27,7 +27,21 @@ vi.mock('@/libs/cardActivity', () => ({
   calculateCardActivity: () => ({
     accountBalance: -1029.99,
     totalDebt: 1029.99,
-    charges: [{ lineId: 'line-1', txId: 'charge-1', date: '2026-01-01', description: 'ChatGPT', amount: 1029.99, baseAmount: 999.99, feeRate: 3, paid: false, txType: 'expense', categoryId: null, budgetCycleId: 'cycle' }],
+    charges: [
+      {
+        lineId: 'line-1',
+        txId: 'charge-1',
+        date: '2026-01-01',
+        description: 'ChatGPT',
+        amount: 1029.99,
+        baseAmount: 999.99,
+        feeRate: 3,
+        paid: false,
+        txType: 'expense',
+        categoryId: null,
+        budgetCycleId: 'cycle',
+      },
+    ],
     cycleGroups: [],
   }),
 }));
@@ -39,16 +53,45 @@ vi.mock('./CardDesign', () => ({
   CardChip: () => <span />,
   ContactlessIcon: () => <span />,
 }));
-vi.mock('@/components/Money', () => ({ Money: ({ amount, code }: { amount: number; code: string }) => <>{code} {amount.toFixed(2)}</> }));
+vi.mock('@/components/Money', () => ({
+  Money: ({ amount, code }: { amount: number; code: string }) => (
+    <>
+      {code} {amount.toFixed(2)}
+    </>
+  ),
+}));
 vi.mock('./components/CardActivityList', () => ({
   CardActivityList: ({ onPay }: { onPay: (charge: unknown) => void }) => (
-    <button onClick={() => onPay({ txId: 'charge-1', description: 'ChatGPT', txType: 'expense', amount: 1029.99, baseAmount: 999.99, feeRate: 3 })}>Pay</button>
+    <button
+      onClick={() =>
+        onPay({
+          txId: 'charge-1',
+          description: 'ChatGPT',
+          txType: 'expense',
+          amount: 1029.99,
+          baseAmount: 999.99,
+          feeRate: 3,
+        })
+      }
+    >
+      Pay
+    </button>
   ),
 }));
 
 const card: Card = {
-  id: 'card-1', householdId: 'household', kind: 'credit', parentAccountId: 'credit-account', name: 'HSBC',
-  last4: '1234', network: 'visa', bankId: 'hsbc', isActive: true, createdAt: '2026-01-01', currency: 'EGP', creditLimit: 10000,
+  id: 'card-1',
+  householdId: 'household',
+  kind: 'credit',
+  parentAccountId: 'credit-account',
+  name: 'HSBC',
+  last4: '1234',
+  network: 'visa',
+  bankId: 'hsbc',
+  isActive: true,
+  createdAt: '2026-01-01',
+  currency: 'EGP',
+  creditLimit: 10000,
 };
 
 function renderCard() {
@@ -106,12 +149,14 @@ describe('CardDetail credit payment dialog', () => {
     await user.clear(fields.fee);
     await user.type(fields.fee, '3');
     await user.click(fields.confirm);
-    expect(mocks.mutateAsync).toHaveBeenCalledWith(expect.objectContaining({
-      amount: 103,
-      fee: { amount: 3, rate: 3 },
-      settlesChargeIds: ['charge-1'],
-      settlesDescriptions: ['ChatGPT'],
-    }));
+    expect(mocks.mutateAsync).toHaveBeenCalledWith(
+      expect.objectContaining({
+        amount: 103,
+        fee: { amount: 3, rate: 3 },
+        settlesChargeIds: ['charge-1'],
+        settlesDescriptions: ['ChatGPT'],
+      }),
+    );
   });
 
   it('uses the three percent default for Pay all and resets it when reopened', async () => {

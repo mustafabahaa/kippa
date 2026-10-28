@@ -268,16 +268,19 @@ export function ProfileMenu({
       >
         Appearance
       </Typography>
-      {([
+      {[
         { value: 'light' as ThemeModePref, label: 'Light', Icon: LightModeIcon },
         { value: 'dark' as ThemeModePref, label: 'Dark', Icon: DarkModeIcon },
         { value: 'system' as ThemeModePref, label: 'System default', Icon: SettingsBrightnessIcon },
-      ]).map(({ value, label, Icon }) => {
+      ].map(({ value, label, Icon }) => {
         const selected = modePref === value;
         return (
           <MenuItem
             key={value}
-            onClick={() => { setModePref(value); handleClose(); }}
+            onClick={() => {
+              setModePref(value);
+              handleClose();
+            }}
             sx={{ ...menuItemStyle, py: 0.75 }}
           >
             <ListItemIcon>
@@ -293,23 +296,26 @@ export function ProfileMenu({
 
       {/* Privacy mode — mask monetary values for screen sharing / demos */}
       <MenuItem
-        onClick={() => { setPrivacyMode(!privacyMode); handleClose(); }}
+        onClick={() => {
+          setPrivacyMode(!privacyMode);
+          handleClose();
+        }}
         sx={{ ...menuItemStyle, py: 0.75 }}
       >
         <ListItemIcon>
           {privacyMode ? <VisibilityOffIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
         </ListItemIcon>
-        <ListItemText
-          primary={privacyMode ? 'Privacy Mode On' : 'Privacy Mode'}
-          secondary="Hide balances"
-        />
+        <ListItemText primary={privacyMode ? 'Privacy Mode On' : 'Privacy Mode'} secondary="Hide balances" />
         {privacyMode && <CheckIcon fontSize="small" sx={{ color: 'primary.main', ml: 'auto' }} />}
       </MenuItem>
 
       <Divider sx={{ my: 1 }} />
 
       <MenuItem
-        onClick={() => { handleClose(); logout(); }}
+        onClick={() => {
+          handleClose();
+          logout();
+        }}
         sx={{
           ...menuItemStyle,
           color: 'error.main',
@@ -317,7 +323,9 @@ export function ProfileMenu({
           '& .MuiListItemText-primary': { fontSize: '0.875rem', fontWeight: 600, color: 'error.main' },
         }}
       >
-        <ListItemIcon><LogoutIcon fontSize="small" /></ListItemIcon>
+        <ListItemIcon>
+          <LogoutIcon fontSize="small" />
+        </ListItemIcon>
         <ListItemText primary="Sign Out" />
       </MenuItem>
     </Menu>

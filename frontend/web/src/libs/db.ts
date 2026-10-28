@@ -8,7 +8,7 @@ import {
   query,
   where,
   onSnapshot,
-  Firestore
+  Firestore,
 } from 'firebase/firestore';
 import { db, isFirebaseConfigured } from '@/config/firebase';
 
@@ -25,9 +25,8 @@ function requireFirestore(): Firestore {
 export const dbLib = {
   async getDoc(householdId: string, collectionName: string, docId: string): Promise<any | null> {
     const firestore = requireFirestore();
-    const path = householdId === 'system' 
-      ? `${collectionName}/${docId}` 
-      : `households/${householdId}/${collectionName}/${docId}`;
+    const path =
+      householdId === 'system' ? `${collectionName}/${docId}` : `households/${householdId}/${collectionName}/${docId}`;
     const docRef = doc(firestore, path);
     const snapshot = await firestoreGetDoc(docRef);
     return snapshot.exists() ? snapshot.data() : null;
@@ -36,12 +35,10 @@ export const dbLib = {
   async getDocs(
     householdId: string,
     collectionName: string,
-    filters?: { field: string; op: '==' | 'in' | 'array-contains'; value: any }[]
+    filters?: { field: string; op: '==' | 'in' | 'array-contains'; value: any }[],
   ): Promise<any[]> {
     const firestore = requireFirestore();
-    const path = householdId === 'system'
-      ? collectionName
-      : `households/${householdId}/${collectionName}`;
+    const path = householdId === 'system' ? collectionName : `households/${householdId}/${collectionName}`;
     const colRef = collection(firestore, path);
     if (filters && filters.length > 0) {
       let q = query(colRef);
@@ -49,10 +46,10 @@ export const dbLib = {
         q = query(q, where(filter.field, filter.op, filter.value));
       }
       const snapshot = await firestoreGetDocs(q);
-      return snapshot.docs.map(d => d.data());
+      return snapshot.docs.map((d) => d.data());
     }
     const snapshot = await firestoreGetDocs(colRef);
-    return snapshot.docs.map(d => d.data());
+    return snapshot.docs.map((d) => d.data());
   },
 
   /**
@@ -64,38 +61,37 @@ export const dbLib = {
     householdId: string,
     collectionName: string,
     onUpdate: (docs: any[]) => void,
-    onError?: (error: Error) => void
+    onError?: (error: Error) => void,
   ): () => void {
     const firestore = requireFirestore();
-    const path = householdId === 'system'
-      ? collectionName
-      : `households/${householdId}/${collectionName}`;
+    const path = householdId === 'system' ? collectionName : `households/${householdId}/${collectionName}`;
     const colRef = collection(firestore, path);
     return onSnapshot(
       colRef,
-      (snapshot) => onUpdate(snapshot.docs.map(d => d.data())),
-      (error) => onError?.(error)
+      (snapshot) => onUpdate(snapshot.docs.map((d) => d.data())),
+      (error) => onError?.(error),
     );
   },
 
-  async setDoc(householdId: string, collectionName: string, docId: string, data: any): Promise<void> {    const firestore = requireFirestore();
-    const path = householdId === 'system'
-      ? `${collectionName}/${docId}`
-      : `households/${householdId}/${collectionName}/${docId}`;
+  async setDoc(householdId: string, collectionName: string, docId: string, data: any): Promise<void> {
+    const firestore = requireFirestore();
+    const path =
+      householdId === 'system' ? `${collectionName}/${docId}` : `households/${householdId}/${collectionName}/${docId}`;
     const docRef = doc(firestore, path);
     await firestoreSetDoc(docRef, data);
   },
 
   async executeBatch(
     householdId: string,
-    operations: { type: 'set' | 'delete'; collectionName: string; docId: string; data?: any }[]
+    operations: { type: 'set' | 'delete'; collectionName: string; docId: string; data?: any }[],
   ): Promise<void> {
     const firestore = requireFirestore();
     const batch = firestoreWriteBatch(firestore);
     for (const op of operations) {
-      const path = householdId === 'system'
-        ? `${op.collectionName}/${op.docId}`
-        : `households/${householdId}/${op.collectionName}/${op.docId}`;
+      const path =
+        householdId === 'system'
+          ? `${op.collectionName}/${op.docId}`
+          : `households/${householdId}/${op.collectionName}/${op.docId}`;
       const docRef = doc(firestore, path);
       if (op.type === 'set') {
         batch.set(docRef, op.data);
@@ -104,5 +100,5 @@ export const dbLib = {
       }
     }
     await batch.commit();
-  }
+  },
 };

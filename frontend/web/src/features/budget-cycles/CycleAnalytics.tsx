@@ -1,18 +1,18 @@
 import { useState, useMemo } from 'react';
-import { 
-  Box, 
-  Card, 
-  CardContent, 
-  Stack, 
-  Typography, 
-  FormControl, 
-  InputLabel, 
-  Select, 
-  MenuItem, 
+import {
+  Box,
+  Card,
+  CardContent,
+  Stack,
+  Typography,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
   Tabs,
   Tab,
   useTheme,
-  alpha
+  alpha,
 } from '@mui/material';
 import { BarChartIcon } from '@/components/AppIcon';
 import { LineChart } from '@mui/x-charts/LineChart';
@@ -26,7 +26,7 @@ import {
   useHouseholdBaseCurrency,
   useAllBudgetAllocations,
   useAllExpectedIncomes,
-  useLoans
+  useLoans,
 } from '@/hooks/useFinance';
 import { useAppContext } from '@/hooks/useAppContext';
 import { buildCashFlowSeries, calculateCategoryTrends, calculateCycleData } from '@/libs/budgetAnalytics';
@@ -36,7 +36,7 @@ import { AnalyticsPlaceholder } from './components/AnalyticsPlaceholder';
 export function CycleAnalytics() {
   const { householdId } = useAppContext();
   const theme = useTheme();
-  
+
   // Queries
   const { data: cycles = [], isLoading: cyclesLoading } = useCycles(householdId);
   const { data: transactions = [], isLoading: txsLoading } = useTransactions(householdId);
@@ -44,7 +44,7 @@ export function CycleAnalytics() {
   const { data: categories = [], isLoading: categoriesLoading } = useCategories(householdId);
   const { data: accounts = [] } = useAccounts(householdId);
   const baseCurrency = useHouseholdBaseCurrency();
-  const foreignCodes = Array.from(new Set(accounts.map(a => a.currency).filter(c => c !== baseCurrency)));
+  const foreignCodes = Array.from(new Set(accounts.map((a) => a.currency).filter((c) => c !== baseCurrency)));
   const { data: displayRates = {} } = useDisplayRates(baseCurrency, foreignCodes);
   const { data: allAllocations = [], isLoading: allocsLoading } = useAllBudgetAllocations(householdId);
   const { data: allExpectedIncomes = [], isLoading: incomesLoading } = useAllExpectedIncomes(householdId);
@@ -56,30 +56,57 @@ export function CycleAnalytics() {
   // Selected Category for Line Trend Chart
   const [selectedCategoryId, setSelectedCategoryId] = useState('masrof-bet');
 
-  const isLoading = cyclesLoading || txsLoading || linesLoading || categoriesLoading || allocsLoading || incomesLoading || loansLoading;
+  const isLoading =
+    cyclesLoading || txsLoading || linesLoading || categoriesLoading || allocsLoading || incomesLoading || loansLoading;
 
   // Chronologically sorted active or closed cycles
   const sortedCycles = useMemo(() => {
     return [...cycles]
-      .filter(c => c.status === 'open' || c.status === 'closed')
+      .filter((c) => c.status === 'open' || c.status === 'closed')
       .sort((a, b) => a.startDate.localeCompare(b.startDate));
   }, [cycles]);
 
   // Compute stats per cycle
   const cycleData = useMemo(() => {
     if (isLoading || sortedCycles.length === 0) return [];
-    return calculateCycleData(sortedCycles, transactions, ledgerLines, allAllocations, allExpectedIncomes, baseCurrency, displayRates, loans);
-  }, [isLoading, sortedCycles, transactions, ledgerLines, allAllocations, allExpectedIncomes, displayRates, baseCurrency, loans]);
+    return calculateCycleData(
+      sortedCycles,
+      transactions,
+      ledgerLines,
+      allAllocations,
+      allExpectedIncomes,
+      baseCurrency,
+      displayRates,
+      loans,
+    );
+  }, [
+    isLoading,
+    sortedCycles,
+    transactions,
+    ledgerLines,
+    allAllocations,
+    allExpectedIncomes,
+    displayRates,
+    baseCurrency,
+    loans,
+  ]);
 
   // Compute category trends over cycles
   const categoryTrends = useMemo(() => {
     if (isLoading || sortedCycles.length === 0 || !selectedCategoryId) return [];
 
-    return calculateCategoryTrends(sortedCycles, transactions, ledgerLines, selectedCategoryId, baseCurrency, displayRates);
+    return calculateCategoryTrends(
+      sortedCycles,
+      transactions,
+      ledgerLines,
+      selectedCategoryId,
+      baseCurrency,
+      displayRates,
+    );
   }, [isLoading, sortedCycles, transactions, ledgerLines, selectedCategoryId, displayRates, baseCurrency]);
 
   const expenseCategories = useMemo(() => {
-    return categories.filter(c => c.type === 'expense');
+    return categories.filter((c) => c.type === 'expense');
   }, [categories]);
 
   const cashFlowSeries = useMemo(() => buildCashFlowSeries(cycleData), [cycleData]);
@@ -108,7 +135,15 @@ export function CycleAnalytics() {
                   minHeight: 36,
                   '& .MuiTabs-indicator': { display: 'none' },
                   '& .MuiTab-root': {
-                    minHeight: 32, py: 0.5, px: 2, borderRadius: '16px', fontSize: '13px', fontWeight: 'bold', textTransform: 'none', color: 'text.secondary', transition: 'all 0.2s ease',
+                    minHeight: 32,
+                    py: 0.5,
+                    px: 2,
+                    borderRadius: '16px',
+                    fontSize: '13px',
+                    fontWeight: 'bold',
+                    textTransform: 'none',
+                    color: 'text.secondary',
+                    transition: 'all 0.2s ease',
                     '&.Mui-selected': { color: 'secondary.contrastText', bgcolor: 'secondary.main' },
                     '&:hover:not(.Mui-selected)': { bgcolor: 'action.hover' },
                   },
@@ -135,11 +170,16 @@ export function CycleAnalytics() {
               {[
                 { label: 'Spent', color: theme.palette.secondary.main },
                 { label: 'Retained', color: theme.palette.primary.dark },
-                { label: 'Plan space', color: alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.22 : 0.1) },
-              ].map(item => (
+                {
+                  label: 'Plan space',
+                  color: alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.22 : 0.1),
+                },
+              ].map((item) => (
                 <Stack key={item.label} direction="row" spacing={0.75} alignItems="center">
                   <Box sx={{ width: 10, height: 10, borderRadius: '3px', bgcolor: item.color }} />
-                  <Typography variant="body2" sx={{ color: 'text.secondary', fontWeight: 600 }}>{item.label}</Typography>
+                  <Typography variant="body2" sx={{ color: 'text.secondary', fontWeight: 600 }}>
+                    {item.label}
+                  </Typography>
                 </Stack>
               ))}
               <Typography variant="body2" sx={{ color: 'text.secondary', ml: { sm: 'auto' } }}>
@@ -178,10 +218,23 @@ export function CycleAnalytics() {
                 />
 
                 {cycleData.map((cycle, index) => {
-                  const capacity = cashFlowSeries.spend[index] + cashFlowSeries.retained[index] + cashFlowSeries.planGap[index] || 1;
+                  const capacity =
+                    cashFlowSeries.spend[index] + cashFlowSeries.retained[index] + cashFlowSeries.planGap[index] || 1;
                   const incomeHeight = Math.max(4, Math.min(100, (cycle.actualIncome / capacity) * 100));
                   const spendHeight = Math.max(3, Math.min(100, (cycle.actualExpense / capacity) * 100));
-                  const capacityHeight = Math.max(34, Math.min(100, (capacity / Math.max(...cycleData.map(item => Math.max(item.expectedIncome, item.plannedBudget, item.actualIncome, item.actualExpense, 1)))) * 100));
+                  const capacityHeight = Math.max(
+                    34,
+                    Math.min(
+                      100,
+                      (capacity /
+                        Math.max(
+                          ...cycleData.map((item) =>
+                            Math.max(item.expectedIncome, item.plannedBudget, item.actualIncome, item.actualExpense, 1),
+                          ),
+                        )) *
+                        100,
+                    ),
+                  );
 
                   return (
                     <Box
@@ -194,7 +247,10 @@ export function CycleAnalytics() {
                         display: 'flex',
                         alignItems: 'flex-end',
                         justifyContent: 'center',
-                        '&:hover .flow-tooltip, &:focus-within .flow-tooltip': { opacity: 1, transform: 'translate(-50%, -8px)' },
+                        '&:hover .flow-tooltip, &:focus-within .flow-tooltip': {
+                          opacity: 1,
+                          transform: 'translate(-50%, -8px)',
+                        },
                       }}
                     >
                       <Box
@@ -260,7 +316,14 @@ export function CycleAnalytics() {
                         }}
                       >
                         <Typography sx={{ color: 'inherit', fontSize: '10px', opacity: 0.72 }}>Income</Typography>
-                        <Typography sx={{ color: 'inherit', fontSize: '14px', fontWeight: 750, fontVariantNumeric: 'tabular-nums' }}>
+                        <Typography
+                          sx={{
+                            color: 'inherit',
+                            fontSize: '14px',
+                            fontWeight: 750,
+                            fontVariantNumeric: 'tabular-nums',
+                          }}
+                        >
                           {cycle.actualIncome.toLocaleString()} {baseCurrency}
                         </Typography>
                       </Box>
@@ -303,10 +366,10 @@ export function CycleAnalytics() {
                   labelId="trend-cat-select-label"
                   value={selectedCategoryId}
                   label="Category"
-                  onChange={e => setSelectedCategoryId(e.target.value)}
+                  onChange={(e) => setSelectedCategoryId(e.target.value)}
                   sx={{ borderRadius: '8px' }}
                 >
-                  {expenseCategories.map(c => (
+                  {expenseCategories.map((c) => (
                     <MenuItem key={c.id} value={c.id}>
                       {c.name}
                     </MenuItem>
@@ -314,24 +377,26 @@ export function CycleAnalytics() {
                 </Select>
               </FormControl>
             </Stack>
-            
+
             <Box sx={{ height: { xs: 300, sm: 380 }, width: '100%' }}>
               {categoryTrends.length > 0 && (
                 <LineChart
-                  xAxis={[{ 
-                    scaleType: 'point', 
-                    data: categoryTrends.map(t => t.cycleName) 
-                  }]}
+                  xAxis={[
+                    {
+                      scaleType: 'point',
+                      data: categoryTrends.map((t) => t.cycleName),
+                    },
+                  ]}
                   series={[
-                    { 
-                      data: categoryTrends.map(t => t.spent), 
-                      label: 'Spent', 
+                    {
+                      data: categoryTrends.map((t) => t.spent),
+                      label: 'Spent',
                       color: theme.palette.primary.main,
                       area: true,
                       curve: 'catmullRom',
                       showMark: false,
-                      valueFormatter: value => `${value?.toLocaleString() ?? 0} ${baseCurrency}`,
-                    }
+                      valueFormatter: (value) => `${value?.toLocaleString() ?? 0} ${baseCurrency}`,
+                    },
                   ]}
                   height={370}
                   margin={{ top: 20, bottom: 40, left: 60, right: 20 }}
@@ -340,8 +405,8 @@ export function CycleAnalytics() {
                     legend: {
                       direction: 'row',
                       position: { vertical: 'bottom', horizontal: 'center' },
-                      padding: -5
-                    } as any
+                      padding: -5,
+                    } as any,
                   }}
                   sx={{
                     '& .MuiAreaElement-root': {
@@ -368,7 +433,7 @@ export function CycleAnalytics() {
                     '& .MuiChartsLegend-root text': {
                       fill: `${theme.palette.text.primary} !important`,
                       fontSize: '12px !important',
-                    }
+                    },
                   }}
                 />
               )}

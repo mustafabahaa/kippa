@@ -20,14 +20,14 @@ export function currentCyclePurchases(
   lines: LedgerLine[],
   transactions: FinanceTransaction[],
   creditAccountId: string,
-  lastStatement: CardStatement | null
+  lastStatement: CardStatement | null,
 ): number {
   const cutoff = lastStatement?.statementDate ?? '';
   let total = 0;
   for (const line of getPostedLedgerLines(transactions, lines)) {
     if (line.accountId !== creditAccountId) continue;
     if (line.signedAmount >= 0) continue; // only outflows (purchases)
-    const tx = transactions.find(t => t.id === line.transactionId);
+    const tx = transactions.find((t) => t.id === line.transactionId);
     if (!tx) continue;
     if (cutoff && tx.date <= cutoff) continue;
     total += Math.abs(line.signedAmount);
@@ -39,13 +39,13 @@ export function computeCardSummary(
   card: Card,
   creditAccountBalance: number, // ledger balance of the credit account (negative = debt)
   lastStatement: CardStatement | null,
-  _allStatements: CardStatement[]
+  _allStatements: CardStatement[],
 ): CardSummary {
   const currentDebt = Math.max(0, -creditAccountBalance);
   const hasLimit = card.creditLimit != null;
   return {
     currentDebt,
-    availableCredit: hasLimit ? (card.creditLimit! - currentDebt) : null,
+    availableCredit: hasLimit ? card.creditLimit! - currentDebt : null,
     utilization: hasLimit && card.creditLimit! > 0 ? currentDebt / card.creditLimit! : null,
     lastStatement,
     lastStatementBalance: lastStatement?.statementBalance ?? null,

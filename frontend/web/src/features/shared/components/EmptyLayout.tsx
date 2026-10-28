@@ -65,17 +65,11 @@ export function EmptyLayout({ title, description, action, icon }: EmptyLayoutPro
           }}
         />
       )}
-      <Typography
-        variant="subtitle1"
-        sx={{ fontWeight: 700, color: 'text.primary', fontSize: '15px' }}
-      >
+      <Typography variant="subtitle1" sx={{ fontWeight: 700, color: 'text.primary', fontSize: '15px' }}>
         {title}
       </Typography>
       {description && (
-        <Typography
-          variant="body2"
-          sx={{ color: 'text.secondary', fontSize: '13px', mt: 0.75, maxWidth: '80%' }}
-        >
+        <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '13px', mt: 0.75, maxWidth: '80%' }}>
           {description}
         </Typography>
       )}

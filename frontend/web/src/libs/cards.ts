@@ -19,7 +19,7 @@ export function validateCardInput(card: CardInput, accounts: Account[]): void {
   if (!card.parentAccountId) {
     throw new Error('parentAccountId is required (no card without an account).');
   }
-  const parent = accounts.find(a => a.id === card.parentAccountId);
+  const parent = accounts.find((a) => a.id === card.parentAccountId);
   if (!parent) throw new Error('parentAccountId does not reference a real account.');
 
   if (card.kind === 'debit') {
@@ -33,7 +33,7 @@ export function validateCardInput(card: CardInput, accounts: Account[]): void {
     }
     if (card.creditLimit == null) throw new Error('creditLimit is required for a credit card.');
     if (!card.paymentAccountId) throw new Error('paymentAccountId is required for a credit card.');
-    const payAcc = accounts.find(a => a.id === card.paymentAccountId);
+    const payAcc = accounts.find((a) => a.id === card.paymentAccountId);
     if (!payAcc) throw new Error('paymentAccountId does not reference a real account.');
     if (payAcc.currency !== card.currency) {
       throw new Error('Card currency must equal the payment account currency.');
@@ -72,16 +72,25 @@ export const cardsLib = {
   /**
    * Creates a debit card. No new account needed — links to an existing one.
    */
-  async createDebitCard(householdId: string, card: CardInput, accounts: Account[], auditUser?: AuditUser): Promise<string> {
+  async createDebitCard(
+    householdId: string,
+    card: CardInput,
+    accounts: Account[],
+    auditUser?: AuditUser,
+  ): Promise<string> {
     if (card.kind !== 'debit') throw new Error('Use createCreditCard for credit cards.');
     validateCardInput(card, accounts);
     const id = crypto.randomUUID();
     const newCard: Card = { ...card, id, householdId, createdAt: new Date().toISOString() };
     await dbLib.setDoc(householdId, 'cards', id, newCard);
     if (auditUser) {
-      auditLogLib.logAction(householdId, auditUser, 'account_created',
+      auditLogLib.logAction(
+        householdId,
+        auditUser,
+        'account_created',
         `${auditUser.displayName} added debit card: ${newCard.name}`,
-        { cardId: id, kind: 'debit' });
+        { cardId: id, kind: 'debit' },
+      );
     }
     return id;
   },
@@ -95,7 +104,7 @@ export const cardsLib = {
     card: CardInput,
     accounts: Account[],
     sortOrder: number,
-    auditUser?: AuditUser
+    auditUser?: AuditUser,
   ): Promise<{ cardId: string; creditAccountId: string }> {
     // First create the credit account (the debt bucket), then validate + link.
     const creditAccountId = crypto.randomUUID();
@@ -114,8 +123,11 @@ export const cardsLib = {
 
     const cardId = crypto.randomUUID();
     const newCard: Card = {
-      ...card, parentAccountId: creditAccountId, id: cardId,
-      householdId, createdAt: new Date().toISOString(),
+      ...card,
+      parentAccountId: creditAccountId,
+      id: cardId,
+      householdId,
+      createdAt: new Date().toISOString(),
     };
 
     await dbLib.executeBatch(householdId, [
@@ -124,22 +136,37 @@ export const cardsLib = {
     ]);
 
     if (auditUser) {
-      auditLogLib.logAction(householdId, auditUser, 'account_created',
+      auditLogLib.logAction(
+        householdId,
+        auditUser,
+        'account_created',
         `${auditUser.displayName} added credit card: ${newCard.name}`,
-        { cardId, creditAccountId, kind: 'credit' });
+        { cardId, creditAccountId, kind: 'credit' },
+      );
     }
     return { cardId, creditAccountId };
   },
 
-  async updateCard(householdId: string, cardId: string, updates: Partial<Card>, accounts: Account[], auditUser?: AuditUser): Promise<void> {
+  async updateCard(
+    householdId: string,
+    cardId: string,
+    updates: Partial<Card>,
+    accounts: Account[],
+    auditUser?: AuditUser,
+  ): Promise<void> {
     const existing = (await dbLib.getDoc(householdId, 'cards', cardId)) as Card | null;
     if (!existing) throw new Error('Card not found');
     const merged: Card = { ...existing, ...updates };
     validateCardInput(merged, accounts);
     await dbLib.setDoc(householdId, 'cards', cardId, merged);
     if (auditUser) {
-      auditLogLib.logAction(householdId, auditUser, 'account_updated',
-        `${auditUser.displayName} updated card: ${merged.name}`, { cardId });
+      auditLogLib.logAction(
+        householdId,
+        auditUser,
+        'account_updated',
+        `${auditUser.displayName} updated card: ${merged.name}`,
+        { cardId },
+      );
     }
   },
 
@@ -170,9 +197,10 @@ export const cardsLib = {
     settlesChargeIds?: string[],
     budgetCycleId?: string | null,
     settlesDescriptions?: string[],
-    fee?: { amount: number; rate: number }
+    fee?: { amount: number; rate: number },
   ): Promise<string> {
-    if (!Number.isFinite(amount) || amount <= 0) throw new Error('Payment amount must be a finite number greater than 0.');
+    if (!Number.isFinite(amount) || amount <= 0)
+      throw new Error('Payment amount must be a finite number greater than 0.');
     if (fee && (!Number.isFinite(fee.amount) || fee.amount < 0)) {
       throw new Error('Card fee amount must be a finite number greater than or equal to 0.');
     }
@@ -211,7 +239,7 @@ export const cardsLib = {
           { accountId: card.parentAccountId, signedAmount: amount, currency: card.currency },
         ],
         undefined,
-        auditUser
+        auditUser,
       );
     }
 
@@ -220,9 +248,11 @@ export const cardsLib = {
         dbLib.getDocs(householdId, 'transactions'),
         dbLib.getDocs(householdId, 'ledgerLines'),
       ]);
-      const transactionById = new Map((rawTransactions as FinanceTransaction[]).map(transaction => [transaction.id, transaction]));
+      const transactionById = new Map(
+        (rawTransactions as FinanceTransaction[]).map((transaction) => [transaction.id, transaction]),
+      );
       const linesByTransaction = new Map<string, LedgerLine[]>();
-      (rawLines as LedgerLine[]).forEach(line => {
+      (rawLines as LedgerLine[]).forEach((line) => {
         const lines = linesByTransaction.get(line.transactionId) ?? [];
         lines.push(line);
         linesByTransaction.set(line.transactionId, lines);
@@ -230,15 +260,24 @@ export const cardsLib = {
       const selectedIds = [...new Set(settlesChargeIds)];
       const selectedLines = selectedIds.map((chargeId) => {
         const transaction = transactionById.get(chargeId);
-        const line = linesByTransaction.get(chargeId)?.find(candidate =>
-          candidate.accountId === card.parentAccountId && candidate.signedAmount < 0
-        );
-        if (!transaction || transaction.status !== 'posted' || !line ||
-          line.currency !== card.currency || !Number.isFinite(line.signedAmount) ||
-          (line.cardFee && (!Number.isFinite(line.cardFee.baseAmount) || line.cardFee.baseAmount < 0))) {
+        const line = linesByTransaction
+          .get(chargeId)
+          ?.find((candidate) => candidate.accountId === card.parentAccountId && candidate.signedAmount < 0);
+        if (
+          !transaction ||
+          transaction.status !== 'posted' ||
+          !line ||
+          line.currency !== card.currency ||
+          !Number.isFinite(line.signedAmount) ||
+          (line.cardFee && (!Number.isFinite(line.cardFee.baseAmount) || line.cardFee.baseAmount < 0))
+        ) {
           throw new Error(`Selected card charge not found or invalid: ${chargeId}`);
         }
-        return { transaction, line, baseCents: Math.round((line.cardFee?.baseAmount ?? Math.abs(line.signedAmount)) * 100) };
+        return {
+          transaction,
+          line,
+          baseCents: Math.round((line.cardFee?.baseAmount ?? Math.abs(line.signedAmount)) * 100),
+        };
       });
       const baseTotalCents = Math.round((amount - fee.amount) * 100);
       const originalBaseTotalCents = selectedLines.reduce((total, selected) => total + selected.baseCents, 0);
@@ -248,9 +287,9 @@ export const cardsLib = {
       const allocateCents = (totalCents: number): number[] => {
         let cumulativeBase = 0;
         let allocated = 0;
-        return selectedLines.map(selected => {
+        return selectedLines.map((selected) => {
           cumulativeBase += selected.baseCents;
-          const target = Math.round(totalCents * cumulativeBase / originalBaseTotalCents);
+          const target = Math.round((totalCents * cumulativeBase) / originalBaseTotalCents);
           const share = target - allocated;
           allocated = target;
           return share;
@@ -274,8 +313,24 @@ export const cardsLib = {
         status: 'posted' as const,
       };
       const paymentLines = [
-        { id: crypto.randomUUID(), householdId, transactionId: paymentTransactionId, accountId: card.paymentAccountId, signedAmount: -amount, currency: card.currency, createdAt: nowStr },
-        { id: crypto.randomUUID(), householdId, transactionId: paymentTransactionId, accountId: card.parentAccountId, signedAmount: amount, currency: card.currency, createdAt: nowStr },
+        {
+          id: crypto.randomUUID(),
+          householdId,
+          transactionId: paymentTransactionId,
+          accountId: card.paymentAccountId,
+          signedAmount: -amount,
+          currency: card.currency,
+          createdAt: nowStr,
+        },
+        {
+          id: crypto.randomUUID(),
+          householdId,
+          transactionId: paymentTransactionId,
+          accountId: card.parentAccountId,
+          signedAmount: amount,
+          currency: card.currency,
+          createdAt: nowStr,
+        },
       ];
       await dbLib.executeBatch(householdId, [
         ...selectedLines.map((selected, index) => ({
@@ -289,7 +344,12 @@ export const cardsLib = {
           },
         })),
         { type: 'set', collectionName: 'transactions', docId: paymentTransactionId, data: paymentTransaction },
-        ...paymentLines.map(line => ({ type: 'set' as const, collectionName: 'ledgerLines', docId: line.id, data: line })),
+        ...paymentLines.map((line) => ({
+          type: 'set' as const,
+          collectionName: 'ledgerLines',
+          docId: line.id,
+          data: line,
+        })),
       ]);
       if (auditUser) {
         auditLogLib.logAction(
@@ -297,7 +357,7 @@ export const cardsLib = {
           auditUser,
           'transaction_created',
           `${auditUser.displayName} logged transfer: ${amount} ${card.currency} — ${description}`,
-          { transactionId: paymentTransactionId, type: 'transfer', amount, currency: card.currency }
+          { transactionId: paymentTransactionId, type: 'transfer', amount, currency: card.currency },
         );
       }
       return paymentTransactionId;
@@ -319,7 +379,7 @@ export const cardsLib = {
           { accountId: card.parentAccountId, signedAmount: amount, currency: card.currency },
         ],
         undefined,
-        auditUser
+        auditUser,
       );
     }
 
@@ -329,8 +389,24 @@ export const cardsLib = {
     const feeLineId = crypto.randomUUID();
     const paymentTransactionId = crypto.randomUUID();
     const paymentLines = [
-      { id: crypto.randomUUID(), householdId, transactionId: paymentTransactionId, accountId: card.paymentAccountId, signedAmount: -amount, currency: card.currency, createdAt: nowStr },
-      { id: crypto.randomUUID(), householdId, transactionId: paymentTransactionId, accountId: card.parentAccountId, signedAmount: amount, currency: card.currency, createdAt: nowStr },
+      {
+        id: crypto.randomUUID(),
+        householdId,
+        transactionId: paymentTransactionId,
+        accountId: card.paymentAccountId,
+        signedAmount: -amount,
+        currency: card.currency,
+        createdAt: nowStr,
+      },
+      {
+        id: crypto.randomUUID(),
+        householdId,
+        transactionId: paymentTransactionId,
+        accountId: card.parentAccountId,
+        signedAmount: amount,
+        currency: card.currency,
+        createdAt: nowStr,
+      },
     ];
     const settledIds = [feeTransactionId, ...(settlesChargeIds ?? [])];
     const feeDescription = `Card fee (${fee.rate}%) — ${settlesDescriptions?.[0] ?? card.name}`;
@@ -363,17 +439,27 @@ export const cardsLib = {
 
     await dbLib.executeBatch(householdId, [
       { type: 'set', collectionName: 'transactions', docId: feeTransactionId, data: feeTransaction },
-      { type: 'set', collectionName: 'ledgerLines', docId: feeLineId, data: {
-        id: feeLineId,
-        householdId,
-        transactionId: feeTransactionId,
-        accountId: card.parentAccountId,
-        signedAmount: -fee.amount,
-        currency: card.currency,
-        createdAt: nowStr,
-      } },
+      {
+        type: 'set',
+        collectionName: 'ledgerLines',
+        docId: feeLineId,
+        data: {
+          id: feeLineId,
+          householdId,
+          transactionId: feeTransactionId,
+          accountId: card.parentAccountId,
+          signedAmount: -fee.amount,
+          currency: card.currency,
+          createdAt: nowStr,
+        },
+      },
       { type: 'set', collectionName: 'transactions', docId: paymentTransactionId, data: paymentTransaction },
-      ...paymentLines.map(line => ({ type: 'set' as const, collectionName: 'ledgerLines', docId: line.id, data: line })),
+      ...paymentLines.map((line) => ({
+        type: 'set' as const,
+        collectionName: 'ledgerLines',
+        docId: line.id,
+        data: line,
+      })),
     ]);
 
     if (auditUser) {
@@ -382,14 +468,14 @@ export const cardsLib = {
         auditUser,
         'transaction_created',
         `${auditUser.displayName} logged expense: ${fee.amount} ${card.currency} — ${feeDescription}`,
-        { transactionId: feeTransactionId, type: 'expense', amount: fee.amount, currency: card.currency }
+        { transactionId: feeTransactionId, type: 'expense', amount: fee.amount, currency: card.currency },
       );
       auditLogLib.logAction(
         householdId,
         auditUser,
         'transaction_created',
         `${auditUser.displayName} logged transfer: ${amount} ${card.currency} — ${description}`,
-        { transactionId: paymentTransactionId, type: 'transfer', amount, currency: card.currency }
+        { transactionId: paymentTransactionId, type: 'transfer', amount, currency: card.currency },
       );
     }
     return paymentTransactionId;
@@ -404,7 +490,7 @@ export const cardsLib = {
     statement: CardStatement,
     card: Card,
     amount: number,
-    auditUser?: AuditUser
+    auditUser?: AuditUser,
   ): Promise<string> {
     if (statement.paymentTransactionId) {
       throw new Error('This statement already has a linked payment.');
@@ -426,8 +512,6 @@ export const cardsLib = {
     if (stmt.paymentTransactionId) {
       throw new Error('This statement has a linked payment. Void or delete that payment first.');
     }
-    await dbLib.executeBatch(householdId, [
-      { type: 'delete', collectionName: 'cardStatements', docId: statementId },
-    ]);
+    await dbLib.executeBatch(householdId, [{ type: 'delete', collectionName: 'cardStatements', docId: statementId }]);
   },
 };

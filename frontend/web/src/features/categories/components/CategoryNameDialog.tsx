@@ -47,17 +47,14 @@ export function CategoryNameDialog({
             disabled={loading}
           />
           {editingMerchants && (
-            <MerchantKeywordsEditor
-              keywords={merchants}
-              onChange={onMerchantsChange}
-              disabled={loading}
-              emptyState
-            />
+            <MerchantKeywordsEditor keywords={merchants} onChange={onMerchantsChange} disabled={loading} emptyState />
           )}
         </Stack>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose} color="inherit">Cancel</Button>
+        <Button onClick={onClose} color="inherit">
+          Cancel
+        </Button>
         <Button onClick={onConfirm} variant="contained" disabled={!value.trim()} loading={loading}>
           {confirmLabel}
         </Button>

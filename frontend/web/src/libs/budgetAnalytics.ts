@@ -1,4 +1,12 @@
-import type { BudgetAllocation, BudgetCycle, CurrencyCode, ExpectedIncome, FinanceTransaction, LedgerLine, Loan } from '@kippa/domain';
+import type {
+  BudgetAllocation,
+  BudgetCycle,
+  CurrencyCode,
+  ExpectedIncome,
+  FinanceTransaction,
+  LedgerLine,
+  Loan,
+} from '@kippa/domain';
 import { convertToBaseCurrency, getPostedLedgerLines, getPostedTransactions } from './financeCalculations';
 import { loanHasPaymentDueInCycle } from './loanCalculations';
 
@@ -35,21 +43,34 @@ export function calculateCycleData(
     let actualExpense = 0;
 
     cycleTransactions.forEach((transaction) => {
-      cycleLines.filter((line) => line.transactionId === transaction.id).forEach((line) => {
-        const amount = Math.abs(convertToBaseCurrency(line.signedAmount, line.currency, baseCurrency, rates));
-        if (transaction.type === 'income') actualIncome += amount;
-        if (transaction.type === 'expense') actualExpense += amount;
-      });
+      cycleLines
+        .filter((line) => line.transactionId === transaction.id)
+        .forEach((line) => {
+          const amount = Math.abs(convertToBaseCurrency(line.signedAmount, line.currency, baseCurrency, rates));
+          if (transaction.type === 'income') actualIncome += amount;
+          if (transaction.type === 'expense') actualExpense += amount;
+        });
     });
 
     const categoryPlan = allocations
       .filter((allocation) => allocation.budgetCycleId === cycle.id)
       .reduce((total, allocation) => total + allocation.plannedAmount, 0);
-    const loanPlan = loans.filter(loan => loanHasPaymentDueInCycle(loan, cycle.startDate, cycle.endDate)).reduce((total, loan) => total + convertToBaseCurrency(loan.installmentAmount, loan.currency, baseCurrency, rates), 0);
+    const loanPlan = loans
+      .filter((loan) => loanHasPaymentDueInCycle(loan, cycle.startDate, cycle.endDate))
+      .reduce(
+        (total, loan) => total + convertToBaseCurrency(loan.installmentAmount, loan.currency, baseCurrency, rates),
+        0,
+      );
     const plannedBudget = categoryPlan + loanPlan;
     const expectedIncome = expectedIncomes
       .filter((income) => income.budgetCycleId === cycle.id)
-      .reduce((total, income) => total + income.amount * (income.currency === baseCurrency ? 1 : income.expectedRateToBaseCurrency || rates[income.currency] || 1), 0);
+      .reduce(
+        (total, income) =>
+          total +
+          income.amount *
+            (income.currency === baseCurrency ? 1 : income.expectedRateToBaseCurrency || rates[income.currency] || 1),
+        0,
+      );
 
     return {
       id: cycle.id,
@@ -75,11 +96,16 @@ export function calculateCategoryTrends(
   const postedLines = getPostedLedgerLines(transactions, ledgerLines);
 
   return cycles.map((cycle) => {
-    const cycleTransactions = postedTransactions.filter((transaction) => transaction.budgetCycleId === cycle.id && transaction.categoryId === categoryId);
+    const cycleTransactions = postedTransactions.filter(
+      (transaction) => transaction.budgetCycleId === cycle.id && transaction.categoryId === categoryId,
+    );
     const cycleIds = new Set(cycleTransactions.map((transaction) => transaction.id));
     const spent = postedLines
       .filter((line) => cycleIds.has(line.transactionId))
-      .reduce((total, line) => total + Math.abs(convertToBaseCurrency(line.signedAmount, line.currency, baseCurrency, rates)), 0);
+      .reduce(
+        (total, line) => total + Math.abs(convertToBaseCurrency(line.signedAmount, line.currency, baseCurrency, rates)),
+        0,
+      );
     return { cycleName: cycle.name, spent: Math.round(spent) };
   });
 }

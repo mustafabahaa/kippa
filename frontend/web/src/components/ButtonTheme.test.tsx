@@ -5,13 +5,16 @@ import { createKippaTheme, designTokens, modeTokens } from '@kippa/design-system
 
 function rgb(hex: string) {
   const value = hex.replace('#', '');
-  const channels = value.length === 3 ? value.split('').map(channel => channel + channel) : [value.slice(0, 2), value.slice(2, 4), value.slice(4, 6)];
-  return `rgb(${channels.map(channel => parseInt(channel, 16)).join(', ')})`;
+  const channels =
+    value.length === 3
+      ? value.split('').map((channel) => channel + channel)
+      : [value.slice(0, 2), value.slice(2, 4), value.slice(4, 6)];
+  return `rgb(${channels.map((channel) => parseInt(channel, 16)).join(', ')})`;
 }
 
 function luminance(color: string) {
   const channels = color.match(/\d+/g)?.map(Number) ?? [0, 0, 0];
-  const linear = channels.map(channel => {
+  const linear = channels.map((channel) => {
     const value = channel / 255;
     return value <= 0.03928 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
   });
@@ -24,11 +27,15 @@ function contrast(background: string, foreground: string) {
 }
 
 describe('contained primary button theme states', () => {
-  it.each(['light', 'dark'] as const)('keeps enabled and disabled labels readable in %s mode', mode => {
+  it.each(['light', 'dark'] as const)('keeps enabled and disabled labels readable in %s mode', (mode) => {
     const { unmount } = render(
       <ThemeProvider theme={createKippaTheme(mode)}>
-        <Button variant="contained" color="primary">Confirm</Button>
-        <Button variant="contained" color="primary" disabled>Confirm disabled</Button>
+        <Button variant="contained" color="primary">
+          Confirm
+        </Button>
+        <Button variant="contained" color="primary" disabled>
+          Confirm disabled
+        </Button>
       </ThemeProvider>,
     );
 

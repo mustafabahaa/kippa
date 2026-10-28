@@ -2,8 +2,20 @@ import { createHash, randomBytes, randomUUID, timingSafeEqual } from 'node:crypt
 import { FieldValue, getFirestore } from 'firebase-admin/firestore';
 import { projectID } from 'firebase-functions/params';
 import { HttpsError, onCall, onRequest } from 'firebase-functions/v2/https';
-import type { Account, Card, Category, FinanceTransaction, Loan, PendingFinancialMessage, UserProfile } from '@kippa/domain';
-import { buildMessagePreview, parseFinancialMessage, type ParsedFinancialMessage } from '../../domain/message-ingestion/parser.js';
+import type {
+  Account,
+  Card,
+  Category,
+  FinanceTransaction,
+  Loan,
+  PendingFinancialMessage,
+  UserProfile,
+} from '@kippa/domain';
+import {
+  buildMessagePreview,
+  parseFinancialMessage,
+  type ParsedFinancialMessage,
+} from '../../domain/message-ingestion/parser.js';
 import { buildMessagePayload } from '../../domain/notifications/payload.js';
 import { getTokensForUsers, sendToMany } from '../../libs/notifications/sendToMany.js';
 import { calculateCreditCardLedgerAmount } from '../../domain/transactions/creditCardFee.js';
@@ -50,7 +62,11 @@ function sha256(value: string): string {
 
 function cleanSource(value: unknown): string {
   if (typeof value !== 'string') return 'message-automation';
-  const cleaned = value.trim().toLowerCase().replace(/[^a-z0-9._-]/g, '-').slice(0, 64);
+  const cleaned = value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9._-]/g, '-')
+    .slice(0, 64);
   return cleaned || 'message-automation';
 }
 
@@ -94,10 +110,9 @@ async function resolveSuggestions(
   const activeAccounts = accounts.filter((account) => account.isActive && account.currency === parsed.currency);
 
   const cardAccount = (hint: string | undefined, kind?: 'credit' | 'debit') => {
-    const card = cards.find((candidate) => candidate.isActive
-      && (!kind || candidate.kind === kind)
-      && !!hint
-      && candidate.last4 === hint);
+    const card = cards.find(
+      (candidate) => candidate.isActive && (!kind || candidate.kind === kind) && !!hint && candidate.last4 === hint,
+    );
     return card?.parentAccountId;
   };
 
@@ -132,7 +147,9 @@ function installmentDate(loan: Loan, installmentNumber: number): string {
 }
 
 function daysBetween(left: string, right: string): number {
-  return Math.round(Math.abs(new Date(`${left}T12:00:00Z`).getTime() - new Date(`${right}T12:00:00Z`).getTime()) / 86_400_000);
+  return Math.round(
+    Math.abs(new Date(`${left}T12:00:00Z`).getTime() - new Date(`${right}T12:00:00Z`).getTime()) / 86_400_000,
+  );
 }
 
 async function resolveLoanSuggestion(
@@ -150,12 +167,17 @@ async function resolveLoanSuggestion(
   const matches = loansSnapshot.docs
     .map((doc) => ({ id: doc.id, ...doc.data() }) as Loan)
     .flatMap((loan) => {
-      const linkedPayments = transactions.filter((transaction) => transaction.status === 'posted' && transaction.loanId === loan.id);
+      const linkedPayments = transactions.filter(
+        (transaction) => transaction.status === 'posted' && transaction.loanId === loan.id,
+      );
       const installmentNumber = (loan.openingPaidInstallments ?? 0) + linkedPayments.length + 1;
-      if (loan.paymentAccountId !== accountId
-        || loan.currency !== parsed.currency
-        || Math.abs(loan.installmentAmount - parsed.amount) > 0.01
-        || installmentNumber > loan.totalInstallments) return [];
+      if (
+        loan.paymentAccountId !== accountId ||
+        loan.currency !== parsed.currency ||
+        Math.abs(loan.installmentAmount - parsed.amount) > 0.01 ||
+        installmentNumber > loan.totalInstallments
+      )
+        return [];
       const dueDate = installmentDate(loan, installmentNumber);
       const allowedDays = Math.max(3, (loan.graceDay ?? loan.dueDay) - loan.dueDay + 2);
       return daysBetween(parsed.date, dueDate) <= allowedDays
@@ -169,9 +191,10 @@ export const createMessageIngestionCredential = onCall(async (request) => {
   const uid = request.auth?.uid;
   if (!uid) throw new HttpsError('unauthenticated', 'Sign in required.');
   const householdId = assertString((request.data as { householdId?: unknown })?.householdId, 'householdId');
-  const label = typeof (request.data as { label?: unknown })?.label === 'string'
-    ? (request.data as { label: string }).label.trim().slice(0, 80) || 'Secure message connection'
-    : 'Secure message connection';
+  const label =
+    typeof (request.data as { label?: unknown })?.label === 'string'
+      ? (request.data as { label: string }).label.trim().slice(0, 80) || 'Secure message connection'
+      : 'Secure message connection';
   await requireHouseholdMember(uid, householdId);
 
   const runtimeProjectId = projectID.value();
@@ -206,23 +229,23 @@ export const listMessageIngestionCredentials = onCall(async (request) => {
   if (!uid) throw new HttpsError('unauthenticated', 'Sign in required.');
   const householdId = assertString((request.data as { householdId?: unknown })?.householdId, 'householdId');
   await requireHouseholdMember(uid, householdId);
-  const snapshot = await getFirestore().collection('messageIngestionCredentials')
-    .where('ownerUid', '==', uid)
-    .get();
+  const snapshot = await getFirestore().collection('messageIngestionCredentials').where('ownerUid', '==', uid).get();
   return {
-    credentials: snapshot.docs.filter((doc) => {
-      const credential = doc.data() as IngestionCredential;
-      return credential.householdId === householdId;
-    }).map((doc) => {
-      const credential = doc.data() as IngestionCredential;
-      return {
-        id: credential.id,
-        label: credential.label === 'iPhone Shortcut' ? 'Secure message connection' : credential.label,
-        enabled: credential.enabled,
-        createdAt: credential.createdAt,
-        lastUsedAt: credential.lastUsedAt ?? null,
-      };
-    }),
+    credentials: snapshot.docs
+      .filter((doc) => {
+        const credential = doc.data() as IngestionCredential;
+        return credential.householdId === householdId;
+      })
+      .map((doc) => {
+        const credential = doc.data() as IngestionCredential;
+        return {
+          id: credential.id,
+          label: credential.label === 'iPhone Shortcut' ? 'Secure message connection' : credential.label,
+          enabled: credential.enabled,
+          createdAt: credential.createdAt,
+          lastUsedAt: credential.lastUsedAt ?? null,
+        };
+      }),
   };
 });
 
@@ -246,7 +269,8 @@ export const deleteMessageIngestionCredential = onCall(async (request) => {
   const ref = db.doc(`messageIngestionCredentials/${credentialId}`);
   const initialSnapshot = await ref.get();
   const initialCredential = initialSnapshot.data() as IngestionCredential | undefined;
-  if (!initialCredential || initialCredential.ownerUid !== uid) throw new HttpsError('not-found', 'Connection not found.');
+  if (!initialCredential || initialCredential.ownerUid !== uid)
+    throw new HttpsError('not-found', 'Connection not found.');
   await requireHouseholdMember(uid, initialCredential.householdId);
 
   await db.runTransaction(async (transaction) => {
@@ -298,15 +322,23 @@ export const ingestFinancialMessage = onRequest(
     }
     const source = cleanSource(body.source);
     const parsedResult = parseFinancialMessage(body.message, source);
-    const dedupeMaterial = typeof body.idempotencyKey === 'string' && body.idempotencyKey.trim()
-      ? body.idempotencyKey.trim().slice(0, 256)
-      : body.message.replace(/\s+/g, ' ').trim();
+    const dedupeMaterial =
+      typeof body.idempotencyKey === 'string' && body.idempotencyKey.trim()
+        ? body.idempotencyKey.trim().slice(0, 256)
+        : body.message.replace(/\s+/g, ' ').trim();
     const receiptId = sha256(`${credentialId}\0${dedupeMaterial}`);
     const receiptRef = db.doc(`messageIngestionReceipts/${receiptId}`);
     const existingReceipt = await receiptRef.get();
     if (existingReceipt.exists) {
       const existing = existingReceipt.data() as IngestionReceipt;
-      response.status(200).json({ accepted: existing.state === 'pending', duplicate: true, state: existing.state, pendingId: existing.pendingId ?? null });
+      response
+        .status(200)
+        .json({
+          accepted: existing.state === 'pending',
+          duplicate: true,
+          state: existing.state,
+          pendingId: existing.pendingId ?? null,
+        });
       return;
     }
 
@@ -320,10 +352,7 @@ export const ingestFinancialMessage = onRequest(
         createdAt: now,
         updatedAt: now,
       };
-      await Promise.all([
-        receiptRef.set(receipt),
-        credentialRef.update({ lastUsedAt: now }),
-      ]);
+      await Promise.all([receiptRef.set(receipt), credentialRef.update({ lastUsedAt: now })]);
       const tokens = await getTokensForUsers(credential.householdId, [credential.ownerUid]);
       await sendToMany(
         credential.householdId,
@@ -349,16 +378,17 @@ export const ingestFinancialMessage = onRequest(
         createdAt: now,
         updatedAt: now,
       };
-      await Promise.all([
-        receiptRef.set(receipt),
-        credentialRef.update({ lastUsedAt: now }),
-      ]);
+      await Promise.all([receiptRef.set(receipt), credentialRef.update({ lastUsedAt: now })]);
       response.status(200).json({ accepted: false, ignored: true, reason: parsedResult.reason });
       return;
     }
 
     const suggestions = await resolveSuggestions(credential.householdId, parsedResult.parsed);
-    const loanSuggestion = await resolveLoanSuggestion(credential.householdId, parsedResult.parsed, suggestions.accountId);
+    const loanSuggestion = await resolveLoanSuggestion(
+      credential.householdId,
+      parsedResult.parsed,
+      suggestions.accountId,
+    );
     const parsed = parsedResult.parsed;
 
     // ── Cross-currency transfer merge ──────────────────────────────────
@@ -367,7 +397,8 @@ export const ingestFinancialMessage = onRequest(
     // a single cross-currency transfer.
     if (parsed.transferLeg && parsed.mergeKey) {
       const oppositeLeg = parsed.transferLeg === 'debit' ? 'credit' : 'debit';
-      const halfPendingSnap = await db.collection(`households/${credential.householdId}/pendingFinancialMessages`)
+      const halfPendingSnap = await db
+        .collection(`households/${credential.householdId}/pendingFinancialMessages`)
         .where('mergeKey', '==', parsed.mergeKey)
         .where('transferLeg', '==', oppositeLeg)
         .where('date', '==', parsed.date)
@@ -390,14 +421,18 @@ export const ingestFinancialMessage = onRequest(
           // resolveSuggestions uses currency for destination matching — we override after
         });
         // Resolve the destination account in the credit-leg currency separately.
-        const destAccountsSnap = await db.collection(`households/${credential.householdId}/accounts`)
-          .where('isActive', '==', true).get();
+        const destAccountsSnap = await db
+          .collection(`households/${credential.householdId}/accounts`)
+          .where('isActive', '==', true)
+          .get();
         const destAccount = destAccountsSnap.docs
           .map((d) => ({ id: d.id, ...d.data() }) as Account)
           .find((a) => a.currency === credit.currency && a.type === 'running');
 
         const mergedPendingId = half.id; // reuse the first-arriving doc id
-        const mergedPendingRef = db.doc(`households/${credential.householdId}/pendingFinancialMessages/${mergedPendingId}`);
+        const mergedPendingRef = db.doc(
+          `households/${credential.householdId}/pendingFinancialMessages/${mergedPendingId}`,
+        );
         const merged: Partial<PendingFinancialMessage> = {
           amount: debit.amount,
           currency: debit.currency,
@@ -455,7 +490,9 @@ export const ingestFinancialMessage = onRequest(
       amount: parsed.amount,
       currency: parsed.currency,
       date: parsed.date,
-      description: loanSuggestion ? `${loanSuggestion.loanName} — installment ${loanSuggestion.installmentNumber}` : parsed.description,
+      description: loanSuggestion
+        ? `${loanSuggestion.loanName} — installment ${loanSuggestion.installmentNumber}`
+        : parsed.description,
       counterparty: parsed.counterparty ?? null,
       messagePreview: buildMessagePreview(body.message),
       accountHintLast4: parsed.accountHintLast4 ?? null,
@@ -526,8 +563,11 @@ export const approvePendingFinancialMessage = onCall(async (request) => {
   const transactionId = `import_${pendingId}`;
   const transactionRef = db.doc(`households/${householdId}/transactions/${transactionId}`);
 
-  const cycleSnapshot = await db.collection(`households/${householdId}/budgetCycles`)
-    .where('status', '==', 'open').limit(1).get();
+  const cycleSnapshot = await db
+    .collection(`households/${householdId}/budgetCycles`)
+    .where('status', '==', 'open')
+    .limit(1)
+    .get();
   const activeCycleId = cycleSnapshot.empty ? null : cycleSnapshot.docs[0].id;
 
   const pendingBeforeApproval = await pendingRef.get();
@@ -537,8 +577,10 @@ export const approvePendingFinancialMessage = onCall(async (request) => {
   const suggestedInstallment = pendingForLoanCheck.suggestedLoanInstallmentNumber ?? null;
   let existingLoanPayments: FinanceTransaction[] = [];
   if (suggestedLoanId && suggestedInstallment) {
-    const loanTransactionsSnapshot = await db.collection(`households/${householdId}/transactions`)
-      .where('loanId', '==', suggestedLoanId).get();
+    const loanTransactionsSnapshot = await db
+      .collection(`households/${householdId}/transactions`)
+      .where('loanId', '==', suggestedLoanId)
+      .get();
     existingLoanPayments = loanTransactionsSnapshot.docs
       .map((doc) => ({ id: doc.id, ...doc.data() }) as FinanceTransaction)
       .filter((existing) => existing.status === 'posted');
@@ -549,16 +591,18 @@ export const approvePendingFinancialMessage = onCall(async (request) => {
 
   await db.runTransaction(async (transaction) => {
     const loanRef = suggestedLoanId ? db.doc(`households/${householdId}/loans/${suggestedLoanId}`) : null;
-    const paymentLockRef = suggestedLoanId && suggestedInstallment
-      ? db.doc(`households/${householdId}/loanPaymentLocks/${suggestedLoanId}_${suggestedInstallment}`)
-      : null;
-    const [pendingSnapshot, accountSnapshot, existingTransaction, loanSnapshot, paymentLockSnapshot] = await Promise.all([
-      transaction.get(pendingRef),
-      transaction.get(db.doc(`households/${householdId}/accounts/${accountId}`)),
-      transaction.get(transactionRef),
-      loanRef ? transaction.get(loanRef) : Promise.resolve(null),
-      paymentLockRef ? transaction.get(paymentLockRef) : Promise.resolve(null),
-    ]);
+    const paymentLockRef =
+      suggestedLoanId && suggestedInstallment
+        ? db.doc(`households/${householdId}/loanPaymentLocks/${suggestedLoanId}_${suggestedInstallment}`)
+        : null;
+    const [pendingSnapshot, accountSnapshot, existingTransaction, loanSnapshot, paymentLockSnapshot] =
+      await Promise.all([
+        transaction.get(pendingRef),
+        transaction.get(db.doc(`households/${householdId}/accounts/${accountId}`)),
+        transaction.get(transactionRef),
+        loanRef ? transaction.get(loanRef) : Promise.resolve(null),
+        paymentLockRef ? transaction.get(paymentLockRef) : Promise.resolve(null),
+      ]);
     if (existingTransaction.exists) return;
     if (!pendingSnapshot.exists) throw new HttpsError('not-found', 'Pending item not found.');
     const pending = pendingSnapshot.data() as PendingFinancialMessage;
@@ -567,17 +611,22 @@ export const approvePendingFinancialMessage = onCall(async (request) => {
     const isLoanPayment = !!suggestedLoanId && !!suggestedInstallment;
     if (isLoanPayment) {
       const expectedInstallment = (loan?.openingPaidInstallments ?? 0) + existingLoanPayments.length + 1;
-      if (pending.suggestedLoanId !== suggestedLoanId
-        || pending.suggestedLoanInstallmentNumber !== suggestedInstallment
-        || !loan || loan.status !== 'active'
-        || loan.paymentAccountId !== accountId
-        || loan.currency !== pending.currency
-        || Math.abs(loan.installmentAmount - pending.amount) > 0.01
-        || expectedInstallment !== suggestedInstallment
-        || daysBetween(pending.date, installmentDate(loan, suggestedInstallment)) > Math.max(3, (loan.graceDay ?? loan.dueDay) - loan.dueDay + 2)) {
+      if (
+        pending.suggestedLoanId !== suggestedLoanId ||
+        pending.suggestedLoanInstallmentNumber !== suggestedInstallment ||
+        !loan ||
+        loan.status !== 'active' ||
+        loan.paymentAccountId !== accountId ||
+        loan.currency !== pending.currency ||
+        Math.abs(loan.installmentAmount - pending.amount) > 0.01 ||
+        expectedInstallment !== suggestedInstallment ||
+        daysBetween(pending.date, installmentDate(loan, suggestedInstallment)) >
+          Math.max(3, (loan.graceDay ?? loan.dueDay) - loan.dueDay + 2)
+      ) {
         throw new HttpsError('failed-precondition', 'The suggested loan no longer matches this payment.');
       }
-      if (paymentLockSnapshot?.exists) throw new HttpsError('already-exists', 'This loan installment is already recorded.');
+      if (paymentLockSnapshot?.exists)
+        throw new HttpsError('already-exists', 'This loan installment is already recorded.');
     } else if (pending.kind !== 'transfer') {
       if (!categoryId) throw new HttpsError('invalid-argument', 'Category is required.');
       const categorySnapshot = await transaction.get(db.doc(`households/${householdId}/categories/${categoryId}`));
@@ -594,17 +643,25 @@ export const approvePendingFinancialMessage = onCall(async (request) => {
     let destinationAccount: Account | undefined;
     if (pending.kind === 'transfer') {
       if (!destinationAccountId) throw new HttpsError('invalid-argument', 'Destination account is required.');
-      const destinationSnapshot = await transaction.get(db.doc(`households/${householdId}/accounts/${destinationAccountId}`));
+      const destinationSnapshot = await transaction.get(
+        db.doc(`households/${householdId}/accounts/${destinationAccountId}`),
+      );
       destinationAccount = destinationSnapshot.data() as Account | undefined;
       const expectedDestCurrency = pending.destinationCurrency ?? pending.currency;
-      if (!destinationAccount?.isActive || destinationAccount.currency !== expectedDestCurrency || destinationAccount.id === account.id) {
-        throw new HttpsError('failed-precondition', `Choose a different active destination account in ${expectedDestCurrency}.`);
+      if (
+        !destinationAccount?.isActive ||
+        destinationAccount.currency !== expectedDestCurrency ||
+        destinationAccount.id === account.id
+      ) {
+        throw new HttpsError(
+          'failed-precondition',
+          `Choose a different active destination account in ${expectedDestCurrency}.`,
+        );
       }
     }
 
-    const isCrossCurrency = pending.kind === 'transfer'
-      && !!pending.destinationCurrency
-      && pending.destinationCurrency !== pending.currency;
+    const isCrossCurrency =
+      pending.kind === 'transfer' && !!pending.destinationCurrency && pending.destinationCurrency !== pending.currency;
     const destAmount = isCrossCurrency ? (pending.destinationAmount ?? pending.amount) : pending.amount;
     const destCurrency = isCrossCurrency ? (pending.destinationCurrency as string) : pending.currency;
 
@@ -633,16 +690,24 @@ export const approvePendingFinancialMessage = onCall(async (request) => {
       importedFrom: { kind: 'financial-message', pendingId, provider: pending.provider, source: pending.source },
     });
     transaction.create(db.doc(`households/${householdId}/ledgerLines/${transactionId}_source`), {
-      id: `${transactionId}_source`, householdId, transactionId, accountId,
+      id: `${transactionId}_source`,
+      householdId,
+      transactionId,
+      accountId,
       signedAmount: sourceLedgerAmount.signedAmount,
       ...(sourceLedgerAmount.cardFee ? { cardFee: sourceLedgerAmount.cardFee } : {}),
-      currency: pending.currency, createdAt: now,
+      currency: pending.currency,
+      createdAt: now,
     });
     if (pending.kind === 'transfer' && destinationAccount) {
       transaction.create(db.doc(`households/${householdId}/ledgerLines/${transactionId}_destination`), {
-        id: `${transactionId}_destination`, householdId, transactionId,
-        accountId: destinationAccount.id, signedAmount: destAmount,
-        currency: destCurrency, createdAt: now,
+        id: `${transactionId}_destination`,
+        householdId,
+        transactionId,
+        accountId: destinationAccount.id,
+        signedAmount: destAmount,
+        currency: destCurrency,
+        createdAt: now,
       });
       if (isCrossCurrency && pending.destinationAmount) {
         transaction.create(db.doc(`households/${householdId}/conversionDetails/${transactionId}`), {
@@ -657,8 +722,14 @@ export const approvePendingFinancialMessage = onCall(async (request) => {
       }
     }
     if (isLoanPayment && paymentLockRef && loan) {
-      transaction.create(paymentLockRef, { loanId: suggestedLoanId, installmentNumber: suggestedInstallment, transactionId, createdAt: now });
-      if (suggestedInstallment >= loan.totalInstallments) transaction.set(loanRef!, { status: 'paid', updatedAt: now }, { merge: true });
+      transaction.create(paymentLockRef, {
+        loanId: suggestedLoanId,
+        installmentNumber: suggestedInstallment,
+        transactionId,
+        createdAt: now,
+      });
+      if (suggestedInstallment >= loan.totalInstallments)
+        transaction.set(loanRef!, { status: 'paid', updatedAt: now }, { merge: true });
     }
     transaction.create(db.doc(`households/${householdId}/auditLog/${transactionId}`), {
       id: transactionId,
@@ -670,20 +741,30 @@ export const approvePendingFinancialMessage = onCall(async (request) => {
       summary: isLoanPayment
         ? `${profile.displayName || 'User'} approved imported loan installment ${suggestedInstallment}/${loan?.totalInstallments}: ${pending.amount} ${pending.currency}`
         : isCrossCurrency
-        ? `${profile.displayName || 'User'} approved imported transfer: ${pending.amount} ${pending.currency} → ${destAmount} ${destCurrency} - ${pending.description}`
-        : `${profile.displayName || 'User'} approved imported ${pending.kind}: ${pending.amount} ${pending.currency} - ${pending.description}`,
-      details: { transactionId, type: pending.kind, amount: pending.amount, currency: pending.currency, imported: true },
+          ? `${profile.displayName || 'User'} approved imported transfer: ${pending.amount} ${pending.currency} → ${destAmount} ${destCurrency} - ${pending.description}`
+          : `${profile.displayName || 'User'} approved imported ${pending.kind}: ${pending.amount} ${pending.currency} - ${pending.description}`,
+      details: {
+        transactionId,
+        type: pending.kind,
+        amount: pending.amount,
+        currency: pending.currency,
+        imported: true,
+      },
       createdAt: now,
     });
-    transaction.set(db.doc(`messageIngestionReceipts/${pendingId}`), {
-      state: 'approved',
-      transactionId,
-      snapshot: pending,
-      resolvedAt: now,
-      resolvedBy: uid,
-      resolvedByDisplayName: profile.displayName || 'User',
-      updatedAt: now,
-    }, { merge: true });
+    transaction.set(
+      db.doc(`messageIngestionReceipts/${pendingId}`),
+      {
+        state: 'approved',
+        transactionId,
+        snapshot: pending,
+        resolvedAt: now,
+        resolvedBy: uid,
+        resolvedByDisplayName: profile.displayName || 'User',
+        updatedAt: now,
+      },
+      { merge: true },
+    );
     transaction.delete(pendingRef);
   });
 
@@ -705,15 +786,19 @@ export const discardPendingFinancialMessage = onCall(async (request) => {
     const now = new Date().toISOString();
     const auditId = `pending_discarded_${pendingId}_${Date.now()}`;
     transaction.delete(pendingRef);
-    transaction.set(db.doc(`messageIngestionReceipts/${pendingId}`), {
-      state: 'discarded',
-      snapshot: pending,
-      resolvedAt: now,
-      resolvedBy: uid,
-      resolvedByDisplayName: profile.displayName || 'User',
-      updatedAt: now,
-      rawMessage: FieldValue.delete(),
-    }, { merge: true });
+    transaction.set(
+      db.doc(`messageIngestionReceipts/${pendingId}`),
+      {
+        state: 'discarded',
+        snapshot: pending,
+        resolvedAt: now,
+        resolvedBy: uid,
+        resolvedByDisplayName: profile.displayName || 'User',
+        updatedAt: now,
+        rawMessage: FieldValue.delete(),
+      },
+      { merge: true },
+    );
     transaction.create(db.doc(`households/${householdId}/auditLog/${auditId}`), {
       id: auditId,
       householdId,
@@ -735,7 +820,8 @@ export const listResolvedPendingFinancialMessages = onCall(async (request) => {
   const householdId = assertString((request.data as { householdId?: unknown })?.householdId, 'householdId');
   await requireHouseholdMember(uid, householdId);
 
-  const snapshot = await getFirestore().collection('messageIngestionReceipts')
+  const snapshot = await getFirestore()
+    .collection('messageIngestionReceipts')
     .where('householdId', '==', householdId)
     .where('state', 'in', ['approved', 'discarded'])
     .orderBy('resolvedAt', 'desc')
@@ -743,10 +829,13 @@ export const listResolvedPendingFinancialMessages = onCall(async (request) => {
     .get();
   const items = snapshot.docs
     .map((doc) => doc.data() as IngestionReceipt)
-    .filter((receipt) => (receipt.state === 'approved' || receipt.state === 'discarded')
-      && !!receipt.snapshot
-      && !!receipt.resolvedAt
-      && !!receipt.resolvedBy)
+    .filter(
+      (receipt) =>
+        (receipt.state === 'approved' || receipt.state === 'discarded') &&
+        !!receipt.snapshot &&
+        !!receipt.resolvedAt &&
+        !!receipt.resolvedBy,
+    )
     .map((receipt) => ({
       id: receipt.id,
       state: receipt.state as 'approved' | 'discarded',
@@ -786,14 +875,18 @@ export const restoreDiscardedPendingFinancialMessage = onCall(async (request) =>
     const auditId = `pending_restored_${pendingId}_${Date.now()}`;
     restored = { ...receipt.snapshot, id: pendingId, householdId, status: 'pending' };
     transaction.create(pendingRef, restored);
-    transaction.set(receiptRef, {
-      state: 'pending',
-      transactionId: FieldValue.delete(),
-      resolvedAt: FieldValue.delete(),
-      resolvedBy: FieldValue.delete(),
-      resolvedByDisplayName: FieldValue.delete(),
-      updatedAt: now,
-    }, { merge: true });
+    transaction.set(
+      receiptRef,
+      {
+        state: 'pending',
+        transactionId: FieldValue.delete(),
+        resolvedAt: FieldValue.delete(),
+        resolvedBy: FieldValue.delete(),
+        resolvedByDisplayName: FieldValue.delete(),
+        updatedAt: now,
+      },
+      { merge: true },
+    );
     transaction.create(db.doc(`households/${householdId}/auditLog/${auditId}`), {
       id: auditId,
       householdId,

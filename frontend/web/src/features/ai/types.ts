@@ -10,7 +10,13 @@ export type AiConversation = {
   pendingActions?: PendingAiAction[];
 };
 
-export type PendingAiAction = { id: string; toolName: string; input: unknown; summary: string; risk: 'write' | 'sensitive' };
+export type PendingAiAction = {
+  id: string;
+  toolName: string;
+  input: unknown;
+  summary: string;
+  risk: 'write' | 'sensitive';
+};
 
 export type AiMessage = {
   id: string;

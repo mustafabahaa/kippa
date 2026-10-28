@@ -26,6 +26,11 @@
     "deploy": "npm run build && firebase deploy",
     "deploy:web": "npm run build && firebase deploy --only hosting",
     "deploy:functions": "firebase deploy --only functions",
-    "deploy:firebase": "firebase deploy --project YOUR_FIREBASE_PROJECT_ID"
+    "deploy:firebase": "firebase deploy --project YOUR_FIREBASE_PROJECT_ID",
+    "format": "prettier --write --ignore-unknown .",
+    "format:check": "prettier --check --ignore-unknown ."
+  },
+  "devDependencies": {
+    "prettier": "^3.9.10"
   }
 }

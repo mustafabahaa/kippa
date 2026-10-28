@@ -21,7 +21,7 @@ import {
   TextField,
   Typography,
   useTheme,
-  alpha
+  alpha,
 } from '@mui/material';
 
 // Action icons
@@ -58,32 +58,40 @@ function getActionVisual(action: AuditAction, theme: any): ActionVisual {
   switch (action) {
     case 'transaction_created':
       // Could be income/expense/conversion — neutral-ish blue handled per-entry in summary
-      return { Icon: ShoppingCartIcon, color: theme.palette.primary.main, bg: alpha(theme.palette.primary.main, 0.10) };
+      return { Icon: ShoppingCartIcon, color: theme.palette.primary.main, bg: alpha(theme.palette.primary.main, 0.1) };
     case 'transaction_updated':
-      return { Icon: EditIcon, color: theme.palette.text.secondary, bg: alpha(theme.palette.text.secondary, 0.10) };
+      return { Icon: EditIcon, color: theme.palette.text.secondary, bg: alpha(theme.palette.text.secondary, 0.1) };
     case 'transaction_voided':
-      return { Icon: CancelIcon, color: theme.palette.error.main, bg: alpha(theme.palette.error.main, 0.10) };
+      return { Icon: CancelIcon, color: theme.palette.error.main, bg: alpha(theme.palette.error.main, 0.1) };
     case 'account_created':
     case 'account_updated':
-      return { Icon: AccountBalanceIcon, color: theme.palette.primary.main, bg: alpha(theme.palette.primary.main, 0.10) };
+      return {
+        Icon: AccountBalanceIcon,
+        color: theme.palette.primary.main,
+        bg: alpha(theme.palette.primary.main, 0.1),
+      };
     case 'category_created':
     case 'category_updated':
-      return { Icon: CategoryIcon, color: theme.palette.text.secondary, bg: alpha(theme.palette.text.secondary, 0.10) };
+      return { Icon: CategoryIcon, color: theme.palette.text.secondary, bg: alpha(theme.palette.text.secondary, 0.1) };
     case 'cycle_created':
     case 'cycle_status_changed':
-      return { Icon: CalendarMonthIcon, color: theme.palette.primary.main, bg: alpha(theme.palette.primary.main, 0.10) };
+      return { Icon: CalendarMonthIcon, color: theme.palette.primary.main, bg: alpha(theme.palette.primary.main, 0.1) };
     case 'allocation_saved':
     case 'allocations_batch_saved':
-      return { Icon: PieChartIcon, color: theme.palette.text.secondary, bg: alpha(theme.palette.text.secondary, 0.10) };
+      return { Icon: PieChartIcon, color: theme.palette.text.secondary, bg: alpha(theme.palette.text.secondary, 0.1) };
     case 'expected_income_saved':
-      return { Icon: SavingsIcon, color: theme.palette.success.main, bg: alpha(theme.palette.success.main, 0.10) };
+      return { Icon: SavingsIcon, color: theme.palette.success.main, bg: alpha(theme.palette.success.main, 0.1) };
     case 'reconciliation_created':
-      return { Icon: SyncAltIcon, color: theme.palette.primary.main, bg: alpha(theme.palette.primary.main, 0.10) };
+      return { Icon: SyncAltIcon, color: theme.palette.primary.main, bg: alpha(theme.palette.primary.main, 0.1) };
     case 'notification_settings_updated':
-      return { Icon: NotificationsActiveIcon, color: theme.palette.text.secondary, bg: alpha(theme.palette.text.secondary, 0.10) };
+      return {
+        Icon: NotificationsActiveIcon,
+        color: theme.palette.text.secondary,
+        bg: alpha(theme.palette.text.secondary, 0.1),
+      };
     case 'household_joined':
     case 'household_left':
-      return { Icon: HomeIcon, color: theme.palette.primary.main, bg: alpha(theme.palette.primary.main, 0.10) };
+      return { Icon: HomeIcon, color: theme.palette.primary.main, bg: alpha(theme.palette.primary.main, 0.1) };
     default:
       return { Icon: HistoryIcon, color: theme.palette.text.secondary, bg: theme.palette.action.hover };
   }
@@ -163,14 +171,21 @@ function AuditLogRow({ entry }: { entry: AuditLogEntry }) {
       </TableCell>
       <TableCell sx={{ width: 220, py: 1.25, display: { xs: 'none', md: 'table-cell' } }}>
         <Stack direction="row" spacing={1} alignItems="center">
-          <Avatar src={entry.userPhotoURL || undefined} sx={{ width: 24, height: 24, fontSize: 10, bgcolor: 'primary.main' }}>
+          <Avatar
+            src={entry.userPhotoURL || undefined}
+            sx={{ width: 24, height: 24, fontSize: 10, bgcolor: 'primary.main' }}
+          >
             {initials(entry.userDisplayName)}
           </Avatar>
-          <Typography noWrap sx={{ color: 'text.secondary', fontSize: 12, fontWeight: 600 }}>{entry.userDisplayName}</Typography>
+          <Typography noWrap sx={{ color: 'text.secondary', fontSize: 12, fontWeight: 600 }}>
+            {entry.userDisplayName}
+          </Typography>
         </Stack>
       </TableCell>
       <TableCell align="right" sx={{ width: { xs: 100, sm: 140 }, py: 1.25 }}>
-        <Typography noWrap sx={{ color: 'text.secondary', fontSize: 12, fontWeight: 650 }}>{relativeTime(entry.createdAt)}</Typography>
+        <Typography noWrap sx={{ color: 'text.secondary', fontSize: 12, fontWeight: 650 }}>
+          {relativeTime(entry.createdAt)}
+        </Typography>
       </TableCell>
     </TableRow>
   );
@@ -186,9 +201,18 @@ export function AuditLog() {
   const [selectedAction, setSelectedAction] = useState('all');
   const [selectedMember, setSelectedMember] = useState('all');
 
-  const handleSearch = (value: string) => { setSearchTerm(value); resetPage(); };
-  const handleActionChange = (value: string) => { setSelectedAction(value); resetPage(); };
-  const handleMemberChange = (value: string) => { setSelectedMember(value); resetPage(); };
+  const handleSearch = (value: string) => {
+    setSearchTerm(value);
+    resetPage();
+  };
+  const handleActionChange = (value: string) => {
+    setSelectedAction(value);
+    resetPage();
+  };
+  const handleMemberChange = (value: string) => {
+    setSelectedMember(value);
+    resetPage();
+  };
 
   // Pagination State
   const PAGE_SIZE = 25;
@@ -240,10 +264,7 @@ export function AuditLog() {
   return (
     <Box sx={{ py: 0.5 }}>
       <Stack spacing={3}>
-        <PageHeader
-          title="Activity Log"
-          subtitle="A real-time timeline of everything happening in your household"
-        />
+        <PageHeader title="Activity Log" subtitle="A real-time timeline of everything happening in your household" />
 
         {isLoading ? (
           <Card>
@@ -291,32 +312,66 @@ export function AuditLog() {
                   },
                 }}
               />
-              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))' }, gap: 1.5 }}>
+              <Box
+                sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))' }, gap: 1.5 }}
+              >
                 <FormControl fullWidth>
                   <InputLabel id="activity-action-label">Action</InputLabel>
-                  <Select labelId="activity-action-label" value={selectedAction} label="Action" onChange={(e) => handleActionChange(e.target.value)}>
+                  <Select
+                    labelId="activity-action-label"
+                    value={selectedAction}
+                    label="Action"
+                    onChange={(e) => handleActionChange(e.target.value)}
+                  >
                     <MenuItem value="all">All Actions</MenuItem>
-                    {ACTION_GROUPS.map((g) => <MenuItem key={g.label} value={g.label}>{g.label}</MenuItem>)}
+                    {ACTION_GROUPS.map((g) => (
+                      <MenuItem key={g.label} value={g.label}>
+                        {g.label}
+                      </MenuItem>
+                    ))}
                   </Select>
                 </FormControl>
                 <FormControl fullWidth>
                   <InputLabel id="activity-member-label">Member</InputLabel>
-                  <Select labelId="activity-member-label" value={selectedMember} label="Member" onChange={(e) => handleMemberChange(e.target.value)}>
+                  <Select
+                    labelId="activity-member-label"
+                    value={selectedMember}
+                    label="Member"
+                    onChange={(e) => handleMemberChange(e.target.value)}
+                  >
                     <MenuItem value="all">All Members</MenuItem>
-                    {members.map((m) => <MenuItem key={m.userId} value={m.userId}>{m.userDisplayName}</MenuItem>)}
+                    {members.map((m) => (
+                      <MenuItem key={m.userId} value={m.userId}>
+                        {m.userDisplayName}
+                      </MenuItem>
+                    ))}
                   </Select>
                 </FormControl>
               </Box>
             </Stack>
 
-            <TableContainer component={Card} sx={{ border: 0, boxShadow: 'none', overflow: 'hidden', '&:hover': { transform: 'none', boxShadow: 'none' } }}>
+            <TableContainer
+              component={Card}
+              sx={{
+                border: 0,
+                boxShadow: 'none',
+                overflow: 'hidden',
+                '&:hover': { transform: 'none', boxShadow: 'none' },
+              }}
+            >
               <Table sx={{ tableLayout: 'fixed' }}>
                 <TableHead>
                   <TableRow>
-                    <TableCell align="center" sx={{ width: 64, py: 1.75 }}>Type</TableCell>
+                    <TableCell align="center" sx={{ width: 64, py: 1.75 }}>
+                      Type
+                    </TableCell>
                     <TableCell sx={{ py: 1.75 }}>Activity</TableCell>
-                    <TableCell sx={{ width: 220, py: 1.75, display: { xs: 'none', md: 'table-cell' } }}>Member</TableCell>
-                    <TableCell align="right" sx={{ width: { xs: 100, sm: 140 }, py: 1.75 }}>When</TableCell>
+                    <TableCell sx={{ width: 220, py: 1.75, display: { xs: 'none', md: 'table-cell' } }}>
+                      Member
+                    </TableCell>
+                    <TableCell align="right" sx={{ width: { xs: 100, sm: 140 }, py: 1.75 }}>
+                      When
+                    </TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -330,7 +385,9 @@ export function AuditLog() {
                         />
                       </TableCell>
                     </TableRow>
-                  ) : visibleEntries.map(entry => <AuditLogRow key={entry.id} entry={entry} />)}
+                  ) : (
+                    visibleEntries.map((entry) => <AuditLogRow key={entry.id} entry={entry} />)
+                  )}
                 </TableBody>
               </Table>
               {visibleCount < filteredEntries.length && (

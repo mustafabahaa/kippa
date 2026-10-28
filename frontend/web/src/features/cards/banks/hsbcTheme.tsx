@@ -15,16 +15,16 @@ const triangles: { points: string; type: 'light' | 'dark'; opacity: number }[] =
   { points: '28,20 24,30 50,24', type: 'dark', opacity: 0.08 },
   { points: '24,30 36,32 50,24', type: 'light', opacity: 0.16 },
   { points: '24,30 34,46 28,58', type: 'dark', opacity: 0.15 },
-  { points: '24,30 36,32 34,46', type: 'dark', opacity: 0.20 },
+  { points: '24,30 36,32 34,46', type: 'dark', opacity: 0.2 },
   { points: '10,44 24,30 34,46', type: 'light', opacity: 0.08 },
   { points: '10,44 12,50 34,46', type: 'dark', opacity: 0.12 },
   { points: '12,50 14,58 28,58', type: 'light', opacity: 0.14 },
   { points: '34,46 12,50 28,58', type: 'dark', opacity: 0.25 },
   { points: '34,46 28,58 32,70', type: 'dark', opacity: 0.18 },
-  { points: '28,58 18,80 32,70', type: 'dark', opacity: 0.10 },
+  { points: '28,58 18,80 32,70', type: 'dark', opacity: 0.1 },
 
   // Mane front
-  { points: '50,24 68,22 72,42', type: 'light', opacity: 0.10 },
+  { points: '50,24 68,22 72,42', type: 'light', opacity: 0.1 },
   { points: '36,32 50,24 72,42', type: 'light', opacity: 0.14 },
   { points: '36,32 34,46 72,42', type: 'dark', opacity: 0.06 },
   { points: '34,46 68,62 72,42', type: 'dark', opacity: 0.08 },
@@ -36,7 +36,7 @@ const triangles: { points: string; type: 'light' | 'dark'; opacity: number }[] =
   { points: '58,8 68,22 82,18', type: 'light', opacity: 0.16 },
   { points: '68,22 72,42 82,18', type: 'light', opacity: 0.12 },
   { points: '72,42 68,62 88,40', type: 'dark', opacity: 0.05 },
-  { points: '68,62 52,78 82,68', type: 'dark', opacity: 0.10 },
+  { points: '68,62 52,78 82,68', type: 'dark', opacity: 0.1 },
   { points: '52,78 68,86 82,68', type: 'dark', opacity: 0.16 },
   { points: '82,18 72,42 88,40', type: 'light', opacity: 0.08 },
   { points: '88,40 68,62 82,68', type: 'dark', opacity: 0.08 },
@@ -78,19 +78,18 @@ export function HsbcLionBackground({ kind = 'credit' }: { kind?: CardKind }) {
       >
         {triangles.map((t, idx) => {
           const fill = isCredit
-            ? (t.type === 'light' ? '#ffffff' : '#000000')
-            : (t.type === 'light' ? '#5c7df2' : '#080c21');
+            ? t.type === 'light'
+              ? '#ffffff'
+              : '#000000'
+            : t.type === 'light'
+              ? '#5c7df2'
+              : '#080c21';
           const opacity = isCredit
             ? t.opacity
-            : (t.type === 'light' ? Math.min(0.9, t.opacity * 2.2) : Math.min(0.9, t.opacity * 1.5));
-          return (
-            <polygon
-              key={idx}
-              points={t.points}
-              fill={fill}
-              fillOpacity={opacity}
-            />
-          );
+            : t.type === 'light'
+              ? Math.min(0.9, t.opacity * 2.2)
+              : Math.min(0.9, t.opacity * 1.5);
+          return <polygon key={idx} points={t.points} fill={fill} fillOpacity={opacity} />;
         })}
       </svg>
     </Box>

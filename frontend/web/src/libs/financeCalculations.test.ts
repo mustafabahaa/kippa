@@ -3,7 +3,10 @@ import type { Account, FinanceTransaction, LedgerLine } from '@kippa/domain';
 import { calculateAccountBalances, getPostedLedgerLines, getTransferLines } from './financeCalculations';
 
 const accounts = [{ id: 'cash' }, { id: 'bank' }] as Account[];
-const transactions = [{ id: 'posted', status: 'posted' }, { id: 'voided', status: 'voided' }] as FinanceTransaction[];
+const transactions = [
+  { id: 'posted', status: 'posted' },
+  { id: 'voided', status: 'voided' },
+] as FinanceTransaction[];
 const lines = [
   { id: '1', transactionId: 'posted', accountId: 'cash', signedAmount: -25 },
   { id: '2', transactionId: 'posted', accountId: 'bank', signedAmount: 25 },

@@ -104,7 +104,7 @@ export default function DarkVeil({
   warpAmount = 0,
   resolutionScale = 1,
   saturation = 1,
-  brightness = 1
+  brightness = 1,
 }: Props) {
   const ref = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
@@ -113,7 +113,7 @@ export default function DarkVeil({
 
     const renderer = new Renderer({
       dpr: Math.min(window.devicePixelRatio, 2),
-      canvas
+      canvas,
     });
 
     const gl = renderer.gl;
@@ -131,8 +131,8 @@ export default function DarkVeil({
         uScanFreq: { value: scanlineFrequency },
         uWarp: { value: warpAmount },
         uSaturation: { value: saturation },
-        uBrightness: { value: brightness }
-      }
+        uBrightness: { value: brightness },
+      },
     });
 
     const mesh = new Mesh(gl, { geometry, program });
@@ -169,6 +169,16 @@ export default function DarkVeil({
       cancelAnimationFrame(frame);
       window.removeEventListener('resize', resize);
     };
-  }, [hueShift, noiseIntensity, scanlineIntensity, speed, scanlineFrequency, warpAmount, resolutionScale, saturation, brightness]);
+  }, [
+    hueShift,
+    noiseIntensity,
+    scanlineIntensity,
+    speed,
+    scanlineFrequency,
+    warpAmount,
+    resolutionScale,
+    saturation,
+    brightness,
+  ]);
   return <canvas ref={ref} className="darkveil-canvas" />;
 }

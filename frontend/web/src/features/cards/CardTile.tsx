@@ -24,14 +24,13 @@ export function CardTile({
   onOpenDetail?: () => void;
 }) {
   const utilizationPct = summary?.utilization != null ? Math.round(summary.utilization * 100) : null;
-  const barColor = utilizationPct == null ? 'primary' : utilizationPct > 95 ? 'error' : utilizationPct > 80 ? 'warning' : 'success';
+  const barColor =
+    utilizationPct == null ? 'primary' : utilizationPct > 95 ? 'error' : utilizationPct > 80 ? 'warning' : 'success';
   const isCredit = card.kind === 'credit';
 
   const formatMoney = useFormattedMoney();
   const { maskText, maskDigits } = usePrivacyMask();
-  const formattedBalance = parentAccountBalance != null
-    ? formatMoney(parentAccountBalance, card.currency, 2)
-    : null;
+  const formattedBalance = parentAccountBalance != null ? formatMoney(parentAccountBalance, card.currency, 2) : null;
 
   return (
     <Box
@@ -53,20 +52,38 @@ export function CardTile({
         boxSizing: 'border-box',
         transition: 'transform 0.2s ease, box-shadow 0.2s ease',
         overflow: 'hidden',
-        '&:hover': onOpenDetail ? {
-          transform: 'translateY(-4px)',
-          boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
-        } : {},
+        '&:hover': onOpenDetail
+          ? {
+              transform: 'translateY(-4px)',
+              boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
+            }
+          : {},
       }}
     >
       <CardBackground bankId={card.bankId} kind={card.kind} tierId={card.tierId} fill>
-        <Box sx={{ p: 2.5, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', flex: '1 1 auto', boxSizing: 'border-box' }}>
+        <Box
+          sx={{
+            p: 2.5,
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+            flex: '1 1 auto',
+            boxSizing: 'border-box',
+          }}
+        >
           {!card.isActive && (
             <Chip
               icon={<AcUnitIcon sx={{ fontSize: 14 }} />}
               label="Frozen"
               size="small"
-              sx={{ position: 'absolute', top: 12, left: 12, bgcolor: 'rgba(255,255,255,0.2)', color: '#fff', zIndex: 2 }}
+              sx={{
+                position: 'absolute',
+                top: 12,
+                left: 12,
+                bgcolor: 'rgba(255,255,255,0.2)',
+                color: '#fff',
+                zIndex: 2,
+              }}
             />
           )}
 
@@ -74,7 +91,12 @@ export function CardTile({
             <BankLogo bankId={card.bankId} kind={card.kind} />
           </Stack>
 
-          <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mt: 1, position: 'relative', zIndex: 1 }}>
+          <Stack
+            direction="row"
+            justifyContent="space-between"
+            alignItems="center"
+            sx={{ mt: 1, position: 'relative', zIndex: 1 }}
+          >
             <CardChip />
             <Stack direction="row" alignItems="center" spacing={1.5}>
               <TierLabel bankId={card.bankId} tierId={card.tierId} />
@@ -95,7 +117,12 @@ export function CardTile({
             </Stack>
           </Stack>
 
-          <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mt: 0.5, mb: 0.5, position: 'relative', zIndex: 1 }}>
+          <Stack
+            direction="row"
+            justifyContent="space-between"
+            alignItems="center"
+            sx={{ mt: 0.5, mb: 0.5, position: 'relative', zIndex: 1 }}
+          >
             <Typography
               sx={{
                 fontSize: '16px',
@@ -133,11 +160,28 @@ export function CardTile({
               <Box sx={{ flex: 1, mr: 2 }}>
                 {isCredit && summary && (
                   <Stack spacing={0.5}>
-                    <Typography sx={{ fontSize: '24px', fontWeight: 800, letterSpacing: '-0.5px', lineHeight: 1.1, color: '#ffffff' }}>
+                    <Typography
+                      sx={{
+                        fontSize: '24px',
+                        fontWeight: 800,
+                        letterSpacing: '-0.5px',
+                        lineHeight: 1.1,
+                        color: '#ffffff',
+                      }}
+                    >
                       <Money amount={summary.currentDebt} code={card.currency} maxDigits={2} />
                     </Typography>
                     <Stack direction="row" justifyContent="space-between" alignItems="center">
-                      <Typography sx={{ fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.8px', color: '#ffffff', opacity: 0.7 }}>
+                      <Typography
+                        sx={{
+                          fontSize: '9px',
+                          fontWeight: 600,
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.8px',
+                          color: '#ffffff',
+                          opacity: 0.7,
+                        }}
+                      >
                         Outstanding
                       </Typography>
                       {summary.nextDueDate && (
@@ -175,10 +219,27 @@ export function CardTile({
 
                 {!isCredit && formattedBalance && (
                   <Stack spacing={0.25}>
-                    <Typography sx={{ fontSize: '24px', fontWeight: 800, letterSpacing: '-0.5px', lineHeight: 1.1, color: '#ffffff' }}>
+                    <Typography
+                      sx={{
+                        fontSize: '24px',
+                        fontWeight: 800,
+                        letterSpacing: '-0.5px',
+                        lineHeight: 1.1,
+                        color: '#ffffff',
+                      }}
+                    >
                       {formattedBalance}
                     </Typography>
-                    <Typography sx={{ fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.8px', color: '#ffffff', opacity: 0.7 }}>
+                    <Typography
+                      sx={{
+                        fontSize: '9px',
+                        fontWeight: 600,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.8px',
+                        color: '#ffffff',
+                        opacity: 0.7,
+                      }}
+                    >
                       Available Balance
                     </Typography>
                   </Stack>
@@ -189,7 +250,13 @@ export function CardTile({
             </Stack>
 
             {(onFreeze || onEdit) && (
-              <Stack direction="row" spacing={1} justifyContent="flex-end" sx={{ mt: 1.5 }} onClick={e => e.stopPropagation()}>
+              <Stack
+                direction="row"
+                spacing={1}
+                justifyContent="flex-end"
+                sx={{ mt: 1.5 }}
+                onClick={(e) => e.stopPropagation()}
+              >
                 {onFreeze && (
                   <IconButton
                     size="small"
@@ -197,7 +264,7 @@ export function CardTile({
                     sx={{
                       bgcolor: 'rgba(255,255,255,0.15)',
                       color: '#ffffff',
-                      '&:hover': { bgcolor: 'rgba(255,255,255,0.25)' }
+                      '&:hover': { bgcolor: 'rgba(255,255,255,0.25)' },
                     }}
                   >
                     <AcUnitIcon sx={{ fontSize: 15 }} />
@@ -210,7 +277,7 @@ export function CardTile({
                     sx={{
                       bgcolor: 'rgba(255,255,255,0.15)',
                       color: '#ffffff',
-                      '&:hover': { bgcolor: 'rgba(255,255,255,0.25)' }
+                      '&:hover': { bgcolor: 'rgba(255,255,255,0.25)' },
                     }}
                   >
                     <EditIcon sx={{ fontSize: 15 }} />

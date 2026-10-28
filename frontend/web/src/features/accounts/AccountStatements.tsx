@@ -63,34 +63,45 @@ export function AccountStatements() {
   const { data: transactions = [], isLoading: transactionsLoading } = useTransactions(householdId);
   const { data: ledgerLines = [], isLoading: linesLoading } = useLedgerLines(householdId);
 
-  const statementAccounts = useMemo(() => accounts.filter(account => account.type !== 'credit' && account.isActive), [accounts]);
+  const statementAccounts = useMemo(
+    () => accounts.filter((account) => account.type !== 'credit' && account.isActive),
+    [accounts],
+  );
   const requestedAccountId = searchParams.get('account');
-  const selectedAccount = statementAccounts.find(account => account.id === requestedAccountId) ?? statementAccounts[0] ?? null;
+  const selectedAccount =
+    statementAccounts.find((account) => account.id === requestedAccountId) ?? statementAccounts[0] ?? null;
 
   useEffect(() => {
     if (!selectedAccount || requestedAccountId === selectedAccount.id) return;
-    setSearchParams(current => {
-      const next = new URLSearchParams(current);
-      next.set('account', selectedAccount.id);
-      return next;
-    }, { replace: true });
+    setSearchParams(
+      (current) => {
+        const next = new URLSearchParams(current);
+        next.set('account', selectedAccount.id);
+        return next;
+      },
+      { replace: true },
+    );
   }, [requestedAccountId, selectedAccount, setSearchParams]);
 
   const resetPage = () => setPage(0);
-  const entries = useMemo(() => selectedAccount ? buildAccountStatement(
-    selectedAccount.id,
-    transactions,
-    ledgerLines,
-    { search },
-  ) : [], [ledgerLines, search, selectedAccount, transactions]);
+  const entries = useMemo(
+    () => (selectedAccount ? buildAccountStatement(selectedAccount.id, transactions, ledgerLines, { search }) : []),
+    [ledgerLines, search, selectedAccount, transactions],
+  );
 
   const visibleEntries = entries.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
   const currentBalance = selectedAccount ? calculateAccountBalance(selectedAccount.id, transactions, ledgerLines) : 0;
-  const categoryName = (id?: string | null) => categories.find(category => category.id === id)?.name;
+  const categoryName = (id?: string | null) => categories.find((category) => category.id === id)?.name;
   const isLoading = accountsLoading || categoriesLoading || transactionsLoading || linesLoading;
 
   if (isLoading) {
-    return <Stack spacing={3}><Skeleton variant="text" width="40%" height={40} /><Skeleton variant="rounded" height={150} /><Skeleton variant="rounded" height={420} /></Stack>;
+    return (
+      <Stack spacing={3}>
+        <Skeleton variant="text" width="40%" height={40} />
+        <Skeleton variant="rounded" height={150} />
+        <Skeleton variant="rounded" height={420} />
+      </Stack>
+    );
   }
 
   return (
@@ -102,19 +113,30 @@ export function AccountStatements() {
           <>
             <Card>
               <CardContent>
-                <Stack direction={{ xs: 'column', sm: 'row' }} alignItems={{ xs: 'flex-start', sm: 'center' }} justifyContent="space-between" spacing={2.5}>
+                <Stack
+                  direction={{ xs: 'column', sm: 'row' }}
+                  alignItems={{ xs: 'flex-start', sm: 'center' }}
+                  justifyContent="space-between"
+                  spacing={2.5}
+                >
                   <Stack direction="row" spacing={1.5} alignItems="center">
                     <Paper variant="cardHeaderIcon">
                       <AccountBalanceIcon variant="Bulk" />
                     </Paper>
                     <Box>
                       <Typography variant="cardTitle">{selectedAccount.name}</Typography>
-                      <Typography variant="cardSubtitle" color="text.secondary">{selectedAccount.type.toUpperCase()} · {selectedAccount.currency}</Typography>
+                      <Typography variant="cardSubtitle" color="text.secondary">
+                        {selectedAccount.type.toUpperCase()} · {selectedAccount.currency}
+                      </Typography>
                     </Box>
                   </Stack>
                   <Stack spacing={0.25} alignItems={{ xs: 'flex-start', sm: 'flex-end' }}>
-                    <Typography variant="fieldHint" color="text.secondary">Current balance</Typography>
-                    <Typography variant="loanMetric"><Money amount={currentBalance} code={selectedAccount.currency} maxDigits={2} /></Typography>
+                    <Typography variant="fieldHint" color="text.secondary">
+                      Current balance
+                    </Typography>
+                    <Typography variant="loanMetric">
+                      <Money amount={currentBalance} code={selectedAccount.currency} maxDigits={2} />
+                    </Typography>
                   </Stack>
                 </Stack>
               </CardContent>
@@ -125,7 +147,10 @@ export function AccountStatements() {
                 fullWidth
                 placeholder="Search statement descriptions..."
                 value={search}
-                onChange={event => { setSearch(event.target.value); resetPage(); }}
+                onChange={(event) => {
+                  setSearch(event.target.value);
+                  resetPage();
+                }}
                 slotProps={{ input: { startAdornment: <SearchIcon sx={{ mr: 1 }} /> } }}
               />
               <Box sx={{ width: '100%', maxWidth: { sm: 420 } }}>
@@ -135,12 +160,16 @@ export function AccountStatements() {
                     labelId="statement-account-label"
                     label="Account"
                     value={selectedAccount.id}
-                    onChange={event => {
+                    onChange={(event) => {
                       setSearchParams({ account: event.target.value });
                       resetPage();
                     }}
                   >
-                    {statementAccounts.map(account => <MenuItem key={account.id} value={account.id}>{account.name} ({account.currency})</MenuItem>)}
+                    {statementAccounts.map((account) => (
+                      <MenuItem key={account.id} value={account.id}>
+                        {account.name} ({account.currency})
+                      </MenuItem>
+                    ))}
                   </Select>
                 </FormControl>
               </Box>
@@ -148,7 +177,11 @@ export function AccountStatements() {
 
             <Card sx={{ overflow: 'hidden' }}>
               {entries.length === 0 ? (
-                <EmptyLayout icon={<SearchIcon />} title="No statement entries" description="Try another account or search term." />
+                <EmptyLayout
+                  icon={<SearchIcon />}
+                  title="No statement entries"
+                  description="Try another account or search term."
+                />
               ) : (
                 <>
                   <TableContainer sx={{ display: { xs: 'none', md: 'block' } }}>
@@ -163,15 +196,45 @@ export function AccountStatements() {
                         </TableRow>
                       </TableHead>
                       <TableBody>
-                        {visibleEntries.map(entry => {
-                          const title = entry.transaction.description || categoryName(entry.transaction.categoryId) || transactionLabel(entry.transaction.type);
+                        {visibleEntries.map((entry) => {
+                          const title =
+                            entry.transaction.description ||
+                            categoryName(entry.transaction.categoryId) ||
+                            transactionLabel(entry.transaction.type);
                           return (
                             <TableRow key={entry.transaction.id} hover>
-                              <TableCell><Typography variant="body2">{formatStatementDate(entry.transaction.date)}</Typography></TableCell>
-                              <TableCell><Typography variant="body1">{maskText(title)}</Typography>{categoryName(entry.transaction.categoryId) && <Typography variant="body2" color="text.secondary">{categoryName(entry.transaction.categoryId)}</Typography>}</TableCell>
-                              <TableCell><Chip size="small" label={transactionLabel(entry.transaction.type)} /></TableCell>
-                              <TableCell align="right"><Typography variant="sectionLabel" color={entry.amount >= 0 ? 'success.main' : 'text.primary'}>{entry.amount >= 0 ? '+' : '−'}<Money amount={Math.abs(entry.amount)} code={selectedAccount.currency} maxDigits={2} /></Typography></TableCell>
-                              <TableCell align="right"><Typography variant="sectionLabel"><Money amount={entry.balance} code={selectedAccount.currency} maxDigits={2} /></Typography></TableCell>
+                              <TableCell>
+                                <Typography variant="body2">{formatStatementDate(entry.transaction.date)}</Typography>
+                              </TableCell>
+                              <TableCell>
+                                <Typography variant="body1">{maskText(title)}</Typography>
+                                {categoryName(entry.transaction.categoryId) && (
+                                  <Typography variant="body2" color="text.secondary">
+                                    {categoryName(entry.transaction.categoryId)}
+                                  </Typography>
+                                )}
+                              </TableCell>
+                              <TableCell>
+                                <Chip size="small" label={transactionLabel(entry.transaction.type)} />
+                              </TableCell>
+                              <TableCell align="right">
+                                <Typography
+                                  variant="sectionLabel"
+                                  color={entry.amount >= 0 ? 'success.main' : 'text.primary'}
+                                >
+                                  {entry.amount >= 0 ? '+' : '−'}
+                                  <Money
+                                    amount={Math.abs(entry.amount)}
+                                    code={selectedAccount.currency}
+                                    maxDigits={2}
+                                  />
+                                </Typography>
+                              </TableCell>
+                              <TableCell align="right">
+                                <Typography variant="sectionLabel">
+                                  <Money amount={entry.balance} code={selectedAccount.currency} maxDigits={2} />
+                                </Typography>
+                              </TableCell>
                             </TableRow>
                           );
                         })}
@@ -180,16 +243,31 @@ export function AccountStatements() {
                   </TableContainer>
 
                   <Stack divider={<Divider flexItem />} sx={{ display: { xs: 'flex', md: 'none' } }}>
-                    {visibleEntries.map(entry => {
-                      const title = entry.transaction.description || categoryName(entry.transaction.categoryId) || transactionLabel(entry.transaction.type);
+                    {visibleEntries.map((entry) => {
+                      const title =
+                        entry.transaction.description ||
+                        categoryName(entry.transaction.categoryId) ||
+                        transactionLabel(entry.transaction.type);
                       return (
                         <Stack key={entry.transaction.id} direction="row" spacing={1.5} sx={{ p: 2 }}>
                           <TransactionIcon type={entry.transaction.type} size={40} />
                           <Box sx={{ flex: 1, minWidth: 0 }}>
-                            <Typography variant="body1" noWrap>{maskText(title)}</Typography>
-                            <Typography variant="body2" color="text.secondary">{formatStatementDate(entry.transaction.date)} · Balance <Money amount={entry.balance} code={selectedAccount.currency} maxDigits={2} /></Typography>
+                            <Typography variant="body1" noWrap>
+                              {maskText(title)}
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                              {formatStatementDate(entry.transaction.date)} · Balance{' '}
+                              <Money amount={entry.balance} code={selectedAccount.currency} maxDigits={2} />
+                            </Typography>
                           </Box>
-                          <Typography variant="sectionLabel" color={entry.amount >= 0 ? 'success.main' : 'text.primary'} sx={{ whiteSpace: 'nowrap' }}>{entry.amount >= 0 ? '+' : '−'}<Money amount={Math.abs(entry.amount)} code={selectedAccount.currency} maxDigits={2} /></Typography>
+                          <Typography
+                            variant="sectionLabel"
+                            color={entry.amount >= 0 ? 'success.main' : 'text.primary'}
+                            sx={{ whiteSpace: 'nowrap' }}
+                          >
+                            {entry.amount >= 0 ? '+' : '−'}
+                            <Money amount={Math.abs(entry.amount)} code={selectedAccount.currency} maxDigits={2} />
+                          </Typography>
                         </Stack>
                       );
                     })}
@@ -202,15 +280,27 @@ export function AccountStatements() {
                     rowsPerPage={rowsPerPage}
                     rowsPerPageOptions={[10, 25, 50]}
                     onPageChange={(_, nextPage) => setPage(nextPage)}
-                    onRowsPerPageChange={event => { setRowsPerPage(Number(event.target.value)); setPage(0); }}
-                    sx={{ '& .MuiTablePagination-toolbar': { flexWrap: 'wrap' }, '& .MuiTablePagination-spacer': { display: { xs: 'none', sm: 'block' } } }}
+                    onRowsPerPageChange={(event) => {
+                      setRowsPerPage(Number(event.target.value));
+                      setPage(0);
+                    }}
+                    sx={{
+                      '& .MuiTablePagination-toolbar': { flexWrap: 'wrap' },
+                      '& .MuiTablePagination-spacer': { display: { xs: 'none', sm: 'block' } },
+                    }}
                   />
                 </>
               )}
             </Card>
           </>
         ) : (
-          <Card><EmptyLayout icon={<SearchIcon />} title="No accounts available" description="Create an account before opening a statement." /></Card>
+          <Card>
+            <EmptyLayout
+              icon={<SearchIcon />}
+              title="No accounts available"
+              description="Create an account before opening a statement."
+            />
+          </Card>
         )}
       </Stack>
     </Box>

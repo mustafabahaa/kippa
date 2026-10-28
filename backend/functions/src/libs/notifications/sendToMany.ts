@@ -8,15 +8,10 @@ import type { buildMessagePayload } from '../../domain/notifications/payload.js'
  * Reads the whole household token collection then filters in memory, to
  * avoid the Firestore `in` query 10-element limit.
  */
-export async function getTokensForUsers(
-  householdId: string,
-  uids: string[],
-): Promise<string[]> {
+export async function getTokensForUsers(householdId: string, uids: string[]): Promise<string[]> {
   if (uids.length === 0) return [];
   const db = getFirestore();
-  const tokensSnap = await db
-    .collection(`households/${householdId}/fcmTokens`)
-    .get();
+  const tokensSnap = await db.collection(`households/${householdId}/fcmTokens`).get();
 
   const uidSet = new Set(uids);
   return tokensSnap.docs
@@ -52,10 +47,7 @@ export async function sendToMany(
   response.responses.forEach((resp, idx) => {
     if (!resp.success && resp.error) {
       const code = resp.error.code;
-      if (
-        code === 'messaging/registration-token-not-registered' ||
-        code === 'messaging/invalid-argument'
-      ) {
+      if (code === 'messaging/registration-token-not-registered' || code === 'messaging/invalid-argument') {
         invalidTokens.push(tokens[idx]);
       }
     }

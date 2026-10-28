@@ -17,7 +17,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let cancelled = false;
     let unsubscribe = () => {};
-    authLib.signInForLocalPreview()
+    authLib
+      .signInForLocalPreview()
       .catch((error) => console.error(error))
       .finally(() => {
         if (cancelled) return;
@@ -49,14 +50,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       return Promise.all(
         userProfile.householdIds.map(async (id) => {
           const info = await ledgerLib.getHouseholdInfo(id);
-          return info || {
-            id,
-            name: `Household (${id})`,
-            baseCurrency: detectBaseCurrency(),
-            createdAt: '',
-            createdBy: ''
-          };
-        })
+          return (
+            info || {
+              id,
+              name: `Household (${id})`,
+              baseCurrency: detectBaseCurrency(),
+              createdAt: '',
+              createdBy: '',
+            }
+          );
+        }),
       );
     },
     enabled: !!userProfile?.householdIds,

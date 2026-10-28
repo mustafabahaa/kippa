@@ -34,14 +34,7 @@ export function ThemeModeProvider({ children }: { children: React.ReactNode }) {
 
   const resolvedMode: ResolvedThemeMode = modePref === 'system' ? systemMode : modePref;
 
-  const value = React.useMemo(
-    () => ({ modePref, resolvedMode, setModePref }),
-    [modePref, resolvedMode, setModePref]
-  );
+  const value = React.useMemo(() => ({ modePref, resolvedMode, setModePref }), [modePref, resolvedMode, setModePref]);
 
-  return (
-    <ThemeModeContext.Provider value={value}>
-      {children}
-    </ThemeModeContext.Provider>
-  );
+  return <ThemeModeContext.Provider value={value}>{children}</ThemeModeContext.Provider>;
 }

@@ -9,7 +9,7 @@ import {
   useHouseholdBaseCurrency,
   useBudgetAllocations,
   useExpectedIncomes,
-  useLoans
+  useLoans,
 } from '@/hooks/useFinance';
 import { computeDashboard, DashboardData } from '@/libs/selectors';
 import { Money } from '@/components/Money';
@@ -26,10 +26,10 @@ export function BudgetPulseCard() {
   const { data: categories = [] } = useCategories(householdId);
   const { data: cycles = [] } = useCycles(householdId);
   const baseCurrency = useHouseholdBaseCurrency();
-  const foreignCodes = Array.from(new Set((accounts ?? []).map(a => a.currency).filter(c => c !== baseCurrency)));
+  const foreignCodes = Array.from(new Set((accounts ?? []).map((a) => a.currency).filter((c) => c !== baseCurrency)));
   const { data: displayRates = {} } = useDisplayRates(baseCurrency, foreignCodes);
 
-  const activeCycle = cycles.find(c => c.status === 'open') || null;
+  const activeCycle = cycles.find((c) => c.status === 'open') || null;
   const activeCycleId = activeCycle?.id;
 
   const { data: allocations = [], isLoading: allocationsLoading } = useBudgetAllocations(householdId, activeCycleId);
@@ -83,28 +83,67 @@ export function BudgetPulseCard() {
     baseCurrency,
     loans,
   );
-  const remainingPercent = data.spending.plannedBudget > 0
-    ? Math.max(0, Math.round((1 - data.spending.actual / data.spending.plannedBudget) * 100))
-    : 0;
+  const remainingPercent =
+    data.spending.plannedBudget > 0
+      ? Math.max(0, Math.round((1 - data.spending.actual / data.spending.plannedBudget) * 100))
+      : 0;
   const featuredCategories = [...data.categoryStatus]
-    .filter(category => category.planned > 0)
+    .filter((category) => category.planned > 0)
     .sort((a, b) => b.planned - a.planned)
     .slice(0, 3);
 
   return (
     <Card sx={{ height: 375 }}>
       <CardContent sx={{ height: '100%' }}>
-        <DashboardCardHeading icon={<BarChartIcon variant="Bulk" />} title="Remaining monthly" trailing={<Chip label={getStatusLabel(data.saving.status)} color={data.saving.status === 'on-track' ? 'success' : data.saving.status === 'warning' ? 'warning' : 'error'} />} />
+        <DashboardCardHeading
+          icon={<BarChartIcon variant="Bulk" />}
+          title="Remaining monthly"
+          trailing={
+            <Chip
+              label={getStatusLabel(data.saving.status)}
+              color={
+                data.saving.status === 'on-track' ? 'success' : data.saving.status === 'warning' ? 'warning' : 'error'
+              }
+            />
+          }
+        />
 
         <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={2} sx={{ mt: 2.5 }}>
-          <Typography sx={{ color: 'text.primary', fontSize: { xs: 36, lg: 40 }, fontWeight: 500, lineHeight: 1.05, letterSpacing: '-0.055em', fontVariantNumeric: 'tabular-nums' }}>{remainingPercent}<Box component="span" sx={{ color: 'text.secondary', fontSize: '0.62em', ml: 0.75 }}>%</Box></Typography>
+          <Typography
+            sx={{
+              color: 'text.primary',
+              fontSize: { xs: 36, lg: 40 },
+              fontWeight: 500,
+              lineHeight: 1.05,
+              letterSpacing: '-0.055em',
+              fontVariantNumeric: 'tabular-nums',
+            }}
+          >
+            {remainingPercent}
+            <Box component="span" sx={{ color: 'text.secondary', fontSize: '0.62em', ml: 0.75 }}>
+              %
+            </Box>
+          </Typography>
           <Typography sx={{ maxWidth: 150, color: 'text.secondary', fontSize: 10.5, lineHeight: 1.45 }}>
-            {data.saving.status === 'on-track' ? 'You are in good shape—your monthly spending remains within plan.' : 'Spending is running ahead of the monthly plan.'}
+            {data.saving.status === 'on-track'
+              ? 'You are in good shape—your monthly spending remains within plan.'
+              : 'Spending is running ahead of the monthly plan.'}
           </Typography>
         </Stack>
 
-        <Box sx={{ mt: 1.25, px: 1, py: 0.6, width: 'fit-content', borderRadius: '9px', bgcolor: getStatusBgColor(data.saving.status) }}>
-          <Typography sx={{ color: getStatusColor(data.saving.status), fontSize: 9.5, fontWeight: 700 }}>Cycle progress {data.cycleProgress ? Math.round(data.cycleProgress.ratio * 100) : 0}%</Typography>
+        <Box
+          sx={{
+            mt: 1.25,
+            px: 1,
+            py: 0.6,
+            width: 'fit-content',
+            borderRadius: '9px',
+            bgcolor: getStatusBgColor(data.saving.status),
+          }}
+        >
+          <Typography sx={{ color: getStatusColor(data.saving.status), fontSize: 9.5, fontWeight: 700 }}>
+            Cycle progress {data.cycleProgress ? Math.round(data.cycleProgress.ratio * 100) : 0}%
+          </Typography>
         </Box>
 
         <Stack direction="row" spacing={1} alignItems="flex-end" sx={{ mt: 2.5, minHeight: 150 }}>
@@ -113,12 +152,36 @@ export function BudgetPulseCard() {
             const remaining = Math.max(0, category.planned - category.spent);
             return (
               <Box key={category.categoryId} sx={{ flex: 1, minWidth: 0 }}>
-                <Box sx={{ height: 120 - index * 16, p: 1.25, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', borderRadius: '13px 13px 9px 9px', bgcolor: index === 0 ? 'primary.dark' : index === 1 ? 'secondary.main' : 'primary.light', color: index === 0 ? 'primary.contrastText' : index === 1 ? 'secondary.contrastText' : 'primary.dark' }}>
+                <Box
+                  sx={{
+                    height: 120 - index * 16,
+                    p: 1.25,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between',
+                    borderRadius: '13px 13px 9px 9px',
+                    bgcolor: index === 0 ? 'primary.dark' : index === 1 ? 'secondary.main' : 'primary.light',
+                    color:
+                      index === 0 ? 'primary.contrastText' : index === 1 ? 'secondary.contrastText' : 'primary.dark',
+                  }}
+                >
                   <Box>
-                    <Typography sx={{ color: 'inherit', fontSize: used >= 100 ? 19 : 24, fontWeight: 500, lineHeight: 1 }}>{used}%</Typography>
-                    <Typography noWrap sx={{ color: 'inherit', fontSize: 10.5, opacity: 0.82 }}>{category.categoryName}</Typography>
+                    <Typography
+                      sx={{ color: 'inherit', fontSize: used >= 100 ? 19 : 24, fontWeight: 500, lineHeight: 1 }}
+                    >
+                      {used}%
+                    </Typography>
+                    <Typography noWrap sx={{ color: 'inherit', fontSize: 10.5, opacity: 0.82 }}>
+                      {category.categoryName}
+                    </Typography>
                   </Box>
-                  <Typography noWrap title={`${remaining.toLocaleString()} ${baseCurrency} left`} sx={{ color: 'inherit', fontSize: 8.5, fontWeight: 700 }}><Money amount={remaining} code={baseCurrency} maxDigits={0} /></Typography>
+                  <Typography
+                    noWrap
+                    title={`${remaining.toLocaleString()} ${baseCurrency} left`}
+                    sx={{ color: 'inherit', fontSize: 8.5, fontWeight: 700 }}
+                  >
+                    <Money amount={remaining} code={baseCurrency} maxDigits={0} />
+                  </Typography>
                 </Box>
               </Box>
             );

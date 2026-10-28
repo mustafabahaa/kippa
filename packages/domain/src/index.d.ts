@@ -79,35 +79,35 @@ export type Card = {
   id: string;
   householdId: string;
   kind: CardKind;
-  parentAccountId: string;          // REQUIRED. debit → running/savings account; credit → credit account.
+  parentAccountId: string; // REQUIRED. debit → running/savings account; credit → credit account.
   name: string;
   last4?: string;
   network?: CardNetwork;
-  bankId: string;                    // e.g. 'hsbc' | 'cib' | 'nbe' | 'other'
-  tierId?: string;                   // e.g. 'premier' | 'platinum' | 'classic'
-  expiryMonth?: number;             // 1–12
-  expiryYear?: number;              // e.g. 2027
+  bankId: string; // e.g. 'hsbc' | 'cib' | 'nbe' | 'other'
+  tierId?: string; // e.g. 'premier' | 'platinum' | 'classic'
+  expiryMonth?: number; // 1–12
+  expiryYear?: number; // e.g. 2027
   isActive: boolean;
   createdAt: string;
   // Credit only:
   creditLimit?: number;
-  paymentAccountId?: string;        // default source account for "Mark as paid"
-  currency: CurrencyCode;           // must equal paymentAccountId's currency
-  notifiedCardExpiryAt?: string;    // YYYY-MM-DD sentinel used by notification functions
+  paymentAccountId?: string; // default source account for "Mark as paid"
+  currency: CurrencyCode; // must equal paymentAccountId's currency
+  notifiedCardExpiryAt?: string; // YYYY-MM-DD sentinel used by notification functions
 };
 
 export type CardStatement = {
   id: string;
   householdId: string;
   cardId: string;
-  creditAccountId: string;          // denormalized for query
-  statementDate: string;            // ISO date user entered (cycle close)
-  statementBalance: number;         // user-entered bill amount
+  creditAccountId: string; // denormalized for query
+  statementDate: string; // ISO date user entered (cycle close)
+  statementBalance: number; // user-entered bill amount
   minPayment?: number;
-  dueDate: string;                  // ISO date user entered
+  dueDate: string; // ISO date user entered
   status: CardStatementStatus;
-  paymentTransactionId?: string;    // linked transfer(s) — see markAsPaid
-  notifiedCardExpiryAt?: string;    // sentinel so expiry push fires once
+  paymentTransactionId?: string; // linked transfer(s) — see markAsPaid
+  notifiedCardExpiryAt?: string; // sentinel so expiry push fires once
   createdAt: string;
 };
 
@@ -184,7 +184,7 @@ export type BudgetCycle = {
   householdId: string;
   name: string;
   startDate: string; // YYYY-MM-DD
-  endDate?: string | null;  // YYYY-MM-DD
+  endDate?: string | null; // YYYY-MM-DD
   status: BudgetCycleStatus;
   salaryTransactionId?: string | null;
   closedAt?: string | null;

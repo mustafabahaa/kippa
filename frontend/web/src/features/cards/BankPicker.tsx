@@ -5,13 +5,13 @@ import { BankLogo } from './CardDesign';
 
 export function BankPicker({ onPick }: { onPick: (bankId: string) => void }) {
   const [q, setQ] = useState('');
-  const filtered = BANK_LIST.filter(b => b.name.toLowerCase().includes(q.toLowerCase()));
+  const filtered = BANK_LIST.filter((b) => b.name.toLowerCase().includes(q.toLowerCase()));
 
   return (
     <Stack spacing={2}>
       <TextField
         value={q}
-        onChange={e => setQ(e.target.value)}
+        onChange={(e) => setQ(e.target.value)}
         placeholder="Search banks..."
         size="small"
         fullWidth
@@ -23,7 +23,7 @@ export function BankPicker({ onPick }: { onPick: (bankId: string) => void }) {
           gap: 1.5,
         }}
       >
-        {filtered.map(b => (
+        {filtered.map((b) => (
           <Box
             key={b.id}
             onClick={() => onPick(b.id)}
@@ -53,11 +53,7 @@ export function BankPicker({ onPick }: { onPick: (bankId: string) => void }) {
             <Box sx={{ '& svg': { maxWidth: 28, maxHeight: 28 }, zoom: 0.85 }}>
               <BankLogo bankId={b.id} kind="debit" />
             </Box>
-            <Typography
-              variant="caption"
-              noWrap
-              sx={{ fontWeight: 600, color: '#ffffff', opacity: 0.9 }}
-            >
+            <Typography variant="caption" noWrap sx={{ fontWeight: 600, color: '#ffffff', opacity: 0.9 }}>
               {b.name}
             </Typography>
           </Box>

@@ -1,19 +1,10 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
+import { Box, Card, CardContent, Chip, IconButton, Skeleton, Stack, Typography } from '@mui/material';
 import {
-  Box,
-  Card,
-  CardContent,
-  Chip,
-  IconButton,
-  Skeleton,
-  Stack,
-  Typography,
-} from '@mui/material';
-import { 
-  useCategories, 
-  useTransactions, 
+  useCategories,
+  useTransactions,
   useLedgerLines,
   useAccounts,
   useVoidTransactionMutation,
@@ -33,7 +24,7 @@ export function TransactionsCard() {
   const { data: transactions, isLoading: txsLoading } = useTransactions(householdId);
   const { data: ledgerLines, isLoading: linesLoading } = useLedgerLines(householdId);
   const { data: accounts = [] } = useAccounts(householdId);
-  
+
   const voidMutation = useVoidTransactionMutation();
   const [editingTx, setEditingTx] = useState<FinanceTransaction | null>(null);
 
@@ -64,18 +55,36 @@ export function TransactionsCard() {
       <Card>
         <CardContent>
           <Stack spacing={2.5}>
-            <DashboardCardHeading icon={<ReceiptLongIcon variant="Bulk" />} title="Recent Transactions" subtitle="Latest household activity" trailing={<Stack direction="row" spacing={1} alignItems="center">
-                <Chip size="small" label={`${Math.min(transactions.length, 8)} recent`} sx={{ bgcolor: 'action.hover', color: 'primary.main' }} />
-                <IconButton aria-label="View all transactions" onClick={() => navigate('/transactions')} size="small" sx={{ width: 36, height: 36, minWidth: 36 }}>
-                  <ArrowBackIcon sx={{ fontSize: 18, transform: 'rotate(180deg)' }} />
-                </IconButton>
-              </Stack>} />
+            <DashboardCardHeading
+              icon={<ReceiptLongIcon variant="Bulk" />}
+              title="Recent Transactions"
+              subtitle="Latest household activity"
+              trailing={
+                <Stack direction="row" spacing={1} alignItems="center">
+                  <Chip
+                    size="small"
+                    label={`${Math.min(transactions.length, 8)} recent`}
+                    sx={{ bgcolor: 'action.hover', color: 'primary.main' }}
+                  />
+                  <IconButton
+                    aria-label="View all transactions"
+                    onClick={() => navigate('/transactions')}
+                    size="small"
+                    sx={{ width: 36, height: 36, minWidth: 36 }}
+                  >
+                    <ArrowBackIcon sx={{ fontSize: 18, transform: 'rotate(180deg)' }} />
+                  </IconButton>
+                </Stack>
+              }
+            />
 
             {transactions.length === 0 ? (
-              <Typography variant="body2" color="text.secondary" align="center" sx={{ py: 4 }}>No recent activity recorded.</Typography>
+              <Typography variant="body2" color="text.secondary" align="center" sx={{ py: 4 }}>
+                No recent activity recorded.
+              </Typography>
             ) : (
               <Stack spacing={1}>
-                {transactions.slice(0, 8).map(tx => (
+                {transactions.slice(0, 8).map((tx) => (
                   <TransactionsListItem
                     key={tx.id}
                     tx={tx}
@@ -93,11 +102,7 @@ export function TransactionsCard() {
       </Card>
 
       {/* Reusable Edit Dialog */}
-      <EditTransactionDialog
-        open={Boolean(editingTx)}
-        transaction={editingTx}
-        onClose={() => setEditingTx(null)}
-      />
+      <EditTransactionDialog open={Boolean(editingTx)} transaction={editingTx} onClose={() => setEditingTx(null)} />
     </>
   );
 }

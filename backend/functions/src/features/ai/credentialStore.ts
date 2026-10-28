@@ -33,14 +33,20 @@ function encrypt(value: ProviderCredential, uid: string, provider: AiProvider) {
   const cipher = createCipheriv('aes-256-gcm', keyBytes(), iv);
   cipher.setAAD(Buffer.from(`${uid}:${provider}`));
   const ciphertext = Buffer.concat([cipher.update(JSON.stringify(value), 'utf8'), cipher.final()]);
-  return { ciphertext: ciphertext.toString('base64'), iv: iv.toString('base64'), tag: cipher.getAuthTag().toString('base64') };
+  return {
+    ciphertext: ciphertext.toString('base64'),
+    iv: iv.toString('base64'),
+    tag: cipher.getAuthTag().toString('base64'),
+  };
 }
 
 function decrypt(stored: StoredCredential, uid: string, provider: AiProvider): ProviderCredential {
   const decipher = createDecipheriv('aes-256-gcm', keyBytes(), Buffer.from(stored.iv, 'base64'));
   decipher.setAAD(Buffer.from(`${uid}:${provider}`));
   decipher.setAuthTag(Buffer.from(stored.tag, 'base64'));
-  return JSON.parse(Buffer.concat([decipher.update(Buffer.from(stored.ciphertext, 'base64')), decipher.final()]).toString('utf8')) as ProviderCredential;
+  return JSON.parse(
+    Buffer.concat([decipher.update(Buffer.from(stored.ciphertext, 'base64')), decipher.final()]).toString('utf8'),
+  ) as ProviderCredential;
 }
 
 function ref(uid: string, provider: AiProvider) {
@@ -73,18 +79,24 @@ export async function withProviderCredential<T>(
     const value = snapshot.exists ? (snapshot.data() as StoredCredential) : undefined;
     if (value?.lock && value.lock.until > now && value.lock.id !== lockId) throw new Error('AI provider is busy');
     current = value;
-    transaction.set(document, { ...(value ?? { provider }), provider, lock: { id: lockId, until: now + LEASE_MS } }, { merge: true });
+    transaction.set(
+      document,
+      { ...(value ?? { provider }), provider, lock: { id: lockId, until: now + LEASE_MS } },
+      { merge: true },
+    );
   });
 
   let latest: ProviderCredential | null = null;
   let stopped = false;
   const heartbeat = setInterval(() => {
     if (stopped) return;
-    void getFirestore().runTransaction(async (transaction) => {
-      const snapshot = await transaction.get(document);
-      const value = snapshot.data() as StoredCredential | undefined;
-      if (value?.lock?.id === lockId) transaction.update(document, { 'lock.until': Date.now() + LEASE_MS });
-    }).catch(() => undefined);
+    void getFirestore()
+      .runTransaction(async (transaction) => {
+        const snapshot = await transaction.get(document);
+        const value = snapshot.data() as StoredCredential | undefined;
+        if (value?.lock?.id === lockId) transaction.update(document, { 'lock.until': Date.now() + LEASE_MS });
+      })
+      .catch(() => undefined);
   }, HEARTBEAT_MS);
   const save = async (next: ProviderCredential) => {
     latest = next;
@@ -93,7 +105,12 @@ export async function withProviderCredential<T>(
       const snapshot = await transaction.get(document);
       const value = snapshot.data() as StoredCredential | undefined;
       if (value?.lock?.id !== lockId) throw new Error('AI provider lock expired');
-      transaction.update(document, { ...encrypted, provider, updatedAt: Date.now(), lock: { id: lockId, until: Date.now() + LEASE_MS } });
+      transaction.update(document, {
+        ...encrypted,
+        provider,
+        updatedAt: Date.now(),
+        lock: { id: lockId, until: Date.now() + LEASE_MS },
+      });
     });
   };
   try {
@@ -103,13 +120,15 @@ export async function withProviderCredential<T>(
     stopped = true;
     clearInterval(heartbeat);
     const encrypted = latest ? encrypt(latest, uid, provider) : undefined;
-    await getFirestore().runTransaction(async (transaction) => {
-      const snapshot = await transaction.get(document);
-      const value = snapshot.data() as StoredCredential | undefined;
-      if (value?.lock?.id !== lockId) return;
-      if (encrypted) transaction.update(document, { ...encrypted, provider, updatedAt: Date.now(), lock: null });
-      else transaction.update(document, { lock: null });
-    }).catch(() => undefined);
+    await getFirestore()
+      .runTransaction(async (transaction) => {
+        const snapshot = await transaction.get(document);
+        const value = snapshot.data() as StoredCredential | undefined;
+        if (value?.lock?.id !== lockId) return;
+        if (encrypted) transaction.update(document, { ...encrypted, provider, updatedAt: Date.now(), lock: null });
+        else transaction.update(document, { lock: null });
+      })
+      .catch(() => undefined);
   }
 }
 

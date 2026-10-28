@@ -21,6 +21,7 @@ graph TD
 ```
 
 ### Key Architectural Pillars:
+
 1. **Ledger-First Principle**: Account balances, cycle metrics, and daily spend calculations are not stored as primary data; they are dynamically computed (derived) from raw, double-entry ledger records (`ledgerLines` and `transactions`).
 2. **Feature-Oriented Layer**: Page views and domain-specific UI components are grouped into self-contained feature directories in `src/features/`.
 3. **Decoupled Business Logic**: Low-level database mutations and calculations (e.g., closing cycles, recording double-entry transaction splits, validating carry-overs) are defined in plain TypeScript libraries in `src/libs/` and wrapped in React Query hooks in `src/hooks/useFinance.ts`.
@@ -62,21 +63,27 @@ kippa/
 ## 3. Detailed Component Responsibilities
 
 ### `packages/domain/`
+
 Canonical entities are declared in `packages/domain/src/index.d.ts`. Both the app and Functions import these contracts through `@kippa/domain`, preventing schema copies from drifting:
+
 - `FinanceTransaction`: Represents the transactional event.
 - `LedgerLine`: Double-entry record for balance sheets.
 - `BudgetCycle`: Period representing the salary duration.
 - `BudgetAllocation`: Category allocations per cycle.
 
 ### `packages/design-system/`
+
 The visual source of truth shared by the product, landing page, and documentation:
+
 - `src/foundations/` contains tokens, responsive layout values, and light/dark mode resolution.
 - `src/theme/` composes the palette and typography into the MUI theme.
 - `src/theme/components/` keeps each component-family override in its own module.
 - `src/tokens.css` exposes the same semantic surface, text, border, and brand roles to non-MUI consumers.
 
 ### `frontend/web/src/libs/`
+
 This folder contains framework-agnostic business logic. **No UI components belong here.**
+
 - `auth.ts`: Sign-in and onboarding operations.
 - `db.ts`: Raw Firestore client collection references.
 - `transactions.ts`: Atomic creation, updating, and voiding of transactions.
@@ -85,15 +92,20 @@ This folder contains framework-agnostic business logic. **No UI components belon
 - `selectors.ts`: Pure balance, progress, and spending calculations.
 
 ### `frontend/web/src/hooks/`
+
 Ties the UI components to our business services using React state or React Query:
+
 - `useFinance.ts`: Manages server queries and mutation caching.
 
 ### `frontend/web/src/features/`
+
 Feature-specific components:
+
 - If a component is only used within a single feature (e.g. `BudgetPulseCard` inside the `dashboard`), it must live within that feature's directory (e.g. `src/features/dashboard/components/`).
 - If a component is reused across multiple features (e.g., custom loaders, special info icons, page headers), it must live in `src/features/shared/components/`. Single-file components can be placed directly in this folder. Components containing multiple related files (such as subcomponents, styles, or configuration) should be grouped inside their own subfolders under `src/features/shared/components/` (e.g. `src/features/shared/components/DotGrid/`).
 
 ### `backend/functions/src/`
+
 - `domain/` contains deterministic parsing, formatting, warning, date, and payload rules. It must not import Firebase.
 - `features/` contains callable, HTTP, scheduled, and Firestore handlers grouped by business feature.
 - `libs/` contains Firebase Admin integrations such as FCM token lookup, delivery, and cleanup.

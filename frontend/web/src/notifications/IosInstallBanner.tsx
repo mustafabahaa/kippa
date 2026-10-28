@@ -26,8 +26,7 @@ export function IosInstallBanner({ onClose }: Props) {
       <Stack spacing={1}>
         <span>To receive push notifications, add Kippa to your Home Screen:</span>
         <span>
-          <strong>1.</strong> Tap the{' '}
-          <IosShareIcon fontSize="small" sx={{ verticalAlign: 'middle' }} /> Share button in
+          <strong>1.</strong> Tap the <IosShareIcon fontSize="small" sx={{ verticalAlign: 'middle' }} /> Share button in
           Safari's toolbar.
         </span>
         <span>

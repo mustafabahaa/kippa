@@ -1,11 +1,4 @@
-import {
-  Menu,
-  MenuItem,
-  Divider,
-  ListItemIcon,
-  ListItemText,
-  Typography,
-} from '@mui/material';
+import { Menu, MenuItem, Divider, ListItemIcon, ListItemText, Typography } from '@mui/material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { AccountBalanceIcon } from '@/components/AppIcon';
 import { ReceiptLongIcon } from '@/components/AppIcon';

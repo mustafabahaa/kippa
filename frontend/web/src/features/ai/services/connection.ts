@@ -44,12 +44,16 @@ function isSafeVerificationUrl(value: unknown): value is string {
 }
 
 function readDeviceChunk(chunk: unknown): AiConnectionDevice | null {
-  const value = (chunk && typeof chunk === 'object' && 'data' in chunk)
-    ? (chunk as { data?: unknown }).data
-    : chunk;
+  const value = chunk && typeof chunk === 'object' && 'data' in chunk ? (chunk as { data?: unknown }).data : chunk;
   if (!value || typeof value !== 'object') return null;
   const item = value as ConnectionStreamChunk;
-  if (item.type !== 'device' || !isSafeVerificationUrl(item.verificationUrl) || typeof item.code !== 'string' || typeof item.attemptId !== 'string') return null;
+  if (
+    item.type !== 'device' ||
+    !isSafeVerificationUrl(item.verificationUrl) ||
+    typeof item.code !== 'string' ||
+    typeof item.attemptId !== 'string'
+  )
+    return null;
   return { verificationUrl: item.verificationUrl, code: item.code.slice(0, 64), attemptId: item.attemptId };
 }
 
@@ -68,8 +72,15 @@ export async function startAiConnection(
   onDevice: (device: AiConnectionDevice) => void,
   signal?: AbortSignal,
 ): Promise<AiConnection> {
-  const callable = httpsCallable<ConnectionRequest, AiConnection, ConnectionStreamChunk>(requireFunctions(), 'startAiConnection', { timeout: 600_000 });
-  const result: HttpsCallableStreamResult<AiConnection, ConnectionStreamChunk> = await callable.stream(providerRequest, { signal });
+  const callable = httpsCallable<ConnectionRequest, AiConnection, ConnectionStreamChunk>(
+    requireFunctions(),
+    'startAiConnection',
+    { timeout: 600_000 },
+  );
+  const result: HttpsCallableStreamResult<AiConnection, ConnectionStreamChunk> = await callable.stream(
+    providerRequest,
+    { signal },
+  );
   for await (const chunk of result.stream) {
     const device = readDeviceChunk(chunk);
     if (device) onDevice(device);
@@ -78,6 +89,9 @@ export async function startAiConnection(
 }
 
 export async function disconnectAiConnection(): Promise<void> {
-  const callable = httpsCallable<ConnectionRequest, { disconnected: boolean }>(requireFunctions(), 'disconnectAiConnection');
+  const callable = httpsCallable<ConnectionRequest, { disconnected: boolean }>(
+    requireFunctions(),
+    'disconnectAiConnection',
+  );
   await callable(providerRequest);
 }

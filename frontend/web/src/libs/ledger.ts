@@ -2,7 +2,16 @@ import { includeUnrecordedCardFees } from './creditCardFees';
 import { dbLib } from '@/libs/db';
 import { auditLogLib } from '@/libs/auditLog';
 import { detectBaseCurrency, currencySymbol } from '@/libs/currencyMeta';
-import { Account, Category, FinanceTransaction, Household, Reconciliation, NotificationSettings, CurrencyCode, LedgerLine } from '@kippa/domain';
+import {
+  Account,
+  Category,
+  FinanceTransaction,
+  Household,
+  Reconciliation,
+  NotificationSettings,
+  CurrencyCode,
+  LedgerLine,
+} from '@kippa/domain';
 
 type AuditUser = { uid: string; displayName: string; photoURL?: string };
 
@@ -16,7 +25,7 @@ export const ledgerLib = {
   async createAccount(
     householdId: string,
     account: Omit<Account, 'id' | 'householdId' | 'createdAt'>,
-    auditUser?: AuditUser
+    auditUser?: AuditUser,
   ): Promise<string> {
     const id = crypto.randomUUID();
     const newAccount: Account = {
@@ -34,7 +43,7 @@ export const ledgerLib = {
         auditUser,
         'account_created',
         `${auditUser.displayName} added account: ${newAccount.name} (${newAccount.currency})`,
-        { accountId: id, name: newAccount.name, type: newAccount.type, currency: newAccount.currency }
+        { accountId: id, name: newAccount.name, type: newAccount.type, currency: newAccount.currency },
       );
     }
     return id;
@@ -56,13 +65,13 @@ export const ledgerLib = {
   // Categories
   async getCategories(householdId: string): Promise<Category[]> {
     const list = await dbLib.getDocs(householdId, 'categories');
-    return (list as Category[]).filter(c => c.isActive);
+    return (list as Category[]).filter((c) => c.isActive);
   },
 
   async createCategory(
     householdId: string,
     category: Omit<Category, 'id' | 'householdId' | 'createdAt'>,
-    auditUser?: AuditUser
+    auditUser?: AuditUser,
   ): Promise<string> {
     const id = crypto.randomUUID();
     const newCategory: Category = {
@@ -80,7 +89,7 @@ export const ledgerLib = {
         auditUser,
         'category_created',
         `${auditUser.displayName} created category: ${newCategory.name} (${newCategory.type})`,
-        { categoryId: id, name: newCategory.name, type: newCategory.type }
+        { categoryId: id, name: newCategory.name, type: newCategory.type },
       );
     }
     return id;
@@ -90,10 +99,10 @@ export const ledgerLib = {
     householdId: string,
     categoryId: string,
     updates: Partial<Pick<Category, 'name' | 'isActive' | 'essential' | 'merchantKeywords'>>,
-    auditUser?: AuditUser
+    auditUser?: AuditUser,
   ): Promise<void> {
     const list = await dbLib.getDocs(householdId, 'categories');
-    const existing = (list as Category[]).find(c => c.id === categoryId);
+    const existing = (list as Category[]).find((c) => c.id === categoryId);
     if (!existing) throw new Error('Category not found');
     const updated = { ...existing, ...updates };
     await dbLib.setDoc(householdId, 'categories', categoryId, updated);
@@ -106,7 +115,7 @@ export const ledgerLib = {
         auditUser,
         'category_updated',
         `${auditUser.displayName} ${action} category: ${updated.name}`,
-        { categoryId, name: updated.name, ...updates }
+        { categoryId, name: updated.name, ...updates },
       );
     }
   },
@@ -145,14 +154,19 @@ export const ledgerLib = {
       dbLib.getDocs(householdId, 'accounts'),
       dbLib.getDocs(householdId, 'transactions'),
     ]);
-    return includeUnrecordedCardFees(accounts as Account[], transactions as FinanceTransaction[], lines as LedgerLine[]);
+    return includeUnrecordedCardFees(
+      accounts as Account[],
+      transactions as FinanceTransaction[],
+      lines as LedgerLine[],
+    );
   },
 
   async getTransactions(householdId: string, cycleId?: string): Promise<FinanceTransaction[]> {
     const filters = cycleId ? [{ field: 'budgetCycleId', op: '==' as const, value: cycleId }] : undefined;
     const list = await dbLib.getDocs(householdId, 'transactions', filters);
-    return (list as FinanceTransaction[])
-      .sort((a, b) => b.date.localeCompare(a.date) || (b.createdAt || '').localeCompare(a.createdAt || ''));
+    return (list as FinanceTransaction[]).sort(
+      (a, b) => b.date.localeCompare(a.date) || (b.createdAt || '').localeCompare(a.createdAt || ''),
+    );
   },
 
   async getHouseholdName(householdId: string): Promise<string> {
@@ -176,10 +190,7 @@ export const ledgerLib = {
     }
   },
 
-  async updateHouseholdBaseCurrency(
-    householdId: string,
-    baseCurrency: CurrencyCode
-  ): Promise<void> {
+  async updateHouseholdBaseCurrency(householdId: string, baseCurrency: CurrencyCode): Promise<void> {
     const info = await this.getHouseholdInfo(householdId);
     if (!info) throw new Error('Household not found');
     await dbLib.setDoc(householdId, 'householdInfo', 'info', { ...info, baseCurrency });
@@ -207,12 +218,7 @@ export const ledgerLib = {
   },
 
   // Accounts CRUD support
-  async updateAccount(
-    householdId: string,
-    accountId: string,
-    updated: Account,
-    auditUser?: AuditUser
-  ): Promise<void> {
+  async updateAccount(householdId: string, accountId: string, updated: Account, auditUser?: AuditUser): Promise<void> {
     await dbLib.setDoc(householdId, 'accounts', accountId, updated);
 
     // Audit log (fire-and-forget)
@@ -222,7 +228,7 @@ export const ledgerLib = {
         auditUser,
         'account_updated',
         `${auditUser.displayName} updated account: ${updated.name}`,
-        { accountId, name: updated.name, type: updated.type, currency: updated.currency }
+        { accountId, name: updated.name, type: updated.type, currency: updated.currency },
       );
     }
   },
@@ -237,7 +243,7 @@ export const ledgerLib = {
     householdId: string,
     reconId: string,
     reconLog: Reconciliation,
-    auditUser?: AuditUser
+    auditUser?: AuditUser,
   ): Promise<void> {
     await dbLib.setDoc(householdId, 'reconciliations', reconId, reconLog);
 
@@ -245,13 +251,21 @@ export const ledgerLib = {
     if (auditUser) {
       const diff = Number(Math.abs(reconLog.difference).toFixed(2));
       const cleanDifference = Number(reconLog.difference.toFixed(2));
-      const verdict = cleanDifference === 0 ? 'matched' : `had a ${cleanDifference > 0 ? 'surplus' : 'shortfall'} of ${diff} ${reconLog.currency}`;
+      const verdict =
+        cleanDifference === 0
+          ? 'matched'
+          : `had a ${cleanDifference > 0 ? 'surplus' : 'shortfall'} of ${diff} ${reconLog.currency}`;
       auditLogLib.logAction(
         householdId,
         auditUser,
         'reconciliation_created',
         `${auditUser.displayName} reconciled an account (${verdict})`,
-        { reconciliationId: reconId, accountId: reconLog.accountId, difference: cleanDifference, currency: reconLog.currency }
+        {
+          reconciliationId: reconId,
+          accountId: reconLog.accountId,
+          difference: cleanDifference,
+          currency: reconLog.currency,
+        },
       );
     }
   },
@@ -266,7 +280,7 @@ export const ledgerLib = {
     householdId: string,
     userId: string,
     settings: NotificationSettings,
-    auditUser?: AuditUser
+    auditUser?: AuditUser,
   ): Promise<void> {
     await dbLib.setDoc(householdId, 'notificationSettings', userId, settings);
 
@@ -277,8 +291,8 @@ export const ledgerLib = {
         auditUser,
         'notification_settings_updated',
         `${auditUser.displayName} updated reminder & alert settings`,
-        { userId }
+        { userId },
       );
     }
-  }
+  },
 };

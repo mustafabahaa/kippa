@@ -6,9 +6,7 @@ import { useEffect, useState } from 'react';
  * SDK's persistent cache; this hook only drives UI affordances (banner / toasts).
  */
 export function useOnlineStatus(): boolean {
-  const [isOnline, setIsOnline] = useState<boolean>(
-    () => (typeof navigator === 'undefined' ? true : navigator.onLine)
-  );
+  const [isOnline, setIsOnline] = useState<boolean>(() => (typeof navigator === 'undefined' ? true : navigator.onLine));
 
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);

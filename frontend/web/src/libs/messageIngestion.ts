@@ -14,7 +14,7 @@ function requireFunctions() {
 
 export const messageIngestionLib = {
   async getPending(householdId: string): Promise<PendingFinancialMessage[]> {
-    const items = await dbLib.getDocs(householdId, 'pendingFinancialMessages') as PendingFinancialMessage[];
+    const items = (await dbLib.getDocs(householdId, 'pendingFinancialMessages')) as PendingFinancialMessage[];
     return items.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   },
 
@@ -25,7 +25,10 @@ export const messageIngestionLib = {
     accountId: string;
     destinationAccountId?: string;
   }): Promise<string> {
-    const callable = httpsCallable<typeof data, { transactionId: string }>(requireFunctions(), 'approvePendingFinancialMessage');
+    const callable = httpsCallable<typeof data, { transactionId: string }>(
+      requireFunctions(),
+      'approvePendingFinancialMessage',
+    );
     return (await callable(data)).data.transactionId;
   },
 
@@ -38,24 +41,25 @@ export const messageIngestionLib = {
   },
 
   async getResolved(householdId: string): Promise<ResolvedPendingFinancialMessage[]> {
-    const callable = httpsCallable<
-      { householdId: string },
-      { items: ResolvedPendingFinancialMessage[] }
-    >(requireFunctions(), 'listResolvedPendingFinancialMessages');
+    const callable = httpsCallable<{ householdId: string }, { items: ResolvedPendingFinancialMessage[] }>(
+      requireFunctions(),
+      'listResolvedPendingFinancialMessages',
+    );
     return (await callable({ householdId })).data.items;
   },
 
   async restoreDiscarded(householdId: string, pendingId: string): Promise<PendingFinancialMessage> {
-    const callable = httpsCallable<
-      { householdId: string; pendingId: string },
-      { item: PendingFinancialMessage }
-    >(requireFunctions(), 'restoreDiscardedPendingFinancialMessage');
+    const callable = httpsCallable<{ householdId: string; pendingId: string }, { item: PendingFinancialMessage }>(
+      requireFunctions(),
+      'restoreDiscardedPendingFinancialMessage',
+    );
     return (await callable({ householdId, pendingId })).data.item;
   },
 
   async deleteCredential(credentialId: string): Promise<void> {
     const callable = httpsCallable<{ credentialId: string }, { deleted: boolean }>(
-      requireFunctions(), 'deleteMessageIngestionCredential',
+      requireFunctions(),
+      'deleteMessageIngestionCredential',
     );
     await callable({ credentialId });
   },
@@ -69,10 +73,10 @@ export const messageIngestionLib = {
   },
 
   async listCredentials(householdId: string): Promise<MessageIngestionCredential[]> {
-    const callable = httpsCallable<
-      { householdId: string },
-      { credentials: MessageIngestionCredential[] }
-    >(requireFunctions(), 'listMessageIngestionCredentials');
+    const callable = httpsCallable<{ householdId: string }, { credentials: MessageIngestionCredential[] }>(
+      requireFunctions(),
+      'listMessageIngestionCredentials',
+    );
     return (await callable({ householdId })).data.credentials;
   },
 

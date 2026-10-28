@@ -1,12 +1,5 @@
 import { dbLib } from '@/libs/db';
-import { 
-  collection, 
-  query, 
-  orderBy, 
-  limit as firestoreLimit, 
-  onSnapshot,
-  Unsubscribe
-} from 'firebase/firestore';
+import { collection, query, orderBy, limit as firestoreLimit, onSnapshot, Unsubscribe } from 'firebase/firestore';
 import { db, isFirebaseConfigured } from '@/config/firebase';
 import { AuditLogEntry, AuditAction } from '@kippa/domain';
 
@@ -19,7 +12,7 @@ export const auditLogLib = {
     userProfile: { uid: string; displayName: string; photoURL?: string },
     action: AuditAction,
     summary: string,
-    details?: Record<string, any>
+    details?: Record<string, any>,
   ): AuditLogEntry {
     return {
       id: crypto.randomUUID(),
@@ -54,7 +47,7 @@ export const auditLogLib = {
     userProfile: { uid: string; displayName: string; photoURL?: string },
     action: AuditAction,
     summary: string,
-    details?: Record<string, any>
+    details?: Record<string, any>,
   ): Promise<void> {
     const entry = this.buildEntry(householdId, userProfile, action, summary, details);
     await this.log(householdId, entry);
@@ -65,20 +58,14 @@ export const auditLogLib = {
    */
   async getRecentLogs(householdId: string, count: number = 50): Promise<AuditLogEntry[]> {
     const list = await dbLib.getDocs(householdId, 'auditLog');
-    return (list as AuditLogEntry[])
-      .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-      .slice(0, count);
+    return (list as AuditLogEntry[]).sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, count);
   },
 
   /**
    * Subscribe to real-time audit log updates via Firestore onSnapshot.
    * Returns an unsubscribe function.
    */
-  subscribeToLogs(
-    householdId: string,
-    count: number,
-    callback: (entries: AuditLogEntry[]) => void
-  ): Unsubscribe {
+  subscribeToLogs(householdId: string, count: number, callback: (entries: AuditLogEntry[]) => void): Unsubscribe {
     if (!isFirebaseConfigured || !db) {
       callback([]);
       return () => {};
@@ -87,12 +74,16 @@ export const auditLogLib = {
     const colRef = collection(db, `households/${householdId}/auditLog`);
     const q = query(colRef, orderBy('createdAt', 'desc'), firestoreLimit(count));
 
-    return onSnapshot(q, (snapshot) => {
-      const entries = snapshot.docs.map(doc => doc.data() as AuditLogEntry);
-      callback(entries);
-    }, (err) => {
-      console.warn('[AuditLog] Snapshot listener error:', err);
-      callback([]);
-    });
-  }
+    return onSnapshot(
+      q,
+      (snapshot) => {
+        const entries = snapshot.docs.map((doc) => doc.data() as AuditLogEntry);
+        callback(entries);
+      },
+      (err) => {
+        console.warn('[AuditLog] Snapshot listener error:', err);
+        callback([]);
+      },
+    );
+  },
 };

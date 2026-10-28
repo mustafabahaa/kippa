@@ -7,7 +7,7 @@ describe('currencyMeta', () => {
 
   it('exposes a non-empty CURRENCIES list with EGP and USD', async () => {
     const { CURRENCIES } = await import('./currencyMeta');
-    const codes = CURRENCIES.map(c => c.code);
+    const codes = CURRENCIES.map((c) => c.code);
     expect(codes).toContain('EGP');
     expect(codes).toContain('USD');
     expect(codes.length).toBeGreaterThanOrEqual(10);

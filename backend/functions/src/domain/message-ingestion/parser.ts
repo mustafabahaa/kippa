@@ -23,8 +23,18 @@ export type ParseResult =
   | { outcome: 'unsupported'; reason: string };
 
 const MONTHS: Record<string, string> = {
-  JAN: '01', FEB: '02', MAR: '03', APR: '04', MAY: '05', JUN: '06',
-  JUL: '07', AUG: '08', SEP: '09', OCT: '10', NOV: '11', DEC: '12',
+  JAN: '01',
+  FEB: '02',
+  MAR: '03',
+  APR: '04',
+  MAY: '05',
+  JUN: '06',
+  JUL: '07',
+  AUG: '08',
+  SEP: '09',
+  OCT: '10',
+  NOV: '11',
+  DEC: '12',
 };
 
 function amount(value: string): number {
@@ -47,7 +57,10 @@ function last4(value?: string): string | undefined {
 }
 
 function cleanParty(value: string): string {
-  return value.replace(/\s+/g, ' ').replace(/[.\s]+$/, '').trim();
+  return value
+    .replace(/\s+/g, ' ')
+    .replace(/[.\s]+$/, '')
+    .trim();
 }
 
 /**
@@ -66,7 +79,10 @@ export function buildMessagePreview(raw: string): string {
 }
 
 export function parseFinancialMessage(raw: string, source = 'sms'): ParseResult {
-  const text = raw.replace(/[\u2013\u2014]/g, '-').replace(/\s+/g, ' ').trim();
+  const text = raw
+    .replace(/[\u2013\u2014]/g, '-')
+    .replace(/\s+/g, ' ')
+    .trim();
   if (!text) return { outcome: 'unsupported', reason: 'Message is empty.' };
 
   if (/statement date|minimum amount due|min\.?\s*amt due|total amt due/i.test(text)) {
@@ -82,10 +98,15 @@ export function parseFinancialMessage(raw: string, source = 'sms'): ParseResult 
     return {
       outcome: 'matched',
       parsed: {
-        kind: 'expense', provider, date: compactDate(debitPurchase[1]),
-        description: cleanParty(debitPurchase[2]), counterparty: cleanParty(debitPurchase[2]),
-        accountHintLast4: last4(debitPurchase[3]), accountKind: 'bank',
-        currency: debitPurchase[4].toUpperCase(), amount: amount(debitPurchase[5]),
+        kind: 'expense',
+        provider,
+        date: compactDate(debitPurchase[1]),
+        description: cleanParty(debitPurchase[2]),
+        counterparty: cleanParty(debitPurchase[2]),
+        accountHintLast4: last4(debitPurchase[3]),
+        accountKind: 'bank',
+        currency: debitPurchase[4].toUpperCase(),
+        amount: amount(debitPurchase[5]),
       },
     };
   }
@@ -97,10 +118,16 @@ export function parseFinancialMessage(raw: string, source = 'sms'): ParseResult 
     return {
       outcome: 'matched',
       parsed: {
-        kind: 'transfer', provider, date: compactDate(atmWithdrawal[1]),
-        description: 'ATM cash withdrawal', counterparty: 'Cash',
-        accountHintLast4: last4(atmWithdrawal[2]), accountKind: 'bank', destinationKind: 'cash',
-        currency: atmWithdrawal[3].toUpperCase(), amount: amount(atmWithdrawal[4]),
+        kind: 'transfer',
+        provider,
+        date: compactDate(atmWithdrawal[1]),
+        description: 'ATM cash withdrawal',
+        counterparty: 'Cash',
+        accountHintLast4: last4(atmWithdrawal[2]),
+        accountKind: 'bank',
+        destinationKind: 'cash',
+        currency: atmWithdrawal[3].toUpperCase(),
+        amount: amount(atmWithdrawal[4]),
       },
     };
   }
@@ -113,11 +140,16 @@ export function parseFinancialMessage(raw: string, source = 'sms'): ParseResult 
     return {
       outcome: 'matched',
       parsed: {
-        kind: 'transfer', provider, date: compactDate(phoneTransferDebit[1]),
+        kind: 'transfer',
+        provider,
+        date: compactDate(phoneTransferDebit[1]),
         description: 'Phone Banking Transfer',
-        accountHintLast4: last4(phoneTransferDebit[2]), accountKind: 'bank',
-        currency: phoneTransferDebit[3].toUpperCase(), amount: amount(phoneTransferDebit[4]),
-        transferLeg: 'debit', mergeKey: 'phone-banking-transfer',
+        accountHintLast4: last4(phoneTransferDebit[2]),
+        accountKind: 'bank',
+        currency: phoneTransferDebit[3].toUpperCase(),
+        amount: amount(phoneTransferDebit[4]),
+        transferLeg: 'debit',
+        mergeKey: 'phone-banking-transfer',
       },
     };
   }
@@ -130,11 +162,16 @@ export function parseFinancialMessage(raw: string, source = 'sms'): ParseResult 
     return {
       outcome: 'matched',
       parsed: {
-        kind: 'transfer', provider, date: compactDate(phoneTransferCredit[1]),
+        kind: 'transfer',
+        provider,
+        date: compactDate(phoneTransferCredit[1]),
         description: 'Phone Banking Transfer',
-        accountHintLast4: last4(phoneTransferCredit[2]), accountKind: 'bank',
-        currency: phoneTransferCredit[3].toUpperCase(), amount: amount(phoneTransferCredit[4]),
-        transferLeg: 'credit', mergeKey: 'phone-banking-transfer',
+        accountHintLast4: last4(phoneTransferCredit[2]),
+        accountKind: 'bank',
+        currency: phoneTransferCredit[3].toUpperCase(),
+        amount: amount(phoneTransferCredit[4]),
+        transferLeg: 'credit',
+        mergeKey: 'phone-banking-transfer',
       },
     };
   }
@@ -149,10 +186,14 @@ export function parseFinancialMessage(raw: string, source = 'sms'): ParseResult 
     return {
       outcome: 'matched',
       parsed: {
-        kind: 'expense', provider, date: compactDate(bankTransferDebit[1]),
+        kind: 'expense',
+        provider,
+        date: compactDate(bankTransferDebit[1]),
         description: 'Bank transfer debit',
-        accountHintLast4: last4(bankTransferDebit[2]), accountKind: 'bank',
-        currency: bankTransferDebit[3].toUpperCase(), amount: amount(bankTransferDebit[4]),
+        accountHintLast4: last4(bankTransferDebit[2]),
+        accountKind: 'bank',
+        currency: bankTransferDebit[3].toUpperCase(),
+        amount: amount(bankTransferDebit[4]),
       },
     };
   }
@@ -164,9 +205,14 @@ export function parseFinancialMessage(raw: string, source = 'sms'): ParseResult 
     return {
       outcome: 'matched',
       parsed: {
-        kind: 'expense', provider, accountKind: 'credit-card', accountHintLast4: creditPurchase[1],
-        currency: creditPurchase[2].toUpperCase(), amount: amount(creditPurchase[3]),
-        date: numericDate(creditPurchase[4]), description: cleanParty(creditPurchase[5]),
+        kind: 'expense',
+        provider,
+        accountKind: 'credit-card',
+        accountHintLast4: creditPurchase[1],
+        currency: creditPurchase[2].toUpperCase(),
+        amount: amount(creditPurchase[3]),
+        date: numericDate(creditPurchase[4]),
+        description: cleanParty(creditPurchase[5]),
         counterparty: cleanParty(creditPurchase[5]),
       },
     };
@@ -179,9 +225,14 @@ export function parseFinancialMessage(raw: string, source = 'sms'): ParseResult 
     return {
       outcome: 'matched',
       parsed: {
-        kind: 'income', provider, accountKind: 'bank', accountHintLast4: ipnInward[1],
-        currency: ipnInward[2].toUpperCase(), amount: amount(ipnInward[3]),
-        date: numericDate(ipnInward[4]), description: `Transfer from ${cleanParty(ipnInward[5])}`,
+        kind: 'income',
+        provider,
+        accountKind: 'bank',
+        accountHintLast4: ipnInward[1],
+        currency: ipnInward[2].toUpperCase(),
+        amount: amount(ipnInward[3]),
+        date: numericDate(ipnInward[4]),
+        description: `Transfer from ${cleanParty(ipnInward[5])}`,
         counterparty: cleanParty(ipnInward[5]),
       },
     };
@@ -194,9 +245,14 @@ export function parseFinancialMessage(raw: string, source = 'sms'): ParseResult 
     return {
       outcome: 'matched',
       parsed: {
-        kind: 'expense', provider, accountKind: 'bank', accountHintLast4: ipnPurchase[1],
-        currency: ipnPurchase[2].toUpperCase(), amount: amount(ipnPurchase[3]),
-        date: numericDate(ipnPurchase[4]), description: `Purchase from ${cleanParty(ipnPurchase[5])}`,
+        kind: 'expense',
+        provider,
+        accountKind: 'bank',
+        accountHintLast4: ipnPurchase[1],
+        currency: ipnPurchase[2].toUpperCase(),
+        amount: amount(ipnPurchase[3]),
+        date: numericDate(ipnPurchase[4]),
+        description: `Purchase from ${cleanParty(ipnPurchase[5])}`,
         counterparty: cleanParty(ipnPurchase[5]),
       },
     };
@@ -209,9 +265,14 @@ export function parseFinancialMessage(raw: string, source = 'sms'): ParseResult 
     return {
       outcome: 'matched',
       parsed: {
-        kind: 'expense', provider, accountKind: 'bank', accountHintLast4: ipnOutward[1],
-        currency: ipnOutward[2].toUpperCase(), amount: amount(ipnOutward[3]),
-        date: numericDate(ipnOutward[4]), description: `Transfer to ${cleanParty(ipnOutward[5])}`,
+        kind: 'expense',
+        provider,
+        accountKind: 'bank',
+        accountHintLast4: ipnOutward[1],
+        currency: ipnOutward[2].toUpperCase(),
+        amount: amount(ipnOutward[3]),
+        date: numericDate(ipnOutward[4]),
+        description: `Transfer to ${cleanParty(ipnOutward[5])}`,
         counterparty: cleanParty(ipnOutward[5]),
       },
     };

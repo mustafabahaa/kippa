@@ -1,11 +1,6 @@
 import { initializeApp, getApp, getApps, FirebaseApp } from 'firebase/app';
 import { getAuth, Auth } from 'firebase/auth';
-import {
-  initializeFirestore,
-  persistentLocalCache,
-  persistentMultipleTabManager,
-  Firestore,
-} from 'firebase/firestore';
+import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, Firestore } from 'firebase/firestore';
 import { getMessaging, Messaging, isSupported } from 'firebase/messaging';
 import { getFunctions, Functions } from 'firebase/functions';
 
@@ -49,9 +44,7 @@ if (isFirebaseConfigured) {
     console.error('Firebase initialization failed:', error);
   }
 } else {
-  console.error(
-    'Firebase credentials missing. Copy .env.example to .env and set VITE_FIREBASE_* values.'
-  );
+  console.error('Firebase credentials missing. Copy .env.example to .env and set VITE_FIREBASE_* values.');
 }
 
 export const isFirebaseReady = isFirebaseConfigured && !!auth && !!db;

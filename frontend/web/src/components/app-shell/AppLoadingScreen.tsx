@@ -6,9 +6,8 @@ interface AppLoadingScreenProps {
 }
 
 export function AppLoadingScreen({ theme }: AppLoadingScreenProps) {
-  const logoSrc = theme.palette.mode === 'dark'
-    ? '/icons/logo_white_transparent.png'
-    : '/icons/logo_green_transparent.png';
+  const logoSrc =
+    theme.palette.mode === 'dark' ? '/icons/logo_white_transparent.png' : '/icons/logo_green_transparent.png';
 
   return (
     <ThemeProvider theme={theme}>
@@ -19,7 +18,7 @@ export function AppLoadingScreen({ theme }: AppLoadingScreenProps) {
         sx={{
           position: 'fixed',
           inset: 0,
-          zIndex: theme => theme.zIndex.modal + 10,
+          zIndex: (theme) => theme.zIndex.modal + 10,
           minHeight: '100dvh',
           display: 'grid',
           placeItems: 'center',
@@ -77,7 +76,7 @@ export function AppLoadingScreen({ theme }: AppLoadingScreenProps) {
               mt: 0.5,
               overflow: 'hidden',
               borderRadius: 'pill',
-              bgcolor: theme => alpha(theme.palette.primary.main, 0.12),
+              bgcolor: (theme) => alpha(theme.palette.primary.main, 0.12),
             }}
           >
             <Box

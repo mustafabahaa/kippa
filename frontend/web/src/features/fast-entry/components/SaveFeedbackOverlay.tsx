@@ -3,7 +3,15 @@ import { CheckCircleIcon, ReceiptLongIcon } from '@/components/AppIcon';
 
 export type SaveFeedbackContent = { account: string; amount: string; category: string; title: string };
 
-export function SaveFeedbackOverlay({ content, onClose, open }: { content: SaveFeedbackContent; onClose: () => void; open: boolean }) {
+export function SaveFeedbackOverlay({
+  content,
+  onClose,
+  open,
+}: {
+  content: SaveFeedbackContent;
+  onClose: () => void;
+  open: boolean;
+}) {
   if (!open) return null;
 
   return (
@@ -74,10 +82,18 @@ export function SaveFeedbackOverlay({ content, onClose, open }: { content: SaveF
             },
           }}
         >
-          <Typography variant="sectionLabel" color="inherit">{content.title}</Typography>
-          <Typography variant="h2" color="inherit">{content.amount}</Typography>
-          <Typography variant="body2" color="inherit">{content.category} · {content.account}</Typography>
-          <Typography variant="fieldHint" color="inherit" sx={{ pt: 1 }}>Tap anywhere to continue</Typography>
+          <Typography variant="sectionLabel" color="inherit">
+            {content.title}
+          </Typography>
+          <Typography variant="h2" color="inherit">
+            {content.amount}
+          </Typography>
+          <Typography variant="body2" color="inherit">
+            {content.category} · {content.account}
+          </Typography>
+          <Typography variant="fieldHint" color="inherit" sx={{ pt: 1 }}>
+            Tap anywhere to continue
+          </Typography>
         </Stack>
 
         <Stack

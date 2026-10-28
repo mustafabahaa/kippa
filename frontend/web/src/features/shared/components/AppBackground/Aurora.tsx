@@ -81,12 +81,7 @@ type AuroraProps = {
 };
 
 /** React Bits Aurora background, with Kippa's theme values supplied by its host. */
-export default function Aurora({
-  colorStops,
-  amplitude = 1,
-  blend = 0.5,
-  speed = 1,
-}: AuroraProps) {
+export default function Aurora({ colorStops, amplitude = 1, blend = 0.5, speed = 1 }: AuroraProps) {
   const propsRef = useRef({ colorStops, amplitude, blend, speed });
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -114,7 +109,12 @@ export default function Aurora({
       uniforms: {
         uTime: { value: 0 },
         uAmplitude: { value: initial.amplitude },
-        uColorStops: { value: initial.colorStops.map((hex) => { const color = new Color(hex); return [color.r, color.g, color.b]; }) },
+        uColorStops: {
+          value: initial.colorStops.map((hex) => {
+            const color = new Color(hex);
+            return [color.r, color.g, color.b];
+          }),
+        },
         uResolution: { value: [container.offsetWidth, container.offsetHeight] },
         uBlend: { value: initial.blend },
       },

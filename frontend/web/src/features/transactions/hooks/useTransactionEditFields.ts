@@ -3,10 +3,17 @@ import { FinanceTransaction, LedgerLine } from '@kippa/domain';
 import { createTransactionEditFields, TransactionEditFields } from '@/libs/transactionEdit';
 
 const EMPTY_FIELDS: TransactionEditFields = {
-  description: '', date: '', categoryId: '', accountId: '', amount: '0', type: 'expense',
+  description: '',
+  date: '',
+  categoryId: '',
+  accountId: '',
+  amount: '0',
+  type: 'expense',
 };
 
-type Action = { type: 'reset'; fields: TransactionEditFields } | { type: 'change'; field: keyof TransactionEditFields; value: string };
+type Action =
+  | { type: 'reset'; fields: TransactionEditFields }
+  | { type: 'change'; field: keyof TransactionEditFields; value: string };
 
 function reducer(state: TransactionEditFields, action: Action): TransactionEditFields {
   if (action.type === 'reset') return action.fields;

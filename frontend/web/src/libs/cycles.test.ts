@@ -2,7 +2,9 @@ import { describe, it, expect } from 'vitest';
 import { dedupeAllocations } from './allocations';
 import type { BudgetAllocation } from '@kippa/domain';
 
-const mk = (overrides: Partial<BudgetAllocation> & Pick<BudgetAllocation, 'budgetCycleId' | 'categoryId'>): BudgetAllocation => ({
+const mk = (
+  overrides: Partial<BudgetAllocation> & Pick<BudgetAllocation, 'budgetCycleId' | 'categoryId'>,
+): BudgetAllocation => ({
   id: `${overrides.budgetCycleId}_${overrides.categoryId}`,
   householdId: 'h',
   plannedAmount: 1000,
@@ -23,7 +25,7 @@ describe('dedupeAllocations', () => {
     const c = mk({ budgetCycleId: 'c2', categoryId: 'groceries', plannedAmount: 300 });
     const out = dedupeAllocations([a, b, c]);
     expect(out).toHaveLength(3);
-    expect(out.map(o => o.categoryId).sort()).toEqual(['groceries', 'groceries', 'rent']);
+    expect(out.map((o) => o.categoryId).sort()).toEqual(['groceries', 'groceries', 'rent']);
   });
 
   it('collapses two identical allocations for the same (cycle, category) into one', () => {
@@ -55,8 +57,13 @@ describe('dedupeAllocations', () => {
 
   it('keeps all fields of the keeper', () => {
     const keeper = mk({
-      id: 'uuid-1', budgetCycleId: 'c1', categoryId: 'groceries',
-      plannedAmount: 800, currency: 'USD', carryLeftover: true, notes: 'weekly',
+      id: 'uuid-1',
+      budgetCycleId: 'c1',
+      categoryId: 'groceries',
+      plannedAmount: 800,
+      currency: 'USD',
+      carryLeftover: true,
+      notes: 'weekly',
     });
     const stray = mk({ id: 'uuid-2', budgetCycleId: 'c1', categoryId: 'groceries', plannedAmount: 100 });
     const out = dedupeAllocations([stray, keeper]);

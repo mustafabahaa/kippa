@@ -34,23 +34,23 @@
 - **Multi-currency.** First-class support for USD and EGP. USD→EGP transfers are modeled as transfers (not income).
 - **Salary-cycle budgeting.** Budget around salary cycles (which may land on the 25th, 26th, or 27th) instead of rigid calendar months.
 - **Real-time sync.** Cloud Firestore keeps two partners in sync across phone and PC, with offline persistence.
-- **Budget pulse.** A clear answer to *“Am I on track or overspending?”* and *“Can I safely spend at this pace until next salary?”*
+- **Budget pulse.** A clear answer to _“Am I on track or overspending?”_ and _“Can I safely spend at this pace until next salary?”_
 - **Push notifications.** Daily reminders and shared-household activity via Firebase Cloud Messaging.
 - **Installable PWA.** Add to home screen; works offline and loads fast.
 - **Manual reconciliation.** No bank API required; reconcile balances when reality drifts.
 
 ## 🧱 Tech stack
 
-| Area | Tech |
-| --- | --- |
-| Frontend | React 19, Vite 7, TypeScript 5.8 |
-| UI | Material UI (MUI) 7, Emotion |
-| Backend | Firebase (Auth, Firestore, Hosting, Cloud Functions, Cloud Messaging) |
-| Animations | GSAP, Three.js / postprocessing |
-| Charts | MUI X Charts |
-| State/data | React Query, Context |
-| Testing | Vitest, Testing Library |
-| PWA | vite-plugin-pwa, Workbox |
+| Area       | Tech                                                                  |
+| ---------- | --------------------------------------------------------------------- |
+| Frontend   | React 19, Vite 7, TypeScript 5.8                                      |
+| UI         | Material UI (MUI) 7, Emotion                                          |
+| Backend    | Firebase (Auth, Firestore, Hosting, Cloud Functions, Cloud Messaging) |
+| Animations | GSAP, Three.js / postprocessing                                       |
+| Charts     | MUI X Charts                                                          |
+| State/data | React Query, Context                                                  |
+| Testing    | Vitest, Testing Library                                               |
+| PWA        | vite-plugin-pwa, Workbox                                              |
 
 ## 📸 Highlights
 
@@ -62,9 +62,9 @@
 
 ## 🚀 Quick start
 
-> ⚠️ **Firebase Blaze plan required.** Kippa relies on Cloud Functions (cron reminders, FCM fanout, derived data) and scheduled functions, which are **only available on the Firebase Blaze (pay-as-you-go) plan**. The free Spark plan will *not* work — deploys of `backend/functions/` will fail. Upgrade in Firebase Console → *Build → Functions → Upgrade project* (or Console → ⚙️ → Usage and billing). See [GETTING_STARTED.md §4](./GETTING_STARTED.md#4-enable-firebase-services) for details.
+> ⚠️ **Firebase Blaze plan required.** Kippa relies on Cloud Functions (cron reminders, FCM fanout, derived data) and scheduled functions, which are **only available on the Firebase Blaze (pay-as-you-go) plan**. The free Spark plan will _not_ work — deploys of `backend/functions/` will fail. Upgrade in Firebase Console → _Build → Functions → Upgrade project_ (or Console → ⚙️ → Usage and billing). See [GETTING_STARTED.md §4](./GETTING_STARTED.md#4-enable-firebase-services) for details.
 
-**New here?** Follow the complete, step-by-step guide: **[GETTING_STARTED.md](./GETTING_STARTED.md)**. It covers installing the Firebase CLI and `gcloud`, creating a project, getting config values, enabling services, and deploying. Written so a human *or* an AI agent can get the app running and hosted in minutes.
+**New here?** Follow the complete, step-by-step guide: **[GETTING_STARTED.md](./GETTING_STARTED.md)**. It covers installing the Firebase CLI and `gcloud`, creating a project, getting config values, enabling services, and deploying. Written so a human _or_ an AI agent can get the app running and hosted in minutes.
 
 ### TL;DR
 
@@ -142,4 +142,4 @@ Commercial licensing is available from the copyright holder.
 
 ## 💬 Acknowledgements
 
-Built for a household that earns in USD and spends in EGP, where knowing *“can I safely spend right now?”* should take a glance, not a spreadsheet.
+Built for a household that earns in USD and spends in EGP, where knowing _“can I safely spend right now?”_ should take a glance, not a spreadsheet.

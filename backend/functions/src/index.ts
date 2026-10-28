@@ -2,7 +2,12 @@ import { initializeApp } from 'firebase-admin/app';
 
 initializeApp();
 
-export { getAiConnection, startAiConnection, cancelAiConnection, disconnectAiConnection } from './features/ai/codexConnection.js';
+export {
+  getAiConnection,
+  startAiConnection,
+  cancelAiConnection,
+  disconnectAiConnection,
+} from './features/ai/codexConnection.js';
 export { streamAiReply, submitAiToolResult } from './features/ai/streamAiReply.js';
 
 export { onTransactionCreated } from './features/transactions/onTransactionCreated.js';

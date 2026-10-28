@@ -61,7 +61,9 @@ export function BottomNav() {
         type="button"
         key={item.path}
         onClick={() => navigate(item.path)}
-        aria-label={isPending && pendingCount > 0 ? `Pending review, ${pendingCount} items require attention` : item.label}
+        aria-label={
+          isPending && pendingCount > 0 ? `Pending review, ${pendingCount} items require attention` : item.label
+        }
         sx={{
           border: 0,
           bgcolor: 'transparent',
@@ -106,7 +108,9 @@ export function BottomNav() {
           >
             {item.icon}
           </Badge>
-        ) : item.icon}
+        ) : (
+          item.icon
+        )}
         <Typography
           sx={{
             fontSize: '10px',
@@ -150,7 +154,9 @@ export function BottomNav() {
       L ${W + 2},${H + 2}
       L -2,${H + 2}
       Z
-    `.replace(/\s+/g, ' ').trim();
+    `
+      .replace(/\s+/g, ' ')
+      .trim();
   };
 
   return (
@@ -227,7 +233,8 @@ export function BottomNav() {
             boxShadow: isDark
               ? `0 4px 16px ${alpha(theme.palette.primary.main, 0.5)}`
               : `0 4px 14px ${alpha(theme.palette.primary.main, 0.4)}`,
-            transition: 'transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.2s ease, box-shadow 0.2s ease',
+            transition:
+              'transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.2s ease, box-shadow 0.2s ease',
             '&:hover': {
               transform: 'scale(1.1)',
               boxShadow: isDark

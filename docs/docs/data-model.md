@@ -102,17 +102,13 @@ Examples:
 Salary:
 
 ```json
-[
-  { "account": "USD Bank", "signedAmount": 3000, "currency": "USD" }
-]
+[{ "account": "USD Bank", "signedAmount": 3000, "currency": "USD" }]
 ```
 
 Expense:
 
 ```json
-[
-  { "account": "EGP Cash", "signedAmount": -250, "currency": "EGP" }
-]
+[{ "account": "EGP Cash", "signedAmount": -250, "currency": "EGP" }]
 ```
 
 Cross-currency Transfer:
@@ -266,4 +262,3 @@ These should be calculated, not stored as source truth:
 - on-track status
 - overspending status
 - burn rate
-

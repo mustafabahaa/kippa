@@ -29,8 +29,10 @@ export function FinancialOverviewCard({ variant }: { variant: 'income' | 'expens
   const { data: categories = [] } = useCategories(householdId);
   const { data: cycles = [] } = useCycles(householdId);
   const baseCurrency = useHouseholdBaseCurrency();
-  const activeCycle = cycles.find(cycle => cycle.status === 'open') ?? null;
-  const foreignCodes = Array.from(new Set(accounts.map(account => account.currency).filter(currency => currency !== baseCurrency)));
+  const activeCycle = cycles.find((cycle) => cycle.status === 'open') ?? null;
+  const foreignCodes = Array.from(
+    new Set(accounts.map((account) => account.currency).filter((currency) => currency !== baseCurrency)),
+  );
   const { data: displayRates = {} } = useDisplayRates(baseCurrency, foreignCodes);
   const { data: allocations = [], isLoading: allocationsLoading } = useBudgetAllocations(householdId, activeCycle?.id);
   const { data: expectedIncomes = [], isLoading: incomesLoading } = useExpectedIncomes(householdId, activeCycle?.id);
@@ -41,92 +43,201 @@ export function FinancialOverviewCard({ variant }: { variant: 'income' | 'expens
     return <Skeleton variant="rounded" height={300} />;
   }
 
-  const data = computeDashboard(accounts, transactions, ledgerLines, categories, activeCycle, allocations, expectedIncomes, displayRates, baseCurrency, loans);
+  const data = computeDashboard(
+    accounts,
+    transactions,
+    ledgerLines,
+    categories,
+    activeCycle,
+    allocations,
+    expectedIncomes,
+    displayRates,
+    baseCurrency,
+    loans,
+  );
   const spendingRatio = data.spending.plannedBudget > 0 ? data.spending.actual / data.spending.plannedBudget : 0;
   const meterPercent = Math.max(0, Math.min(100, Math.round(spendingRatio * 100)));
-  const receivedIncomeCount = transactions.filter(transaction => transaction.status === 'posted' && transaction.type === 'income' && transaction.budgetCycleId === activeCycle?.id).length;
+  const receivedIncomeCount = transactions.filter(
+    (transaction) =>
+      transaction.status === 'posted' && transaction.type === 'income' && transaction.budgetCycleId === activeCycle?.id,
+  ).length;
 
   return (
     <>
-      {variant === 'income' && <Card sx={{ height: 375 }}>
-        <CardContent sx={{ height: '100%' }}>
-          <Stack sx={{ height: '100%' }}>
-            <Stack direction="row" justifyContent="space-between" alignItems="center">
-              <CardHeading icon={<WorkIcon variant="Bulk" />} title="My income" />
-              <Typography sx={{ color: 'text.secondary', fontSize: 11, fontWeight: 600 }}>{activeCycle?.name ?? 'Current cycle'}</Typography>
-            </Stack>
+      {variant === 'income' && (
+        <Card sx={{ height: 375 }}>
+          <CardContent sx={{ height: '100%' }}>
+            <Stack sx={{ height: '100%' }}>
+              <Stack direction="row" justifyContent="space-between" alignItems="center">
+                <CardHeading icon={<WorkIcon variant="Bulk" />} title="My income" />
+                <Typography sx={{ color: 'text.secondary', fontSize: 11, fontWeight: 600 }}>
+                  {activeCycle?.name ?? 'Current cycle'}
+                </Typography>
+              </Stack>
 
-            <Stack direction="row" justifyContent="space-between" alignItems="flex-end" sx={{ mt: 7 }}>
-              <Box>
-                <Typography sx={{ color: 'text.secondary', fontSize: 12 }}>Total income</Typography>
-                <Typography sx={{ color: 'text.primary', fontSize: { xs: 32, lg: 38 }, fontWeight: 500, lineHeight: 1.1, letterSpacing: '-0.055em', fontVariantNumeric: 'tabular-nums' }}>
-                  <Money amount={data.income.actual || data.income.expected} code={baseCurrency} />
+              <Stack direction="row" justifyContent="space-between" alignItems="flex-end" sx={{ mt: 7 }}>
+                <Box>
+                  <Typography sx={{ color: 'text.secondary', fontSize: 12 }}>Total income</Typography>
+                  <Typography
+                    sx={{
+                      color: 'text.primary',
+                      fontSize: { xs: 32, lg: 38 },
+                      fontWeight: 500,
+                      lineHeight: 1.1,
+                      letterSpacing: '-0.055em',
+                      fontVariantNumeric: 'tabular-nums',
+                    }}
+                  >
+                    <Money amount={data.income.actual || data.income.expected} code={baseCurrency} />
+                  </Typography>
+                </Box>
+                <Box
+                  sx={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(7, 9px)',
+                    gap: '4px',
+                    alignItems: 'end',
+                    pb: 0.5,
+                  }}
+                >
+                  {[2, 3, 4, 6, 3, 5, 2].map((height, index) => (
+                    <Box
+                      key={index}
+                      sx={{
+                        height: height * 7,
+                        borderRadius: '3px',
+                        bgcolor: index === 3 ? 'primary.main' : alpha(theme.palette.primary.main, 0.14 + index * 0.035),
+                      }}
+                    />
+                  ))}
+                </Box>
+              </Stack>
+
+              <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap" sx={{ mt: 2.5 }}>
+                <MetricCapsule
+                  icon={<WorkIcon fontSize="small" />}
+                  label="Received"
+                  value={data.income.actual}
+                  currency={baseCurrency}
+                  positive
+                />
+              </Stack>
+
+              <Box sx={{ mt: 'auto', pt: 3, pl: 1.5, borderLeft: '2px solid', borderColor: 'primary.main' }}>
+                <Typography sx={{ color: 'text.secondary', fontSize: 10.5 }}>Received this cycle</Typography>
+                <Typography sx={{ color: 'text.primary', fontSize: 15, fontWeight: 650 }}>
+                  {receivedIncomeCount} income {receivedIncomeCount === 1 ? 'entry' : 'entries'}
                 </Typography>
               </Box>
-              <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(7, 9px)', gap: '4px', alignItems: 'end', pb: 0.5 }}>
-                {[2, 3, 4, 6, 3, 5, 2].map((height, index) => (
-                  <Box key={index} sx={{ height: height * 7, borderRadius: '3px', bgcolor: index === 3 ? 'primary.main' : alpha(theme.palette.primary.main, 0.14 + index * 0.035) }} />
-                ))}
+            </Stack>
+          </CardContent>
+        </Card>
+      )}
+
+      {variant === 'expense' && (
+        <Card sx={{ height: 375 }}>
+          <CardContent sx={{ height: '100%' }}>
+            <Stack sx={{ height: '100%' }}>
+              <Stack direction="row" justifyContent="space-between" alignItems="center">
+                <CardHeading icon={<ReceiptLongIcon variant="Bulk" />} title="My expenses" />
+                <Typography sx={{ color: 'text.secondary', fontSize: 11, fontWeight: 600 }}>
+                  {activeCycle?.name ?? 'Current cycle'}
+                </Typography>
+              </Stack>
+
+              <Box sx={{ mt: 3.5 }}>
+                <Typography sx={{ color: 'text.secondary', fontSize: 12 }}>Total expense</Typography>
+                <Typography
+                  sx={{
+                    color: 'text.primary',
+                    fontSize: { xs: 36, lg: 40 },
+                    fontWeight: 500,
+                    lineHeight: 1.05,
+                    letterSpacing: '-0.055em',
+                    fontVariantNumeric: 'tabular-nums',
+                  }}
+                >
+                  <Money amount={data.spending.actual} code={baseCurrency} maxDigits={2} />
+                </Typography>
               </Box>
-            </Stack>
 
-            <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap" sx={{ mt: 2.5 }}>
-              <MetricCapsule icon={<WorkIcon fontSize="small" />} label="Received" value={data.income.actual} currency={baseCurrency} positive />
-            </Stack>
+              <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap" sx={{ mt: 2 }}>
+                <MetricCapsule
+                  icon={<PaymentsIcon fontSize="small" />}
+                  label="Goal"
+                  value={data.spending.plannedBudget}
+                  currency={baseCurrency}
+                />
+                <MetricCapsule
+                  icon={<WorkIcon fontSize="small" />}
+                  label="Remaining"
+                  value={Math.max(0, data.spending.plannedBudget - data.spending.actual)}
+                  currency={baseCurrency}
+                  positive
+                />
+              </Stack>
 
-            <Box sx={{ mt: 'auto', pt: 3, pl: 1.5, borderLeft: '2px solid', borderColor: 'primary.main' }}>
-              <Typography sx={{ color: 'text.secondary', fontSize: 10.5 }}>Received this cycle</Typography>
-              <Typography sx={{ color: 'text.primary', fontSize: 15, fontWeight: 650 }}>{receivedIncomeCount} income {receivedIncomeCount === 1 ? 'entry' : 'entries'}</Typography>
-            </Box>
-          </Stack>
-        </CardContent>
-      </Card>}
-
-      {variant === 'expense' && <Card sx={{ height: 375 }}>
-        <CardContent sx={{ height: '100%' }}>
-          <Stack sx={{ height: '100%' }}>
-            <Stack direction="row" justifyContent="space-between" alignItems="center">
-              <CardHeading icon={<ReceiptLongIcon variant="Bulk" />} title="My expenses" />
-              <Typography sx={{ color: 'text.secondary', fontSize: 11, fontWeight: 600 }}>{activeCycle?.name ?? 'Current cycle'}</Typography>
+              <Stack direction="row" justifyContent="space-between" sx={{ mt: 'auto', mb: 1 }}>
+                <Typography sx={{ color: 'text.primary', fontSize: 10 }}>0</Typography>
+                <Typography sx={{ color: 'text.primary', fontSize: 10 }}>50</Typography>
+                <Typography sx={{ color: 'text.primary', fontSize: 10 }}>100</Typography>
+              </Stack>
+              <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(24, 1fr)', gap: '4px' }}>
+                {Array.from({ length: 24 }, (_, index) => {
+                  const active = index < Math.round((meterPercent / 100) * 24);
+                  return (
+                    <Box
+                      key={index}
+                      sx={{
+                        height: 64,
+                        minWidth: 4,
+                        borderRadius: '999px',
+                        bgcolor: active
+                          ? 'secondary.main'
+                          : alpha(theme.palette.secondary.main, theme.palette.mode === 'dark' ? 0.15 : 0.12),
+                      }}
+                    />
+                  );
+                })}
+              </Box>
+              <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mt: 1.5 }}>
+                <Typography sx={{ color: 'text.secondary', fontSize: 10.5 }}>
+                  {activeCycle?.name ?? 'Current cycle'}
+                </Typography>
+                <Typography
+                  sx={{ color: meterPercent > 100 ? 'error.main' : 'text.primary', fontSize: 10.5, fontWeight: 650 }}
+                >
+                  {meterPercent}% of budget used
+                </Typography>
+              </Stack>
             </Stack>
-
-            <Box sx={{ mt: 3.5 }}>
-              <Typography sx={{ color: 'text.secondary', fontSize: 12 }}>Total expense</Typography>
-              <Typography sx={{ color: 'text.primary', fontSize: { xs: 36, lg: 40 }, fontWeight: 500, lineHeight: 1.05, letterSpacing: '-0.055em', fontVariantNumeric: 'tabular-nums' }}>
-                <Money amount={data.spending.actual} code={baseCurrency} maxDigits={2} />
-              </Typography>
-            </Box>
-
-            <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap" sx={{ mt: 2 }}>
-              <MetricCapsule icon={<PaymentsIcon fontSize="small" />} label="Goal" value={data.spending.plannedBudget} currency={baseCurrency} />
-              <MetricCapsule icon={<WorkIcon fontSize="small" />} label="Remaining" value={Math.max(0, data.spending.plannedBudget - data.spending.actual)} currency={baseCurrency} positive />
-            </Stack>
-
-            <Stack direction="row" justifyContent="space-between" sx={{ mt: 'auto', mb: 1 }}>
-              <Typography sx={{ color: 'text.primary', fontSize: 10 }}>0</Typography>
-              <Typography sx={{ color: 'text.primary', fontSize: 10 }}>50</Typography>
-              <Typography sx={{ color: 'text.primary', fontSize: 10 }}>100</Typography>
-            </Stack>
-            <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(24, 1fr)', gap: '4px' }}>
-              {Array.from({ length: 24 }, (_, index) => {
-                const active = index < Math.round((meterPercent / 100) * 24);
-                return <Box key={index} sx={{ height: 64, minWidth: 4, borderRadius: '999px', bgcolor: active ? 'secondary.main' : alpha(theme.palette.secondary.main, theme.palette.mode === 'dark' ? 0.15 : 0.12) }} />;
-              })}
-            </Box>
-            <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mt: 1.5 }}>
-              <Typography sx={{ color: 'text.secondary', fontSize: 10.5 }}>{activeCycle?.name ?? 'Current cycle'}</Typography>
-              <Typography sx={{ color: meterPercent > 100 ? 'error.main' : 'text.primary', fontSize: 10.5, fontWeight: 650 }}>{meterPercent}% of budget used</Typography>
-            </Stack>
-          </Stack>
-        </CardContent>
-      </Card>}
+          </CardContent>
+        </Card>
+      )}
     </>
   );
 }
 
-function MetricCapsule({ icon, label, value, currency, positive = false }: { icon: ReactNode; label: string; value: number; currency: CurrencyCode; positive?: boolean }) {
+function MetricCapsule({
+  icon,
+  label,
+  value,
+  currency,
+  positive = false,
+}: {
+  icon: ReactNode;
+  label: string;
+  value: number;
+  currency: CurrencyCode;
+  positive?: boolean;
+}) {
   return (
-    <Stack direction="row" spacing={0.75} alignItems="center" sx={{ width: 'fit-content', px: 1.1, py: 0.7, borderRadius: '10px', bgcolor: 'action.hover' }}>
+    <Stack
+      direction="row"
+      spacing={0.75}
+      alignItems="center"
+      sx={{ width: 'fit-content', px: 1.1, py: 0.7, borderRadius: '10px', bgcolor: 'action.hover' }}
+    >
       <Box sx={{ color: 'text.secondary', '& svg': { width: 17, height: 17 } }}>{icon}</Box>
       <Typography sx={{ color: 'text.primary', fontSize: 10.5, fontWeight: 600 }}>{label}</Typography>
       <Typography sx={{ color: positive ? 'success.main' : 'text.secondary', fontSize: 10.5, fontWeight: 700 }}>

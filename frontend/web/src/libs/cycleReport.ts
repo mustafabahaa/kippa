@@ -60,16 +60,21 @@ export function calculateCycleReport(
   displayRates: DisplayRates,
 ): CycleReport {
   const posted = new Map(
-    transactions.filter(transaction => transaction.status === 'posted').map(transaction => [transaction.id, transaction]),
+    transactions
+      .filter((transaction) => transaction.status === 'posted')
+      .map((transaction) => [transaction.id, transaction]),
   );
   const cycleTransactions = transactions.filter(
-    transaction => transaction.status === 'posted' && transaction.budgetCycleId === cycle.id,
+    (transaction) => transaction.status === 'posted' && transaction.budgetCycleId === cycle.id,
   );
-  const cycleIds = new Set(cycleTransactions.map(transaction => transaction.id));
+  const cycleIds = new Set(cycleTransactions.map((transaction) => transaction.id));
   const openingIds = new Set(
     transactions
-      .filter(transaction => transaction.status === 'posted' && transaction.date < cycle.startDate && !cycleIds.has(transaction.id))
-      .map(transaction => transaction.id),
+      .filter(
+        (transaction) =>
+          transaction.status === 'posted' && transaction.date < cycle.startDate && !cycleIds.has(transaction.id),
+      )
+      .map((transaction) => transaction.id),
   );
 
   const openingByAccount = new Map<string, number>();
@@ -87,7 +92,12 @@ export function calculateCycleReport(
     }
     if (!cycleIds.has(transaction.id)) continue;
 
-    const activity = activityByAccount.get(line.accountId) ?? { moneyIn: 0, moneyOut: 0, net: 0, ids: new Set<string>() };
+    const activity = activityByAccount.get(line.accountId) ?? {
+      moneyIn: 0,
+      moneyOut: 0,
+      net: 0,
+      ids: new Set<string>(),
+    };
     activity.moneyIn += Math.max(line.signedAmount, 0);
     activity.moneyOut += Math.max(-line.signedAmount, 0);
     activity.net += line.signedAmount;
@@ -99,14 +109,14 @@ export function calculateCycleReport(
     } else if (transaction.type === 'expense' && line.signedAmount < 0) {
       const spending = base(-line.signedAmount, line.currency, baseCurrency, displayRates);
       totalSpending += spending;
-      const categoryId = transaction.loanId ? LOAN_PAYMENTS_CATEGORY_ID : transaction.categoryId ?? null;
+      const categoryId = transaction.loanId ? LOAN_PAYMENTS_CATEGORY_ID : (transaction.categoryId ?? null);
       categorySpent.set(categoryId, (categorySpent.get(categoryId) ?? 0) + spending);
     }
   }
 
   const reportAccounts = accounts
-    .filter(account => account.isActive || openingByAccount.has(account.id) || activityByAccount.has(account.id))
-    .map(account => {
+    .filter((account) => account.isActive || openingByAccount.has(account.id) || activityByAccount.has(account.id))
+    .map((account) => {
       const openingBalance = openingByAccount.get(account.id) ?? 0;
       const activity = activityByAccount.get(account.id);
       const moneyIn = activity?.moneyIn ?? 0;
@@ -125,36 +135,44 @@ export function calculateCycleReport(
     });
 
   const householdOpening = reportAccounts.reduce(
-    (sum, account) => sum + base(account.openingBalance, account.currency, baseCurrency, displayRates), 0,
+    (sum, account) => sum + base(account.openingBalance, account.currency, baseCurrency, displayRates),
+    0,
   );
   const householdClosing = reportAccounts.reduce(
-    (sum, account) => sum + base(account.closingBalance, account.currency, baseCurrency, displayRates), 0,
+    (sum, account) => sum + base(account.closingBalance, account.currency, baseCurrency, displayRates),
+    0,
   );
 
-  const categoryById = new Map(categories.map(category => [category.id, category]));
+  const categoryById = new Map(categories.map((category) => [category.id, category]));
   const plannedByCategory = new Map<string | null, number>();
   for (const allocation of allocations) {
     if (allocation.budgetCycleId !== cycle.id) continue;
     plannedByCategory.set(
       allocation.categoryId,
-      (plannedByCategory.get(allocation.categoryId) ?? 0) + base(allocation.plannedAmount, allocation.currency, baseCurrency, displayRates),
+      (plannedByCategory.get(allocation.categoryId) ?? 0) +
+        base(allocation.plannedAmount, allocation.currency, baseCurrency, displayRates),
     );
   }
   const categoryIds = new Set([...categorySpent.keys(), ...plannedByCategory.keys()]);
-  const reportCategories = Array.from(categoryIds).map(categoryId => {
-    const spent = categorySpent.get(categoryId) ?? 0;
-    const planned = plannedByCategory.get(categoryId) ?? 0;
-    return {
-      categoryId,
-      categoryName: categoryId === LOAN_PAYMENTS_CATEGORY_ID
-        ? 'Loan payments'
-        : categoryId === null ? 'Uncategorized' : (categoryById.get(categoryId)?.name ?? 'Uncategorized'),
-      planned,
-      spent,
-      variance: planned - spent,
-      share: totalSpending === 0 ? 0 : spent / totalSpending,
-    };
-  }).sort((a, b) => b.spent - a.spent || b.planned - a.planned || a.categoryName.localeCompare(b.categoryName));
+  const reportCategories = Array.from(categoryIds)
+    .map((categoryId) => {
+      const spent = categorySpent.get(categoryId) ?? 0;
+      const planned = plannedByCategory.get(categoryId) ?? 0;
+      return {
+        categoryId,
+        categoryName:
+          categoryId === LOAN_PAYMENTS_CATEGORY_ID
+            ? 'Loan payments'
+            : categoryId === null
+              ? 'Uncategorized'
+              : (categoryById.get(categoryId)?.name ?? 'Uncategorized'),
+        planned,
+        spent,
+        variance: planned - spent,
+        share: totalSpending === 0 ? 0 : spent / totalSpending,
+      };
+    })
+    .sort((a, b) => b.spent - a.spent || b.planned - a.planned || a.categoryName.localeCompare(b.categoryName));
 
   return {
     openingBalance: householdOpening,

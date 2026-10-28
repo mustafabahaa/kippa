@@ -1,12 +1,5 @@
-import { 
-  Box, 
-  Stack, 
-  Skeleton
-} from '@mui/material';
-import { 
-  useNotificationSettings, 
-  useUpdateNotificationSettingsMutation 
-} from '@/hooks/useFinance';
+import { Box, Stack, Skeleton } from '@mui/material';
+import { useNotificationSettings, useUpdateNotificationSettingsMutation } from '@/hooks/useFinance';
 import { NotificationSettings } from '@kippa/domain';
 import { NotificationSettingsForm } from '@/features/notifications/NotificationSettingsForm';
 import { useAppContext } from '@/hooks/useAppContext';
@@ -22,7 +15,7 @@ export function Notifications() {
     await updateSettingsMutation.mutateAsync({
       householdId,
       userId,
-      settings
+      settings,
     });
   };
 

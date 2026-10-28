@@ -42,8 +42,8 @@ describe('bank catalog', () => {
   });
 
   it('NBE and Banque Misr issue Meeza', () => {
-    const nbeMeeza = getBank('nbe')!.tiers.some(t => t.networks.includes('meeza'));
-    const bmMeeza = getBank('banque-misr')!.tiers.some(t => t.networks.includes('meeza'));
+    const nbeMeeza = getBank('nbe')!.tiers.some((t) => t.networks.includes('meeza'));
+    const bmMeeza = getBank('banque-misr')!.tiers.some((t) => t.networks.includes('meeza'));
     expect(nbeMeeza && bmMeeza).toBe(true);
   });
 

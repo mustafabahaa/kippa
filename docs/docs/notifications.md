@@ -79,4 +79,3 @@ Per user:
 Use Firebase Cloud Messaging where appropriate.
 
 For PWA push support, implementation must account for browser/platform restrictions, especially iOS Home Screen web apps.
-

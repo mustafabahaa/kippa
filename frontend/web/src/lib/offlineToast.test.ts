@@ -15,10 +15,7 @@ describe('notifyOfflineAwareSuccess', () => {
   it('shows the "will sync" toast when offline', () => {
     const enqueue = vi.fn();
     notifyOfflineAwareSuccess({ isOnline: false, enqueue });
-    expect(enqueue).toHaveBeenCalledWith(
-      expect.stringContaining('sync'),
-      expect.objectContaining({ variant: 'info' })
-    );
+    expect(enqueue).toHaveBeenCalledWith(expect.stringContaining('sync'), expect.objectContaining({ variant: 'info' }));
   });
 
   it('does not toast when online', () => {

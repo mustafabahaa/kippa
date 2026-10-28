@@ -40,11 +40,7 @@ interface EditTransactionDialogProps {
   onClose: () => void;
 }
 
-export const EditTransactionDialog: React.FC<EditTransactionDialogProps> = ({
-  open,
-  transaction,
-  onClose,
-}) => {
+export const EditTransactionDialog: React.FC<EditTransactionDialogProps> = ({ open, transaction, onClose }) => {
   const { enqueueSnackbar } = useSnackbar();
   const { householdId } = useAppContext();
   const baseCurrency = useHouseholdBaseCurrency();
@@ -77,16 +73,23 @@ export const EditTransactionDialog: React.FC<EditTransactionDialogProps> = ({
         transactionUpdates: {
           description: fields.description,
           date: fields.date,
-          categoryId: isRegularTx ? (fields.categoryId || null) : null,
+          categoryId: isRegularTx ? fields.categoryId || null : null,
           type: isRegularTx ? fields.type : transaction.type,
         },
         lineUpdates: {
           accountId: fields.accountId,
           signedAmount: signedAmount,
           currency,
-          ...(firstLine?.cardFee && fields.type === 'expense' && accounts.find(account => account.id === fields.accountId)?.type === 'credit' ? {
-            cardFee: { baseAmount: Number((amount / (1 + firstLine.cardFee.rate / 100)).toFixed(2)), rate: firstLine.cardFee.rate },
-          } : {}),
+          ...(firstLine?.cardFee &&
+          fields.type === 'expense' &&
+          accounts.find((account) => account.id === fields.accountId)?.type === 'credit'
+            ? {
+                cardFee: {
+                  baseAmount: Number((amount / (1 + firstLine.cardFee.rate / 100)).toFixed(2)),
+                  rate: firstLine.cardFee.rate,
+                },
+              }
+            : {}),
         },
       });
       enqueueSnackbar('Transaction updated successfully!', { variant: 'success' });
@@ -102,7 +105,10 @@ export const EditTransactionDialog: React.FC<EditTransactionDialogProps> = ({
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle component="div" sx={{ fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'space-between', pb: 1 }}>
+      <DialogTitle
+        component="div"
+        sx={{ fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'space-between', pb: 1 }}
+      >
         <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
           Edit Transaction
         </Typography>
@@ -123,11 +129,16 @@ export const EditTransactionDialog: React.FC<EditTransactionDialogProps> = ({
                 }}
               >
                 <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic', mb: 1.5 }}>
-                  For ledger integrity, the type, accounts, and amount of a {transaction.type === 'adjustment' ? 'Reconciliation' : transaction.type} transaction cannot be modified.
+                  For ledger integrity, the type, accounts, and amount of a{' '}
+                  {transaction.type === 'adjustment' ? 'Reconciliation' : transaction.type} transaction cannot be
+                  modified.
                 </Typography>
                 <Stack spacing={1}>
                   <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
-                    Amount: <span style={{ fontWeight: 'normal' }}>{fields.amount} {findPrimaryLedgerLine(transaction.id, ledgerLines)?.currency || baseCurrency}</span>
+                    Amount:{' '}
+                    <span style={{ fontWeight: 'normal' }}>
+                      {fields.amount} {findPrimaryLedgerLine(transaction.id, ledgerLines)?.currency || baseCurrency}
+                    </span>
                   </Typography>
                   <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
                     Account: <span style={{ fontWeight: 'normal' }}>{getAccountName(fields.accountId)}</span>
@@ -139,7 +150,10 @@ export const EditTransactionDialog: React.FC<EditTransactionDialogProps> = ({
 
           {/* Section 1: Financial Details */}
           <Grid size={{ xs: 12 }}>
-            <Typography variant="caption" sx={{ fontWeight: 700, color: 'primary.main', textTransform: 'uppercase', letterSpacing: '1px' }}>
+            <Typography
+              variant="caption"
+              sx={{ fontWeight: 700, color: 'primary.main', textTransform: 'uppercase', letterSpacing: '1px' }}
+            >
               Financial Details
             </Typography>
             <Divider sx={{ mt: 1, mb: 1 }} />
@@ -150,12 +164,7 @@ export const EditTransactionDialog: React.FC<EditTransactionDialogProps> = ({
               <Typography variant="body2" sx={{ mb: 1, color: 'text.secondary', fontWeight: 'medium' }}>
                 Transaction Type
               </Typography>
-              <RadioGroup
-                row
-                value={fields.type}
-                onChange={(e) => setField('type', e.target.value)}
-                sx={{ gap: 2 }}
-              >
+              <RadioGroup row value={fields.type} onChange={(e) => setField('type', e.target.value)} sx={{ gap: 2 }}>
                 <FormControlLabel value="expense" control={<Radio />} label="Expense" />
                 <FormControlLabel value="income" control={<Radio />} label="Income" />
               </RadioGroup>
@@ -168,7 +177,11 @@ export const EditTransactionDialog: React.FC<EditTransactionDialogProps> = ({
                 type="number"
                 fullWidth
                 label="Amount"
-                helperText={findPrimaryLedgerLine(transaction.id, ledgerLines)?.cardFee ? "Includes bank fees. Change the fee in the card payment dialog." : undefined}
+                helperText={
+                  findPrimaryLedgerLine(transaction.id, ledgerLines)?.cardFee
+                    ? 'Includes bank fees. Change the fee in the card payment dialog.'
+                    : undefined
+                }
                 value={fields.amount}
                 onChange={(e) => setField('amount', e.target.value)}
               />
@@ -197,7 +210,10 @@ export const EditTransactionDialog: React.FC<EditTransactionDialogProps> = ({
 
           {/* Section 2: Metadata & Notes */}
           <Grid size={{ xs: 12 }} sx={{ mt: 1 }}>
-            <Typography variant="caption" sx={{ fontWeight: 700, color: 'primary.main', textTransform: 'uppercase', letterSpacing: '1px' }}>
+            <Typography
+              variant="caption"
+              sx={{ fontWeight: 700, color: 'primary.main', textTransform: 'uppercase', letterSpacing: '1px' }}
+            >
               Classification & Details
             </Typography>
             <Divider sx={{ mt: 1, mb: 1 }} />
@@ -277,11 +293,7 @@ export const EditTransactionDialog: React.FC<EditTransactionDialogProps> = ({
         <Button onClick={onClose} color="inherit">
           Cancel
         </Button>
-        <Button
-          onClick={handleSave}
-          variant="contained"
-          loading={updateMutation.isPending}
-        >
+        <Button onClick={handleSave} variant="contained" loading={updateMutation.isPending}>
           Save Changes
         </Button>
       </DialogActions>

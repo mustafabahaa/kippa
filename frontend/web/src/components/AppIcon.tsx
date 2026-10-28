@@ -1,11 +1,50 @@
 import { forwardRef, type ComponentType, type ElementType } from 'react';
 import { Box, type SvgIconProps } from '@mui/material';
 import {
-  Add, AddSquare, ArrowLeft, ArrowSwapHorizontal, ArrowUp2, BackSquare, Backward,
-  Bank, Briefcase, Calendar, Card, CardPos, Category, Chart, CloseCircle, CloudRemove,
-  Convert, Copy, Discover, Edit2, Export, Eye, EyeSlash, Filter, Home2, InfoCircle, Key,
-  Logout, Minus, Moon, Note, Notification, NotificationBing, People, Profile2User, Receipt,
-  SearchNormal1, Setting2, ShoppingCart, Sun, TickCircle, TickSquare, Timer1, Trash,
+  Add,
+  AddSquare,
+  ArrowLeft,
+  ArrowSwapHorizontal,
+  ArrowUp2,
+  BackSquare,
+  Backward,
+  Bank,
+  Briefcase,
+  Calendar,
+  Card,
+  CardPos,
+  Category,
+  Chart,
+  CloseCircle,
+  CloudRemove,
+  Convert,
+  Copy,
+  Discover,
+  Edit2,
+  Export,
+  Eye,
+  EyeSlash,
+  Filter,
+  Home2,
+  InfoCircle,
+  Key,
+  Logout,
+  Minus,
+  Moon,
+  Note,
+  Notification,
+  NotificationBing,
+  People,
+  Profile2User,
+  Receipt,
+  SearchNormal1,
+  Setting2,
+  ShoppingCart,
+  Sun,
+  TickCircle,
+  TickSquare,
+  Timer1,
+  Trash,
 } from 'iconsax-react';
 
 type IconsaxVariant = 'Linear' | 'Outline' | 'Broken' | 'Bold' | 'Bulk' | 'TwoTone';
@@ -26,15 +65,12 @@ const semanticIconColors: Partial<Record<NonNullable<SvgIconProps['color']>, str
 /** MUI-compatible Iconsax adapter. Use these exports instead of direct icon-library imports. */
 function createAppIcon(Icon: IconsaxComponent) {
   const IconBox = Box as ElementType;
-  return forwardRef<SVGSVGElement, AppIconProps>(function AppIcon({
-    color = 'inherit',
-    fontSize = 'medium',
-    htmlColor,
-    sx,
-    variant = 'Linear',
-    ...props
-  }, ref) {
-    const fontSizeValue = fontSize === 'small' ? 20 : fontSize === 'large' ? 35 : fontSize === 'inherit' ? 'inherit' : 24;
+  return forwardRef<SVGSVGElement, AppIconProps>(function AppIcon(
+    { color = 'inherit', fontSize = 'medium', htmlColor, sx, variant = 'Linear', ...props },
+    ref,
+  ) {
+    const fontSizeValue =
+      fontSize === 'small' ? 20 : fontSize === 'large' ? 35 : fontSize === 'inherit' ? 'inherit' : 24;
     const semanticColor = color === 'inherit' ? 'inherit' : semanticIconColors[color];
     return (
       <IconBox

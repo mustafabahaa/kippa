@@ -156,4 +156,3 @@ difference = actualBalance - calculatedBalance
 If accepted, create an adjustment transaction.
 
 Never silently overwrite calculated balance.
-

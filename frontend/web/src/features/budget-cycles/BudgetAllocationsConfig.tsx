@@ -1,17 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSnackbar } from 'notistack';
-import {
-  Box,
-  Button,
-  Stack,
-  Typography,
-  Chip
-} from '@mui/material';
+import { Box, Button, Stack, Typography, Chip } from '@mui/material';
 import { ContentCopyIcon } from '@/components/AppIcon';
-import {
-  useSaveAllocationsBatchMutation,
-  useHouseholdBaseCurrency
-} from '@/hooks/useFinance';
+import { useSaveAllocationsBatchMutation, useHouseholdBaseCurrency } from '@/hooks/useFinance';
 import { Money } from '@/components/Money';
 import { usePrivacyMask } from '@/hooks/usePrivacyMask';
 import { cyclesLib } from '@/libs/cycles';
@@ -39,18 +30,18 @@ export function BudgetAllocationsConfig({
   onSave,
   saveRef,
   onSavingStatusChange,
-  onTotalBudgetChange
+  onTotalBudgetChange,
 }: BudgetAllocationsConfigProps) {
   const { enqueueSnackbar } = useSnackbar();
   const { maskDigits, privacyMode } = usePrivacyMask();
   const baseCurrency = useHouseholdBaseCurrency();
-  const expenseCategories = categories.filter(c => c.type === 'expense');
+  const expenseCategories = categories.filter((c) => c.type === 'expense');
 
   const [rows, setRows] = useState<AllocationRow[]>(() => {
     const initial: AllocationRow[] = [];
 
     // Add rows for existing allocations
-    dbAllocations.forEach(alloc => {
+    dbAllocations.forEach((alloc) => {
       initial.push({
         categoryId: alloc.categoryId,
         plannedAmount: alloc.plannedAmount.toString(),
@@ -59,7 +50,7 @@ export function BudgetAllocationsConfig({
 
     // If no allocations exist yet, add all expense categories with 0
     if (initial.length === 0) {
-      expenseCategories.forEach(cat => {
+      expenseCategories.forEach((cat) => {
         initial.push({ categoryId: cat.id, plannedAmount: '0' });
       });
     }
@@ -71,25 +62,23 @@ export function BudgetAllocationsConfig({
   const saveAllocationsBatchMutation = useSaveAllocationsBatchMutation();
 
   // Categories available to add (not already in rows)
-  const usedCategoryIds = new Set(rows.map(r => r.categoryId));
-  const availableCategories = expenseCategories.filter(c => !usedCategoryIds.has(c.id));
+  const usedCategoryIds = new Set(rows.map((r) => r.categoryId));
+  const availableCategories = expenseCategories.filter((c) => !usedCategoryIds.has(c.id));
 
   const handleAddExistingCategory = (categoryId: string) => {
-    setRows(prev => [...prev, { categoryId, plannedAmount: '0' }]);
+    setRows((prev) => [...prev, { categoryId, plannedAmount: '0' }]);
   };
 
   const handleRemoveCategory = (categoryId: string) => {
-    setRows(prev => prev.filter(r => r.categoryId !== categoryId));
+    setRows((prev) => prev.filter((r) => r.categoryId !== categoryId));
   };
 
   const handleAmountChange = (categoryId: string, value: string) => {
-    setRows(prev => prev.map(r =>
-      r.categoryId === categoryId ? { ...r, plannedAmount: value } : r
-    ));
+    setRows((prev) => prev.map((r) => (r.categoryId === categoryId ? { ...r, plannedAmount: value } : r)));
   };
 
   const handleSaveAllocations = useCallback(async () => {
-    const payload: Omit<BudgetAllocation, 'id' | 'householdId'>[] = rows.map(row => ({
+    const payload: Omit<BudgetAllocation, 'id' | 'householdId'>[] = rows.map((row) => ({
       budgetCycleId: activeCycle.id,
       categoryId: row.categoryId,
       plannedAmount: parseFloat(row.plannedAmount) || 0,
@@ -100,14 +89,14 @@ export function BudgetAllocationsConfig({
     await saveAllocationsBatchMutation.mutateAsync({
       householdId,
       cycleId: activeCycle.id,
-      allocations: payload
+      allocations: payload,
     });
     enqueueSnackbar('Allocations saved!', { variant: 'success' });
     if (onSave) onSave();
   }, [rows, activeCycle.id, householdId, saveAllocationsBatchMutation, enqueueSnackbar, onSave, baseCurrency]);
 
   const handleCopyPreviousAllocations = async () => {
-    const closedCycle = cycles.find(c => c.status === 'closed');
+    const closedCycle = cycles.find((c) => c.status === 'closed');
     if (!closedCycle) {
       enqueueSnackbar('No previous cycle allocations found to copy.', { variant: 'warning' });
       return;
@@ -119,7 +108,7 @@ export function BudgetAllocationsConfig({
       return;
     }
 
-    const newRows: AllocationRow[] = prevAllocations.map(alloc => ({
+    const newRows: AllocationRow[] = prevAllocations.map((alloc) => ({
       categoryId: alloc.categoryId,
       plannedAmount: alloc.plannedAmount.toString(),
     }));
@@ -128,7 +117,7 @@ export function BudgetAllocationsConfig({
   };
 
   const getCategoryName = (catId: string) => {
-    return categories.find(c => c.id === catId)?.name || 'Unknown';
+    return categories.find((c) => c.id === catId)?.name || 'Unknown';
   };
 
   const totalBudget = rows.reduce((sum, r) => sum + (parseFloat(r.plannedAmount) || 0), 0);
@@ -161,11 +150,7 @@ export function BudgetAllocationsConfig({
         <Typography variant="body1" sx={{ fontWeight: 700, color: 'text.primary', fontSize: '15px' }}>
           Category Budgets ({baseCurrency})
         </Typography>
-        <Button 
-          variant="text" 
-          startIcon={<ContentCopyIcon />}
-          onClick={handleCopyPreviousAllocations}
-        >
+        <Button variant="text" startIcon={<ContentCopyIcon />} onClick={handleCopyPreviousAllocations}>
           Copy previous
         </Button>
       </Box>
@@ -191,39 +176,43 @@ export function BudgetAllocationsConfig({
         </Stack>
 
         <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 1 }}>
-          {availableCategories.map(cat => (
-              <Chip
-                key={cat.id}
-                label={cat.name}
-                variant="outlined"
-                onClick={() => handleAddExistingCategory(cat.id)}
-                sx={{
-                  height: 36,
-                  borderRadius: '12px',
-                  bgcolor: 'background.paper',
-                  color: 'text.secondary',
-                  borderColor: 'divider',
-                  fontSize: 13,
-                  fontWeight: 400,
-                  '&:hover': { bgcolor: 'action.hover' },
-                }}
-              />
+          {availableCategories.map((cat) => (
+            <Chip
+              key={cat.id}
+              label={cat.name}
+              variant="outlined"
+              onClick={() => handleAddExistingCategory(cat.id)}
+              sx={{
+                height: 36,
+                borderRadius: '12px',
+                bgcolor: 'background.paper',
+                color: 'text.secondary',
+                borderColor: 'divider',
+                fontSize: 13,
+                fontWeight: 400,
+                '&:hover': { bgcolor: 'action.hover' },
+              }}
+            />
           ))}
         </Box>
       </Box>
 
       {/* Total + Save */}
-      {!saveRef && <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 2.5, pt: 2 }}>
-        <Box>
-          <Typography variant="body2" color="text.secondary">
-            Total Budget
-          </Typography>
-          <Typography variant="body1" sx={{ fontWeight: 700, fontSize: '16px' }}>
-            <Money amount={totalBudget} code={baseCurrency} />
-          </Typography>
+      {!saveRef && (
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 2.5, pt: 2 }}>
+          <Box>
+            <Typography variant="body2" color="text.secondary">
+              Total Budget
+            </Typography>
+            <Typography variant="body1" sx={{ fontWeight: 700, fontSize: '16px' }}>
+              <Money amount={totalBudget} code={baseCurrency} />
+            </Typography>
+          </Box>
+          <Button variant="contained" onClick={handleSaveAllocations} loading={saveAllocationsBatchMutation.isPending}>
+            Save
+          </Button>
         </Box>
-        <Button variant="contained" onClick={handleSaveAllocations} loading={saveAllocationsBatchMutation.isPending}>Save</Button>
-      </Box>}
+      )}
     </Box>
   );
 }

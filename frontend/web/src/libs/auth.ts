@@ -5,7 +5,7 @@ import {
   GoogleAuthProvider,
   signInWithPopup,
   signInWithCustomToken,
-  Auth
+  Auth,
 } from 'firebase/auth';
 import { httpsCallable } from 'firebase/functions';
 import { auth, functions, isFirebaseConfigured, isFirebaseReady } from '@/config/firebase';
@@ -25,12 +25,12 @@ function requireAuth(): Auth {
 
 export const authLib = {
   async signInForLocalPreview(): Promise<void> {
-    const isLocalPreview = import.meta.env.DEV
-      && new URLSearchParams(window.location.search).get('visual-preview') === '1';
+    const isLocalPreview =
+      import.meta.env.DEV && new URLSearchParams(window.location.search).get('visual-preview') === '1';
     if (!isLocalPreview || !auth || auth.currentUser) return;
     const response = await fetch('/__visual-preview-token', { cache: 'no-store' });
     if (!response.ok) throw new Error('Could not authenticate the local preview');
-    const { token } = await response.json() as { token: string };
+    const { token } = (await response.json()) as { token: string };
     await signInWithCustomToken(auth, token);
   },
 
@@ -42,7 +42,7 @@ export const authLib = {
 
     return onAuthStateChanged(auth, async (fbUser: FirebaseUser | null) => {
       if (fbUser) {
-        const profile = await dbLib.getDoc('system', 'users', fbUser.uid) as UserProfile | null;
+        const profile = (await dbLib.getDoc('system', 'users', fbUser.uid)) as UserProfile | null;
         if (profile) {
           // Sync photoURL only (non-membership field). Membership fields
           // (householdId/householdIds/role) are server-only now, so we re-pin
@@ -84,7 +84,7 @@ export const authLib = {
     const credentials = await signInWithPopup(firebaseAuth, provider);
     const fbUser = credentials.user;
 
-    const profile = await dbLib.getDoc('system', 'users', fbUser.uid) as UserProfile | null;
+    const profile = (await dbLib.getDoc('system', 'users', fbUser.uid)) as UserProfile | null;
     if (profile) {
       // Sync photoURL only (non-membership field).
       if (fbUser.photoURL && profile.photoURL !== fbUser.photoURL) {
@@ -123,10 +123,10 @@ export const authLib = {
   async createHousehold(userId: string, name: string): Promise<Household> {
     requireAuth();
     const baseCurrency = detectBaseCurrency();
-    const createHouseholdFn = httpsCallable<
-      { name: string; baseCurrency: string },
-      { householdId: string }
-    >(functions!, 'createHousehold');
+    const createHouseholdFn = httpsCallable<{ name: string; baseCurrency: string }, { householdId: string }>(
+      functions!,
+      'createHousehold',
+    );
     const res = await createHouseholdFn({ name, baseCurrency });
     const householdId = res.data.householdId;
     return {
@@ -144,10 +144,10 @@ export const authLib = {
    */
   async requestToJoinHousehold(_userId: string, householdId: string): Promise<JoinStatus> {
     requireAuth();
-    const requestFn = httpsCallable<
-      { householdId: string },
-      { status: JoinStatus }
-    >(functions!, 'requestToJoinHousehold');
+    const requestFn = httpsCallable<{ householdId: string }, { status: JoinStatus }>(
+      functions!,
+      'requestToJoinHousehold',
+    );
     const res = await requestFn({ householdId });
     return res.data.status;
   },
@@ -177,7 +177,7 @@ export const authLib = {
    */
   async switchHousehold(userId: string, householdId: string): Promise<UserProfile> {
     requireAuth();
-    const profile = await dbLib.getDoc('system', 'users', userId) as UserProfile | null;
+    const profile = (await dbLib.getDoc('system', 'users', userId)) as UserProfile | null;
     if (!profile) throw new Error('User profile not found');
 
     const householdIds = profile.householdIds || [];
@@ -213,7 +213,7 @@ export const authLib = {
     );
     await leaveFn({ householdId });
     // Re-read the profile — the Function is the source of truth now.
-    const updated = await dbLib.getDoc('system', 'users', userId) as UserProfile | null;
+    const updated = (await dbLib.getDoc('system', 'users', userId)) as UserProfile | null;
     if (!updated) throw new Error('User profile not found after leave');
     return updated;
   },
@@ -225,10 +225,10 @@ export const authLib = {
    */
   async listHouseholdMembers(_userId: string, householdId: string): Promise<HouseholdMember[]> {
     requireAuth();
-    const listFn = httpsCallable<
-      { householdId: string },
-      { members: HouseholdMember[] }
-    >(functions!, 'listHouseholdMembers');
+    const listFn = httpsCallable<{ householdId: string }, { members: HouseholdMember[] }>(
+      functions!,
+      'listHouseholdMembers',
+    );
     const res = await listFn({ householdId });
     return res.data.members;
   },
@@ -240,7 +240,7 @@ export const authLib = {
 
   async updateLastSeenActivity(userId: string, householdId: string, timestamp: string): Promise<UserProfile> {
     requireAuth();
-    const profile = await dbLib.getDoc('system', 'users', userId) as UserProfile | null;
+    const profile = (await dbLib.getDoc('system', 'users', userId)) as UserProfile | null;
     if (!profile) throw new Error('User profile not found');
 
     const lastSeenActivities = profile.lastSeenActivities || {};
@@ -261,7 +261,7 @@ export const authLib = {
       return updatedProfile;
     }
     return profile;
-  }
+  },
 };
 
 export { isFirebaseConfigured, isFirebaseReady };

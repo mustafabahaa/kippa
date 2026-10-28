@@ -2,17 +2,18 @@ import { describe, it, expect } from 'vitest';
 import { computeFrequencyScores } from '../categoryFrequency';
 import type { FinanceTransaction } from '@kippa/domain';
 
-const tx = (over: Partial<FinanceTransaction>): FinanceTransaction => ({
-  id: over.id ?? 'x',
-  householdId: 'h',
-  type: over.type ?? 'expense',
-  date: over.date ?? '2024-01-01',
-  categoryId: over.categoryId ?? null,
-  status: over.status ?? 'posted',
-  createdBy: 'u',
-  createdAt: over.createdAt ?? '2024-01-01T00:00:00.000Z',
-  updatedAt: over.updatedAt ?? '2024-01-01T00:00:00.000Z',
-} as FinanceTransaction);
+const tx = (over: Partial<FinanceTransaction>): FinanceTransaction =>
+  ({
+    id: over.id ?? 'x',
+    householdId: 'h',
+    type: over.type ?? 'expense',
+    date: over.date ?? '2024-01-01',
+    categoryId: over.categoryId ?? null,
+    status: over.status ?? 'posted',
+    createdBy: 'u',
+    createdAt: over.createdAt ?? '2024-01-01T00:00:00.000Z',
+    updatedAt: over.updatedAt ?? '2024-01-01T00:00:00.000Z',
+  }) as FinanceTransaction;
 
 describe('computeFrequencyScores', () => {
   it('returns empty object for no transactions', () => {

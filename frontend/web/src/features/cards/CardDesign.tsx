@@ -36,7 +36,17 @@ export function CardBackground({
       }}
     >
       {overlay}
-      <Box sx={{ position: 'relative', zIndex: 1, flex: fill ? '1 1 auto' : undefined, display: fill ? 'flex' : undefined, flexDirection: fill ? 'column' : undefined }}>{children}</Box>
+      <Box
+        sx={{
+          position: 'relative',
+          zIndex: 1,
+          flex: fill ? '1 1 auto' : undefined,
+          display: fill ? 'flex' : undefined,
+          flexDirection: fill ? 'column' : undefined,
+        }}
+      >
+        {children}
+      </Box>
     </Box>
   );
 }
@@ -71,14 +81,7 @@ export function NetworkLogo({ network }: { network?: CardNetwork }) {
       );
     case 'mastercard':
       return (
-        <svg
-          viewBox="0 0 50 30"
-          width="42"
-          height="25"
-          style={{ display: 'block' }}
-          aria-label="Mastercard"
-          role="img"
-        >
+        <svg viewBox="0 0 50 30" width="42" height="25" style={{ display: 'block' }} aria-label="Mastercard" role="img">
           <circle cx="17" cy="15" r="13" fill="#eb001b" />
           <circle cx="33" cy="15" r="13" fill="#f79e1b" opacity="0.85" />
         </svg>

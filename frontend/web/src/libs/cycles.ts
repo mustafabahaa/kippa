@@ -13,13 +13,13 @@ export const cyclesLib = {
 
   async getActiveCycle(householdId: string): Promise<BudgetCycle | null> {
     const cycles = await this.getCycles(householdId);
-    return cycles.find(c => c.status === 'open') || null;
+    return cycles.find((c) => c.status === 'open') || null;
   },
 
   async createCycle(
     householdId: string,
     cycle: Omit<BudgetCycle, 'id' | 'householdId'>,
-    auditUser?: AuditUser
+    auditUser?: AuditUser,
   ): Promise<string> {
     const id = crypto.randomUUID();
     const newCycle: BudgetCycle = {
@@ -36,7 +36,7 @@ export const cyclesLib = {
         auditUser,
         'cycle_created',
         `${auditUser.displayName} created cycle: ${newCycle.name}`,
-        { cycleId: id, name: newCycle.name, startDate: newCycle.startDate, status: newCycle.status }
+        { cycleId: id, name: newCycle.name, startDate: newCycle.startDate, status: newCycle.status },
       );
     }
     return id;
@@ -47,9 +47,9 @@ export const cyclesLib = {
     cycleId: string,
     status: 'planned' | 'open' | 'closed',
     extra: Partial<BudgetCycle> = {},
-    auditUser?: AuditUser
+    auditUser?: AuditUser,
   ): Promise<void> {
-    const cycle = await dbLib.getDoc(householdId, 'budgetCycles', cycleId) as BudgetCycle | null;
+    const cycle = (await dbLib.getDoc(householdId, 'budgetCycles', cycleId)) as BudgetCycle | null;
     if (!cycle) throw new Error('Budget cycle not found');
 
     const updated: BudgetCycle = {
@@ -67,7 +67,7 @@ export const cyclesLib = {
         auditUser,
         'cycle_status_changed',
         `${auditUser.displayName} ${verb} cycle: ${updated.name}`,
-        { cycleId, name: updated.name, status }
+        { cycleId, name: updated.name, status },
       );
     }
   },
@@ -75,7 +75,7 @@ export const cyclesLib = {
   // Allocations
   async getBudgetAllocations(householdId: string, cycleId: string): Promise<BudgetAllocation[]> {
     const allAllocations = await dbLib.getDocs(householdId, 'budgetAllocations');
-    const filtered = (allAllocations as BudgetAllocation[]).filter(a => a.budgetCycleId === cycleId);
+    const filtered = (allAllocations as BudgetAllocation[]).filter((a) => a.budgetCycleId === cycleId);
     // Defensive: stale duplicate allocation docs (from before the canonical-id
     // write fix) would otherwise render as duplicate category rows. Collapse
     // to one doc per (cycle, category).
@@ -85,7 +85,7 @@ export const cyclesLib = {
   async saveBudgetAllocation(
     householdId: string,
     allocation: Omit<BudgetAllocation, 'id' | 'householdId'>,
-    auditUser?: AuditUser
+    auditUser?: AuditUser,
   ): Promise<string> {
     // Canonical id keyed on (cycle, category) so re-saving upserts the same doc
     // instead of creating duplicates.
@@ -104,7 +104,13 @@ export const cyclesLib = {
         auditUser,
         'allocation_saved',
         `${auditUser.displayName} saved a budget allocation of ${newAlloc.plannedAmount} ${newAlloc.currency}`,
-        { allocationId: id, categoryId: newAlloc.categoryId, cycleId: newAlloc.budgetCycleId, plannedAmount: newAlloc.plannedAmount, currency: newAlloc.currency }
+        {
+          allocationId: id,
+          categoryId: newAlloc.categoryId,
+          cycleId: newAlloc.budgetCycleId,
+          plannedAmount: newAlloc.plannedAmount,
+          currency: newAlloc.currency,
+        },
       );
     }
     return id;
@@ -113,9 +119,9 @@ export const cyclesLib = {
   async saveBudgetAllocationsBatch(
     householdId: string,
     allocations: Omit<BudgetAllocation, 'id' | 'householdId'>[],
-    auditUser?: AuditUser
+    auditUser?: AuditUser,
   ): Promise<void> {
-    const ops = allocations.map(a => {
+    const ops = allocations.map((a) => {
       // Canonical id keyed on (cycle, category) so re-saving upserts the same
       // doc instead of creating duplicates.
       const id = allocationDocId(a.budgetCycleId, a.categoryId);
@@ -140,7 +146,7 @@ export const cyclesLib = {
         auditUser,
         'allocations_batch_saved',
         `${auditUser.displayName} saved ${allocations.length} budget allocation${allocations.length === 1 ? '' : 's'}`,
-        { cycleId, count: allocations.length }
+        { cycleId, count: allocations.length },
       );
     }
   },
@@ -148,13 +154,13 @@ export const cyclesLib = {
   // Expected Income
   async getExpectedIncomes(householdId: string, cycleId: string): Promise<ExpectedIncome[]> {
     const list = await dbLib.getDocs(householdId, 'expectedIncome');
-    return (list as ExpectedIncome[]).filter(i => i.budgetCycleId === cycleId);
+    return (list as ExpectedIncome[]).filter((i) => i.budgetCycleId === cycleId);
   },
 
   async saveExpectedIncome(
     householdId: string,
     income: Omit<ExpectedIncome, 'id' | 'householdId'>,
-    auditUser?: AuditUser
+    auditUser?: AuditUser,
   ): Promise<string> {
     const id = crypto.randomUUID();
     const newInc: ExpectedIncome = {
@@ -171,7 +177,13 @@ export const cyclesLib = {
         auditUser,
         'expected_income_saved',
         `${auditUser.displayName} added expected income: ${newInc.label} (${newInc.amount} ${newInc.currency})`,
-        { incomeId: id, cycleId: newInc.budgetCycleId, label: newInc.label, amount: newInc.amount, currency: newInc.currency }
+        {
+          incomeId: id,
+          cycleId: newInc.budgetCycleId,
+          label: newInc.label,
+          amount: newInc.amount,
+          currency: newInc.currency,
+        },
       );
     }
     return id;
@@ -186,5 +198,5 @@ export const cyclesLib = {
   async getAllExpectedIncomes(householdId: string): Promise<ExpectedIncome[]> {
     const list = await dbLib.getDocs(householdId, 'expectedIncome');
     return list as ExpectedIncome[];
-  }
+  },
 };

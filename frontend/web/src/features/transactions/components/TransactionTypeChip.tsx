@@ -32,7 +32,10 @@ export const TransactionTypeChip: React.FC<TransactionTypeChipProps> = ({ type, 
         height: 24,
         borderRadius: '999px',
         border: 0,
-        bgcolor: (theme) => tone ? alpha(theme.palette[tone].main, theme.palette.mode === 'dark' ? 0.18 : 0.1) : theme.palette.action.hover,
+        bgcolor: (theme) =>
+          tone
+            ? alpha(theme.palette[tone].main, theme.palette.mode === 'dark' ? 0.18 : 0.1)
+            : theme.palette.action.hover,
         color: tone ? `${tone}.main` : 'text.secondary',
         fontWeight: 700,
         fontSize: 10.5,

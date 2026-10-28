@@ -62,7 +62,9 @@ describe('suggestCategoryId', () => {
   });
 
   it('falls back to the description when there is no counterparty', () => {
-    expect(suggestCategoryId(item({ counterparty: null, description: 'Seoudi-Dream' }), [groceries, dining])).toBe('masrof-bet');
+    expect(suggestCategoryId(item({ counterparty: null, description: 'Seoudi-Dream' }), [groceries, dining])).toBe(
+      'masrof-bet',
+    );
   });
 
   it('prefers the longest (most specific) matching keyword', () => {
@@ -90,8 +92,11 @@ describe('suggestCategoryId', () => {
     const fuel = category({ id: 'sgayer', name: 'sgayer', merchantKeywords: ['MOBIL FARDOUS'] });
     const petrol = category({ id: 'bnzen', name: 'bnzen', merchantKeywords: ['MOBIL FARDOUS'] });
     const generic = category({ id: 'other', name: 'Other', merchantKeywords: ['FARDOUS'] });
-    expect(suggestCategoryIds(item({ counterparty: 'FAWRY*MOBIL FARDOUS' }), [petrol, fuel, generic]))
-      .toEqual(['bnzen', 'sgayer', 'other']);
+    expect(suggestCategoryIds(item({ counterparty: 'FAWRY*MOBIL FARDOUS' }), [petrol, fuel, generic])).toEqual([
+      'bnzen',
+      'sgayer',
+      'other',
+    ]);
     expect(suggestCategoryId(item({ counterparty: 'FAWRY*MOBIL FARDOUS' }), [petrol, fuel, generic])).toBe('bnzen');
   });
 });

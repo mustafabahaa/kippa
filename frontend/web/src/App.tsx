@@ -9,23 +9,36 @@ import { AppLoadingScreen } from '@/components/app-shell/AppLoadingScreen';
 import { AppShell } from '@/components/app-shell/AppShell';
 import { useNotifications } from '@/notifications/useNotifications';
 
-const AuthScreen = lazy(() => import('@/features/auth/AuthScreen').then(m => ({ default: m.AuthScreen })));
-const Dashboard = lazy(() => import('@/features/dashboard/Dashboard').then(m => ({ default: m.Dashboard })));
-const FastEntry = lazy(() => import('@/features/fast-entry/FastEntry').then(m => ({ default: m.FastEntry })));
-const Reconciliation = lazy(() => import('@/features/reconciliation/Reconciliation').then(m => ({ default: m.Reconciliation })));
-const BudgetCycles = lazy(() => import('@/features/budget-cycles/BudgetCycles').then(m => ({ default: m.BudgetCycles })));
-const CycleReport = lazy(() => import('@/features/budget-cycles/CycleReport').then(m => ({ default: m.CycleReport })));
-const Accounts = lazy(() => import('@/features/accounts/Accounts').then(m => ({ default: m.Accounts })));
-const AccountStatements = lazy(() => import('@/features/accounts/AccountStatements').then(m => ({ default: m.AccountStatements })));
-const Household = lazy(() => import('@/features/household/Household').then(m => ({ default: m.Household })));
-const Categories = lazy(() => import('@/features/categories/Categories').then(m => ({ default: m.Categories })));
-const Notifications = lazy(() => import('@/features/notifications/Notifications').then(m => ({ default: m.Notifications })));
-const TransactionHistory = lazy(() => import('@/features/transactions/TransactionHistory').then(m => ({ default: m.TransactionHistory })));
-const AuditLog = lazy(() => import('@/features/activity/AuditLog').then(m => ({ default: m.AuditLog })));
-const PendingTransactions = lazy(() => import('@/features/pending-transactions/PendingTransactions').then(m => ({ default: m.PendingTransactions })));
-const AiAssistant = lazy(() => import('@/features/ai/AiAssistant').then(m => ({ default: m.AiAssistant })));
-const Loans = lazy(() => import('@/features/loans/Loans').then(m => ({ default: m.Loans })));
-
+const AuthScreen = lazy(() => import('@/features/auth/AuthScreen').then((m) => ({ default: m.AuthScreen })));
+const Dashboard = lazy(() => import('@/features/dashboard/Dashboard').then((m) => ({ default: m.Dashboard })));
+const FastEntry = lazy(() => import('@/features/fast-entry/FastEntry').then((m) => ({ default: m.FastEntry })));
+const Reconciliation = lazy(() =>
+  import('@/features/reconciliation/Reconciliation').then((m) => ({ default: m.Reconciliation })),
+);
+const BudgetCycles = lazy(() =>
+  import('@/features/budget-cycles/BudgetCycles').then((m) => ({ default: m.BudgetCycles })),
+);
+const CycleReport = lazy(() =>
+  import('@/features/budget-cycles/CycleReport').then((m) => ({ default: m.CycleReport })),
+);
+const Accounts = lazy(() => import('@/features/accounts/Accounts').then((m) => ({ default: m.Accounts })));
+const AccountStatements = lazy(() =>
+  import('@/features/accounts/AccountStatements').then((m) => ({ default: m.AccountStatements })),
+);
+const Household = lazy(() => import('@/features/household/Household').then((m) => ({ default: m.Household })));
+const Categories = lazy(() => import('@/features/categories/Categories').then((m) => ({ default: m.Categories })));
+const Notifications = lazy(() =>
+  import('@/features/notifications/Notifications').then((m) => ({ default: m.Notifications })),
+);
+const TransactionHistory = lazy(() =>
+  import('@/features/transactions/TransactionHistory').then((m) => ({ default: m.TransactionHistory })),
+);
+const AuditLog = lazy(() => import('@/features/activity/AuditLog').then((m) => ({ default: m.AuditLog })));
+const PendingTransactions = lazy(() =>
+  import('@/features/pending-transactions/PendingTransactions').then((m) => ({ default: m.PendingTransactions })),
+);
+const AiAssistant = lazy(() => import('@/features/ai/AiAssistant').then((m) => ({ default: m.AiAssistant })));
+const Loans = lazy(() => import('@/features/loans/Loans').then((m) => ({ default: m.Loans })));
 
 export default function App() {
   const { userProfile, householdId, isAuthLoading } = useAppContext();

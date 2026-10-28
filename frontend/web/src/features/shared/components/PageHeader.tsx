@@ -28,15 +28,18 @@ export function PageHeader({ title, subtitle, action }: PageHeaderProps) {
       <Box>
         <Typography
           variant="h2"
-          sx={{ fontSize: { xs: '24px', sm: '28px' }, lineHeight: 1.2, letterSpacing: '-0.03em', fontWeight: 750, color: 'text.primary' }}
+          sx={{
+            fontSize: { xs: '24px', sm: '28px' },
+            lineHeight: 1.2,
+            letterSpacing: '-0.03em',
+            fontWeight: 750,
+            color: 'text.primary',
+          }}
         >
           {title}
         </Typography>
         {subtitle && (
-          <Typography
-            variant="body1"
-            sx={{ color: 'text.secondary', fontSize: '13px', mt: 0.5 }}
-          >
+          <Typography variant="body1" sx={{ color: 'text.secondary', fontSize: '13px', mt: 0.5 }}>
             {subtitle}
           </Typography>
         )}

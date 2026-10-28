@@ -21,18 +21,24 @@ function localPreviewAuth(): Plugin {
             import('firebase-admin/auth'),
           ]);
           const previewProjectId = process.env.KIPPA_PREVIEW_PROJECT_ID;
-          const previewApp = getApps().find(app => app.name === 'kippa-local-preview-v2')
-            || initializeApp({
-              credential: applicationDefault(),
-              ...(previewProjectId ? { projectId: previewProjectId } : {}),
-            }, 'kippa-local-preview-v2');
+          const previewApp =
+            getApps().find((app) => app.name === 'kippa-local-preview-v2') ||
+            initializeApp(
+              {
+                credential: applicationDefault(),
+                ...(previewProjectId ? { projectId: previewProjectId } : {}),
+              },
+              'kippa-local-preview-v2',
+            );
           const uid = process.env.KIPPA_PREVIEW_UID || 'kippa-visual-demo';
           const token = await getAuth(previewApp).createCustomToken(uid);
           res.setHeader('Content-Type', 'application/json');
           res.setHeader('Cache-Control', 'no-store');
           res.end(JSON.stringify({ token }));
         } catch (error) {
-          server.config.logger.error(`Local preview authentication failed: ${error instanceof Error ? error.message : String(error)}`);
+          server.config.logger.error(
+            `Local preview authentication failed: ${error instanceof Error ? error.message : String(error)}`,
+          );
           res.statusCode = 500;
           res.end(JSON.stringify({ error: 'Preview authentication failed' }));
         }
@@ -60,13 +66,13 @@ export default defineConfig({
         'icons/icon-512.png',
         'icons/maskable-192.png',
         'icons/maskable-512.png',
-        'icons/maskable.svg'
+        'icons/maskable.svg',
       ],
       manifest: false,
       workbox: {
         maximumFileSizeToCacheInBytes: 5000000,
-        importScripts: ['/firebase-messaging-sw.js']
-      }
+        importScripts: ['/firebase-messaging-sw.js'],
+      },
     }),
   ],
   build: {
@@ -94,25 +100,22 @@ export default defineConfig({
               return 'router-vendor';
             }
             if (
-              id.includes('/react/')
-              || id.includes('/react-dom/')
-              || id.includes('/scheduler/')
-              || id.includes('/@mui/material/')
-              || id.includes('/@mui/system/')
-              || id.includes('/@mui/icons-material/')
-              || id.includes('/@emotion/')
+              id.includes('/react/') ||
+              id.includes('/react-dom/') ||
+              id.includes('/scheduler/') ||
+              id.includes('/@mui/material/') ||
+              id.includes('/@mui/system/') ||
+              id.includes('/@mui/icons-material/') ||
+              id.includes('/@emotion/')
             ) {
               return 'ui-framework-vendor';
             }
-            if (
-              id.includes('/@tanstack/react-query/')
-              || id.includes('/notistack/')
-            ) {
+            if (id.includes('/@tanstack/react-query/') || id.includes('/notistack/')) {
               return 'app-runtime-vendor';
             }
           }
-        }
-      }
-    }
-  }
+        },
+      },
+    },
+  },
 });

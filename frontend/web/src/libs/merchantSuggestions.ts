@@ -4,7 +4,10 @@ import type { Category, PendingFinancialMessage } from '@kippa/domain';
  *  character into single spaces, so "SEOUDI-DREAM", "seoudi market dream"
  *  and "SEOUDI MARKET DREAM" all compare equal for substring matching. */
 export function normalizeMerchantText(value: string): string {
-  return value.toUpperCase().replace(/[^A-Z0-9\u0600-\u06FF]+/g, ' ').trim();
+  return value
+    .toUpperCase()
+    .replace(/[^A-Z0-9\u0600-\u06FF]+/g, ' ')
+    .trim();
 }
 
 export function normalizeMerchantKeyword(value: string): string {
@@ -32,10 +35,7 @@ export function merchantText(item: PendingFinancialMessage): string {
  *  merchant stored on several categories (e.g. a petrol-station shop that is
  *  sometimes fuel, sometimes cigarettes) yields several ids so the review UI
  *  can ask "this or this?". */
-export function suggestCategoryIds(
-  item: PendingFinancialMessage,
-  categories: Category[],
-): string[] {
+export function suggestCategoryIds(item: PendingFinancialMessage, categories: Category[]): string[] {
   if (item.kind === 'transfer' || item.suggestedLoanId) return [];
   const expectedType = item.kind === 'income' ? 'income' : 'expense';
   const text = merchantText(item);
@@ -52,15 +52,10 @@ export function suggestCategoryIds(
     }
     if (best !== null) matches.push({ categoryId: category.id, keywordLength: best });
   }
-  return matches
-    .sort((a, b) => b.keywordLength - a.keywordLength)
-    .map((match) => match.categoryId);
+  return matches.sort((a, b) => b.keywordLength - a.keywordLength).map((match) => match.categoryId);
 }
 
 /** Single-category convenience: the best (most specific) match, or null. */
-export function suggestCategoryId(
-  item: PendingFinancialMessage,
-  categories: Category[],
-): string | null {
+export function suggestCategoryId(item: PendingFinancialMessage, categories: Category[]): string | null {
   return suggestCategoryIds(item, categories)[0] ?? null;
 }

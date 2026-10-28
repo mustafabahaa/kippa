@@ -41,10 +41,22 @@ export function AppShell() {
   return (
     <>
       <title>{pageTitle ? `Kippa — ${pageTitle}` : 'Kippa'}</title>
-      <Box sx={{ position: 'relative', zIndex: 1, minHeight: '100dvh', pb: pathname === '/ai' ? 0 : { xs: 10, md: 0 }, bgcolor: 'transparent', overflowX: 'clip' }}>
+      <Box
+        sx={{
+          position: 'relative',
+          zIndex: 1,
+          minHeight: '100dvh',
+          pb: pathname === '/ai' ? 0 : { xs: 10, md: 0 },
+          bgcolor: 'transparent',
+          overflowX: 'clip',
+        }}
+      >
         <OfflineBanner isOnline={isOnline} />
         <SideNav />
-        <Box component="main" sx={{ ml: { md: '264px' }, minHeight: '100dvh', bgcolor: 'background.paper', overflowX: 'clip' }}>
+        <Box
+          component="main"
+          sx={{ ml: { md: '264px' }, minHeight: '100dvh', bgcolor: 'background.paper', overflowX: 'clip' }}
+        >
           <TopBar
             logoSrc={logoSrc}
             modePref={modePref}

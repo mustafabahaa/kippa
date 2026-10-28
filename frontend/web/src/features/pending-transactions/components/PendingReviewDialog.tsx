@@ -1,4 +1,20 @@
-import { Box, Button, Chip, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, Divider, FormControl, InputLabel, MenuItem, Select, Stack, Typography } from '@mui/material';
+import {
+  Box,
+  Button,
+  Chip,
+  CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Divider,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
+  Stack,
+  Typography,
+} from '@mui/material';
 import type { Account, Category, PendingFinancialMessage } from '@kippa/domain';
 import { CheckCircleIcon, DeleteIcon } from '@/components/AppIcon';
 import { Money } from '@/components/Money';
@@ -6,76 +22,222 @@ import { calculateCardPayment } from '@/libs/cardPayment';
 import { DEFAULT_CARD_FEE_RATE } from '@/libs/creditCardFees';
 import { PendingCategoryPicker } from './PendingCategoryPicker';
 
-type Props = { accountId: string; accounts: Account[]; busy: boolean; categories: Category[]; categoryId: string; destinationAccountId: string; destinationAccounts: Account[]; item: PendingFinancialMessage | null; onAccountChange: (id: string) => void; onApprove: () => void; onCategoryChange: (id: string) => void; onClose: () => void; onDestinationChange: (id: string) => void; onDiscard: () => void; state: 'idle' | 'approving' | 'discarding' | 'settled'; suggestedCategoryIds?: string[] };
+type Props = {
+  accountId: string;
+  accounts: Account[];
+  busy: boolean;
+  categories: Category[];
+  categoryId: string;
+  destinationAccountId: string;
+  destinationAccounts: Account[];
+  item: PendingFinancialMessage | null;
+  onAccountChange: (id: string) => void;
+  onApprove: () => void;
+  onCategoryChange: (id: string) => void;
+  onClose: () => void;
+  onDestinationChange: (id: string) => void;
+  onDiscard: () => void;
+  state: 'idle' | 'approving' | 'discarding' | 'settled';
+  suggestedCategoryIds?: string[];
+};
 
 export function PendingReviewDialog(props: Props) {
-  const { accountId, accounts, busy, categories, categoryId, destinationAccountId, destinationAccounts, item, onAccountChange, onApprove, onCategoryChange, onClose, onDestinationChange, onDiscard, state, suggestedCategoryIds = [] } = props;
+  const {
+    accountId,
+    accounts,
+    busy,
+    categories,
+    categoryId,
+    destinationAccountId,
+    destinationAccounts,
+    item,
+    onAccountChange,
+    onApprove,
+    onCategoryChange,
+    onClose,
+    onDestinationChange,
+    onDiscard,
+    state,
+    suggestedCategoryIds = [],
+  } = props;
   if (!item) return null;
   const transfer = item.kind === 'transfer';
   const crossCurrency = !!item.destinationCurrency && item.destinationCurrency !== item.currency;
   const halfPending = !!item.transferLeg;
   const loanPayment = !!item.suggestedLoanId;
-  const creditCardPurchase = !transfer && !loanPayment && item.kind === 'expense'
-    && accounts.find((account) => account.id === accountId)?.type === 'credit'
-    && item.currency === 'EGP';
+  const creditCardPurchase =
+    !transfer &&
+    !loanPayment &&
+    item.kind === 'expense' &&
+    accounts.find((account) => account.id === accountId)?.type === 'credit' &&
+    item.currency === 'EGP';
   const cardPayment = creditCardPurchase ? calculateCardPayment(item.amount, DEFAULT_CARD_FEE_RATE) : null;
-  const canApprove = transfer ? !halfPending && !!accountId && !!destinationAccountId : !!accountId && (loanPayment || !!categoryId);
+  const canApprove = transfer
+    ? !halfPending && !!accountId && !!destinationAccountId
+    : !!accountId && (loanPayment || !!categoryId);
   return (
     <Dialog open onClose={onClose} fullWidth maxWidth="xs">
       <DialogTitle>
         {transfer ? 'Review transfer' : `Review detected ${item.kind}`}
-        <Typography component="span" variant="body2" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>Nothing enters your ledger until you approve.</Typography>
+        <Typography component="span" variant="body2" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
+          Nothing enters your ledger until you approve.
+        </Typography>
       </DialogTitle>
       <DialogContent>
         <Stack spacing={2.5}>
           <Box>
             <Typography variant="amountValue">
               <Money amount={item.amount} code={item.currency} maxDigits={2} />
-              {transfer && crossCurrency && <> → <Money amount={item.destinationAmount ?? 0} code={item.destinationCurrency ?? item.currency} maxDigits={2} /></>}
+              {transfer && crossCurrency && (
+                <>
+                  {' '}
+                  →{' '}
+                  <Money
+                    amount={item.destinationAmount ?? 0}
+                    code={item.destinationCurrency ?? item.currency}
+                    maxDigits={2}
+                  />
+                </>
+              )}
             </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>{item.description}</Typography>
-            {cardPayment?.valid && <Stack spacing={0.5} sx={{ mt: 1.25 }}>
-              <Stack direction="row" justifyContent="space-between" alignItems="center">
-                <Typography variant="sectionLabel" color="text.secondary">Bank fee (3%)</Typography>
-                <Typography variant="body2"><Money amount={cardPayment.feeAmount} code={item.currency} maxDigits={2} /></Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+              {item.description}
+            </Typography>
+            {cardPayment?.valid && (
+              <Stack spacing={0.5} sx={{ mt: 1.25 }}>
+                <Stack direction="row" justifyContent="space-between" alignItems="center">
+                  <Typography variant="sectionLabel" color="text.secondary">
+                    Bank fee (3%)
+                  </Typography>
+                  <Typography variant="body2">
+                    <Money amount={cardPayment.feeAmount} code={item.currency} maxDigits={2} />
+                  </Typography>
+                </Stack>
+                <Stack direction="row" justifyContent="space-between" alignItems="center">
+                  <Typography variant="sectionLabel" color="primary">
+                    Total
+                  </Typography>
+                  <Typography variant="body2" color="primary">
+                    <Money amount={cardPayment.totalAmount} code={item.currency} maxDigits={2} />
+                  </Typography>
+                </Stack>
               </Stack>
-              <Stack direction="row" justifyContent="space-between" alignItems="center">
-                <Typography variant="sectionLabel" color="primary">Total</Typography>
-                <Typography variant="body2" color="primary"><Money amount={cardPayment.totalAmount} code={item.currency} maxDigits={2} /></Typography>
-              </Stack>
-            </Stack>}
-            {loanPayment && <Chip color="success" label={`${item.suggestedLoanName ?? 'Loan'} · installment ${item.suggestedLoanInstallmentNumber}`} sx={{ mt: 1 }} />}
-            {halfPending && <Typography variant="fieldHint" color="warning">Waiting for the other leg of this transfer…</Typography>}
+            )}
+            {loanPayment && (
+              <Chip
+                color="success"
+                label={`${item.suggestedLoanName ?? 'Loan'} · installment ${item.suggestedLoanInstallmentNumber}`}
+                sx={{ mt: 1 }}
+              />
+            )}
+            {halfPending && (
+              <Typography variant="fieldHint" color="warning">
+                Waiting for the other leg of this transfer…
+              </Typography>
+            )}
           </Box>
           <Divider />
           <Stack spacing={2}>
-            {!transfer && !loanPayment && <>
-              {suggestedCategoryIds.length > 1 && <Box>
-                <Typography variant="sectionLabel" color="primary">This merchant fits more than one — pick one</Typography>
-                <Stack direction="row" spacing={1} sx={{ mt: 1, flexWrap: 'wrap', rowGap: 1 }}>
-                  {suggestedCategoryIds.map((id) => {
-                    const candidate = categories.find((category) => category.id === id);
-                    if (!candidate) return null;
-                    const picked = categoryId === id;
-                    return (
-                      <Chip key={id} label={candidate.name} variant={picked ? 'filterSelected' : 'filter'} onClick={() => onCategoryChange(id)} />
-                    );
-                  })}
-                </Stack>
-              </Box>}
-              <PendingCategoryPicker categories={categories} categoryId={categoryId} mode={item.kind === 'income' ? 'income' : 'expense'} onChange={onCategoryChange} />
-              {suggestedCategoryIds.length === 1 && categoryId === suggestedCategoryIds[0] && <Typography variant="fieldHint" color="primary" sx={{ mt: -0.5 }}>Category auto-filled from this merchant — tap another to change it.</Typography>}
-            </>}
-            <FormControl fullWidth><InputLabel id="pending-account-label">{item.kind === 'income' ? 'To account' : 'From account'}</InputLabel><Select labelId="pending-account-label" value={accountId} label={item.kind === 'income' ? 'To account' : 'From account'} onChange={(event) => onAccountChange(event.target.value)}>{accounts.map((account) => <MenuItem key={account.id} value={account.id}>{account.name}</MenuItem>)}</Select></FormControl>
-            {transfer && <FormControl fullWidth><InputLabel id="pending-destination-label">To account</InputLabel><Select labelId="pending-destination-label" value={destinationAccountId} label="To account" onChange={(event) => onDestinationChange(event.target.value)}>{destinationAccounts.map((account) => <MenuItem key={account.id} value={account.id}>{account.name}</MenuItem>)}</Select></FormControl>}
+            {!transfer && !loanPayment && (
+              <>
+                {suggestedCategoryIds.length > 1 && (
+                  <Box>
+                    <Typography variant="sectionLabel" color="primary">
+                      This merchant fits more than one — pick one
+                    </Typography>
+                    <Stack direction="row" spacing={1} sx={{ mt: 1, flexWrap: 'wrap', rowGap: 1 }}>
+                      {suggestedCategoryIds.map((id) => {
+                        const candidate = categories.find((category) => category.id === id);
+                        if (!candidate) return null;
+                        const picked = categoryId === id;
+                        return (
+                          <Chip
+                            key={id}
+                            label={candidate.name}
+                            variant={picked ? 'filterSelected' : 'filter'}
+                            onClick={() => onCategoryChange(id)}
+                          />
+                        );
+                      })}
+                    </Stack>
+                  </Box>
+                )}
+                <PendingCategoryPicker
+                  categories={categories}
+                  categoryId={categoryId}
+                  mode={item.kind === 'income' ? 'income' : 'expense'}
+                  onChange={onCategoryChange}
+                />
+                {suggestedCategoryIds.length === 1 && categoryId === suggestedCategoryIds[0] && (
+                  <Typography variant="fieldHint" color="primary" sx={{ mt: -0.5 }}>
+                    Category auto-filled from this merchant — tap another to change it.
+                  </Typography>
+                )}
+              </>
+            )}
+            <FormControl fullWidth>
+              <InputLabel id="pending-account-label">
+                {item.kind === 'income' ? 'To account' : 'From account'}
+              </InputLabel>
+              <Select
+                labelId="pending-account-label"
+                value={accountId}
+                label={item.kind === 'income' ? 'To account' : 'From account'}
+                onChange={(event) => onAccountChange(event.target.value)}
+              >
+                {accounts.map((account) => (
+                  <MenuItem key={account.id} value={account.id}>
+                    {account.name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            {transfer && (
+              <FormControl fullWidth>
+                <InputLabel id="pending-destination-label">To account</InputLabel>
+                <Select
+                  labelId="pending-destination-label"
+                  value={destinationAccountId}
+                  label="To account"
+                  onChange={(event) => onDestinationChange(event.target.value)}
+                >
+                  {destinationAccounts.map((account) => (
+                    <MenuItem key={account.id} value={account.id}>
+                      {account.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            )}
           </Stack>
           <Divider />
-          <Box><Typography variant="sectionLabel" color="primary">Bank message</Typography><Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>{item.messagePreview}</Typography></Box>
+          <Box>
+            <Typography variant="sectionLabel" color="primary">
+              Bank message
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+              {item.messagePreview}
+            </Typography>
+          </Box>
         </Stack>
       </DialogContent>
       <DialogActions>
-        <Button color="inherit" startIcon={state === 'discarding' ? <CircularProgress size={18} /> : <DeleteIcon />} onClick={onDiscard} disabled={busy}>{state === 'discarding' ? 'Discarding…' : 'Discard'}</Button>
-        <Button variant="contained" startIcon={state === 'approving' ? <CircularProgress color="inherit" size={18} /> : <CheckCircleIcon />} onClick={onApprove} disabled={!canApprove || busy}>{state === 'approving' ? 'Approving…' : 'Approve'}</Button>
+        <Button
+          color="inherit"
+          startIcon={state === 'discarding' ? <CircularProgress size={18} /> : <DeleteIcon />}
+          onClick={onDiscard}
+          disabled={busy}
+        >
+          {state === 'discarding' ? 'Discarding…' : 'Discard'}
+        </Button>
+        <Button
+          variant="contained"
+          startIcon={state === 'approving' ? <CircularProgress color="inherit" size={18} /> : <CheckCircleIcon />}
+          onClick={onApprove}
+          disabled={!canApprove || busy}
+        >
+          {state === 'approving' ? 'Approving…' : 'Approve'}
+        </Button>
       </DialogActions>
     </Dialog>
   );

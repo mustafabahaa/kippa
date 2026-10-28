@@ -218,4 +218,3 @@ Home dashboard should answer:
 - Old transfer rates should not be silently recalculated.
 - Closed cycles should be protected with audit/revision behavior.
 - Manual corrections should be explicit and explainable.
-

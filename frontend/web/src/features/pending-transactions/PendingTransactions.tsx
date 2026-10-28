@@ -40,40 +40,92 @@ type PendingItemState = 'idle' | 'approving' | 'discarding' | 'settled';
 
 const PREVIEW_PENDING_ITEMS: PendingFinancialMessage[] = [
   {
-    id: 'preview-debit-purchase', householdId: 'preview', receivedBy: 'preview', kind: 'expense',
-    source: 'ios-shortcut', provider: 'hsbc', amount: 325, currency: 'EGP', date: '2026-07-31',
-    description: 'FAWRY · BEANOS', counterparty: 'FAWRY · BEANOS',
+    id: 'preview-debit-purchase',
+    householdId: 'preview',
+    receivedBy: 'preview',
+    kind: 'expense',
+    source: 'ios-shortcut',
+    provider: 'hsbc',
+    amount: 325,
+    currency: 'EGP',
+    date: '2026-07-31',
+    description: 'FAWRY · BEANOS',
+    counterparty: 'FAWRY · BEANOS',
     messagePreview: 'HSBC card purchase · EGP 325.00 · 31 Jul 2026',
-    suggestedAccountId: null, suggestedDestinationAccountId: null, createdAt: '2026-07-31T12:00:00.000Z', status: 'pending',
+    suggestedAccountId: null,
+    suggestedDestinationAccountId: null,
+    createdAt: '2026-07-31T12:00:00.000Z',
+    status: 'pending',
   },
   {
-    id: 'preview-credit-purchase', householdId: 'preview', receivedBy: 'preview', kind: 'expense',
-    source: 'ios-shortcut', provider: 'hsbc', amount: 999.99, currency: 'EGP', date: '2026-07-19',
-    description: 'OPENAI · CHATGPT SUBSCR', counterparty: 'OPENAI · CHATGPT SUBSCR', accountHintLast4: '7281',
+    id: 'preview-credit-purchase',
+    householdId: 'preview',
+    receivedBy: 'preview',
+    kind: 'expense',
+    source: 'ios-shortcut',
+    provider: 'hsbc',
+    amount: 999.99,
+    currency: 'EGP',
+    date: '2026-07-19',
+    description: 'OPENAI · CHATGPT SUBSCR',
+    counterparty: 'OPENAI · CHATGPT SUBSCR',
+    accountHintLast4: '7281',
     messagePreview: 'HSBC credit-card purchase ending 7281 · EGP 999.99 · 19 Jul 2026',
-    suggestedAccountId: null, suggestedDestinationAccountId: null, createdAt: '2026-07-31T11:00:00.000Z', status: 'pending',
+    suggestedAccountId: null,
+    suggestedDestinationAccountId: null,
+    createdAt: '2026-07-31T11:00:00.000Z',
+    status: 'pending',
   },
   {
-    id: 'preview-inward', householdId: 'preview', receivedBy: 'preview', kind: 'income',
-    source: 'ios-shortcut', provider: 'hsbc', amount: 225, currency: 'EGP', date: '2026-07-17',
+    id: 'preview-inward',
+    householdId: 'preview',
+    receivedBy: 'preview',
+    kind: 'income',
+    source: 'ios-shortcut',
+    provider: 'hsbc',
+    amount: 225,
+    currency: 'EGP',
+    date: '2026-07-17',
     description: 'Incoming bank transfer',
     messagePreview: 'HSBC incoming transfer · EGP 225.00 · 17 Jul 2026',
-    suggestedAccountId: null, suggestedDestinationAccountId: null, createdAt: '2026-07-31T10:00:00.000Z', status: 'pending',
+    suggestedAccountId: null,
+    suggestedDestinationAccountId: null,
+    createdAt: '2026-07-31T10:00:00.000Z',
+    status: 'pending',
   },
 ];
 
 export function PendingTransactions() {
   const { householdId } = useAppContext();
   const { closeSnackbar, enqueueSnackbar } = useSnackbar();
-  const { data: remotePending = [], isLoading: remoteLoading, isFetching: remoteFetching } = usePendingFinancialMessages(householdId);
+  const {
+    data: remotePending = [],
+    isLoading: remoteLoading,
+    isFetching: remoteFetching,
+  } = usePendingFinancialMessages(householdId);
   const { data: accounts = [] } = useAccounts(householdId);
   const { data: categories = [] } = useCategories(householdId);
   const approveMutation = useApprovePendingFinancialMessageMutation();
   const discardMutation = useDiscardPendingFinancialMessageMutation();
   const restoreMutation = useRestoreDiscardedPendingFinancialMessageMutation();
-  const { data: resolved = [], isLoading: historyLoading, isFetching: historyFetching } = useResolvedPendingFinancialMessages(householdId);
+  const {
+    data: resolved = [],
+    isLoading: historyLoading,
+    isFetching: historyFetching,
+  } = useResolvedPendingFinancialMessages(householdId);
   const [tab, setTab] = useState<'review' | 'history'>('review');
-  const { accountId, categoryId, destinationAccountId, selected, suggestedCategoryIds, setAccountId, setCategoryId, setDestinationAccountId, setSelected, setSuggestedCategoryIds } = usePendingReviewState();
+  const {
+    accountId,
+    categoryId,
+    destinationAccountId,
+    selected,
+    suggestedCategoryIds,
+    setAccountId,
+    setCategoryId,
+    setDestinationAccountId,
+    setSelected,
+    setSuggestedCategoryIds,
+  } = usePendingReviewState();
   const [itemStates, setItemStates] = useState<Record<string, PendingItemState>>({});
   const [setupOpen, setSetupOpen] = useState(false);
   const connections = useMessageConnections(householdId);
@@ -85,7 +137,6 @@ export function PendingTransactions() {
   // while a fetch is in flight and we have nothing to show yet.
   const reviewChecking = !previewMode && (remoteLoading || (remoteFetching && remotePending.length === 0));
   const historyChecking = historyLoading || (historyFetching && resolved.length === 0);
-
 
   const availableCategories = useMemo(() => {
     if (!selected) return [];
@@ -101,7 +152,9 @@ export function PendingTransactions() {
   const availableDestinationAccounts = useMemo(() => {
     if (!selected) return [];
     const targetCurrency = selected.destinationCurrency ?? selected.currency;
-    return accounts.filter((account) => account.isActive && account.currency === targetCurrency && account.id !== accountId);
+    return accounts.filter(
+      (account) => account.isActive && account.currency === targetCurrency && account.id !== accountId,
+    );
   }, [accounts, selected, accountId]);
 
   const openReview = (item: PendingFinancialMessage) => {
@@ -120,7 +173,13 @@ export function PendingTransactions() {
   };
 
   const approve = async () => {
-    if (!selected || !accountId || (selected.kind !== 'transfer' && !selected.suggestedLoanId && !categoryId) || (selected.kind === 'transfer' && !destinationAccountId)) return;
+    if (
+      !selected ||
+      !accountId ||
+      (selected.kind !== 'transfer' && !selected.suggestedLoanId && !categoryId) ||
+      (selected.kind === 'transfer' && !destinationAccountId)
+    )
+      return;
     if (previewMode && selected.id.startsWith('preview-')) {
       enqueueSnackbar('Preview only — no transaction was created', { variant: 'success' });
       setSelected(null);
@@ -170,7 +229,9 @@ export function PendingTransactions() {
                 setItemStates((current) => ({ ...current, [discardedItem.id]: 'idle' }));
                 enqueueSnackbar('Pending item restored', { variant: 'success' });
               } catch (error) {
-                enqueueSnackbar(error instanceof Error ? error.message : 'Could not restore this item', { variant: 'error' });
+                enqueueSnackbar(error instanceof Error ? error.message : 'Could not restore this item', {
+                  variant: 'error',
+                });
               }
             }}
           >
@@ -205,7 +266,12 @@ export function PendingTransactions() {
       <PageHeader
         title="Message activity"
         subtitle="Review detected bank activity and keep a complete resolution history."
-        action={<Chip label={tab === 'review' ? `${pending.length} pending` : `${resolved.length} resolved`} color={tab === 'review' && pending.length ? 'secondary' : 'default'} />}
+        action={
+          <Chip
+            label={tab === 'review' ? `${pending.length} pending` : `${resolved.length} resolved`}
+            color={tab === 'review' && pending.length ? 'secondary' : 'default'}
+          />
+        }
       />
 
       <Box
@@ -226,7 +292,9 @@ export function PendingTransactions() {
           <Box>
             <Typography sx={{ fontSize: 14, fontWeight: 750 }}>Secure message connection</Typography>
             <Typography sx={{ fontSize: 12, color: 'text.secondary' }}>
-              {activeConnections ? `${activeConnections} active secure connection` : 'Connect your bank message automation securely'}
+              {activeConnections
+                ? `${activeConnections} active secure connection`
+                : 'Connect your bank message automation securely'}
             </Typography>
           </Box>
         </Stack>
@@ -240,116 +308,182 @@ export function PendingTransactions() {
         <Tab value="history" label="History" icon={<HistoryIcon fontSize="small" />} iconPosition="start" />
       </Tabs>
 
-      {tab === 'review' && (reviewChecking ? (
-        <Stack spacing={1}>
-          {[0, 1, 2].map((item) => <Skeleton key={item} variant="rounded" height={76} />)}
-        </Stack>
-      ) : pending.length === 0 ? (
-        <EmptyLayout
-          icon={<CheckCircleIcon sx={{ fontSize: 28 }} />}
-          title="Nothing waiting for you"
-          description="Detected bank activity will appear here. No ledger entry is created until you approve it."
-        />
-      ) : (
-        <Card sx={{ overflow: 'hidden', '&:hover': { transform: 'none' } }}>
-          <Box sx={{ px: { xs: 2, sm: 2.5 }, py: 2 }}>
-            <Typography sx={{ fontSize: 16, fontWeight: 800 }}>Detected activity</Typography>
-            <Typography sx={{ fontSize: 12, color: 'text.secondary', mt: 0.25 }}>Tap an item to review it</Typography>
-          </Box>
-          <Divider />
-          {pending.map((item, index) => (
-            <Box key={item.id}>
-              <Box
-                component="button"
-                type="button"
-                onClick={() => openReview(item)}
-                disabled={(itemStates[item.id] ?? 'idle') !== 'idle'}
-                sx={{
-                  width: '100%', minHeight: 72, px: { xs: 2, sm: 2.5 }, py: 1.25,
-                  display: 'flex', alignItems: 'center', gap: 1.5, border: 0,
-                  bgcolor: 'transparent', color: 'text.primary', textAlign: 'left', cursor: 'pointer',
-                  opacity: (itemStates[item.id] ?? 'idle') === 'idle' ? 1 : 0.6,
-                  '&:hover': { bgcolor: 'action.hover' },
-                }}
-              >
-                {(itemStates[item.id] ?? 'idle') === 'idle'
-                  ? <TransactionIcon type={item.kind} size={40} />
-                  : <CircularProgress size={32} />}
-                <Box sx={{ flex: 1, minWidth: 0 }}>
-                  <Stack direction="row" spacing={1} alignItems="center">
-                    <Typography noWrap sx={{ fontSize: 13.5, fontWeight: 800, flex: 1 }}>{item.description}</Typography>
-                    <Typography sx={{ fontSize: 13, fontWeight: 800, whiteSpace: 'nowrap' }}>
-                      <Money amount={item.amount} code={item.currency} maxDigits={2} />
-                    </Typography>
-                  </Stack>
-                  <Typography noWrap sx={{ fontSize: 11.5, color: 'text.secondary', mt: 0.25 }}>
-                    {item.provider.toUpperCase()} · {item.kind} · {item.date}
-                  </Typography>
-                </Box>
-              </Box>
-              {index < pending.length - 1 && <Divider sx={{ ml: 8.5 }} />}
+      {tab === 'review' &&
+        (reviewChecking ? (
+          <Stack spacing={1}>
+            {[0, 1, 2].map((item) => (
+              <Skeleton key={item} variant="rounded" height={76} />
+            ))}
+          </Stack>
+        ) : pending.length === 0 ? (
+          <EmptyLayout
+            icon={<CheckCircleIcon sx={{ fontSize: 28 }} />}
+            title="Nothing waiting for you"
+            description="Detected bank activity will appear here. No ledger entry is created until you approve it."
+          />
+        ) : (
+          <Card sx={{ overflow: 'hidden', '&:hover': { transform: 'none' } }}>
+            <Box sx={{ px: { xs: 2, sm: 2.5 }, py: 2 }}>
+              <Typography sx={{ fontSize: 16, fontWeight: 800 }}>Detected activity</Typography>
+              <Typography sx={{ fontSize: 12, color: 'text.secondary', mt: 0.25 }}>Tap an item to review it</Typography>
             </Box>
-          ))}
-        </Card>
-      ))}
-
-      {tab === 'history' && (historyChecking ? (
-        <Stack spacing={1}>
-          {[0, 1, 2].map((item) => <Skeleton key={item} variant="rounded" height={76} />)}
-        </Stack>
-      ) : resolved.length === 0 ? (
-        <EmptyLayout
-          icon={<HistoryIcon sx={{ fontSize: 28 }} />}
-          title="No review history yet"
-          description="Approved and discarded message activity will appear here after you resolve it."
-        />
-      ) : (
-        <Card sx={{ overflow: 'hidden', '&:hover': { transform: 'none' } }}>
-          <Box sx={{ px: { xs: 2, sm: 2.5 }, py: 2 }}>
-            <CardHeading icon={<HistoryIcon variant="Bulk" />} title="Resolved activity" subtitle="The latest 100 reviewed messages" />
-          </Box>
-          <Divider />
-          {resolved.map((item, index) => {
-            const restoring = restoreMutation.isPending && restoreMutation.variables?.pendingId === item.id;
-            return (
+            <Divider />
+            {pending.map((item, index) => (
               <Box key={item.id}>
-                <Box sx={{ minHeight: 72, px: { xs: 2, sm: 2.5 }, py: 1.25, display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                  <TransactionIcon type={item.snapshot.kind} size={40} />
+                <Box
+                  component="button"
+                  type="button"
+                  onClick={() => openReview(item)}
+                  disabled={(itemStates[item.id] ?? 'idle') !== 'idle'}
+                  sx={{
+                    width: '100%',
+                    minHeight: 72,
+                    px: { xs: 2, sm: 2.5 },
+                    py: 1.25,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1.5,
+                    border: 0,
+                    bgcolor: 'transparent',
+                    color: 'text.primary',
+                    textAlign: 'left',
+                    cursor: 'pointer',
+                    opacity: (itemStates[item.id] ?? 'idle') === 'idle' ? 1 : 0.6,
+                    '&:hover': { bgcolor: 'action.hover' },
+                  }}
+                >
+                  {(itemStates[item.id] ?? 'idle') === 'idle' ? (
+                    <TransactionIcon type={item.kind} size={40} />
+                  ) : (
+                    <CircularProgress size={32} />
+                  )}
                   <Box sx={{ flex: 1, minWidth: 0 }}>
                     <Stack direction="row" spacing={1} alignItems="center">
-                      <Typography noWrap sx={{ fontSize: 13.5, fontWeight: 800, flex: 1 }}>{item.snapshot.description}</Typography>
+                      <Typography noWrap sx={{ fontSize: 13.5, fontWeight: 800, flex: 1 }}>
+                        {item.description}
+                      </Typography>
                       <Typography sx={{ fontSize: 13, fontWeight: 800, whiteSpace: 'nowrap' }}>
-                        <Money amount={item.snapshot.amount} code={item.snapshot.currency} maxDigits={2} />
+                        <Money amount={item.amount} code={item.currency} maxDigits={2} />
                       </Typography>
                     </Stack>
-                    <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 0.25 }}>
-                      <Chip
-                        label={item.state === 'approved' ? 'Approved' : 'Discarded'}
-                        color={item.state === 'approved' ? 'success' : 'default'}
+                    <Typography noWrap sx={{ fontSize: 11.5, color: 'text.secondary', mt: 0.25 }}>
+                      {item.provider.toUpperCase()} · {item.kind} · {item.date}
+                    </Typography>
+                  </Box>
+                </Box>
+                {index < pending.length - 1 && <Divider sx={{ ml: 8.5 }} />}
+              </Box>
+            ))}
+          </Card>
+        ))}
+
+      {tab === 'history' &&
+        (historyChecking ? (
+          <Stack spacing={1}>
+            {[0, 1, 2].map((item) => (
+              <Skeleton key={item} variant="rounded" height={76} />
+            ))}
+          </Stack>
+        ) : resolved.length === 0 ? (
+          <EmptyLayout
+            icon={<HistoryIcon sx={{ fontSize: 28 }} />}
+            title="No review history yet"
+            description="Approved and discarded message activity will appear here after you resolve it."
+          />
+        ) : (
+          <Card sx={{ overflow: 'hidden', '&:hover': { transform: 'none' } }}>
+            <Box sx={{ px: { xs: 2, sm: 2.5 }, py: 2 }}>
+              <CardHeading
+                icon={<HistoryIcon variant="Bulk" />}
+                title="Resolved activity"
+                subtitle="The latest 100 reviewed messages"
+              />
+            </Box>
+            <Divider />
+            {resolved.map((item, index) => {
+              const restoring = restoreMutation.isPending && restoreMutation.variables?.pendingId === item.id;
+              return (
+                <Box key={item.id}>
+                  <Box
+                    sx={{
+                      minHeight: 72,
+                      px: { xs: 2, sm: 2.5 },
+                      py: 1.25,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 1.5,
+                    }}
+                  >
+                    <TransactionIcon type={item.snapshot.kind} size={40} />
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                      <Stack direction="row" spacing={1} alignItems="center">
+                        <Typography noWrap sx={{ fontSize: 13.5, fontWeight: 800, flex: 1 }}>
+                          {item.snapshot.description}
+                        </Typography>
+                        <Typography sx={{ fontSize: 13, fontWeight: 800, whiteSpace: 'nowrap' }}>
+                          <Money amount={item.snapshot.amount} code={item.snapshot.currency} maxDigits={2} />
+                        </Typography>
+                      </Stack>
+                      <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 0.25 }}>
+                        <Chip
+                          label={item.state === 'approved' ? 'Approved' : 'Discarded'}
+                          color={item.state === 'approved' ? 'success' : 'default'}
+                          size="small"
+                          variant="outlined"
+                        />
+                        <Typography noWrap sx={{ fontSize: 11.5, color: 'text.secondary' }}>
+                          {new Date(item.resolvedAt).toLocaleString()} · {item.resolvedByDisplayName}
+                        </Typography>
+                      </Stack>
+                    </Box>
+                    {item.state === 'discarded' && (
+                      <Button
                         size="small"
                         variant="outlined"
-                      />
-                      <Typography noWrap sx={{ fontSize: 11.5, color: 'text.secondary' }}>
-                        {new Date(item.resolvedAt).toLocaleString()} · {item.resolvedByDisplayName}
-                      </Typography>
-                    </Stack>
+                        disabled={restoring}
+                        onClick={() => restoreDiscarded(item.id)}
+                      >
+                        {restoring ? 'Restoring…' : 'Restore'}
+                      </Button>
+                    )}
                   </Box>
-                  {item.state === 'discarded' && (
-                    <Button size="small" variant="outlined" disabled={restoring} onClick={() => restoreDiscarded(item.id)}>
-                      {restoring ? 'Restoring…' : 'Restore'}
-                    </Button>
-                  )}
+                  {index < resolved.length - 1 && <Divider sx={{ ml: 8.5 }} />}
                 </Box>
-                {index < resolved.length - 1 && <Divider sx={{ ml: 8.5 }} />}
-              </Box>
-            );
-          })}
-        </Card>
-      ))}
+              );
+            })}
+          </Card>
+        ))}
 
-      <PendingReviewDialog accountId={accountId} accounts={availableAccounts} busy={reviewBusy} categories={availableCategories} categoryId={categoryId} destinationAccountId={destinationAccountId} destinationAccounts={availableDestinationAccounts} item={selected} onAccountChange={setAccountId} onApprove={approve} onCategoryChange={setCategoryId} onClose={closeReview} onDestinationChange={setDestinationAccountId} onDiscard={discard} state={selectedState} suggestedCategoryIds={suggestedCategoryIds} />
+      <PendingReviewDialog
+        accountId={accountId}
+        accounts={availableAccounts}
+        busy={reviewBusy}
+        categories={availableCategories}
+        categoryId={categoryId}
+        destinationAccountId={destinationAccountId}
+        destinationAccounts={availableDestinationAccounts}
+        item={selected}
+        onAccountChange={setAccountId}
+        onApprove={approve}
+        onCategoryChange={setCategoryId}
+        onClose={closeReview}
+        onDestinationChange={setDestinationAccountId}
+        onDiscard={discard}
+        state={selectedState}
+        suggestedCategoryIds={suggestedCategoryIds}
+      />
 
-      <MessageConnectionDialog busy={connections.busy} credentials={connections.credentials} generated={connections.generated} onClose={() => setSetupOpen(false)} onCopy={connections.copy} onCreate={connections.create} onRevoke={connections.revoke} onDelete={connections.remove} open={setupOpen} />
+      <MessageConnectionDialog
+        busy={connections.busy}
+        credentials={connections.credentials}
+        generated={connections.generated}
+        onClose={() => setSetupOpen(false)}
+        onCopy={connections.copy}
+        onCreate={connections.create}
+        onRevoke={connections.revoke}
+        onDelete={connections.remove}
+        open={setupOpen}
+      />
     </Stack>
   );
 }

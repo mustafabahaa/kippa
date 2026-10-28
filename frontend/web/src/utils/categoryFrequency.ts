@@ -21,7 +21,7 @@ function daysBetween(fromISODate: string, toISODate: string): number {
 export function computeFrequencyScores(
   transactions: FinanceTransaction[] | undefined,
   type: 'income' | 'expense',
-  today: string // YYYY-MM-DD
+  today: string, // YYYY-MM-DD
 ): Record<string, number> {
   const scores: Record<string, number> = {};
   if (!transactions?.length) return scores;
