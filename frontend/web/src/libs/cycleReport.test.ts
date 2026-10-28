@@ -1,6 +1,7 @@
 import type { Account, BudgetAllocation, BudgetCycle, Category, FinanceTransaction, LedgerLine } from '@kippa/domain';
 import { describe, expect, it } from 'vitest';
 import { calculateCycleReport } from './cycleReport';
+import { calculateAccountBalances } from './financeCalculations';
 
 const cycle: BudgetCycle = {
   id: 'c1',
@@ -70,7 +71,8 @@ const report = (
   allocations: BudgetAllocation[] = [],
   categories: Category[] = [],
   rates: Record<string, number> = {},
-) => calculateCycleReport(cycle, accounts, categories, transactions, lines, allocations, 'EGP', rates);
+  cycles: BudgetCycle[] = [],
+) => calculateCycleReport(cycle, accounts, categories, transactions, lines, allocations, 'EGP', rates, cycles);
 
 describe('calculateCycleReport', () => {
   it('excludes voided transactions and calculates opening and closing balances', () => {
@@ -154,5 +156,131 @@ describe('calculateCycleReport', () => {
     expect(result.totalSpending).toBe(20);
     expect(result.closingBalance).toBe(-20);
     expect(result.savingsRate).toBe(0);
+  });
+
+  it('reconciles an open cycle to the live ledger when prior-cycle transactions share its start date', () => {
+    const openCycle = {
+      ...cycle,
+      id: 'oct',
+      name: 'Oct/Nov',
+      startDate: '2026-10-26',
+      endDate: '2026-11-25',
+      status: 'open' as const,
+    };
+    const cash = account('cash');
+    const priorCycle = { ...cycle, id: 'sep', name: 'Previous', startDate: '2026-09-29', endDate: '2026-10-26' };
+    const transactions = [
+      transaction('opening', 'income', '2026-09-20', 'sep'),
+      ...[35, 600, 20, 50, 425, 75].map((amount, index) =>
+        transaction(`boundary-${index}-${amount}`, 'expense', '2026-10-26', 'sep'),
+      ),
+      transaction('current-1', 'expense', '2026-10-27', 'oct'),
+      transaction('current-2', 'expense', '2026-10-27', 'oct'),
+    ];
+    const lines = [
+      line('opening-line', 'opening', 'cash', 4097),
+      ...[35, 600, 20, 50, 425, 75].map((amount, index) =>
+        line(`boundary-line-${index}`, `boundary-${index}-${amount}`, 'cash', -amount),
+      ),
+      line('current-line-1', 'current-1', 'cash', -20),
+      line('current-line-2', 'current-2', 'cash', -50),
+    ];
+    const result = calculateCycleReport(openCycle, [cash], [], transactions, lines, [], 'EGP', {}, [
+      priorCycle,
+      openCycle,
+    ]);
+
+    expect(result.openingBalance).toBe(2892);
+    expect(result.closingBalance).toBe(2822);
+    expect(result.closingBalance).toBe(calculateAccountBalances([cash], transactions, lines).cash);
+    const previousReport = calculateCycleReport(priorCycle, [cash], [], transactions, lines, [], 'EGP', {}, [
+      priorCycle,
+      openCycle,
+    ]);
+    expect(previousReport.closingBalance).toBe(result.openingBalance);
+  });
+
+  it('includes posted non-cycle transfers and adjustments after an open cycle starts in its opening balance', () => {
+    const openCycle = { ...cycle, status: 'open' as const };
+    const transactions = [
+      transaction('opening-transfer', 'transfer', '2026-04-10', 'previous'),
+      transaction('opening-adjustment', 'adjustment', '2026-04-11', 'previous'),
+      transaction('in', 'income', '2026-04-12', 'c1'),
+    ];
+    const result = calculateCycleReport(
+      openCycle,
+      [account('bank')],
+      [],
+      transactions,
+      [
+        line('transfer', 'opening-transfer', 'bank', -25),
+        line('adjustment', 'opening-adjustment', 'bank', 10),
+        line('income', 'in', 'bank', 30),
+      ],
+      [],
+      'EGP',
+      {},
+    );
+
+    expect(result.openingBalance).toBe(-15);
+    expect(result.closingBalance).toBe(15);
+    expect(result.totalIncome).toBe(30);
+  });
+
+  it('uses assigned cycle chronology for closed history and date fallback for unassigned transactions', () => {
+    const historicalCycle = { ...cycle, id: 'history', startDate: '2026-04-01', endDate: '2026-04-30' };
+    const earlier = { ...cycle, id: 'earlier', startDate: '2026-03-01', endDate: '2026-03-31' };
+    const later = { ...cycle, id: 'later', startDate: '2026-05-01', endDate: '2026-05-31' };
+    const transactions = [
+      transaction('earlier-same-day', 'income', '2026-04-30', 'earlier'),
+      transaction('later-same-day', 'income', '2026-04-30', 'later'),
+      transaction('unassigned-in-range', 'income', '2026-04-30', null),
+      transaction('unassigned-after', 'income', '2026-05-01', null),
+      transaction('unknown-cycle-in-range', 'income', '2026-04-30', 'unknown'),
+      transaction('unknown-cycle-after', 'income', '2026-05-01', 'unknown'),
+      transaction('selected-backdated', 'income', '2026-03-15', 'history'),
+    ];
+    const result = calculateCycleReport(
+      historicalCycle,
+      [account('bank')],
+      [],
+      transactions,
+      transactions.map((tx) => line(`line-${tx.id}`, tx.id, 'bank', 10)),
+      [],
+      'EGP',
+      {},
+      [earlier, historicalCycle, later],
+    );
+
+    expect(result.openingBalance).toBe(30);
+    expect(result.closingBalance).toBe(40);
+    expect(result.totalIncome).toBe(10);
+  });
+
+  it('ignores draft, voided, and orphan ledger rows when forming an open cycle balance', () => {
+    const openCycle = { ...cycle, status: 'open' as const };
+    const transactions = [
+      transaction('posted-prior', 'income', '2026-04-02', 'previous'),
+      transaction('draft', 'income', '2026-04-03', 'previous', 'draft'),
+      transaction('voided', 'income', '2026-04-04', 'previous', 'voided'),
+    ];
+    const result = calculateCycleReport(
+      openCycle,
+      [account('bank')],
+      [],
+      transactions,
+      [
+        line('posted', 'posted-prior', 'bank', 25),
+        line('draft-line', 'draft', 'bank', 100),
+        line('voided-line', 'voided', 'bank', 200),
+        line('orphan-line', 'orphan', 'bank', 300),
+      ],
+      [],
+      'EGP',
+      {},
+    );
+
+    expect(result.openingBalance).toBe(25);
+    expect(result.closingBalance).toBe(25);
   });
 });

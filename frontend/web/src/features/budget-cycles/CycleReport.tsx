@@ -111,9 +111,10 @@ export function CycleReport() {
             allocations,
             baseCurrency,
             displayRates,
+            cycles,
           )
         : null,
-    [accounts, allocations, baseCurrency, categories, displayRates, ledgerLines, selectedCycle, transactions],
+    [accounts, allocations, baseCurrency, categories, cycles, displayRates, ledgerLines, selectedCycle, transactions],
   );
 
   const allCycleTransactions = useMemo(() => {

@@ -39,6 +39,7 @@ export const getCycleReportTool = defineAiTool({
       allocations,
       baseCurrency,
       rates,
+      cycles,
     );
     // Loan payments are fixed commitments tracked outside category budgets by
     // design; keeping them inside the categories list made models read them as

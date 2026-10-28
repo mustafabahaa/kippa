@@ -48,7 +48,12 @@ function base(amount: number, currency: CurrencyCode, baseCurrency: CurrencyCode
   return convertToBaseCurrency(amount, currency, baseCurrency, rates);
 }
 
-/** Build a point-in-time report for one budget cycle from its posted ledger. */
+/**
+ * Build a report from one posted-ledger snapshot. Open-cycle closing balances
+ * reconcile to that entire snapshot, just like calculateAccountBalances.
+ * Historical reports use cycle membership to respect manual, intraday rollovers;
+ * dates are only a fallback for transactions without a known cycle.
+ */
 export function calculateCycleReport(
   cycle: BudgetCycle,
   accounts: Account[],
@@ -58,6 +63,7 @@ export function calculateCycleReport(
   allocations: BudgetAllocation[],
   baseCurrency: CurrencyCode,
   displayRates: DisplayRates,
+  allCycles: BudgetCycle[] = [],
 ): CycleReport {
   const posted = new Map(
     transactions
@@ -68,12 +74,19 @@ export function calculateCycleReport(
     (transaction) => transaction.status === 'posted' && transaction.budgetCycleId === cycle.id,
   );
   const cycleIds = new Set(cycleTransactions.map((transaction) => transaction.id));
+  const cyclesById = new Map(allCycles.map((item) => [item.id, item]));
+  const isOpeningTransaction = (transaction: FinanceTransaction) => {
+    if (cycleIds.has(transaction.id)) return false;
+    // The live ledger includes all posted records, independent of their date or
+    // budget assignment. Its non-cycle remainder is the cycle's carried balance.
+    if (cycle.status === 'open') return true;
+    const assignedCycle = transaction.budgetCycleId ? cyclesById.get(transaction.budgetCycleId) : undefined;
+    if (assignedCycle) return assignedCycle.startDate < cycle.startDate;
+    return transaction.date <= (cycle.endDate ?? cycle.startDate);
+  };
   const openingIds = new Set(
     transactions
-      .filter(
-        (transaction) =>
-          transaction.status === 'posted' && transaction.date < cycle.startDate && !cycleIds.has(transaction.id),
-      )
+      .filter((transaction) => transaction.status === 'posted' && isOpeningTransaction(transaction))
       .map((transaction) => transaction.id),
   );
 
