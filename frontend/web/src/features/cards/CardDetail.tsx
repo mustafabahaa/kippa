@@ -66,16 +66,20 @@ export function CardDetail({ card, onClose }: { card: Card; onClose: () => void 
 
   const isCredit = card.kind === 'credit';
   const creditAccountId = card.parentAccountId;
-  const { accountBalance, charges, cycleGroups, totalDebt } = calculateCardActivity(
+  const { accountBalance, charges, cycleGroups, totalDebt, unallocatedCredit } = calculateCardActivity(
     creditAccountId,
     allTransactions,
     allLines,
     allCycles,
   );
+  // Charge-list debt minus payments/credits that applied to no charge; equals
+  // the ledger debt shown by the snapshot and card tile.
+  const reconciledDebt = Math.max(0, totalDebt - unallocatedCredit);
+  const hasUnappliedCredit = unallocatedCredit > 0.005;
 
   const utilizationPct =
     card.creditLimit != null && card.creditLimit > 0
-      ? Math.min(100, Math.round((totalDebt / card.creditLimit) * 100))
+      ? Math.min(100, Math.round((reconciledDebt / card.creditLimit) * 100))
       : null;
 
   const [visibleCycleCount, setVisibleCycleCount] = useState(1);
@@ -276,7 +280,7 @@ export function CardDetail({ card, onClose }: { card: Card; onClose: () => void 
                             lineHeight: 1.2,
                           }}
                         >
-                          <Money amount={totalDebt} code={card.currency} maxDigits={2} />
+                          <Money amount={reconciledDebt} code={card.currency} maxDigits={2} />
                         </Typography>
                         <Typography
                           sx={{
@@ -290,6 +294,12 @@ export function CardDetail({ card, onClose }: { card: Card; onClose: () => void 
                         >
                           Outstanding Balance
                         </Typography>
+                        {hasUnappliedCredit && (
+                          <Typography variant="fieldHint" sx={{ color: 'rgba(255,255,255,0.7)', mt: 0.5 }}>
+                            {maskDigits(`${card.currency} ${unallocatedCredit.toFixed(2)}`)} of past payments/credits
+                            applies to no charge
+                          </Typography>
+                        )}
                         {utilizationPct != null && (
                           <Box sx={{ mt: 1.5 }}>
                             <LinearProgress

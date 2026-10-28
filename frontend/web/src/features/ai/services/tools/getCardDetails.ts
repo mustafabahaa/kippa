@@ -11,7 +11,7 @@ import { id, trimCardActivity } from './shared';
 
 export const getCardDetailsTool = defineAiTool({
   description:
-    'Get the same debt, available-credit, utilization, statement, due-date, current-purchases, and charge-payment details shown by the card UI. Charge history is trimmed to unpaid plus the 20 most recent charges unless includeFullHistory is true.',
+    'Get the same debt, available-credit, utilization, statement, due-date, current-purchases, and charge-payment details shown by the card UI. totalDebt sums unpaid charges; unallocatedCredit lists payments/credits that reduced the ledger balance but applied to no charge (accountBalance = unallocatedCredit - totalDebt), so the reconciled debt owed is Math.max(0, -accountBalance). Charge history is trimmed to unpaid plus the 20 most recent charges unless includeFullHistory is true.',
   inputSchema: z.object({ cardId: id, includeFullHistory: z.boolean().optional() }).strict(),
   risk: 'read',
   async execute({ cardId, includeFullHistory }, context) {

@@ -101,6 +101,11 @@ export function trimCardActivity(activity: ReturnType<typeof calculateCardActivi
   return {
     accountBalance: activity.accountBalance,
     totalDebt: activity.totalDebt,
+    // Payments/credits that reduced the balance but applied to no charge;
+    // accountBalance === unallocatedCredit - totalDebt, so
+    // Math.max(0, -accountBalance) is the reconciled debt the user owes.
+    unallocatedCredit: activity.unallocatedCredit,
+    unallocatedCredits: activity.unallocatedCredits,
     charges: [...kept.values()].sort((a, b) => b.date.localeCompare(a.date)),
     cycleGroups,
     totalChargeCount: activity.charges.length,
