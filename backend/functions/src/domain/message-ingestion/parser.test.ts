@@ -126,6 +126,16 @@ describe('parseFinancialMessage', () => {
     });
   });
 
+  it('treats an HSBC credit without the Phone Banking prefix (e.g. payroll) as income', () => {
+    const result = parseFinancialMessage(
+      'From HSBC: 28OCT26 Transfer to 074-096***-017 USD 2,502.58+ Your available balance is USD 6,054.09',
+    );
+    expect(result).toMatchObject({
+      outcome: 'matched',
+      parsed: { kind: 'income', amount: 2502.58, currency: 'USD', date: '2026-10-28', accountHintLast4: '6017' },
+    });
+  });
+
   it('ignores statement alerts', () => {
     expect(
       parseFinancialMessage(
