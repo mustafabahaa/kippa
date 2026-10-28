@@ -13,6 +13,8 @@ import { calculateAccountBalances, getPostedLedgerLines } from '@/libs/financeCa
 import { currencyLib } from '@/libs/currency';
 import { computeDashboard } from '@/libs/selectors';
 import { calculateCategoryTrends, calculateCycleData } from '@/libs/budgetAnalytics';
+import { calculateCycleReport } from '@/libs/cycleReport';
+import { dedupeMerchantKeywords } from '@/libs/merchantSuggestions';
 import { BANK_LIST } from '@/features/cards/banks/banks';
 import { dbLib } from '@/libs/db';
 import { calculateCardActivity } from '@/libs/cardActivity';
@@ -67,6 +69,25 @@ async function requireCategory(householdId: string, categoryId: string): Promise
   return category;
 }
 
+/** Keep unpaid charges plus a recent window; the model can opt into the full history explicitly. */
+function trimCardActivity(activity: ReturnType<typeof calculateCardActivity>) {
+  const unpaid = activity.charges.filter(charge => !charge.paid);
+  const recent = [...activity.charges].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 20);
+  const kept = new Map([...unpaid, ...recent].map(charge => [charge.lineId, charge]));
+  const keptIds = new Set(kept.keys());
+  const cycleGroups = activity.cycleGroups
+    .map(group => ({ ...group, charges: group.charges.filter(charge => keptIds.has(charge.lineId)) }))
+    .filter(group => group.charges.length > 0);
+  return {
+    accountBalance: activity.accountBalance,
+    totalDebt: activity.totalDebt,
+    charges: [...kept.values()].sort((a, b) => b.date.localeCompare(a.date)),
+    cycleGroups,
+    totalChargeCount: activity.charges.length,
+    truncated: kept.size < activity.charges.length,
+  };
+}
+
 export function createAiToolRegistry(): AiToolRegistry {
   return {
     getFinancialSnapshot: defineAiTool({
@@ -77,19 +98,55 @@ export function createAiToolRegistry(): AiToolRegistry {
         return { asOf: new Date().toISOString(), baseCurrency: household?.baseCurrency ?? null, accounts: accounts.filter(account => account.isActive).map(account => ({ id: account.id, name: account.name, type: account.type, currency: account.currency, balance: Number((balances[account.id] ?? 0).toFixed(2)) })) };
       },
     }),
+    convertCurrency: defineAiTool({
+      description: 'Convert an amount between currencies using the live exchange rate. Required before adding or comparing amounts held in different currencies.',
+      inputSchema: z.object({ amount: money, from: currency, to: currency }).strict(),
+      risk: 'read',
+      async execute({ amount, from, to }) {
+        const rate = await currencyLib.getRate(from, to);
+        return { amount, from, to, rate, convertedAmount: Number((amount * rate).toFixed(2)) };
+      },
+    }),
     listAccounts: defineAiTool({ description: 'List household accounts, including inactive accounts and stable IDs needed by action tools.', inputSchema: emptyInput, risk: 'read', execute: (_, context) => ledgerLib.getAccounts(context.householdId) }),
     listCategories: defineAiTool({ description: 'List active income and expense categories with stable IDs needed by transaction and budget tools.', inputSchema: emptyInput, risk: 'read', execute: (_, context) => ledgerLib.getCategories(context.householdId) }),
     listLoans: defineAiTool({ description: 'List every loan contract, its fixed schedule, paying account, and status. Loans are direct commitments, not categories.', inputSchema: emptyInput, risk: 'read', execute: (_, context) => loansLib.getLoans(context.householdId) }),
     getLoanProgress: defineAiTool({ description: 'Get accurate paid, remaining, next due, payoff, and account-readiness information for one loan.', inputSchema: z.object({ loanId: id }).strict(), risk: 'read', async execute({ loanId }, context) { const [loans, transactions, lines, accounts] = await Promise.all([loansLib.getLoans(context.householdId), ledgerLib.getTransactions(context.householdId), ledgerLib.getLedgerLines(context.householdId) as Promise<LedgerLine[]>, ledgerLib.getAccounts(context.householdId)]); const loan = loans.find(item => item.id === loanId); if (!loan) throw new Error('Loan not found.'); const progress = getLoanProgress(loan, transactions, lines); const balances = calculateAccountBalances(accounts, transactions, lines); const accountBalance = balances[loan.paymentAccountId] ?? 0; return { loan, ...progress, payments: progress.payments.map(payment => ({ transactionId: payment.transaction.id, date: payment.transaction.date, installmentNumber: payment.transaction.loanInstallmentNumber, amount: payment.amount })), accountBalance, accountShortfall: Math.max(0, loan.installmentAmount - accountBalance) }; } }),
     simulateLoanExtraPayment: defineAiTool({ description: 'Simulate how a one-time extra payment changes a fixed loan payoff. This is informational and does not write data.', inputSchema: z.object({ loanId: id, extraAmount: money }).strict(), risk: 'read', async execute({ loanId, extraAmount }, context) { const [loans, transactions, lines] = await Promise.all([loansLib.getLoans(context.householdId), ledgerLib.getTransactions(context.householdId), ledgerLib.getLedgerLines(context.householdId) as Promise<LedgerLine[]>]); const loan = loans.find(item => item.id === loanId); if (!loan) throw new Error('Loan not found.'); const progress = getLoanProgress(loan, transactions, lines); const newRemaining = Math.max(0, progress.remainingAmount - extraAmount); const installmentsSaved = Math.max(0, progress.remainingInstallments - Math.ceil(newRemaining / loan.installmentAmount)); return { currentRemaining: progress.remainingAmount, extraAmount: Math.min(extraAmount, progress.remainingAmount), newRemaining, installmentsSaved, estimatedRemainingInstallments: Math.ceil(newRemaining / loan.installmentAmount), note: 'This assumes the lender applies extra money directly to the remaining fixed contract amount; confirm early-payment rules with the lender.' }; } }),
     listTransactions: defineAiTool({
-      description: 'List recent transactions, optionally for one budget cycle, date range, or status. Returns matching ledger lines.',
-      inputSchema: z.object({ cycleId: id.optional(), startDate: isoDate.optional(), endDate: isoDate.optional(), status: z.enum(['posted', 'voided', 'draft']).optional(), limit: z.number().int().min(1).max(100).default(30) }).strict().refine(value => !value.startDate || !value.endDate || value.startDate <= value.endDate, { message: 'startDate must be on or before endDate' }), risk: 'read',
-      async execute({ cycleId, startDate, endDate, status, limit }, context) {
+      description: 'List transactions filtered by cycle, date range, status, account, category, description search text, or amount range. Returns matching transactions with their ledger lines.',
+      inputSchema: z.object({
+        cycleId: id.optional(),
+        startDate: isoDate.optional(),
+        endDate: isoDate.optional(),
+        status: z.enum(['posted', 'voided', 'draft']).optional(),
+        accountId: id.optional(),
+        categoryId: id.optional(),
+        search: z.string().trim().min(2).max(80).optional(),
+        minAmount: z.number().min(0).max(1_000_000_000).optional(),
+        maxAmount: z.number().min(0).max(1_000_000_000).optional(),
+        limit: z.number().int().min(1).max(100).default(30),
+      }).strict()
+        .refine(value => !value.startDate || !value.endDate || value.startDate <= value.endDate, { message: 'startDate must be on or before endDate' })
+        .refine(value => value.minAmount === undefined || value.maxAmount === undefined || value.minAmount <= value.maxAmount, { message: 'minAmount must be at most maxAmount' }),
+      risk: 'read',
+      async execute({ cycleId, startDate, endDate, status, accountId, categoryId, search, minAmount, maxAmount, limit }, context) {
         const [transactions, lines] = await Promise.all([ledgerLib.getTransactions(context.householdId, cycleId), ledgerLib.getLedgerLines(context.householdId) as Promise<LedgerLine[]>]);
-        const selected = transactions.filter(item => (!startDate || item.date >= startDate) && (!endDate || item.date <= endDate) && (!status || item.status === status)).slice(0, limit);
+        const linesByTransaction = new Map<string, LedgerLine[]>();
+        for (const line of lines) linesByTransaction.set(line.transactionId, [...(linesByTransaction.get(line.transactionId) ?? []), line]);
+        const amountOf = (transactionId: string) => (linesByTransaction.get(transactionId) ?? []).reduce((total, line) => total + Math.abs(line.signedAmount), 0);
+        const searchLower = search?.toLocaleLowerCase();
+        const filtered = transactions.filter(item =>
+          (!startDate || item.date >= startDate)
+          && (!endDate || item.date <= endDate)
+          && (!status || item.status === status)
+          && (!accountId || (linesByTransaction.get(item.id) ?? []).some(line => line.accountId === accountId))
+          && (!categoryId || item.categoryId === categoryId)
+          && (!searchLower || (item.description ?? '').toLocaleLowerCase().includes(searchLower))
+          && (minAmount === undefined || amountOf(item.id) >= minAmount)
+          && (maxAmount === undefined || amountOf(item.id) <= maxAmount));
+        const selected = filtered.slice(0, limit);
         const selectedIds = new Set(selected.map(item => item.id));
-        return { transactions: selected, ledgerLines: lines.filter(line => selectedIds.has(line.transactionId)) };
+        return { transactions: selected, ledgerLines: lines.filter(line => selectedIds.has(line.transactionId)), hasMore: filtered.length > selected.length };
       },
     }),
     getYearlyIncomeAndSpending: defineAiTool({
@@ -133,13 +190,26 @@ export function createAiToolRegistry(): AiToolRegistry {
       description: 'Get one expense category spending trend across budget cycles. Use before rendering a category trend chart.', inputSchema: z.object({ categoryId: id }).strict(), risk: 'read',
       async execute({ categoryId }, context) { await requireCategory(context.householdId, categoryId); const [accounts, cycles, transactions, ledgerLines, household] = await Promise.all([ledgerLib.getAccounts(context.householdId), cyclesLib.getCycles(context.householdId), ledgerLib.getTransactions(context.householdId), ledgerLib.getLedgerLines(context.householdId) as Promise<LedgerLine[]>, ledgerLib.getHouseholdInfo(context.householdId)]); const baseCurrency = household?.baseCurrency ?? 'EGP'; const rates = await currencyLib.getRatesToBase(baseCurrency, accounts.map(account => account.currency)); return { baseCurrency, trend: calculateCategoryTrends(cycles, transactions, ledgerLines, categoryId, baseCurrency, rates) }; },
     }),
+    getCycleReport: defineAiTool({
+      description: 'Get a full budget-cycle report: opening and closing balances, income, spending, net cash flow, savings rate, per-account activity, and planned-versus-spent variance per category including loan payments. Defaults to the open cycle. Use for month summaries and budget-versus-actual questions.',
+      inputSchema: z.object({ cycleId: id.optional() }).strict(),
+      risk: 'read',
+      async execute({ cycleId }, context) {
+        const [accounts, categories, cycles, transactions, ledgerLines, allocations, household] = await Promise.all([ledgerLib.getAccounts(context.householdId), ledgerLib.getCategories(context.householdId), cyclesLib.getCycles(context.householdId), ledgerLib.getTransactions(context.householdId), ledgerLib.getLedgerLines(context.householdId) as Promise<LedgerLine[]>, cyclesLib.getAllBudgetAllocations(context.householdId), ledgerLib.getHouseholdInfo(context.householdId)]);
+        const cycle = (cycleId ? cycles.find(item => item.id === cycleId) : cycles.find(item => item.status === 'open')) ?? null;
+        if (!cycle) throw new Error(cycleId ? 'Budget cycle not found.' : 'No open budget cycle exists.');
+        const baseCurrency = household?.baseCurrency ?? 'EGP';
+        const rates = await currencyLib.getRatesToBase(baseCurrency, accounts.map(account => account.currency));
+        return { cycleId: cycle.id, cycleName: cycle.name, cycleStartDate: cycle.startDate, cycleEndDate: cycle.endDate ?? null, baseCurrency, report: calculateCycleReport(cycle, accounts, categories, transactions, ledgerLines, allocations, baseCurrency, rates) };
+      },
+    }),
     listBudgetCycles: defineAiTool({ description: 'List all budget cycles and their statuses.', inputSchema: emptyInput, risk: 'read', execute: (_, context) => cyclesLib.getCycles(context.householdId) }),
     getCyclePlan: defineAiTool({ description: 'Get allocations and expected incomes for a budget cycle.', inputSchema: z.object({ cycleId: id }).strict(), risk: 'read', async execute({ cycleId }, context) { const [allocations, expectedIncomes] = await Promise.all([cyclesLib.getBudgetAllocations(context.householdId, cycleId), cyclesLib.getExpectedIncomes(context.householdId, cycleId)]); return { allocations, expectedIncomes }; } }),
     listCards: defineAiTool({ description: 'List debit and credit cards and their linked accounts.', inputSchema: emptyInput, risk: 'read', execute: (_, context) => cardsLib.getCards(context.householdId) }),
     listSupportedBanks: defineAiTool({ description: 'List bank, card-tier, network, and card-kind options supported by the card UI. Use before proposing card creation.', inputSchema: emptyInput, risk: 'read', execute: async () => BANK_LIST.map(bank => ({ id: bank.id, name: bank.name, tiers: bank.tiers })) }),
-    listCardStatements: defineAiTool({ description: 'List card statements, optionally for one card.', inputSchema: z.object({ cardId: id.optional() }).strict(), risk: 'read', execute: ({ cardId }, context) => cardsLib.getStatements(context.householdId, cardId) }),
-    getCardDetails: defineAiTool({ description: 'Get the same debt, available-credit, utilization, statement, due-date, current-purchases, and charge-payment details shown by the card UI.', inputSchema: z.object({ cardId: id }).strict(), risk: 'read', async execute({ cardId }, context) { const [cards, statements, accounts, transactions, ledgerLines, cycles] = await Promise.all([cardsLib.getCards(context.householdId), cardsLib.getStatements(context.householdId, cardId), ledgerLib.getAccounts(context.householdId), ledgerLib.getTransactions(context.householdId), ledgerLib.getLedgerLines(context.householdId) as Promise<LedgerLine[]>, cyclesLib.getCycles(context.householdId)]); const card = cards.find(item => item.id === cardId); if (!card) throw new Error('Card not found.'); const balances = calculateAccountBalances(accounts, transactions, ledgerLines); const lastStatement = statements[0] ?? null; const summary = computeCardSummary(card, balances[card.parentAccountId] ?? 0, lastStatement, statements); summary.currentCyclePurchases = currentCyclePurchases(ledgerLines, transactions, card.parentAccountId, lastStatement); return { card, summary, activity: calculateCardActivity(card.parentAccountId, transactions, ledgerLines, cycles) }; } }),
-    listReconciliations: defineAiTool({ description: 'List account reconciliation history.', inputSchema: emptyInput, risk: 'read', execute: (_, context) => ledgerLib.getReconciliations(context.householdId) }),
+    listCardStatements: defineAiTool({ description: 'List card statements newest first, optionally for one card, up to a limit.', inputSchema: z.object({ cardId: id.optional(), limit: z.number().int().min(1).max(100).default(20) }).strict(), risk: 'read', execute: async ({ cardId, limit }, context) => (await cardsLib.getStatements(context.householdId, cardId)).slice(0, limit) }),
+    getCardDetails: defineAiTool({ description: 'Get the same debt, available-credit, utilization, statement, due-date, current-purchases, and charge-payment details shown by the card UI. Charge history is trimmed to unpaid plus the 20 most recent charges unless includeFullHistory is true.', inputSchema: z.object({ cardId: id, includeFullHistory: z.boolean().optional() }).strict(), risk: 'read', async execute({ cardId, includeFullHistory }, context) { const [cards, statements, accounts, transactions, ledgerLines, cycles] = await Promise.all([cardsLib.getCards(context.householdId), cardsLib.getStatements(context.householdId, cardId), ledgerLib.getAccounts(context.householdId), ledgerLib.getTransactions(context.householdId), ledgerLib.getLedgerLines(context.householdId) as Promise<LedgerLine[]>, cyclesLib.getCycles(context.householdId)]); const card = cards.find(item => item.id === cardId); if (!card) throw new Error('Card not found.'); const balances = calculateAccountBalances(accounts, transactions, ledgerLines); const lastStatement = statements[0] ?? null; const summary = computeCardSummary(card, balances[card.parentAccountId] ?? 0, lastStatement, statements); summary.currentCyclePurchases = currentCyclePurchases(ledgerLines, transactions, card.parentAccountId, lastStatement); const fullActivity = calculateCardActivity(card.parentAccountId, transactions, ledgerLines, cycles); return { card, summary, activity: includeFullHistory ? fullActivity : trimCardActivity(fullActivity) }; } }),
+    listReconciliations: defineAiTool({ description: 'List account reconciliation history, most recent first, up to a limit.', inputSchema: z.object({ limit: z.number().int().min(1).max(100).default(20) }).strict(), risk: 'read', execute: async ({ limit }, context) => (await ledgerLib.getReconciliations(context.householdId)).sort((a, b) => b.date.localeCompare(a.date)).slice(0, limit) }),
     getNotificationSettings: defineAiTool({ description: 'Get the current user notification preferences.', inputSchema: emptyInput, risk: 'read', execute: (_, context) => ledgerLib.getNotificationSettings(context.householdId, context.userId) }),
     getPushNotificationStatus: defineAiTool({ description: 'Get whether this browser supports notifications and its current permission state.', inputSchema: emptyInput, risk: 'read', execute: async () => ({ supported: typeof Notification !== 'undefined', permission: typeof Notification === 'undefined' ? 'unsupported' : Notification.permission }) }),
     listPendingTransactions: defineAiTool({ description: 'List pending imported financial messages waiting for review.', inputSchema: emptyInput, risk: 'read', execute: (_, context) => messageIngestionLib.getPending(context.householdId) }),
@@ -163,7 +233,11 @@ export function createAiToolRegistry(): AiToolRegistry {
       async execute({ accountId, ...updates }, context) { const account = await requireAccount(context.householdId, accountId); await ledgerLib.updateAccount(context.householdId, accountId, { ...account, ...updates }, auditUser(context)); return { accountId }; },
     }),
     createCategory: defineAiTool({ description: 'Propose creating an income or expense category. Requires user confirmation.', inputSchema: z.object({ name, type: z.enum(['income', 'expense']), parentCategoryId: id.nullable().optional() }).strict(), risk: 'write', confirmation: input => `Create ${input.name} category`, execute: (input, context) => ledgerLib.createCategory(context.householdId, { ...input, isActive: true }, auditUser(context)) }),
-    updateCategory: defineAiTool({ description: 'Propose renaming or activating/deactivating a category. Requires user confirmation.', inputSchema: z.object({ categoryId: id, name: name.optional(), isActive: z.boolean().optional() }).strict().refine(value => value.name !== undefined || value.isActive !== undefined, { message: 'At least one category change is required.' }), risk: 'write', confirmation: () => 'Update this category', async execute({ categoryId, ...updates }, context) { await requireCategory(context.householdId, categoryId); await ledgerLib.updateCategory(context.householdId, categoryId, updates, auditUser(context)); return { categoryId }; } }),
+    updateCategory: defineAiTool({
+      description: 'Propose renaming a category, activating or deactivating it, or replacing the merchant keywords that auto-suggest it for imported messages. merchantKeywords replaces the full keyword list. Requires user confirmation.',
+      inputSchema: z.object({ categoryId: id, name: name.optional(), isActive: z.boolean().optional(), merchantKeywords: z.array(z.string().trim().min(2).max(40)).max(60).optional() }).strict().refine(value => value.name !== undefined || value.isActive !== undefined || value.merchantKeywords !== undefined, { message: 'At least one category change is required.' }),
+      risk: 'write', confirmation: () => 'Update this category',
+      async execute({ categoryId, merchantKeywords, ...updates }, context) { await requireCategory(context.householdId, categoryId); await ledgerLib.updateCategory(context.householdId, categoryId, { ...updates, ...(merchantKeywords !== undefined ? { merchantKeywords: dedupeMerchantKeywords(merchantKeywords) } : {}) }, auditUser(context)); return { categoryId }; } }),
     createTransaction: defineAiTool({
       description: 'Propose logging an income, expense, transfer, or adjustment with balanced ledger lines. Requires user confirmation.',
       inputSchema: z.object({ type: z.enum(['income', 'expense', 'transfer', 'adjustment']), date: isoDate, description: z.string().trim().max(240).optional(), categoryId: id.nullable().optional(), budgetCycleId: id.nullable().optional(), lines: z.array(z.object({ accountId: id, signedAmount: signedMoney, currency }).strict()).min(1).max(2) }).strict().superRefine((value, ctx) => { const byCurrency = new Map<string, number>(); value.lines.forEach(line => byCurrency.set(line.currency, (byCurrency.get(line.currency) ?? 0) + line.signedAmount)); if (value.type === 'transfer') { if (value.lines.length !== 2) ctx.addIssue({ code: 'custom', message: 'Transfers require exactly two ledger lines.' }); if (new Set(value.lines.map(line => line.accountId)).size !== value.lines.length) ctx.addIssue({ code: 'custom', message: 'Transfer accounts must be different.' }); if (!value.lines.some(line => line.signedAmount < 0) || !value.lines.some(line => line.signedAmount > 0)) ctx.addIssue({ code: 'custom', message: 'Transfers require one outgoing and one incoming line.' }); if (byCurrency.size === 1 && [...byCurrency.values()].some(total => Math.abs(total) > 0.005)) ctx.addIssue({ code: 'custom', message: 'Same-currency transfer lines must balance to zero.' }); } }),
@@ -201,7 +275,7 @@ export function createAiToolRegistry(): AiToolRegistry {
     updateNotificationSettings: defineAiTool({ description: 'Propose updating the current user notification preferences. Requires user confirmation.', inputSchema: z.object({ dailyReminderEnabled: z.boolean(), categoryWarningEnabled: z.boolean(), cardExpiryWarningEnabled: z.boolean(), joinRequestEnabled: z.boolean() }).strict(), risk: 'write', confirmation: () => 'Update notification preferences', async execute(input, context) { const settings: NotificationSettings = { ...input, householdId: context.householdId, userId: context.userId }; await ledgerLib.updateNotificationSettings(context.householdId, context.userId, settings, auditUser(context)); return settings; } }),
     approvePendingTransaction: defineAiTool({ description: 'Propose approving an imported pending financial message as a transaction. Requires user confirmation.', inputSchema: z.object({ pendingId: id, categoryId: id, accountId: id, destinationAccountId: id.optional() }).strict(), risk: 'write', confirmation: () => 'Approve this pending transaction', async execute(input, context) { await requireCategory(context.householdId, input.categoryId); await requireAccount(context.householdId, input.accountId); if (input.destinationAccountId) await requireAccount(context.householdId, input.destinationAccountId); return messageIngestionLib.approve({ householdId: context.householdId, ...input }); } }),
     discardPendingTransaction: defineAiTool({ description: 'Propose discarding an imported pending financial message. Requires user confirmation.', inputSchema: z.object({ pendingId: id }).strict(), risk: 'write', confirmation: () => 'Discard this pending transaction', execute: ({ pendingId }, context) => messageIngestionLib.discard(context.householdId, pendingId) }),
-    listResolvedPendingTransactions: defineAiTool({ description: 'List previously approved or discarded imported financial messages.', inputSchema: emptyInput, risk: 'read', execute: (_, context) => messageIngestionLib.getResolved(context.householdId) }),
+    listResolvedPendingTransactions: defineAiTool({ description: 'List previously approved or discarded imported financial messages, up to a limit.', inputSchema: z.object({ limit: z.number().int().min(1).max(100).default(20) }).strict(), risk: 'read', execute: async ({ limit }, context) => (await messageIngestionLib.getResolved(context.householdId)).slice(0, limit) }),
     restoreDiscardedPendingTransaction: defineAiTool({ description: 'Propose restoring a discarded imported financial message to pending review. Requires confirmation.', inputSchema: z.object({ pendingId: id }).strict(), risk: 'write', confirmation: () => 'Restore this pending transaction', execute: ({ pendingId }, context) => messageIngestionLib.restoreDiscarded(context.householdId, pendingId) }),
     reconcileAccount: defineAiTool({
       description: 'Propose reconciling an account to an actual balance. Creates an adjustment transaction when needed and records the reconciliation. Requires confirmation.', inputSchema: z.object({ accountId: id, actualBalance: z.number().min(-1_000_000_000).max(1_000_000_000), date: isoDate, note: z.string().trim().max(240).nullable().optional(), budgetCycleId: id.nullable().optional() }).strict(), risk: 'write', confirmation: input => `Reconcile account to ${input.actualBalance}`,
