@@ -1,5 +1,13 @@
 import { dbLib } from '@/libs/db';
-import { collection, query, orderBy, limit as firestoreLimit, onSnapshot, Unsubscribe } from 'firebase/firestore';
+import {
+  collection,
+  query,
+  orderBy,
+  limit as firestoreLimit,
+  getDocs,
+  onSnapshot,
+  Unsubscribe,
+} from 'firebase/firestore';
 import { db, isFirebaseConfigured } from '@/config/firebase';
 import { AuditLogEntry, AuditAction } from '@kippa/domain';
 
@@ -57,8 +65,14 @@ export const auditLogLib = {
    * Fetch the most recent audit log entries.
    */
   async getRecentLogs(householdId: string, count: number = 50): Promise<AuditLogEntry[]> {
-    const list = await dbLib.getDocs(householdId, 'auditLog');
-    return (list as AuditLogEntry[]).sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, count);
+    if (!isFirebaseConfigured || !db) throw new Error('Firebase is not configured.');
+    const q = query(
+      collection(db, `households/${householdId}/auditLog`),
+      orderBy('createdAt', 'desc'),
+      firestoreLimit(Math.max(1, Math.floor(count))),
+    );
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map((doc) => doc.data() as AuditLogEntry);
   },
 
   /**

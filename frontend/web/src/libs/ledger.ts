@@ -146,13 +146,16 @@ export const ledgerLib = {
   },
 
   // Raw Lines & Transactions Fetchers
-  async getLedgerLines(householdId: string): Promise<LedgerLine[]> {
+  async getLedgerLines(
+    householdId: string,
+    context?: { accounts: Account[]; transactions: FinanceTransaction[] },
+  ): Promise<LedgerLine[]> {
     // Ledger lines don't have a budgetCycleId field — only transactions do.
     // Callers already match lines to transactions in-memory via transactionId.
     const [lines, accounts, transactions] = await Promise.all([
       dbLib.getDocs(householdId, 'ledgerLines'),
-      dbLib.getDocs(householdId, 'accounts'),
-      dbLib.getDocs(householdId, 'transactions'),
+      context ? Promise.resolve(context.accounts) : dbLib.getDocs(householdId, 'accounts'),
+      context ? Promise.resolve(context.transactions) : dbLib.getDocs(householdId, 'transactions'),
     ]);
     return includeUnrecordedCardFees(
       accounts as Account[],

@@ -152,38 +152,48 @@ function daysBetween(left: string, right: string): number {
   );
 }
 
-async function resolveLoanSuggestion(
+export async function resolveLoanSuggestion(
   householdId: string,
   parsed: ParsedFinancialMessage,
   accountId?: string,
 ): Promise<{ loanId: string; loanName: string; installmentNumber: number } | null> {
   if (parsed.kind !== 'expense' || !accountId) return null;
   const db = getFirestore();
-  const [loansSnapshot, transactionsSnapshot] = await Promise.all([
-    db.collection(`households/${householdId}/loans`).where('status', '==', 'active').get(),
-    db.collection(`households/${householdId}/transactions`).get(),
-  ]);
-  const transactions = transactionsSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as FinanceTransaction);
-  const matches = loansSnapshot.docs
+  const loansSnapshot = await db.collection(`households/${householdId}/loans`).where('status', '==', 'active').get();
+  const candidateLoans = loansSnapshot.docs
     .map((doc) => ({ id: doc.id, ...doc.data() }) as Loan)
-    .flatMap((loan) => {
-      const linkedPayments = transactions.filter(
-        (transaction) => transaction.status === 'posted' && transaction.loanId === loan.id,
-      );
-      const installmentNumber = (loan.openingPaidInstallments ?? 0) + linkedPayments.length + 1;
-      if (
-        loan.paymentAccountId !== accountId ||
-        loan.currency !== parsed.currency ||
-        Math.abs(loan.installmentAmount - parsed.amount) > 0.01 ||
-        installmentNumber > loan.totalInstallments
-      )
-        return [];
-      const dueDate = installmentDate(loan, installmentNumber);
-      const allowedDays = Math.max(3, (loan.graceDay ?? loan.dueDay) - loan.dueDay + 2);
-      return daysBetween(parsed.date, dueDate) <= allowedDays
-        ? [{ loanId: loan.id, loanName: loan.name, installmentNumber }]
-        : [];
-    });
+    .filter(
+      (loan) =>
+        loan.paymentAccountId === accountId &&
+        loan.currency === parsed.currency &&
+        Math.abs(loan.installmentAmount - parsed.amount) <= 0.01,
+    );
+  if (candidateLoans.length === 0) return null;
+
+  const transactions = db.collection(`households/${householdId}/transactions`);
+  const linkedPayments: FinanceTransaction[] = [];
+  const candidateLoanIds = candidateLoans.map((loan) => loan.id);
+  for (let i = 0; i < candidateLoanIds.length; i += 10) {
+    const ids = candidateLoanIds.slice(i, i + 10);
+    const snapshot = await transactions.where('loanId', 'in', ids).get();
+    linkedPayments.push(...snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as FinanceTransaction));
+  }
+  const postedPaymentCounts = new Map<string, number>();
+  for (const transaction of linkedPayments) {
+    if (transaction.status === 'posted' && transaction.loanId) {
+      postedPaymentCounts.set(transaction.loanId, (postedPaymentCounts.get(transaction.loanId) ?? 0) + 1);
+    }
+  }
+
+  const matches = candidateLoans.flatMap((loan) => {
+    const installmentNumber = (loan.openingPaidInstallments ?? 0) + (postedPaymentCounts.get(loan.id) ?? 0) + 1;
+    if (installmentNumber > loan.totalInstallments) return [];
+    const dueDate = installmentDate(loan, installmentNumber);
+    const allowedDays = Math.max(3, (loan.graceDay ?? loan.dueDay) - loan.dueDay + 2);
+    return daysBetween(parsed.date, dueDate) <= allowedDays
+      ? [{ loanId: loan.id, loanName: loan.name, installmentNumber }]
+      : [];
+  });
   return matches.length === 1 ? matches[0] : null;
 }
 

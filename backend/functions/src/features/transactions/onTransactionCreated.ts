@@ -106,7 +106,7 @@ export const onTransactionCreated = onDocumentCreated(
   },
 );
 
-async function checkCategoryWarning(
+export async function checkCategoryWarning(
   db: FirebaseFirestore.Firestore,
   householdId: string,
   txn: FinanceTransaction,
@@ -149,13 +149,23 @@ async function checkCategoryWarning(
 
   // Fetch ledger lines and sum spent
   const postedTxnIds = new Set(postedTxns.map((t) => t.id));
-  const linesSnap = await db.collection(`households/${householdId}/ledgerLines`).get();
+  const ledgerLines = db.collection(`households/${householdId}/ledgerLines`);
+  const postedTxnIdList = [...postedTxnIds];
+  const lineDocs: FirebaseFirestore.QueryDocumentSnapshot[] = [];
+  for (let i = 0; i < postedTxnIdList.length; i += 10) {
+    const ids = postedTxnIdList.slice(i, i + 10);
+    const linesSnap = await ledgerLines.where('transactionId', 'in', ids).get();
+    lineDocs.push(...linesSnap.docs);
+  }
   let spent = 0;
-  for (const lineDoc of linesSnap.docs) {
+  const linesByTransaction = new Map<string, LedgerLine[]>();
+  for (const lineDoc of lineDocs) {
     const line = lineDoc.data() as LedgerLine;
-    if (postedTxnIds.has(line.transactionId) && line.signedAmount < 0) {
-      spent += Math.abs(line.signedAmount);
-    }
+    if (!postedTxnIds.has(line.transactionId)) continue;
+    const lines = linesByTransaction.get(line.transactionId) ?? [];
+    lines.push(line);
+    linesByTransaction.set(line.transactionId, lines);
+    if (line.signedAmount < 0) spent += Math.abs(line.signedAmount);
   }
 
   // Check percentage thresholds
@@ -171,9 +181,8 @@ async function checkCategoryWarning(
   const recentEntries: SpendingEntry[] = [];
   for (const t of postedTxns) {
     const entry: SpendingEntry = { amount: 0, date: t.date };
-    for (const lineDoc of linesSnap.docs) {
-      const line = lineDoc.data() as LedgerLine;
-      if (line.transactionId === t.id && line.signedAmount < 0) {
+    for (const line of linesByTransaction.get(t.id) ?? []) {
+      if (line.signedAmount < 0) {
         entry.amount += Math.abs(line.signedAmount);
       }
     }

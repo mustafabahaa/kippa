@@ -90,11 +90,11 @@ export function useCycles(householdId: string) {
   });
 }
 
-export function useTransactions(householdId: string, cycleId?: string) {
+export function useTransactions(householdId: string, cycleId?: string, options: { enabled?: boolean } = {}) {
   return useQuery({
     queryKey: keys.transactions(householdId, cycleId),
     queryFn: () => ledgerLib.getTransactions(householdId, cycleId),
-    enabled: !!householdId,
+    enabled: !!householdId && options.enabled !== false,
   });
 }
 
@@ -218,11 +218,27 @@ export function useCategoryFrequency(householdId: string, type: 'income' | 'expe
   }, [transactions, type]);
 }
 
-export function useLedgerLines(householdId: string, cycleId?: string) {
+export function useLedgerLines(householdId: string, cycleId?: string, options: { enabled?: boolean } = {}) {
+  const queryClient = useQueryClient();
   return useQuery({
     queryKey: keys.ledgerLines(householdId, cycleId),
-    queryFn: () => ledgerLib.getLedgerLines(householdId),
-    enabled: !!householdId,
+    queryFn: async () => {
+      // Reuse (and deduplicate in-flight) the same account and transaction
+      // queries used by balance widgets; fee compatibility needs their full
+      // context, but must not download it a second time behind the cache.
+      const [accounts, transactions] = await Promise.all([
+        queryClient.fetchQuery({
+          queryKey: keys.accounts(householdId),
+          queryFn: () => ledgerLib.getAccounts(householdId),
+        }),
+        queryClient.fetchQuery({
+          queryKey: keys.transactions(householdId),
+          queryFn: () => ledgerLib.getTransactions(householdId),
+        }),
+      ]);
+      return ledgerLib.getLedgerLines(householdId, { accounts, transactions });
+    },
+    enabled: !!householdId && options.enabled !== false,
   });
 }
 

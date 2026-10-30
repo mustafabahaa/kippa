@@ -14,10 +14,15 @@ export function useLoanReminders() {
   const { enqueueSnackbar } = useSnackbar();
   const { data: loans = [] } = useLoans(householdId);
   const { data: accounts = [] } = useAccounts(householdId);
-  const { data: transactions = [] } = useTransactions(householdId);
-  const { data: lines = [] } = useLedgerLines(householdId);
+  const hasActiveLoan = loans.some((loan) => loan.status === 'active');
+  const { data: transactions = [], isSuccess: transactionsReady } = useTransactions(householdId, undefined, {
+    enabled: hasActiveLoan,
+  });
+  const { data: lines = [], isSuccess: linesReady } = useLedgerLines(householdId, undefined, {
+    enabled: hasActiveLoan,
+  });
   useEffect(() => {
-    if (!householdId || !loans.length || !accounts.length) return;
+    if (!householdId || !hasActiveLoan || !accounts.length || !transactionsReady || !linesReady) return;
     const today = new Date().toISOString().slice(0, 10);
     const balances = calculateAccountBalances(accounts, transactions, lines);
     for (const loan of loans.filter((item) => item.status === 'active')) {
@@ -37,5 +42,15 @@ export function useLoanReminders() {
           registration.showNotification('Loan account needs funding', { body: message, tag: key }),
         );
     }
-  }, [accounts, enqueueSnackbar, householdId, lines, loans, transactions]);
+  }, [
+    accounts,
+    enqueueSnackbar,
+    hasActiveLoan,
+    householdId,
+    lines,
+    linesReady,
+    loans,
+    transactions,
+    transactionsReady,
+  ]);
 }

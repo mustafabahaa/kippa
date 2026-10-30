@@ -334,7 +334,7 @@ export function TransactionHistory() {
       </Stack>
 
       {/* Shared Edit Dialog */}
-      <EditTransactionDialog open={Boolean(editingTx)} transaction={editingTx} onClose={() => setEditingTx(null)} />
+      {editingTx && <EditTransactionDialog open transaction={editingTx} onClose={() => setEditingTx(null)} />}
     </Box>
   );
 }
