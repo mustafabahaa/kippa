@@ -7,7 +7,6 @@ type State = {
   householdIdToJoin: string;
   householdToLeave: Household | null;
   newHouseholdName: string;
-  tabValue: number;
 };
 type Action = { [Key in keyof State]-?: { key: Key; value: SetStateAction<State[Key]> } }[keyof State];
 export function useHouseholdUi() {
@@ -26,7 +25,6 @@ export function useHouseholdUi() {
       householdIdToJoin: '',
       householdToLeave: null,
       newHouseholdName: '',
-      tabValue: 0,
     },
   );
   const setter =
@@ -41,6 +39,5 @@ export function useHouseholdUi() {
     setHouseholdIdToJoin: setter('householdIdToJoin'),
     setHouseholdToLeave: setter('householdToLeave'),
     setNewHouseholdName: setter('newHouseholdName'),
-    setTabValue: setter('tabValue'),
   };
 }

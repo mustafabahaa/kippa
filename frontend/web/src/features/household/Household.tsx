@@ -1,39 +1,45 @@
+import { useState } from 'react';
 import { useSnackbar } from 'notistack';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   Box,
-  Card,
-  CardContent,
   Stack,
   Typography,
   Button,
-  Divider,
   TextField,
   Chip,
-  Grid,
   Tabs,
   Tab,
+  Grid,
   Alert,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
 } from '@mui/material';
-import { ContentCopyIcon } from '@/components/AppIcon';
-import { HomeIcon } from '@/components/AppIcon';
-import { AddHomeIcon } from '@/components/AppIcon';
-import { GroupAddIcon } from '@/components/AppIcon';
-import { CheckCircleIcon } from '@/components/AppIcon';
-import { CheckIcon } from '@/components/AppIcon';
-import { HourglassEmptyIcon } from '@/components/AppIcon';
-import { CardHeading } from '@/features/shared/components/CardHeading';
+import { SectionHeading } from '@/features/shared/components/SectionHeading';
+import {
+  AddHomeIcon,
+  CheckCircleIcon,
+  ContentCopyIcon,
+  GroupAddIcon,
+  HomeIcon,
+  HourglassEmptyIcon,
+} from '@/components/AppIcon';
 
 import type { Household, CurrencyCode } from '@kippa/domain';
 import { useAppContext } from '@/hooks/useAppContext';
 import { CurrencySelect } from '@/features/shared/components/CurrencySelect';
 import { ledgerLib } from '@/libs/ledger';
 import { PageHeader } from '@/features/shared/components/PageHeader';
-import { HouseholdMembersCard } from './components/HouseholdMembersCard';
-import { YourHouseholdsCard } from './components/YourHouseholdsCard';
+import { HouseholdMembersSection } from './components/HouseholdMembersSection';
 import { LeaveHouseholdDialog } from './components/LeaveHouseholdDialog';
 import { useJoinRequestStatus } from './hooks/useJoinRequestStatus';
 import { useHouseholdUi } from './hooks/useHouseholdUi';
+
+const contentIndent = { xs: 0, md: 4 } as const;
+const sectionIndent = { xs: 0, md: 2 } as const;
 
 export function Household() {
   const { enqueueSnackbar } = useSnackbar();
@@ -65,9 +71,9 @@ export function Household() {
     setHouseholdIdToJoin,
     setHouseholdToLeave,
     setNewHouseholdName,
-    setTabValue,
-    tabValue,
   } = useHouseholdUi();
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [joinDialogOpen, setJoinDialogOpen] = useState(false);
   const queryClient = useQueryClient();
 
   const handleCopyHouseholdId = (id: string) => {
@@ -77,11 +83,12 @@ export function Household() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleSwitchHousehold = async (id: string) => {
+  const handleSwitchHousehold = async (id: string, onSuccess?: () => void) => {
     setActionLoading(true);
     try {
       await switchHousehold(id);
       enqueueSnackbar('Switched to household successfully!', { variant: 'success' });
+      onSuccess?.();
     } catch (err: any) {
       enqueueSnackbar(err.message || 'Failed to switch household.', { variant: 'error' });
     } finally {
@@ -98,6 +105,7 @@ export function Household() {
     try {
       const newHh = await createHousehold(newHouseholdName.trim());
       setNewHouseholdName('');
+      setCreateDialogOpen(false);
       enqueueSnackbar(`Household "${newHh.name}" created and set as active!`, { variant: 'success' });
     } catch (err: any) {
       enqueueSnackbar(err.message || 'Failed to create household', { variant: 'error' });
@@ -179,235 +187,246 @@ export function Household() {
   };
 
   return (
-    <Box sx={{ py: 0.5 }}>
-      <Stack spacing={3}>
-        <PageHeader
-          title="Household"
-          subtitle="Manage members, shared access, and the financial spaces you belong to."
-        />
+    <Stack spacing={{ xs: 2, md: 3 }}>
+      <PageHeader title="Household" subtitle="Manage members, shared access, and the financial spaces you belong to." />
 
-        <Grid container spacing={3} alignItems="stretch">
-          {/* Current Household Spotlight */}
-          {activeHh && (
-            <Grid size={{ xs: 12, lg: isOwner ? 7 : 12 }}>
-              <Card sx={{ height: '100%' }}>
-                <CardContent>
-                  <Stack spacing={2.5}>
-                    <CardHeading
-                      icon={<HomeIcon variant="Bulk" />}
-                      title={activeHh.name}
-                      subtitle={`${activeHh.baseCurrency} (Base Currency) • ${userProfile!.role === 'owner' ? 'Owner' : 'Member'}`}
-                      trailing={
-                        <Chip
-                          label="Active"
-                          color="primary"
-                          size="small"
-                          icon={<CheckCircleIcon sx={{ fontSize: '14px !important' }} />}
-                          sx={{ fontWeight: 700 }}
-                        />
-                      }
-                    />
-
-                    {/* Base Currency Setting */}
-                    <Box sx={{ mt: 1 }}>
-                      <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 0.5 }}>
-                        Base Currency
-                      </Typography>
-                      <CurrencySelect
-                        labelId="hh-base-currency-label"
-                        value={activeHh.baseCurrency}
-                        onChange={handleBaseCurrencyChange}
-                      />
-                      {baseCurrencyLoading && (
-                        <Typography variant="caption" sx={{ color: 'text.secondary', mt: 0.5, display: 'block' }}>
-                          Saving…
-                        </Typography>
-                      )}
-                    </Box>
-
-                    <Divider />
-
-                    <Stack spacing={1}>
-                      <Typography
-                        variant="body2"
-                        sx={{
-                          color: 'text.secondary',
-                          fontSize: '11px',
-                          fontWeight: 'bold',
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.5px',
-                        }}
-                      >
-                        Household Invite ID
-                      </Typography>
-                      <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '11px' }}>
-                        Share this ID with someone. They'll request to join, and you approve them.
-                      </Typography>
-                      <Box
-                        sx={{
-                          display: 'flex',
-                          flexDirection: { xs: 'column', sm: 'row' },
-                          alignItems: { xs: 'stretch', sm: 'center' },
-                          justifyContent: 'space-between',
-                          bgcolor: 'surfaceContainerLow',
-                          p: 1.5,
-                          borderRadius: 3,
-                          gap: 1,
-                        }}
-                      >
-                        <Typography
-                          sx={{
-                            fontFamily: 'monospace',
-                            fontSize: '13px',
-                            color: 'text.primary',
-                            userSelect: 'all',
-                            wordBreak: 'break-all',
-                            py: 0.5,
-                          }}
-                        >
-                          {activeHh.id}
-                        </Typography>
-                        <Button
-                          size="small"
-                          variant="text"
-                          onClick={() => handleCopyHouseholdId(activeHh.id)}
-                          startIcon={copied ? <CheckIcon fontSize="small" /> : <ContentCopyIcon fontSize="small" />}
-                          color={copied ? 'success' : 'primary'}
-                          sx={{ alignSelf: { xs: 'flex-end', sm: 'center' } }}
-                        >
-                          {copied ? 'Copied!' : 'Copy ID'}
-                        </Button>
-                      </Box>
-                    </Stack>
-                  </Stack>
-                </CardContent>
-              </Card>
-            </Grid>
-          )}
-
-          {/* Members + Pending Requests — owner only */}
-          {isOwner && (
-            <Grid size={{ xs: 12, lg: 5 }}>
-              <HouseholdMembersCard
-                busy={actionLoading}
-                loading={isMembersLoading}
-                members={householdMembers}
-                onDecide={handleDecide}
-                requests={pendingRequests}
-              />
-            </Grid>
-          )}
-        </Grid>
-
-        <Grid container spacing={3}>
-          {/* Left Column: Your Households List */}
-          <Grid size={{ xs: 12, md: 6 }}>
-            <YourHouseholdsCard
-              activeId={householdId}
-              busy={actionLoading}
-              households={householdsList}
-              loading={householdsLoading}
-              onLeave={handleOpenLeaveConfirm}
-              onSwitch={handleSwitchHousehold}
-            />
-          </Grid>
-
-          {/* Right Column: Create & Join Actions (Tabbed Panel) */}
-          <Grid size={{ xs: 12, md: 6 }}>
-            <Card>
-              <CardContent>
-                <CardHeading
-                  icon={<GroupAddIcon variant="Bulk" />}
-                  title="Manage households"
-                  subtitle="Create a new space or join someone else's."
-                />
-              </CardContent>
-              <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-                <Tabs value={tabValue} onChange={(...[, val]) => setTabValue(val)} variant="fullWidth">
-                  <Tab icon={<AddHomeIcon sx={{ fontSize: '18px' }} />} iconPosition="start" label="Create" />
-                  <Tab icon={<GroupAddIcon sx={{ fontSize: '18px' }} />} iconPosition="start" label="Join" />
-                </Tabs>
-              </Box>
-              <CardContent>
-                {tabValue === 0 && (
-                  <Stack spacing={2}>
-                    <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '12px' }}>
-                      Start a separate, brand-new household database container.
-                    </Typography>
-                    <TextField
-                      fullWidth
-                      label="Household Name"
-                      placeholder="e.g. Vacation Household"
-                      value={newHouseholdName}
-                      onChange={(e) => setNewHouseholdName(e.target.value)}
-                      disabled={actionLoading}
-                    />
-                    <Button fullWidth variant="contained" onClick={handleCreateHousehold} disabled={actionLoading}>
-                      Create
+      <Box sx={{ width: '100%', maxWidth: 1250, alignSelf: 'center' }}>
+        <Stack spacing={{ xs: 3, md: 4 }}>
+          <Box component="section" sx={{ pl: sectionIndent }}>
+            <Stack spacing={{ xs: 2, md: 2.5 }}>
+              <SectionHeading
+                icon={<HomeIcon />}
+                title="Your households"
+                subtitle={`${householdsList.length} financial ${householdsList.length === 1 ? 'space' : 'spaces'} available`}
+                trailing={
+                  <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems="flex-start">
+                    <Button variant="contained" startIcon={<AddHomeIcon />} onClick={() => setCreateDialogOpen(true)}>
+                      Create household
+                    </Button>
+                    <Button variant="outlined" startIcon={<GroupAddIcon />} onClick={() => setJoinDialogOpen(true)}>
+                      Join household
                     </Button>
                   </Stack>
-                )}
-                {tabValue === 1 && (
-                  <Stack spacing={2}>
-                    <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '12px' }}>
-                      Paste an Invite ID from a household owner. They'll need to approve your request before you can
-                      join.
-                    </Typography>
-                    <TextField
-                      fullWidth
-                      label="Invite ID"
-                      placeholder="Paste UUID here"
-                      value={householdIdToJoin}
-                      onChange={(e) => setHouseholdIdToJoin(e.target.value)}
-                      disabled={actionLoading}
-                    />
-                    {outgoingStatus === null && (
-                      <Button fullWidth variant="outlined" onClick={handleJoinHousehold} disabled={actionLoading}>
-                        Request to Join
-                      </Button>
-                    )}
-                    {outgoingStatus === 'pending' && (
-                      <Alert severity="info" icon={<HourglassEmptyIcon />}>
-                        Request pending — waiting for the owner to approve.
-                      </Alert>
-                    )}
-                    {outgoingStatus === 'rejected' && (
-                      <>
-                        <Alert severity="error">Your request was declined by the owner.</Alert>
-                        <Button fullWidth variant="outlined" onClick={handleJoinHousehold} disabled={actionLoading}>
-                          Request Again
-                        </Button>
-                      </>
-                    )}
-                    {outgoingStatus === 'approved' && (
-                      <>
-                        <Alert severity="success" icon={<CheckCircleIcon />}>
-                          You're approved!
-                        </Alert>
-                        <Button
-                          fullWidth
-                          variant="contained"
-                          onClick={() => handleSwitchHousehold(householdIdToJoin.trim())}
-                          disabled={householdIdToJoin.trim() === householdId || actionLoading}
-                        >
-                          Switch to this Household
-                        </Button>
-                      </>
-                    )}
-                  </Stack>
-                )}
-              </CardContent>
-            </Card>
-          </Grid>
-        </Grid>
-      </Stack>
+                }
+              />
 
-      <LeaveHouseholdDialog
-        busy={actionLoading}
-        household={householdToLeave}
-        onClose={handleCloseLeaveConfirm}
-        onConfirm={handleLeaveHousehold}
-      />
-    </Box>
+              {householdsLoading ? (
+                <Typography variant="fieldHint" color="text.secondary" sx={{ pl: contentIndent }}>
+                  Loading households…
+                </Typography>
+              ) : householdsList.length > 0 ? (
+                <Tabs
+                  value={householdId || false}
+                  onChange={(event, id: string) => {
+                    void event;
+                    handleSwitchHousehold(id);
+                  }}
+                  variant="scrollable"
+                  scrollButtons="auto"
+                  allowScrollButtonsMobile
+                  sx={{ pl: contentIndent }}
+                >
+                  {householdsList.map((household) => (
+                    <Tab key={household.id} value={household.id} label={household.name} disabled={actionLoading} />
+                  ))}
+                </Tabs>
+              ) : (
+                <Typography variant="sectionSubtitle" color="text.secondary" sx={{ pl: contentIndent }}>
+                  No households yet. Create one or request to join an existing household.
+                </Typography>
+              )}
+
+              {activeHh && (
+                <Grid container columns={12} spacing={{ xs: 3, md: 4 }} sx={{ pl: contentIndent }}>
+                  <Grid size={{ xs: 12, md: isOwner ? 4 : 12 }}>
+                    <Stack spacing={{ xs: 2.5, md: 3 }}>
+                      <SectionHeading
+                        icon={<HomeIcon />}
+                        title="Household details"
+                        subtitle={`${activeHh.baseCurrency} base currency · ${isOwner ? 'Owner' : 'Member'}`}
+                        trailing={
+                          <Stack direction="row" spacing={1} alignItems="center">
+                            <Chip size="small" label="Active" />
+                            {!isOwner && (
+                              <Button
+                                size="small"
+                                variant="outlined"
+                                color="error"
+                                onClick={() => handleOpenLeaveConfirm(activeHh)}
+                              >
+                                Leave household
+                              </Button>
+                            )}
+                          </Stack>
+                        }
+                      />
+
+                      <Stack spacing={{ xs: 2.5, md: 3 }} sx={{ pl: contentIndent }}>
+                        <Stack spacing={1.25} alignItems="flex-start">
+                          <Box>
+                            <Typography variant="sectionLabel">Base currency</Typography>
+                            <Typography variant="fieldHint" color="text.secondary">
+                              Used for household totals and reports.
+                            </Typography>
+                          </Box>
+                          <Box sx={{ width: '100%', maxWidth: { sm: 320 } }}>
+                            <CurrencySelect
+                              labelId="hh-base-currency-label"
+                              value={activeHh.baseCurrency}
+                              onChange={handleBaseCurrencyChange}
+                            />
+                          </Box>
+                          {baseCurrencyLoading && (
+                            <Typography variant="fieldHint" color="text.secondary">
+                              Saving currency…
+                            </Typography>
+                          )}
+                        </Stack>
+
+                        <Stack spacing={1} sx={{ minWidth: 0 }}>
+                          <Typography variant="sectionLabel">Invite ID</Typography>
+                          <Typography variant="fieldHint" color="text.secondary">
+                            Share this ID. The household owner can approve join requests.
+                          </Typography>
+                          <Stack
+                            direction={{ xs: 'column', sm: 'row' }}
+                            alignItems={{ xs: 'flex-start', sm: 'center' }}
+                            spacing={1}
+                            sx={{ minWidth: 0 }}
+                          >
+                            <Typography
+                              variant="body2"
+                              sx={{ userSelect: 'all', overflowWrap: 'anywhere', minWidth: 0 }}
+                            >
+                              {activeHh.id}
+                            </Typography>
+                            <Button
+                              size="small"
+                              variant="text"
+                              onClick={() => handleCopyHouseholdId(activeHh.id)}
+                              startIcon={copied ? <CheckCircleIcon /> : <ContentCopyIcon />}
+                            >
+                              {copied ? 'Copied' : 'Copy ID'}
+                            </Button>
+                          </Stack>
+                        </Stack>
+                      </Stack>
+                    </Stack>
+                  </Grid>
+
+                  {isOwner && (
+                    <Grid size={{ xs: 12, md: 8 }}>
+                      <HouseholdMembersSection
+                        busy={actionLoading}
+                        loading={isMembersLoading}
+                        members={householdMembers}
+                        onDecide={handleDecide}
+                        requests={pendingRequests}
+                      />
+                    </Grid>
+                  )}
+                </Grid>
+              )}
+            </Stack>
+          </Box>
+
+          <Dialog
+            open={createDialogOpen}
+            onClose={() => setCreateDialogOpen(false)}
+            aria-labelledby="create-household-title"
+            aria-describedby="create-household-description"
+          >
+            <DialogTitle id="create-household-title">Create a household</DialogTitle>
+            <DialogContent>
+              <Stack spacing={2.5} sx={{ pl: { xs: 1, sm: 2 }, pt: 1 }}>
+                <DialogContentText id="create-household-description">
+                  Create a separate household for another home or shared budget.
+                </DialogContentText>
+                <TextField
+                  autoFocus
+                  fullWidth
+                  label="Household name"
+                  placeholder="e.g. Vacation household"
+                  value={newHouseholdName}
+                  onChange={(event) => setNewHouseholdName(event.target.value)}
+                  disabled={actionLoading}
+                />
+              </Stack>
+            </DialogContent>
+            <DialogActions>
+              <Button variant="outlined" onClick={() => setCreateDialogOpen(false)} disabled={actionLoading}>
+                Cancel
+              </Button>
+              <Button variant="contained" onClick={handleCreateHousehold} disabled={actionLoading}>
+                Create household
+              </Button>
+            </DialogActions>
+          </Dialog>
+
+          <Dialog
+            open={joinDialogOpen}
+            onClose={() => setJoinDialogOpen(false)}
+            aria-labelledby="join-household-title"
+            aria-describedby="join-household-description"
+          >
+            <DialogTitle id="join-household-title">Join a household</DialogTitle>
+            <DialogContent>
+              <Stack spacing={2.5} sx={{ pl: { xs: 1, sm: 2 }, pt: 1 }}>
+                <DialogContentText id="join-household-description">
+                  Enter an invite ID. The owner must approve your request before you can switch to that household.
+                </DialogContentText>
+                <TextField
+                  autoFocus
+                  fullWidth
+                  label="Invite ID"
+                  placeholder="Paste invite ID"
+                  value={householdIdToJoin}
+                  onChange={(event) => setHouseholdIdToJoin(event.target.value)}
+                  disabled={actionLoading}
+                />
+                {outgoingStatus === 'pending' && (
+                  <Alert severity="info" icon={<HourglassEmptyIcon />}>
+                    Request pending — waiting for the owner to approve.
+                  </Alert>
+                )}
+                {outgoingStatus === 'rejected' && (
+                  <Alert severity="error">Your request was declined by the owner.</Alert>
+                )}
+                {outgoingStatus === 'approved' && (
+                  <Alert severity="success" icon={<CheckCircleIcon />}>
+                    You’re approved.
+                  </Alert>
+                )}
+              </Stack>
+            </DialogContent>
+            <DialogActions>
+              <Button variant="outlined" onClick={() => setJoinDialogOpen(false)} disabled={actionLoading}>
+                Close
+              </Button>
+              {outgoingStatus === 'approved' ? (
+                <Button
+                  variant="contained"
+                  onClick={() => handleSwitchHousehold(householdIdToJoin.trim(), () => setJoinDialogOpen(false))}
+                  disabled={householdIdToJoin.trim() === householdId || actionLoading}
+                >
+                  Switch household
+                </Button>
+              ) : outgoingStatus !== 'pending' ? (
+                <Button variant="contained" onClick={handleJoinHousehold} disabled={actionLoading}>
+                  {outgoingStatus === 'rejected' ? 'Request again' : 'Request to join'}
+                </Button>
+              ) : null}
+            </DialogActions>
+          </Dialog>
+
+          <LeaveHouseholdDialog
+            busy={actionLoading}
+            household={householdToLeave}
+            onClose={handleCloseLeaveConfirm}
+            onConfirm={handleLeaveHousehold}
+          />
+        </Stack>
+      </Box>
+    </Stack>
   );
 }

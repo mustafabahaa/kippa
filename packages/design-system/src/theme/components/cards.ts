@@ -5,40 +5,135 @@ import type { OverrideContext } from './types';
 declare module '@mui/material/Paper' {
   interface PaperPropsVariantOverrides {
     categoryRow: true;
+    dashboardAccountRow: true;
+    timelineRow: true;
+    iconBadge: true;
+    dashboardSection: true;
+    bankCard: true;
+    bankCardHeader: true;
+    cardDetailDialog: true;
   }
 }
 
 export const cardOverrides = ({ mode, tokens: t }: OverrideContext): Components<Theme> => {
+  const chrome = mode === 'dark' ? '#FFFFFF' : '#0D0D0D';
   const highlight = mode === 'dark' ? 'inset 0 1px 0 rgba(255,255,255,.045)' : 'inset 0 1px 0 rgba(255,255,255,.9)';
   const shadow = mode === 'dark' ? '0 12px 28px rgba(0,0,0,.16)' : '0 10px 26px rgba(24,53,34,.035)';
+  const bankCardSurface = {
+    position: 'relative',
+    overflow: 'hidden',
+    color: mode === 'dark' ? '#F5F5F5' : '#171717',
+    border: mode === 'dark' ? '1px solid rgba(255,255,255,.12)' : 0,
+    backgroundColor: mode === 'dark' ? '#292929' : '#DEDEDE',
+    backgroundImage: mode === 'dark'
+      ? 'linear-gradient(130deg, #303030 0%, #272727 55%, #202020 100%)'
+      : 'linear-gradient(130deg, #EAEAEA 0%, #DEDEDE 55%, #D3D3D3 100%)',
+    boxShadow: 'none',
+    transition: 'transform 150ms ease, filter 150ms ease',
+    '&[data-inactive="true"]': { filter: 'grayscale(1) brightness(.72)' },
+    '&[data-clickable="true"]:hover': { transform: 'translateY(-2px)' },
+    '.bank-card-muted': { color: mode === 'dark' ? 'rgba(245,245,245,.72)' : 'rgba(23,23,23,.68)' },
+    '.bank-card-utilization': {
+      height: 3,
+      maxWidth: 180,
+      marginTop: 8,
+      borderRadius: 2,
+      backgroundColor: mode === 'dark' ? 'rgba(255,255,255,.14)' : 'rgba(0,0,0,.12)',
+      '& .MuiLinearProgress-bar': { backgroundColor: mode === 'dark' ? '#FFFFFF' : '#0D0D0D' },
+    },
+    '.bank-card-utilization-detail': {
+      height: 6,
+      borderRadius: 3,
+      backgroundColor: mode === 'dark' ? 'rgba(255,255,255,.25)' : 'rgba(0,0,0,.15)',
+      '& .MuiLinearProgress-bar': { borderRadius: 3 },
+    },
+    '.bank-card-utilization-detail--success .MuiLinearProgress-bar': { backgroundColor: designTokens.color.success },
+    '.bank-card-utilization-detail--warning .MuiLinearProgress-bar': { backgroundColor: designTokens.color.warning },
+    '.bank-card-utilization-detail--error .MuiLinearProgress-bar': { backgroundColor: designTokens.color.error },
+    '.bank-card-pay-action': {
+      backgroundColor: mode === 'dark' ? 'rgba(255,255,255,.16)' : '#0D0D0D',
+      color: '#FFFFFF',
+      '&:hover': { backgroundColor: mode === 'dark' ? 'rgba(255,255,255,.24)' : '#262626' },
+      '&.Mui-disabled': {
+        backgroundColor: mode === 'dark' ? 'rgba(255,255,255,.08)' : 'rgba(13,13,13,.16)',
+        color: mode === 'dark' ? 'rgba(245,245,245,.4)' : 'rgba(23,23,23,.42)',
+      },
+    },
+  } as const;
   return {
     MuiPaper: {
       styleOverrides: {
         root: {
-          backgroundColor: mode === 'dark' ? 'rgba(14,17,16,.96)' : 'rgba(255,255,255,.92)',
+          backgroundColor: t.surfacePure,
           backgroundImage: 'none',
         },
       },
       variants: [
+        {
+          props: { variant: 'bankCard' },
+          style: {
+            ...bankCardSurface,
+            borderRadius: 18,
+          },
+        },
+        {
+          props: { variant: 'bankCardHeader' },
+          style: {
+            ...bankCardSurface,
+            border: 0,
+            borderRadius: `${designTokens.radius.dialog}px ${designTokens.radius.dialog}px 0 0`,
+          },
+        },
+        {
+          props: { variant: 'cardDetailDialog' },
+          style: {
+            borderRadius: designTokens.radius.dialog,
+            overflow: 'hidden',
+            padding: 0,
+          },
+        },
+        {
+          props: { variant: 'dashboardAccountRow' },
+          style: {
+            padding: '10px 0 0',
+            border: 0,
+            borderTop: `1px solid ${t.borderGray}`,
+            borderRadius: 0,
+            background: 'transparent',
+            boxShadow: 'none',
+            outlineColor: chrome,
+          },
+        },
+        {
+          props: { variant: 'timelineRow' },
+          style: {
+            border: 0,
+            borderRadius: 0,
+            backgroundColor: 'transparent',
+            boxShadow: 'none',
+            transition: 'background-color 150ms ease',
+            '&:hover': { backgroundColor: alpha(chrome, mode === 'dark' ? 0.06 : 0.04) },
+          },
+        },
         {
           props: { variant: 'categoryRow' },
           style: {
             borderRadius: 10,
             border: '1px solid transparent',
             boxShadow: 'none',
-            backgroundColor: alpha(designTokens.color.primaryContainer, mode === 'dark' ? 0.12 : 0.06),
+            backgroundColor: alpha(chrome, mode === 'dark' ? 0.12 : 0.06),
             '.category-dot': {
               width: 7,
               height: 7,
               borderRadius: '50%',
-              backgroundColor: designTokens.color.primaryContainer,
+              backgroundColor: chrome,
               flexShrink: 0,
             },
             '&[data-category-type="income"] .category-dot': { backgroundColor: designTokens.color.success },
             '.category-row-action': {
               width: 36,
               height: 36,
-              color: designTokens.color.primaryContainer,
+              color: chrome,
               opacity: 0,
               pointerEvents: 'none',
               transition: 'opacity .15s ease',
@@ -49,20 +144,20 @@ export const cardOverrides = ({ mode, tokens: t }: OverrideContext): Components<
         {
           props: { variant: 'amountPanel' },
           style: {
-            borderRadius: 24,
-            border: '1px solid transparent',
-            backgroundColor: designTokens.color.primary,
-            color: designTokens.color.onPrimary,
-            boxShadow: designTokens.shadow.lifted,
+            border: 0,
+            borderRadius: 0,
+            backgroundColor: 'transparent',
+            color: t.textPrimary,
+            boxShadow: 'none',
             transition: 'all .2s ease',
           },
         },
         {
           props: { variant: 'amountPanelInactive' },
           style: {
-            borderRadius: 24,
-            border: `1px solid ${t.borderGray}`,
-            backgroundColor: t.surfacePure,
+            border: 0,
+            borderRadius: 0,
+            backgroundColor: 'transparent',
             color: t.textSecondary,
             boxShadow: 'none',
             transition: 'all .2s ease',
@@ -76,9 +171,9 @@ export const cardOverrides = ({ mode, tokens: t }: OverrideContext): Components<
             borderRadius: 14,
             display: 'grid',
             placeItems: 'center',
-            backgroundColor: designTokens.color.primary,
-            color: designTokens.color.onPrimary,
-            boxShadow: designTokens.shadow.lifted,
+            backgroundColor: mode === 'dark' ? '#FFFFFF' : '#0D0D0D',
+            color: mode === 'dark' ? '#0D0D0D' : '#FFFFFF',
+            boxShadow: 'none',
           },
         },
         {
@@ -95,16 +190,16 @@ export const cardOverrides = ({ mode, tokens: t }: OverrideContext): Components<
             color: t.textPrimary,
             boxShadow: 'none',
             transition: 'border-color .2s ease',
-            '&:focus-within': { borderColor: designTokens.color.primaryContainer },
+            '&:focus-within': { borderColor: chrome },
           },
         },
         {
           props: { variant: 'assistantUserMessage' },
           style: {
-            borderRadius: '18px 18px 6px 18px',
+            borderRadius: 18,
             padding: '10px 16px',
-            backgroundColor: designTokens.color.primary,
-            color: designTokens.color.onPrimary,
+            backgroundColor: t.surfaceContainerLow,
+            color: t.textPrimary,
             boxShadow: 'none',
           },
         },
@@ -174,7 +269,7 @@ export const cardOverrides = ({ mode, tokens: t }: OverrideContext): Components<
           },
         },
         {
-          props: { variant: 'cardHeaderIcon' },
+          props: { variant: 'iconBadge' },
           style: {
             width: 44,
             height: 44,
@@ -183,22 +278,19 @@ export const cardOverrides = ({ mode, tokens: t }: OverrideContext): Components<
             placeItems: 'center',
             flexShrink: 0,
             backgroundColor: alpha(designTokens.color.secondary, 0.14),
-            color: designTokens.color.primaryContainer,
+            color: chrome,
             boxShadow: 'none',
           },
         },
         {
-          props: { variant: 'loanProgressSegment' },
+          props: { variant: 'balanceTile' },
           style: {
-            border: 0,
-            borderRadius: 999,
-            backgroundColor: alpha(designTokens.color.secondary, mode === 'dark' ? 0.14 : 0.12),
+            padding: '12px 14px',
+            borderRadius: 12,
+            border: `1px solid ${t.borderGray}`,
+            backgroundColor: t.surfacePure,
             boxShadow: 'none',
           },
-        },
-        {
-          props: { variant: 'loanProgressSegmentPaid' },
-          style: { border: 0, borderRadius: 999, backgroundColor: designTokens.color.secondary, boxShadow: 'none' },
         },
         {
           props: { variant: 'categoryCapacity' },
@@ -207,8 +299,8 @@ export const cardOverrides = ({ mode, tokens: t }: OverrideContext): Components<
             overflow: 'hidden',
             borderRadius: '14px 14px 10px 10px',
             border: 0,
-            backgroundColor: alpha(designTokens.color.primaryContainer, mode === 'dark' ? 0.16 : 0.075),
-            backgroundImage: `repeating-linear-gradient(135deg, transparent 0 8px, ${alpha(designTokens.color.primaryContainer, mode === 'dark' ? 0.12 : 0.07)} 8px 10px)`,
+            backgroundColor: alpha(chrome, mode === 'dark' ? 0.16 : 0.075),
+            backgroundImage: `repeating-linear-gradient(135deg, transparent 0 8px, ${alpha(chrome, mode === 'dark' ? 0.12 : 0.07)} 8px 10px)`,
             boxShadow: 'none',
           },
         },
@@ -220,7 +312,7 @@ export const cardOverrides = ({ mode, tokens: t }: OverrideContext): Components<
             bottom: 0,
             borderRadius: '11px 11px 8px 8px',
             border: 0,
-            backgroundColor: designTokens.color.primaryContainer,
+            backgroundColor: chrome,
             boxShadow: 'none',
             transition: 'height .3s ease',
           },
@@ -266,6 +358,18 @@ export const cardOverrides = ({ mode, tokens: t }: OverrideContext): Components<
       },
       variants: [
         {
+          props: { variant: 'dashboardSection' },
+          style: {
+            padding: 0,
+            border: 0,
+            borderRadius: 0,
+            background: 'transparent',
+            boxShadow: 'none',
+            '&& > .MuiCardContent-root': { padding: 0 },
+            '&& > .MuiCardContent-root:last-child': { paddingBottom: 0 },
+          },
+        },
+        {
           props: { variant: 'selectable' },
           style: {
             borderRadius: 16,
@@ -280,8 +384,8 @@ export const cardOverrides = ({ mode, tokens: t }: OverrideContext): Components<
           style: {
             borderRadius: 16,
             border: '1px solid transparent',
-            background: alpha(designTokens.color.primaryContainer, 0.08),
-            color: designTokens.color.primaryContainer,
+            background: alpha(chrome, 0.08),
+            color: chrome,
             boxShadow: 'none',
           },
         },

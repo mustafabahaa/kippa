@@ -1,3 +1,4 @@
+import { IconAdjustments, IconCheck, IconCopy, IconEye, IconEyeOff, IconHome, IconLogout2, IconMoon, IconSun } from '@tabler/icons-react';
 import {
   Box,
   Menu,
@@ -7,22 +8,14 @@ import {
   ListItemText,
   Typography,
   Stack,
-  Avatar,
   Tooltip,
   IconButton,
 } from '@mui/material';
-import { HomeIcon } from '@/components/AppIcon';
-import { LogoutIcon } from '@/components/AppIcon';
-import { LightModeIcon } from '@/components/AppIcon';
-import { DarkModeIcon } from '@/components/AppIcon';
-import { SettingsBrightnessIcon } from '@/components/AppIcon';
-import { CheckIcon } from '@/components/AppIcon';
-import { ContentCopyIcon } from '@/components/AppIcon';
-import { VisibilityIcon } from '@/components/AppIcon';
-import { VisibilityOffIcon } from '@/components/AppIcon';
 import type { ThemeModePref } from '@/contexts/themeModeContext';
 import type { UserProfile, Household } from '@kippa/domain';
 import { usePrivacyMode } from '@/hooks/usePrivacyMode';
+import { auth } from '@/config/firebase';
+import { UserAvatar } from '@/components/UserAvatar';
 
 interface ProfileMenuProps {
   anchorEl: HTMLElement | null;
@@ -96,7 +89,6 @@ export function ProfileMenu({
             borderRadius: '12px',
             border: '1px solid',
             borderColor: 'divider',
-            boxShadow: 'rgba(0, 0, 0, 0.08) 0px 12px 24px -4px, rgba(0, 0, 0, 0.04) 0px 4px 12px -2px',
             '&::before': {
               content: '""',
               display: 'block',
@@ -121,12 +113,11 @@ export function ProfileMenu({
       {/* User details */}
       <Box sx={{ px: 2.5, py: 2 }}>
         <Stack direction="row" spacing={2} alignItems="center">
-          <Avatar
-            src={userProfile?.photoURL || undefined}
+          <UserAvatar
+            photoURLs={[auth?.currentUser?.photoURL, userProfile?.photoURL]}
+            displayName={userProfile?.displayName}
             sx={{ bgcolor: 'primary.main', width: 44, height: 44, fontSize: '1.1rem', fontWeight: 600 }}
-          >
-            {userProfile?.displayName ? userProfile.displayName.charAt(0).toUpperCase() : 'U'}
-          </Avatar>
+          />
           <Box sx={{ minWidth: 0 }}>
             <Typography variant="body1" noWrap sx={{ fontWeight: 600, color: 'text.primary' }}>
               {userProfile?.displayName || 'User'}
@@ -172,7 +163,7 @@ export function ProfileMenu({
             borderColor: 'divider',
           }}
         >
-          <HomeIcon sx={{ color: 'text.secondary', fontSize: 20 }} />
+          <IconHome size={22} strokeWidth={1.8} />
           <Box sx={{ flexGrow: 1, minWidth: 0 }}>
             <Typography variant="body2" noWrap sx={{ fontWeight: 600, color: 'text.primary', fontSize: '0.8125rem' }}>
               {householdName}
@@ -198,7 +189,7 @@ export function ProfileMenu({
                   '&:hover': { bgcolor: 'action.hover' },
                 }}
               >
-                <ContentCopyIcon sx={{ fontSize: 13, color: 'text.secondary' }} />
+                <IconCopy size={22} strokeWidth={1.8} />
               </IconButton>
             </Tooltip>
           )}
@@ -240,7 +231,7 @@ export function ProfileMenu({
                 sx={menuItemStyle}
               >
                 <ListItemIcon>
-                  <HomeIcon fontSize="small" />
+                  <IconHome size={22} strokeWidth={1.8} />
                 </ListItemIcon>
                 <ListItemText primary={hh.name} secondary={`ID: ${hh.id.slice(0, 8)}...`} />
               </MenuItem>
@@ -269,9 +260,9 @@ export function ProfileMenu({
         Appearance
       </Typography>
       {[
-        { value: 'light' as ThemeModePref, label: 'Light', Icon: LightModeIcon },
-        { value: 'dark' as ThemeModePref, label: 'Dark', Icon: DarkModeIcon },
-        { value: 'system' as ThemeModePref, label: 'System default', Icon: SettingsBrightnessIcon },
+        { value: 'light' as ThemeModePref, label: 'Light', Icon: IconSun },
+        { value: 'dark' as ThemeModePref, label: 'Dark', Icon: IconMoon },
+        { value: 'system' as ThemeModePref, label: 'System default', Icon: IconAdjustments },
       ].map(({ value, label, Icon }) => {
         const selected = modePref === value;
         return (
@@ -284,10 +275,10 @@ export function ProfileMenu({
             sx={{ ...menuItemStyle, py: 0.75 }}
           >
             <ListItemIcon>
-              <Icon fontSize="small" />
+              <Icon size={22} strokeWidth={1.8} />
             </ListItemIcon>
             <ListItemText primary={label} />
-            {selected && <CheckIcon fontSize="small" sx={{ color: 'primary.main', ml: 'auto' }} />}
+            {selected && <IconCheck size={22} strokeWidth={1.8} />}
           </MenuItem>
         );
       })}
@@ -303,10 +294,10 @@ export function ProfileMenu({
         sx={{ ...menuItemStyle, py: 0.75 }}
       >
         <ListItemIcon>
-          {privacyMode ? <VisibilityOffIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
+          {privacyMode ? <IconEyeOff size={22} strokeWidth={1.8} /> : <IconEye size={22} strokeWidth={1.8} />}
         </ListItemIcon>
         <ListItemText primary={privacyMode ? 'Privacy Mode On' : 'Privacy Mode'} secondary="Hide balances" />
-        {privacyMode && <CheckIcon fontSize="small" sx={{ color: 'primary.main', ml: 'auto' }} />}
+        {privacyMode && <IconCheck size={22} strokeWidth={1.8} />}
       </MenuItem>
 
       <Divider sx={{ my: 1 }} />
@@ -324,7 +315,7 @@ export function ProfileMenu({
         }}
       >
         <ListItemIcon>
-          <LogoutIcon fontSize="small" />
+          <IconLogout2 size={22} strokeWidth={1.8} />
         </ListItemIcon>
         <ListItemText primary="Sign Out" />
       </MenuItem>

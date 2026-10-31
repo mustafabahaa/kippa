@@ -1,31 +1,14 @@
 import { useState } from 'react';
 import { useSnackbar } from 'notistack';
-import {
-  Box,
-  Button,
-  Card,
-  CardContent,
-  Container,
-  Stack,
-  TextField,
-  Typography,
-  Alert,
-  useTheme,
-  InputAdornment,
-} from '@mui/material';
-import { alpha } from '@mui/material/styles';
-import { HomeIcon } from '@/components/AppIcon';
-import { GroupAddIcon } from '@/components/AppIcon';
-import { AddHomeIcon } from '@/components/AppIcon';
-import { LogoutIcon } from '@/components/AppIcon';
-import { InfoOutlinedIcon } from '@/components/AppIcon';
-import { KeyIcon } from '@/components/AppIcon';
+import { Box, Button, Container, Stack, TextField, Typography, Alert, useTheme, InputAdornment } from '@mui/material';
 import { isFirebaseReady } from '@/libs/auth';
 import { useAppContext } from '@/hooks/useAppContext';
+import { AddHomeIcon, GroupAddIcon, HomeIcon, KeyIcon, LogoutIcon } from '@/components/AppIcon';
 
 export function AuthScreen() {
   const theme = useTheme();
-  const logoSrc = '/icons/logo_green_transparent.png';
+  const logoSrc =
+    theme.palette.mode === 'dark' ? '/icons/logo_white_transparent.png' : '/icons/logo_black_transparent.png';
   const { enqueueSnackbar } = useSnackbar();
   const { userProfile, loginWithGoogle, logout, createHousehold, requestToJoinHousehold } = useAppContext();
 
@@ -87,7 +70,7 @@ export function AuthScreen() {
     return (
       <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', p: 3 }}>
         <Container maxWidth="sm">
-          <Alert severity="error" sx={{ borderRadius: 3 }}>
+          <Alert severity="error">
             Firebase is not configured. Copy <strong>.env.example</strong> to <strong>.env</strong> and set your{' '}
             <strong>VITE_FIREBASE_*</strong> credentials.
           </Alert>
@@ -102,194 +85,110 @@ export function AuthScreen() {
       <Box
         sx={{
           minHeight: '100vh',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          bgcolor: 'transparent',
+          display: 'grid',
+          placeItems: 'center',
           p: { xs: 2, sm: 4 },
-          position: 'relative',
-          zIndex: 1,
         }}
       >
         <Container maxWidth="md">
-          <Stack spacing={4} alignItems="center">
-            {/* Header / Intro section */}
-            <Box textAlign="center" sx={{ maxWidth: 600, mb: 1 }}>
-              <Typography
-                variant="h2"
-                sx={{
-                  fontSize: { xs: '1.75rem', sm: '2.25rem' },
-                  fontWeight: 800,
-                  letterSpacing: '-0.02em',
-                  color: 'text.primary',
-                  mb: 1.5,
-                }}
-              >
-                Setup Your Workspace
-              </Typography>
-              <Typography
-                variant="body1"
-                sx={{
-                  color: 'text.secondary',
-                  fontSize: { xs: '14px', sm: '16px' },
-                  lineHeight: 1.6,
-                  px: 2,
-                }}
-              >
-                Welcome back, <strong>{userProfile.displayName}</strong>! To get started, you need to create a new
-                household workspace or join an existing shared one.
+          <Stack spacing={4} sx={{ width: '100%', maxWidth: 900, mx: 'auto' }}>
+            <Box sx={{ maxWidth: 620 }}>
+              <Typography variant="h2">Set up your household</Typography>
+              <Typography variant="body1" color="text.secondary" sx={{ mt: 1 }}>
+                Welcome back, <strong>{userProfile.displayName}</strong>. Create a household or ask to join one you
+                trust.
               </Typography>
             </Box>
 
-            {/* Core Cards: Split Layout */}
-            <Stack direction={{ xs: 'column', md: 'row' }} spacing={4} sx={{ width: '100%', alignItems: 'stretch' }}>
-              {/* Card A: Create Household */}
-              <Card
-                sx={{
-                  flex: 1,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  '&:hover': {
-                    '& .icon-badge-create': {
-                      transform: 'scale(1.08)',
-                      bgcolor: alpha(theme.palette.primary.main, 0.15),
+            <Box
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: { xs: 'minmax(0, 1fr)', md: 'repeat(2, minmax(0, 1fr))' },
+                columnGap: { xs: 4, md: 6 },
+                rowGap: 4,
+              }}
+            >
+              <Stack spacing={2}>
+                <Stack direction="row" spacing={1.25} alignItems="center">
+                  <AddHomeIcon />
+                  <Typography variant="sectionTitle">Create a household</Typography>
+                </Stack>
+                <Typography variant="body2" color="text.secondary">
+                  Start a shared household ledger. You’ll be its owner and can invite other members later.
+                </Typography>
+                <TextField
+                  fullWidth
+                  label="Household name"
+                  placeholder="e.g. Our household"
+                  value={householdName}
+                  onChange={(event) => setHouseholdName(event.target.value)}
+                  disabled={loading}
+                  slotProps={{
+                    input: {
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <HomeIcon fontSize="small" />
+                        </InputAdornment>
+                      ),
                     },
-                  },
-                }}
-              >
-                <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', height: '100%' }}>
-                  {/* Icon Badge */}
-                  <Box
-                    className="icon-badge-create"
-                    sx={{
-                      width: 56,
-                      height: 56,
-                      borderRadius: '12px',
-                      bgcolor: alpha(theme.palette.primary.main, 0.1),
-                      color: 'primary.main',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      mb: 3,
-                      transition: 'all 0.3s ease',
-                    }}
-                  >
-                    <AddHomeIcon sx={{ fontSize: 28 }} />
-                  </Box>
+                  }}
+                />
+                <Button
+                  variant="primaryAction"
+                  onClick={handleCreateHousehold}
+                  loading={loading}
+                  disabled={!householdName.trim()}
+                  sx={{ alignSelf: 'flex-start', width: { xs: '100%', sm: 'auto' } }}
+                >
+                  Create household
+                </Button>
+              </Stack>
 
-                  <Typography variant="h3" sx={{ fontSize: '1.25rem', fontWeight: 700, mb: 1.5 }}>
-                    Create a New Household
-                  </Typography>
-
-                  <Typography variant="body2" sx={{ color: 'text.secondary', mb: 4, lineHeight: 1.6, flexGrow: 1 }}>
-                    Establish a brand new shared ledger workspace. As the creator, you'll be the household administrator
-                    and can invite other members via a shared ID anytime.
-                  </Typography>
-
-                  <Stack spacing={2} sx={{ mt: 'auto' }}>
-                    <TextField
-                      fullWidth
-                      label="Household Name"
-                      placeholder="e.g. My Cozy Home"
-                      value={householdName}
-                      onChange={(e) => setHouseholdName(e.target.value)}
-                      disabled={loading}
-                      slotProps={{
-                        input: {
-                          startAdornment: (
-                            <InputAdornment position="start">
-                              <HomeIcon sx={{ color: 'text.secondary', fontSize: 20 }} />
-                            </InputAdornment>
-                          ),
-                        },
-                      }}
-                    />
-                    <Button fullWidth variant="contained" onClick={handleCreateHousehold} loading={loading}>
-                      Create Household
-                    </Button>
-                  </Stack>
-                </CardContent>
-              </Card>
-
-              {/* Card B: Join Household */}
-              <Card
-                sx={{
-                  flex: 1,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  '&:hover': {
-                    '& .icon-badge-join': {
-                      transform: 'scale(1.08)',
-                      bgcolor: alpha(theme.palette.secondary.main, 0.15),
+              <Stack spacing={2}>
+                <Stack direction="row" spacing={1.25} alignItems="center">
+                  <GroupAddIcon />
+                  <Typography variant="sectionTitle">Join a household</Typography>
+                </Stack>
+                <Typography variant="body2" color="text.secondary">
+                  Enter an invite ID from the household owner. They’ll review your request before you get access.
+                </Typography>
+                <TextField
+                  fullWidth
+                  label="Household invite ID"
+                  placeholder="Paste the invite ID"
+                  value={householdIdToJoin}
+                  onChange={(event) => setHouseholdIdToJoin(event.target.value)}
+                  disabled={loading}
+                  slotProps={{
+                    input: {
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <KeyIcon fontSize="small" />
+                        </InputAdornment>
+                      ),
                     },
-                  },
-                }}
-              >
-                <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', height: '100%' }}>
-                  {/* Icon Badge */}
-                  <Box
-                    className="icon-badge-join"
-                    sx={{
-                      width: 56,
-                      height: 56,
-                      borderRadius: '12px',
-                      bgcolor: alpha(theme.palette.secondary.main, 0.1),
-                      color: 'secondary.main',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      mb: 3,
-                      transition: 'all 0.3s ease',
-                    }}
-                  >
-                    <GroupAddIcon sx={{ fontSize: 28 }} />
-                  </Box>
+                  }}
+                />
+                <Button
+                  variant="outlined"
+                  onClick={handleJoinHousehold}
+                  loading={loading}
+                  disabled={!householdIdToJoin.trim()}
+                  sx={{ alignSelf: 'flex-start', width: { xs: '100%', sm: 'auto' } }}
+                >
+                  Request to join
+                </Button>
+              </Stack>
+            </Box>
 
-                  <Typography variant="h3" sx={{ fontSize: '1.25rem', fontWeight: 700, mb: 1.5 }}>
-                    Join an Existing Household
-                  </Typography>
-
-                  <Typography variant="body2" sx={{ color: 'text.secondary', mb: 4, lineHeight: 1.6, flexGrow: 1 }}>
-                    Connect to an existing workspace created by someone else. You will need their Household ID to
-                    instantly sync up and share budget ledger logs.
-                  </Typography>
-
-                  <Stack spacing={2} sx={{ mt: 'auto' }}>
-                    <TextField
-                      fullWidth
-                      label="Household ID"
-                      placeholder="Paste ID here (e.g. uuid-format)"
-                      value={householdIdToJoin}
-                      onChange={(e) => setHouseholdIdToJoin(e.target.value)}
-                      disabled={loading}
-                      slotProps={{
-                        input: {
-                          startAdornment: (
-                            <InputAdornment position="start">
-                              <KeyIcon sx={{ color: 'text.secondary', fontSize: 20 }} />
-                            </InputAdornment>
-                          ),
-                        },
-                      }}
-                    />
-                    <Button fullWidth variant="outlined" onClick={handleJoinHousehold} loading={loading}>
-                      Join Household
-                    </Button>
-                  </Stack>
-                </CardContent>
-              </Card>
+            <Stack spacing={2} alignItems="flex-start">
+              <Alert severity="info" icon={false}>
+                You can find your household invite ID in the profile menu after signing in.
+              </Alert>
+              <Button variant="segmented" onClick={handleLogout} startIcon={<LogoutIcon fontSize="small" />}>
+                Sign out
+              </Button>
             </Stack>
-
-            {/* Help Alert tip block */}
-            <Alert severity="info" icon={<InfoOutlinedIcon fontSize="small" />} sx={{ width: '100%' }}>
-              <strong>Tip:</strong> You can find your Household ID inside the user profile menu at the top-right corner
-              of the application once logged in.
-            </Alert>
-
-            {/* Logout / Switch User */}
-            <Button variant="text" color="error" onClick={handleLogout} startIcon={<LogoutIcon fontSize="small" />}>
-              Sign out / Change Account
-            </Button>
           </Stack>
         </Container>
       </Box>
@@ -302,8 +201,8 @@ export function AuthScreen() {
     <Box
       sx={{
         minHeight: '100dvh',
-        bgcolor: 'primary.dark',
-        color: 'primary.contrastText',
+        bgcolor: 'background.default',
+        color: 'text.primary',
         display: 'grid',
         placeItems: 'center',
         px: { xs: 3, sm: 5 },
@@ -325,61 +224,27 @@ export function AuthScreen() {
               width: 42,
               height: 42,
               borderRadius: 2.5,
-              bgcolor: alpha(theme.palette.primary.contrastText, 0.96),
               display: 'grid',
               placeItems: 'center',
             }}
           >
             <img src={logoSrc} alt="Kippa Logo" style={{ width: 26, height: 26, objectFit: 'contain' }} />
           </Box>
-          <Typography sx={{ fontSize: 22, fontWeight: 800, letterSpacing: '-0.05em', color: 'primary.contrastText' }}>
+          <Typography variant="h6" color="text.primary">
             Kippa
           </Typography>
         </Stack>
 
         <Box sx={{ mt: 'auto', mb: { xs: 5, sm: 2 } }}>
-          <Typography
-            sx={{
-              fontSize: { xs: '3rem', sm: '4rem' },
-              lineHeight: 1.05,
-              fontWeight: 500,
-              letterSpacing: '-0.065em',
-              maxWidth: 430,
-              textWrap: 'balance',
-              color: 'primary.contrastText',
-            }}
-          >
+          <Typography variant="h1" sx={{ maxWidth: 430, textWrap: 'balance' }}>
             Track your spending effortlessly
           </Typography>
-          <Typography
-            sx={{
-              mt: 2.5,
-              mb: 4.5,
-              color: alpha(theme.palette.primary.contrastText, 0.78),
-              fontSize: { xs: 15, sm: 17 },
-              lineHeight: 1.55,
-              maxWidth: 420,
-            }}
-          >
+          <Typography variant="body1" color="text.secondary" sx={{ mt: 2.5, mb: 4.5, maxWidth: 420 }}>
             Manage your household finances, follow every expense, and keep your goals in sight.
           </Typography>
 
           <Box sx={{ width: '100%' }}>
-            <Button
-              fullWidth
-              variant="contained"
-              onClick={handleGoogleSignIn}
-              loading={loading}
-              sx={{
-                height: 62,
-                borderRadius: 999,
-                bgcolor: 'primary.contrastText',
-                color: 'primary.dark',
-                textTransform: 'none',
-                fontSize: 16,
-                '&:hover': { bgcolor: alpha(theme.palette.primary.contrastText, 0.9), transform: 'translateY(-1px)' },
-              }}
-            >
+            <Button fullWidth variant="primaryAction" onClick={handleGoogleSignIn} loading={loading}>
               <Stack direction="row" spacing={1.5} alignItems="center" justifyContent="center">
                 <svg height="20" viewBox="0 0 24 24" width="20" xmlns="http://www.w3.org/2000/svg">
                   <path
@@ -399,15 +264,11 @@ export function AuthScreen() {
                     fill="#EA4335"
                   ></path>
                 </svg>
-                <Typography variant="body1" sx={{ fontWeight: 700, color: 'inherit', fontSize: '15px' }}>
-                  Get started with Google
-                </Typography>
+                <Typography variant="body1">Get started with Google</Typography>
               </Stack>
             </Button>
           </Box>
-          <Typography
-            sx={{ mt: 2.5, textAlign: 'center', color: alpha(theme.palette.primary.contrastText, 0.72), fontSize: 13 }}
-          >
+          <Typography variant="fieldHint" color="text.secondary" sx={{ mt: 2.5, textAlign: 'center' }}>
             Secure sign-in · Your financial data stays private
           </Typography>
         </Box>

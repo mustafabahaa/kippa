@@ -1,13 +1,29 @@
-import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Stack, TextField } from '@mui/material';
+import {
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
+  Stack,
+  TextField,
+  Typography,
+} from '@mui/material';
 import { MerchantKeywordsEditor } from './MerchantKeywordsEditor';
 
 interface CategoryNameDialogProps {
   open: boolean;
   title: string;
+  description: string;
   confirmLabel: string;
   value: string;
   placeholder?: string;
   loading: boolean;
+  categoryType?: 'income' | 'expense';
+  onCategoryTypeChange?: (type: 'income' | 'expense') => void;
   /** Present only when editing an existing category: merchant keywords that
    *  auto-suggest this category for imported bank messages. */
   merchants?: string[];
@@ -20,10 +36,13 @@ interface CategoryNameDialogProps {
 export function CategoryNameDialog({
   open,
   title,
+  description,
   confirmLabel,
   value,
   placeholder,
   loading,
+  categoryType,
+  onCategoryTypeChange,
   merchants,
   onChange,
   onMerchantsChange,
@@ -33,10 +52,13 @@ export function CategoryNameDialog({
   const editingMerchants = merchants !== undefined && !!onMerchantsChange;
 
   return (
-    <Dialog open={open} onClose={onClose}>
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
       <DialogTitle>{title}</DialogTitle>
-      <DialogContent dividers sx={{ minWidth: { xs: 320, sm: 460 }, pb: 3 }}>
-        <Stack spacing={3} sx={{ mt: 1 }}>
+      <DialogContent sx={{ pt: 1 }}>
+        <Stack spacing={3} sx={{ px: 2, pt: 1, pb: 2 }}>
+          <Typography variant="sectionSubtitle" color="text.secondary">
+            {description}
+          </Typography>
           <TextField
             autoFocus
             fullWidth
@@ -46,6 +68,21 @@ export function CategoryNameDialog({
             onChange={(event) => onChange(event.target.value)}
             disabled={loading}
           />
+          {categoryType && onCategoryTypeChange && (
+            <FormControl fullWidth disabled={loading}>
+              <InputLabel id="category-type-label">Type</InputLabel>
+              <Select
+                size="medium"
+                labelId="category-type-label"
+                label="Type"
+                value={categoryType}
+                onChange={(event) => onCategoryTypeChange(event.target.value as 'income' | 'expense')}
+              >
+                <MenuItem value="expense">Expense</MenuItem>
+                <MenuItem value="income">Income</MenuItem>
+              </Select>
+            </FormControl>
+          )}
           {editingMerchants && (
             <MerchantKeywordsEditor keywords={merchants} onChange={onMerchantsChange} disabled={loading} emptyState />
           )}

@@ -1,5 +1,6 @@
 import { Alert, AlertTitle, Button, Stack } from '@mui/material';
 import { IosShareIcon } from '@/components/AppIcon';
+import { Typography } from '@mui/material';
 
 interface Props {
   onClose?: () => void;
@@ -24,18 +25,19 @@ export function IosInstallBanner({ onClose }: Props) {
     >
       <AlertTitle>Enable notifications on iPhone</AlertTitle>
       <Stack spacing={1}>
-        <span>To receive push notifications, add Kippa to your Home Screen:</span>
-        <span>
-          <strong>1.</strong> Tap the <IosShareIcon fontSize="small" sx={{ verticalAlign: 'middle' }} /> Share button in
-          Safari's toolbar.
-        </span>
-        <span>
+        <Typography variant="body2">To receive push notifications, add Kippa to your Home Screen:</Typography>
+        <Typography variant="body2">
+          <strong>1.</strong> Tap the <IosShareIcon fontSize="small" /> Share button in Safari's toolbar.
+        </Typography>
+        <Typography variant="body2">
           <strong>2.</strong> Select <strong>"Add to Home Screen"</strong>.
-        </span>
-        <span>
+        </Typography>
+        <Typography variant="body2">
           <strong>3.</strong> Open Kippa from the Home Screen icon, then enable notifications.
-        </span>
-        <span style={{ opacity: 0.7, fontSize: '0.85em' }}>Requires iOS 16.4 or later.</span>
+        </Typography>
+        <Typography variant="fieldHint" color="text.secondary">
+          Requires iOS 16.4 or later.
+        </Typography>
       </Stack>
     </Alert>
   );

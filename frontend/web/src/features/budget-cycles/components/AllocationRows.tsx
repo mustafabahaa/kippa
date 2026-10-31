@@ -1,5 +1,5 @@
+import { IconTrash } from '@tabler/icons-react';
 import { IconButton, List, ListItem, ListItemText, Stack, TextField } from '@mui/material';
-import { DeleteOutlineIcon } from '@/components/AppIcon';
 
 export interface AllocationRow {
   categoryId: string;
@@ -57,7 +57,7 @@ export function AllocationRows({
                     color="error"
                     sx={{ width: 30, height: 30 }}
                   >
-                    <DeleteOutlineIcon fontSize="small" />
+                    <IconTrash size={22} strokeWidth={1.8} />
                   </IconButton>
                 </Stack>
               </Stack>

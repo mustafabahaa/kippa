@@ -1,10 +1,9 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useSnackbar } from 'notistack';
-import { Box, Button, Divider, InputAdornment, Stack, TextField, Skeleton } from '@mui/material';
+import { Box, Button, Divider, Stack, TextField, Skeleton, Typography } from '@mui/material';
 import { MobileDatePicker } from '@mui/x-date-pickers/MobileDatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
-import { CalendarTodayIcon, CheckCircleIcon, NotesIcon } from '@/components/AppIcon';
 import { isToday, format } from 'date-fns';
 import {
   useAccounts,
@@ -15,10 +14,11 @@ import {
   useHouseholdBaseCurrency,
 } from '@/hooks/useFinance';
 import { useAppContext } from '@/hooks/useAppContext';
+import { CalendarTodayIcon, CheckCircleIcon } from '@/components/AppIcon';
 import { PageHeader } from '@/features/shared/components/PageHeader';
 import { EmptyLayout } from '@/features/shared/components/EmptyLayout';
 import { AccountPicker } from '@/features/shared/components/AccountPicker';
-import { CategoryChips, CategoryDialog } from '@/features/shared/components/CategoryPicker';
+import { CategoryChips } from '@/features/shared/components/CategoryPicker';
 import { SaveFeedbackOverlay } from './components/SaveFeedbackOverlay';
 import { EntryKeypad } from './components/EntryKeypad';
 import { buildFastEntryTransaction, type EntryMode } from '@/libs/fastEntryTransaction';
@@ -28,13 +28,13 @@ import { useFastEntryFormState } from './hooks/useFastEntryFormState';
 export function FastEntry() {
   const { enqueueSnackbar } = useSnackbar();
   const { householdId, userProfile } = useAppContext();
+  const [allCategoriesExpanded, setAllCategoriesExpanded] = useState(false);
   const baseCurrency = useHouseholdBaseCurrency();
   const isSaveAnimationPreview =
     import.meta.env.DEV && new URLSearchParams(window.location.search).get('preview-save-animation') === '1';
 
   const {
     amountStr,
-    categoryDialogOpen,
     categorySearch,
     datePickerOpen,
     description,
@@ -44,7 +44,6 @@ export function FastEntry() {
     selectedAccountId,
     selectedCategoryId,
     setAmountStr,
-    setCategoryDialogOpen,
     setCategorySearch,
     setDatePickerOpen,
     setDescription,
@@ -162,8 +161,8 @@ export function FastEntry() {
   const handleSelectMode = (m: EntryMode) => {
     setMode(m);
     setSelectedCategoryId(null);
-    setCategoryDialogOpen(false);
     setCategorySearch('');
+    setAllCategoriesExpanded(false);
 
     if (!toAccountId || !selectedAccountId) return;
     const sourceAcc = accounts.find((a) => a.id === selectedAccountId);
@@ -242,7 +241,7 @@ export function FastEntry() {
     return (
       <Box sx={{ py: 0.5, width: '100%', maxWidth: 520, mx: 'auto' }}>
         <Stack spacing={3}>
-          <PageHeader title="Fast Entry" subtitle="Log expenses, income & transfers" />
+          <PageHeader title="Quick entry" subtitle="Log expenses, income & transfers" />
           <Skeleton variant="rectangular" width="100%" height={100} sx={{ borderRadius: '20px' }} />
           <Skeleton variant="rectangular" width="100%" height={250} sx={{ borderRadius: '20px' }} />
         </Stack>
@@ -254,7 +253,7 @@ export function FastEntry() {
     return (
       <Box sx={{ py: 0.5, width: '100%', maxWidth: 520, mx: 'auto' }}>
         <Stack spacing={3}>
-          <PageHeader title="Fast Entry" subtitle="Log expenses, income & transfers" />
+          <PageHeader title="Quick entry" subtitle="Log expenses, income & transfers" />
           <EmptyLayout
             title="No accounts to log entries against"
             description="Add an account first — you'll need one to record expenses, income, or transfers."
@@ -265,19 +264,20 @@ export function FastEntry() {
   }
 
   return (
-    <Box sx={{ py: 0.5, pb: { xs: 12, lg: 0 }, width: '100%', maxWidth: 520, mx: 'auto' }}>
+    <Box sx={{ py: 0.5, pb: { xs: 18, lg: 0 }, width: '100%', maxWidth: 520, mx: 'auto' }}>
       <Stack spacing={2.5}>
         {/* Page Header */}
-        <PageHeader title="Fast Entry" subtitle="Log expenses, income & transfers" />
+        <PageHeader title="Quick entry" subtitle="Log expenses, income & transfers" />
 
         {/* Keep the entry type visible before the amount on every viewport. */}
         <Stack direction="row" spacing={1} sx={{ width: '100%' }}>
           {(['expense', 'income', 'transfer'] as EntryMode[]).map((m) => (
             <Button
               key={m}
+              aria-pressed={mode === m}
               onClick={() => handleSelectMode(m)}
               variant={mode === m ? 'segmentedSelected' : 'segmented'}
-              sx={{ flex: 1 }}
+              sx={{ flex: 1, minHeight: 44, height: 44 }}
             >
               {m.toUpperCase()}
             </Button>
@@ -293,14 +293,30 @@ export function FastEntry() {
           }}
         >
           <Box sx={{ order: 2, minWidth: 0 }}>
-            <Stack spacing={2.5} divider={<Divider flexItem />}>
+            <Stack spacing={2} divider={<Divider flexItem />}>
               {/* Category Selection (Only for expense/income) */}
               {(mode === 'expense' || mode === 'income') && (
                 <CategoryChips
-                  categories={displayedCategories}
+                  categories={
+                    categorySearch
+                      ? filteredCategories
+                      : allCategoriesExpanded
+                        ? sortedCategories
+                        : displayedCategories
+                  }
+                  expanded={allCategoriesExpanded}
                   mode={mode}
-                  onOpenAll={() => setCategoryDialogOpen(true)}
-                  onSelect={setSelectedCategoryId}
+                  onSearchChange={(value) => {
+                    setCategorySearch(value);
+                    if (value.trim()) setAllCategoriesExpanded(false);
+                  }}
+                  onSelect={(categoryId) => {
+                    setSelectedCategoryId(categoryId);
+                    setCategorySearch('');
+                    setAllCategoriesExpanded(false);
+                  }}
+                  onToggleExpanded={() => setAllCategoriesExpanded((expanded) => !expanded)}
+                  searchValue={categorySearch}
                   selectedCategoryId={selectedCategoryId}
                   totalCount={sortedCategories.length}
                 />
@@ -327,46 +343,42 @@ export function FastEntry() {
               )}
 
               {/* Note / Date Area */}
-              <Stack direction="row" spacing={1.5} sx={{ width: '100%' }}>
+              <Stack spacing={1.5} sx={{ width: '100%' }}>
+                <Stack direction="row" alignItems="center" justifyContent="space-between">
+                  <Typography variant="sectionTitle">Note (optional)</Typography>
+                  <LocalizationProvider dateAdapter={AdapterDateFns}>
+                    <MobileDatePicker
+                      value={entryDate}
+                      onChange={(newValue) => newValue && setEntryDate(newValue)}
+                      maxDate={new Date()}
+                      closeOnSelect
+                      open={datePickerOpen}
+                      onOpen={() => setDatePickerOpen(true)}
+                      onClose={() => setDatePickerOpen(false)}
+                      slots={{ field: DateButtonField }}
+                      slotProps={{
+                        field: { dateLabel, setOpen: setDatePickerOpen } as any,
+                      }}
+                    />
+                  </LocalizationProvider>
+                </Stack>
                 <TextField
                   fullWidth
-                  placeholder="Note (optional)"
+                  variant="filled"
+                  placeholder="Add context for this entry (optional)"
                   value={description}
                   onChange={(event) => setDescription(event.target.value)}
-                  slotProps={{
-                    input: {
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <NotesIcon fontSize="small" />
-                        </InputAdornment>
-                      ),
-                    },
-                  }}
+                  multiline
+                  minRows={2}
                 />
-                <LocalizationProvider dateAdapter={AdapterDateFns}>
-                  <MobileDatePicker
-                    value={entryDate}
-                    onChange={(newValue) => newValue && setEntryDate(newValue)}
-                    maxDate={new Date()}
-                    closeOnSelect
-                    open={datePickerOpen}
-                    onOpen={() => setDatePickerOpen(true)}
-                    onClose={() => setDatePickerOpen(false)}
-                    slots={{ field: DateButtonField }}
-                    slotProps={{
-                      field: { dateLabel, setOpen: setDatePickerOpen } as any,
-                    }}
-                  />
-                </LocalizationProvider>
               </Stack>
 
               <Button
-                fullWidth
                 variant="primaryAction"
                 loading={isSaving}
-                startIcon={<CheckCircleIcon />}
+                startIcon={<CheckCircleIcon fontSize="small" />}
                 onClick={handleSave}
-                sx={{ display: { xs: 'none', lg: 'flex' } }}
+                sx={{ display: { xs: 'none', lg: 'flex' }, alignSelf: 'flex-start' }}
               >
                 {saveLabel}
               </Button>
@@ -389,23 +401,6 @@ export function FastEntry() {
           />
         </Box>
 
-        <CategoryDialog
-          categories={filteredCategories}
-          open={categoryDialogOpen}
-          search={categorySearch}
-          selectedCategoryId={selectedCategoryId}
-          onSearchChange={setCategorySearch}
-          onSelect={(categoryId) => {
-            setSelectedCategoryId(categoryId);
-            setCategoryDialogOpen(false);
-            setCategorySearch('');
-          }}
-          onClose={() => {
-            setCategoryDialogOpen(false);
-            setCategorySearch('');
-          }}
-        />
-
         <SaveFeedbackOverlay content={saveFeedback.content} onClose={saveFeedback.hide} open={saveFeedback.open} />
       </Stack>
     </Box>
@@ -422,8 +417,8 @@ function DateButtonField({ dateLabel, setOpen }: { dateLabel?: string; setOpen?:
     <Button
       variant="compactField"
       onClick={() => setOpen?.(true)}
-      startIcon={<CalendarTodayIcon sx={{ fontSize: 16 }} />}
-      sx={{ width: 120 }}
+      startIcon={<CalendarTodayIcon fontSize="small" />}
+      sx={{ width: 104, flexShrink: 0 }}
     >
       {dateLabel}
     </Button>

@@ -15,6 +15,8 @@ import {
 
 type AuditUser = { uid: string; displayName: string; photoURL?: string };
 
+export const RECONCILIATION_HISTORY_PAGE_SIZE = 7;
+
 export const ledgerLib = {
   // Accounts
   async getAccounts(householdId: string): Promise<Account[]> {
@@ -240,6 +242,14 @@ export const ledgerLib = {
   async getReconciliations(householdId: string): Promise<Reconciliation[]> {
     const list = await dbLib.getDocs(householdId, 'reconciliations');
     return list as Reconciliation[];
+  },
+
+  async getReconciliationsPage(
+    householdId: string,
+    pageSize: number,
+    cursor?: import('firebase/firestore').QueryDocumentSnapshot,
+  ) {
+    return dbLib.getDocsPage(householdId, 'reconciliations', pageSize, cursor);
   },
 
   async createReconciliation(

@@ -13,9 +13,7 @@ import {
   Box,
   IconButton,
   Grid,
-  Divider,
-  ToggleButton,
-  ToggleButtonGroup,
+  Stack,
 } from '@mui/material';
 import { ArrowBackIcon } from '@/components/AppIcon';
 import { useAppContext } from '@/hooks/useAppContext';
@@ -181,7 +179,7 @@ function AddCardDialogInner({
     <Dialog open onClose={onClose} maxWidth="sm" fullWidth>
       <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
         {!isBankStep && (
-          <IconButton size="small" onClick={goBackToBank} sx={{ mr: 0.5 }}>
+          <IconButton size="small" onClick={goBackToBank}>
             <ArrowBackIcon fontSize="small" />
           </IconButton>
         )}
@@ -203,48 +201,29 @@ function AddCardDialogInner({
               <CardTile card={previewCard} />
             </Box>
 
-            <Box sx={{ height: 32 }} />
+            <Box sx={{ height: 3 }} />
 
             <Grid container spacing={2.5}>
               {/* ── Section 1: Card Type ─────────────────────────────── */}
               <Grid size={{ xs: 12 }}>
-                <Typography
-                  variant="caption"
-                  sx={{ fontWeight: 700, color: 'primary.main', textTransform: 'uppercase', letterSpacing: '1px' }}
-                >
-                  Card Type
-                </Typography>
-                <Divider sx={{ mt: 1, mb: 1 }} />
+                <Typography variant="sectionTitle">Card type</Typography>
               </Grid>
 
               <Grid size={{ xs: 12 }}>
-                <ToggleButtonGroup
-                  exclusive
-                  fullWidth
-                  value={kind}
-                  onChange={(...[, v]) => v && handleKindChange(v)}
-                  sx={{
-                    gap: 1,
-                    '& .MuiToggleButton-root': {
-                      borderRadius: '12px',
-                      border: '1px solid',
-                      borderColor: 'divider',
-                      textTransform: 'none',
-                      fontWeight: 600,
-                      py: 1.25,
-                      color: 'text.secondary',
-                      '&.Mui-selected': {
-                        bgcolor: 'secondary.main',
-                        color: 'secondary.contrastText',
-                        borderColor: 'secondary.main',
-                        '&:hover': { bgcolor: 'primary.dark' },
-                      },
-                    },
-                  }}
-                >
-                  <ToggleButton value="debit">Debit</ToggleButton>
-                  <ToggleButton value="credit">Credit</ToggleButton>
-                </ToggleButtonGroup>
+                <Stack direction="row" spacing={1}>
+                  <Button
+                    variant={kind === 'debit' ? 'segmentedSelected' : 'segmented'}
+                    onClick={() => handleKindChange('debit')}
+                  >
+                    Debit
+                  </Button>
+                  <Button
+                    variant={kind === 'credit' ? 'segmentedSelected' : 'segmented'}
+                    onClick={() => handleKindChange('credit')}
+                  >
+                    Credit
+                  </Button>
+                </Stack>
               </Grid>
 
               <Grid size={{ xs: 12, sm: 6 }}>
@@ -255,16 +234,15 @@ function AddCardDialogInner({
                     onChange={(e) => setTierId(e.target.value)}
                     placeholder="e.g. Platinum"
                     fullWidth
-                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
                   />
                 ) : (
                   <FormControl fullWidth>
                     <InputLabel>Tier</InputLabel>
                     <Select
+                      size="medium"
                       value={tierId}
                       label="Tier"
                       onChange={(e) => handleTierChange(e.target.value as string)}
-                      sx={{ borderRadius: '12px' }}
                     >
                       {availableTiers.map((t) => (
                         <MenuItem key={t.id} value={t.id}>
@@ -280,10 +258,10 @@ function AddCardDialogInner({
                 <FormControl fullWidth>
                   <InputLabel>Network</InputLabel>
                   <Select
+                    size="medium"
                     value={network}
                     label="Network"
                     onChange={(e) => setNetwork(e.target.value as CardNetwork)}
-                    sx={{ borderRadius: '12px' }}
                   >
                     {availableNetworks.map((n) => (
                       <MenuItem key={n} value={n}>
@@ -296,23 +274,11 @@ function AddCardDialogInner({
 
               {/* ── Section 2: Card Details ──────────────────────────── */}
               <Grid size={{ xs: 12 }} sx={{ mt: 1 }}>
-                <Typography
-                  variant="caption"
-                  sx={{ fontWeight: 700, color: 'primary.main', textTransform: 'uppercase', letterSpacing: '1px' }}
-                >
-                  Card Details
-                </Typography>
-                <Divider sx={{ mt: 1, mb: 1 }} />
+                <Typography variant="sectionTitle">Card details</Typography>
               </Grid>
 
               <Grid size={{ xs: 12 }}>
-                <TextField
-                  label="Card name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  fullWidth
-                  sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
-                />
+                <TextField label="Card name" value={name} onChange={(e) => setName(e.target.value)} fullWidth />
               </Grid>
 
               <Grid size={{ xs: 12, sm: 6 }}>
@@ -321,7 +287,6 @@ function AddCardDialogInner({
                   value={last4}
                   onChange={(e) => setLast4(e.target.value.slice(0, 4))}
                   fullWidth
-                  sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
                 />
               </Grid>
 
@@ -332,7 +297,6 @@ function AddCardDialogInner({
                   value={expiryMonth}
                   onChange={(e) => setExpiryMonth(e.target.value ? Number(e.target.value) : '')}
                   fullWidth
-                  sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
                 />
               </Grid>
 
@@ -343,25 +307,21 @@ function AddCardDialogInner({
                   value={expiryYear}
                   onChange={(e) => setExpiryYear(e.target.value ? Number(e.target.value) : '')}
                   fullWidth
-                  sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
                 />
               </Grid>
 
               {/* ── Section 3: Account ───────────────────────────────── */}
               <Grid size={{ xs: 12 }} sx={{ mt: 1 }}>
-                <Typography
-                  variant="caption"
-                  sx={{ fontWeight: 700, color: 'primary.main', textTransform: 'uppercase', letterSpacing: '1px' }}
-                >
+                <Typography variant="sectionTitle">
                   {kind === 'debit' ? 'Linked Account' : 'Payment & Limit'}
                 </Typography>
-                <Divider sx={{ mt: 1, mb: 1 }} />
               </Grid>
 
               <Grid size={{ xs: 12, sm: kind === 'credit' ? 6 : 12 }}>
                 <FormControl fullWidth>
                   <InputLabel>{kind === 'debit' ? 'Draws from account' : 'Payment account'}</InputLabel>
                   <Select
+                    size="medium"
                     value={kind === 'debit' ? parentAccountId : paymentAccountId}
                     label={kind === 'debit' ? 'Draws from account' : 'Payment account'}
                     onChange={(e) => {
@@ -371,7 +331,6 @@ function AddCardDialogInner({
                       else setPaymentAccountId(id);
                       if (acc) setCurrency(acc.currency);
                     }}
-                    sx={{ borderRadius: '12px' }}
                   >
                     {depositAccounts.map((a) => (
                       <MenuItem key={a.id} value={a.id}>
@@ -390,7 +349,6 @@ function AddCardDialogInner({
                     value={creditLimit}
                     onChange={(e) => setCreditLimit(e.target.value ? Number(e.target.value) : '')}
                     fullWidth
-                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
                   />
                 </Grid>
               )}
@@ -406,16 +364,15 @@ function AddCardDialogInner({
           </Box>
         )}
       </DialogContent>
-      <DialogActions sx={{ px: 3, pb: 2.5 }}>
+      <DialogActions>
         <Button onClick={onClose} color="inherit">
           Cancel
         </Button>
         {!isBankStep && (
           <Button
-            variant="contained"
+            variant="primaryAction"
             onClick={handleSave}
             disabled={!name.trim() || (kind === 'debit' ? !parentAccountId : !paymentAccountId)}
-            sx={{ borderRadius: '12px', boxShadow: 'none' }}
           >
             Save card
           </Button>

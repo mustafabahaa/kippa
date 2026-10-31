@@ -5,6 +5,7 @@ export type CurrencyInfo = {
   name: string;
   symbol: string;
   decimalDigits: number;
+  flagRegion: string;
 };
 
 /**
@@ -12,35 +13,40 @@ export type CurrencyInfo = {
  * Append-only — adding a currency is a data change, not a code change.
  */
 export const CURRENCIES: CurrencyInfo[] = [
-  { code: 'USD', name: 'US Dollar', symbol: '$', decimalDigits: 2 },
-  { code: 'EUR', name: 'Euro', symbol: '€', decimalDigits: 2 },
-  { code: 'GBP', name: 'British Pound', symbol: '£', decimalDigits: 2 },
-  { code: 'EGP', name: 'Egyptian Pound', symbol: 'E£', decimalDigits: 2 },
-  { code: 'SAR', name: 'Saudi Riyal', symbol: '﷼', decimalDigits: 2 },
-  { code: 'AED', name: 'UAE Dirham', symbol: 'د.إ', decimalDigits: 2 },
-  { code: 'KWD', name: 'Kuwaiti Dinar', symbol: 'د.ك', decimalDigits: 3 },
-  { code: 'QAR', name: 'Qatari Riyal', symbol: '﷼', decimalDigits: 2 },
-  { code: 'BHD', name: 'Bahraini Dinar', symbol: '.د.ب', decimalDigits: 3 },
-  { code: 'OMR', name: 'Omani Rial', symbol: '﷼', decimalDigits: 3 },
-  { code: 'JOD', name: 'Jordanian Dinar', symbol: 'د.ا', decimalDigits: 3 },
-  { code: 'LBP', name: 'Lebanese Pound', symbol: 'ل.ل', decimalDigits: 2 },
-  { code: 'TRY', name: 'Turkish Lira', symbol: '₺', decimalDigits: 2 },
-  { code: 'INR', name: 'Indian Rupee', symbol: '₹', decimalDigits: 2 },
-  { code: 'PKR', name: 'Pakistani Rupee', symbol: '₨', decimalDigits: 2 },
-  { code: 'CNY', name: 'Chinese Yuan', symbol: '¥', decimalDigits: 2 },
-  { code: 'JPY', name: 'Japanese Yen', symbol: '¥', decimalDigits: 0 },
-  { code: 'NGN', name: 'Nigerian Naira', symbol: '₦', decimalDigits: 2 },
-  { code: 'ZAR', name: 'South African Rand', symbol: 'R', decimalDigits: 2 },
-  { code: 'CAD', name: 'Canadian Dollar', symbol: 'C$', decimalDigits: 2 },
-  { code: 'AUD', name: 'Australian Dollar', symbol: 'A$', decimalDigits: 2 },
-  { code: 'CHF', name: 'Swiss Franc', symbol: 'Fr', decimalDigits: 2 },
-  { code: 'SEK', name: 'Swedish Krona', symbol: 'kr', decimalDigits: 2 },
+  { code: 'USD', name: 'US Dollar', symbol: '$', decimalDigits: 2, flagRegion: 'US' },
+  { code: 'EUR', name: 'Euro', symbol: '€', decimalDigits: 2, flagRegion: 'EU' },
+  { code: 'GBP', name: 'British Pound', symbol: '£', decimalDigits: 2, flagRegion: 'GB' },
+  { code: 'EGP', name: 'Egyptian Pound', symbol: 'E£', decimalDigits: 2, flagRegion: 'EG' },
+  { code: 'SAR', name: 'Saudi Riyal', symbol: '﷼', decimalDigits: 2, flagRegion: 'SA' },
+  { code: 'AED', name: 'UAE Dirham', symbol: 'د.إ', decimalDigits: 2, flagRegion: 'AE' },
+  { code: 'KWD', name: 'Kuwaiti Dinar', symbol: 'د.ك', decimalDigits: 3, flagRegion: 'KW' },
+  { code: 'QAR', name: 'Qatari Riyal', symbol: '﷼', decimalDigits: 2, flagRegion: 'QA' },
+  { code: 'BHD', name: 'Bahraini Dinar', symbol: '.د.ب', decimalDigits: 3, flagRegion: 'BH' },
+  { code: 'OMR', name: 'Omani Rial', symbol: '﷼', decimalDigits: 3, flagRegion: 'OM' },
+  { code: 'JOD', name: 'Jordanian Dinar', symbol: 'د.ا', decimalDigits: 3, flagRegion: 'JO' },
+  { code: 'LBP', name: 'Lebanese Pound', symbol: 'ل.ل', decimalDigits: 2, flagRegion: 'LB' },
+  { code: 'TRY', name: 'Turkish Lira', symbol: '₺', decimalDigits: 2, flagRegion: 'TR' },
+  { code: 'INR', name: 'Indian Rupee', symbol: '₹', decimalDigits: 2, flagRegion: 'IN' },
+  { code: 'PKR', name: 'Pakistani Rupee', symbol: '₨', decimalDigits: 2, flagRegion: 'PK' },
+  { code: 'CNY', name: 'Chinese Yuan', symbol: '¥', decimalDigits: 2, flagRegion: 'CN' },
+  { code: 'JPY', name: 'Japanese Yen', symbol: '¥', decimalDigits: 0, flagRegion: 'JP' },
+  { code: 'NGN', name: 'Nigerian Naira', symbol: '₦', decimalDigits: 2, flagRegion: 'NG' },
+  { code: 'ZAR', name: 'South African Rand', symbol: 'R', decimalDigits: 2, flagRegion: 'ZA' },
+  { code: 'CAD', name: 'Canadian Dollar', symbol: 'C$', decimalDigits: 2, flagRegion: 'CA' },
+  { code: 'AUD', name: 'Australian Dollar', symbol: 'A$', decimalDigits: 2, flagRegion: 'AU' },
+  { code: 'CHF', name: 'Swiss Franc', symbol: 'Fr', decimalDigits: 2, flagRegion: 'CH' },
+  { code: 'SEK', name: 'Swedish Krona', symbol: 'kr', decimalDigits: 2, flagRegion: 'SE' },
 ];
 
 const BY_CODE: Record<string, CurrencyInfo> = Object.fromEntries(CURRENCIES.map((c) => [c.code, c]));
 
 export const getCurrencyInfo = (code: CurrencyCode): CurrencyInfo =>
-  BY_CODE[code] ?? { code, name: code, symbol: code, decimalDigits: 2 };
+  BY_CODE[code] ?? { code, name: code, symbol: code, decimalDigits: 2, flagRegion: '' };
+
+export const countryFlagEmoji = (region: string): string => {
+  if (!/^[A-Z]{2}$/.test(region)) return '';
+  return String.fromCodePoint(...Array.from(region, (letter) => letter.charCodeAt(0) + 127397));
+};
 
 export const currencySymbol = (code: CurrencyCode): string => getCurrencyInfo(code).symbol;
 

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { ledgerLib } from '@/libs/ledger';
+import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
+import { ledgerLib, RECONCILIATION_HISTORY_PAGE_SIZE } from '@/libs/ledger';
 import { cyclesLib } from '@/libs/cycles';
 import { transactionsLib } from '@/libs/transactions';
 import { loansLib, type LoanInput } from '@/libs/loans';
@@ -267,9 +267,13 @@ export function useExpectedIncomes(householdId: string, cycleId: string | undefi
 }
 
 export function useReconciliationHistory(householdId: string) {
-  return useQuery({
-    queryKey: keys.reconciliations(householdId),
-    queryFn: () => ledgerLib.getReconciliations(householdId),
+  return useInfiniteQuery({
+    queryKey: [...keys.reconciliations(householdId), 'pages', RECONCILIATION_HISTORY_PAGE_SIZE],
+    queryFn: ({ pageParam }) =>
+      ledgerLib.getReconciliationsPage(householdId, RECONCILIATION_HISTORY_PAGE_SIZE, pageParam),
+    initialPageParam: undefined as import('firebase/firestore').QueryDocumentSnapshot | undefined,
+    getNextPageParam: (lastPage) =>
+      lastPage.items.length === RECONCILIATION_HISTORY_PAGE_SIZE ? (lastPage.nextCursor ?? undefined) : undefined,
     enabled: !!householdId,
   });
 }
@@ -749,9 +753,26 @@ export function useUpdateCategoryMutation() {
       categoryId: string;
       updates: Partial<Pick<Category, 'name' | 'isActive' | 'essential' | 'merchantKeywords'>>;
     }) => ledgerLib.updateCategory(data.householdId, data.categoryId, data.updates, auditUser),
-    onSuccess: (...[, variables]) => {
-      notifyOfflineSuccess();
-      queryClient.invalidateQueries({ queryKey: keys.categories(variables.householdId) });
+    onMutate: async ({ householdId, categoryId, updates }) => {
+      const queryKey = keys.categories(householdId);
+      await queryClient.cancelQueries({ queryKey });
+      const previousCategories = queryClient.getQueryData<Category[]>(queryKey);
+      if (previousCategories) {
+        queryClient.setQueryData<Category[]>(
+          queryKey,
+          previousCategories.map((category) => (category.id === categoryId ? { ...category, ...updates } : category)),
+        );
+      }
+      return { queryKey, previousCategories };
+    },
+    onError: (...[, , context]) => {
+      if (context?.previousCategories) {
+        queryClient.setQueryData(context.queryKey, context.previousCategories);
+      }
+    },
+    onSuccess: () => notifyOfflineSuccess(),
+    onSettled: (...[, , variables]) => {
+      void queryClient.invalidateQueries({ queryKey: keys.categories(variables.householdId) });
     },
   });
 }

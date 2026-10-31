@@ -7,6 +7,7 @@ import {
   DialogContent,
   DialogTitle,
   Skeleton,
+  Stack,
   Typography,
 } from '@mui/material';
 import { BudgetAllocation, BudgetCycle, Category, CurrencyCode } from '@kippa/domain';
@@ -54,48 +55,57 @@ export function BudgetAllocationDialog({
       onClose={onClose}
       fullWidth
       maxWidth="sm"
+      aria-labelledby="budget-allocation-title"
       slotProps={{ paper: { sx: { maxHeight: 'calc(100dvh - 48px)', overflow: 'hidden' } } }}
     >
-      <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 2 }}>
-        <Box>
-          <Typography variant="sectionLabel">Configure Budget for</Typography>
-          <Box display="flex" alignItems="center" gap={1.5} sx={{ mt: 0.25 }}>
-            <Typography variant="h3">{cycle?.name}</Typography>
-            {cycle && (
-              <Chip
-                label={cycle.status.toUpperCase()}
-                size="small"
-                color={cycle.status === 'open' ? 'success' : cycle.status === 'planned' ? 'primary' : 'default'}
-                variant="outlined"
-              />
-            )}
+      <DialogTitle component="div" sx={{ pb: 2 }}>
+        <Stack
+          direction={{ xs: 'column', sm: 'row' }}
+          justifyContent="space-between"
+          alignItems={{ xs: 'flex-start', sm: 'center' }}
+          spacing={2}
+        >
+          <Box>
+            <Typography id="budget-allocation-title" variant="h3">Edit budget</Typography>
+            <Stack direction="row" spacing={1} alignItems="center">
+              <Typography variant="body2" color="text.secondary">{cycle?.name}</Typography>
+              {cycle && (
+                <Chip
+                  label={cycle.status === 'open' ? 'Active' : cycle.status === 'planned' ? 'Planned' : 'Closed'}
+                  size="small"
+                  color={cycle.status === 'open' ? 'success' : 'default'}
+                />
+              )}
+            </Stack>
           </Box>
-        </Box>
-        <Box sx={{ textAlign: 'right' }}>
-          <Typography variant="sectionLabel">Total Budget</Typography>
-          <Typography variant="h3" color="primary.main">
-            <Money amount={totalBudget} code={currency} />
-          </Typography>
-        </Box>
+          <Box sx={{ textAlign: { xs: 'left', sm: 'right' } }}>
+            <Typography variant="fieldHint" color="text.secondary">Total budget</Typography>
+            <Typography variant="loanMetric">
+              <Money amount={totalBudget} code={currency} />
+            </Typography>
+          </Box>
+        </Stack>
       </DialogTitle>
-      <DialogContent>
-        {cycle &&
-          (isLoading ? (
-            <Skeleton variant="rectangular" width="100%" height={300} />
-          ) : (
-            <BudgetAllocationsConfig
-              key={`${cycle.id}-${allocations.length}`}
-              householdId={householdId}
-              activeCycle={cycle}
-              categories={categories}
-              dbAllocations={allocations}
-              cycles={cycles}
-              onSave={onClose}
-              saveRef={saveRef}
-              onSavingStatusChange={onSavingChange}
-              onTotalBudgetChange={onTotalChange}
-            />
-          ))}
+      <DialogContent sx={{ mt: 2, pt: 2, px: { xs: 3, sm: 5 }, overflowY: 'auto' }}>
+        <Box sx={{ px: { xs: 1, sm: 2 } }}>
+          {cycle &&
+            (isLoading ? (
+              <Skeleton variant="rounded" width="100%" height={300} />
+            ) : (
+              <BudgetAllocationsConfig
+                key={`${cycle.id}-${allocations.length}`}
+                householdId={householdId}
+                activeCycle={cycle}
+                categories={categories}
+                dbAllocations={allocations}
+                cycles={cycles}
+                onSave={onClose}
+                saveRef={saveRef}
+                onSavingStatusChange={onSavingChange}
+                onTotalBudgetChange={onTotalChange}
+              />
+            ))}
+        </Box>
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose} variant="outlined">

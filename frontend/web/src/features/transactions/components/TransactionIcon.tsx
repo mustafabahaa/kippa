@@ -1,60 +1,51 @@
-import { Box, alpha } from '@mui/material';
-import { ReceiptLongIcon } from '@/components/AppIcon';
-import { CreditCardIcon } from '@/components/AppIcon';
-import { WorkIcon } from '@/components/AppIcon';
-import { SwapHorizIcon } from '@/components/AppIcon';
-import { TuneIcon } from '@/components/AppIcon';
+import { Box } from '@mui/material';
 import { TransactionType } from '@kippa/domain';
+import { CreditCardIcon, ReceiptLongIcon, SwapHorizIcon, TuneIcon, WorkIcon } from '@/components/AppIcon';
 
 interface TransactionIconProps {
   type: TransactionType;
   size?: number;
+  className?: string;
   /** When true, expense transactions show a credit card icon instead of a receipt. */
   isCreditCard?: boolean;
 }
 
-export const TransactionIcon: React.FC<TransactionIconProps> = ({ type, size = 40, isCreditCard }) => {
+export const TransactionIcon: React.FC<TransactionIconProps> = ({ type, size = 40, isCreditCard, className }) => {
   const getIconDetails = () => {
     switch (type) {
       case 'income':
         return {
-          icon: <WorkIcon sx={{ fontSize: size * 0.45, color: 'success.main' }} />,
-          bg: (theme: any) => alpha(theme.palette.success.main, 0.1),
+          icon: <WorkIcon fontSize="small" />,
         };
       case 'transfer':
         return {
-          icon: <SwapHorizIcon sx={{ fontSize: size * 0.45, color: 'info.main' }} />,
-          bg: (theme: any) => alpha(theme.palette.info.main, 0.1),
+          icon: <SwapHorizIcon fontSize="small" />,
         };
       case 'adjustment':
         return {
-          icon: <TuneIcon sx={{ fontSize: size * 0.45, color: 'secondary.main' }} />,
-          bg: (theme: any) => alpha(theme.palette.secondary.main, 0.1),
+          icon: <TuneIcon fontSize="small" />,
         };
       case 'expense':
       default:
         if (isCreditCard) {
           return {
-            icon: <CreditCardIcon sx={{ fontSize: size * 0.45, color: 'creditCard.main' }} />,
-            bg: (theme: any) => theme.palette.creditCard.light,
+            icon: <CreditCardIcon fontSize="small" />,
           };
         }
         return {
-          icon: <ReceiptLongIcon sx={{ fontSize: size * 0.45, color: 'error.main' }} />,
-          bg: (theme: any) => alpha(theme.palette.error.main, 0.1),
+          icon: <ReceiptLongIcon fontSize="small" />,
         };
     }
   };
 
-  const { icon, bg } = getIconDetails();
+  const { icon } = getIconDetails();
 
   return (
     <Box
+      className={['kippa-transaction-icon', className].filter(Boolean).join(' ')}
       sx={{
         width: size,
         height: size,
-        borderRadius: '50%',
-        bgcolor: bg,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',

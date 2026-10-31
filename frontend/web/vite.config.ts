@@ -110,12 +110,16 @@ export default defineConfig({
               id.includes('/react/') ||
               id.includes('/react-dom/') ||
               id.includes('/scheduler/') ||
-              id.includes('/@mui/material/') ||
-              id.includes('/@mui/system/') ||
-              id.includes('/@mui/icons-material/') ||
               id.includes('/@emotion/')
             ) {
-              return 'ui-framework-vendor';
+              return 'react-runtime-vendor';
+            }
+            if (
+              id.includes('/@mui/material/') ||
+              id.includes('/@mui/system/') ||
+              id.includes('/@mui/icons-material/')
+            ) {
+              return 'mui-vendor';
             }
             if (id.includes('/@tanstack/react-query/') || id.includes('/notistack/')) {
               return 'app-runtime-vendor';

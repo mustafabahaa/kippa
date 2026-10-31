@@ -19,17 +19,6 @@ import { useNotifications } from '@/notifications/useNotifications';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useAppContext } from '@/hooks/useAppContext';
-import {
-  AccountBalanceIcon,
-  BarChartIcon,
-  CategoryIcon,
-  CheckCircleIcon,
-  CloseIcon,
-  ContentCopyIcon,
-  ExpandLessIcon,
-  KeyIcon,
-  NotesIcon,
-} from '@/components/AppIcon';
 import { PageHeader } from '@/features/shared/components/PageHeader';
 import { aiConversations } from './services/conversations';
 import { streamAssistantReply } from './services/assistant';
@@ -47,6 +36,17 @@ import { AiConnectionPanel, type AiConnectionStatus } from './AiConnectionPanel'
 import { disconnectAiConnection } from './services/connection';
 import { aiProvider } from './services/aiProvider';
 import { mergeConversationMessages } from './conversationUtils';
+import {
+  AccountBalanceIcon,
+  BarChartIcon,
+  CategoryIcon,
+  CheckCircleIcon,
+  CloseIcon,
+  ContentCopyIcon,
+  ExpandLessIcon,
+  KeyIcon,
+  MessageIcon,
+} from '@/components/AppIcon';
 
 const STARTERS = [
   { label: 'RIGHT NOW', prompt: 'What’s my total balance?', featured: true, Icon: AccountBalanceIcon },
@@ -412,7 +412,7 @@ export function AiAssistant() {
         ) : (
           <>
             <Paper variant="assistantMessageAvatar" sx={{ mt: 0.25, mr: 1.5 }}>
-              <NotesIcon sx={{ fontSize: 16 }} />
+              <MessageIcon />
             </Paper>
             <Stack spacing={1.5} sx={{ width: 'calc(100% - 44px)', maxWidth: 620 }}>
               <Paper variant="assistantReply">
@@ -529,15 +529,11 @@ export function AiAssistant() {
               sx={{ flex: 1, textAlign: 'center', py: { xs: 2, sm: 4 } }}
             >
               <Paper variant="assistantAvatar">
-                <NotesIcon />
+                <MessageIcon />
               </Paper>
               <Box>
-                <Typography
-                  sx={{ fontSize: { xs: 20, sm: 22 }, lineHeight: 1.3, fontWeight: 800, letterSpacing: '-0.025em' }}
-                >
-                  How can I help with your money?
-                </Typography>
-                <Typography color="text.secondary" sx={{ mt: 0.75, fontSize: 13, lineHeight: 1.6 }}>
+                <Typography variant="h3">How can I help with your money?</Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 0.75 }}>
                   Ask about balances, spending, or how you’re doing.
                 </Typography>
               </Box>
@@ -636,7 +632,7 @@ export function AiAssistant() {
                     <Stack direction="row" spacing={1} justifyContent="flex-end">
                       <Button
                         variant="segmented"
-                        startIcon={<CloseIcon fontSize="small" />}
+                        startIcon={<CloseIcon />}
                         onClick={() => cancelAction(action.id)}
                         disabled={executingActionId === action.id}
                       >
@@ -644,7 +640,7 @@ export function AiAssistant() {
                       </Button>
                       <Button
                         variant="segmentedSelected"
-                        startIcon={<CheckCircleIcon fontSize="small" />}
+                        startIcon={<CheckCircleIcon />}
                         onClick={() => void confirmAction(action)}
                         loading={executingActionId === action.id}
                       >
@@ -670,7 +666,7 @@ export function AiAssistant() {
                       ] as const
                     ).map(([label, value]) => (
                       <Stack key={label} direction="row" alignItems="center" spacing={1.5}>
-                        <KeyIcon fontSize="small" />
+                        <KeyIcon />
                         <Box sx={{ flex: 1, minWidth: 0 }}>
                           <Typography variant="fieldHint" color="text.secondary">
                             {label}
@@ -681,7 +677,7 @@ export function AiAssistant() {
                         </Box>
                         <Button
                           variant="segmented"
-                          startIcon={<ContentCopyIcon fontSize="small" />}
+                          startIcon={<ContentCopyIcon />}
                           onClick={() => void navigator.clipboard.writeText(value)}
                         >
                           Copy
@@ -785,8 +781,8 @@ export function AiAssistant() {
                   }
                   sx={{ alignSelf: 'flex-start', width: '100%' }}
                 >
-                  <Typography sx={{ fontSize: 13, fontWeight: 800 }}>{FAILURE_TITLES[turnFailure.kind]}</Typography>
-                  <Typography sx={{ mt: 0.25, fontSize: 12 }}>{turnFailure.message}</Typography>
+                  <Typography variant="sectionLabel">{FAILURE_TITLES[turnFailure.kind]}</Typography>
+                  <Typography variant="sectionSubtitle">{turnFailure.message}</Typography>
                 </Alert>
               ) : null}
               <div ref={endRef} />
@@ -828,10 +824,10 @@ export function AiAssistant() {
                 disabled={!draft.trim() || isSending || cooldownRemainingMs > 0}
                 sx={{ mb: 0.25 }}
               >
-                <ExpandLessIcon sx={{ fontSize: 19 }} />
+                <ExpandLessIcon />
               </Button>
             </Paper>
-            <Typography sx={{ textAlign: 'center', fontSize: 10.5, lineHeight: 1.35, color: 'text.secondary' }}>
+            <Typography variant="fieldHint" color="text.secondary" sx={{ textAlign: 'center' }}>
               Kip can make mistakes. Financial facts come from your Kippa records.
             </Typography>
           </Stack>

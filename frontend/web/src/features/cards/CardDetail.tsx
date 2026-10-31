@@ -12,7 +12,6 @@ import {
   IconButton,
   LinearProgress,
 } from '@mui/material';
-import { CloseIcon } from '@/components/AppIcon';
 import { useAppContext } from '@/hooks/useAppContext';
 import { useTransactions, useLedgerLines, usePayCardMutation, useCategories, useCycles } from '@/hooks/useFinance';
 import type { Card } from '@kippa/domain';
@@ -25,6 +24,7 @@ import { CardActivityList } from './components/CardActivityList';
 import { DEFAULT_CARD_FEE_RATE } from '@/libs/creditCardFees';
 import { calculateCardPayment } from '@/libs/cardPayment';
 import { useCardPaymentState } from './hooks/useCardPaymentState';
+import { CloseIcon } from '@/components/AppIcon';
 
 export function CardDetail({ card, onClose }: { card: Card; onClose: () => void }) {
   const { householdId } = useAppContext();
@@ -154,16 +154,18 @@ export function CardDetail({ card, onClose }: { card: Card; onClose: () => void 
         fullWidth
         slotProps={{
           paper: {
-            sx: {
-              borderRadius: '24px',
-              overflow: 'hidden',
-              p: 0,
-            },
+            variant: 'cardDetailDialog',
           },
         }}
       >
         {/* ── Card Header ──────────────────────────────────────────── */}
-        <CardBackground bankId={card.bankId} kind={card.kind} tierId={card.tierId}>
+        <CardBackground
+          bankId={card.bankId}
+          kind={card.kind}
+          tierId={card.tierId}
+          surface="bankCardHeader"
+          sx={{ flexShrink: 0 }}
+        >
           <Box
             sx={{
               filter: card.isActive ? 'none' : 'grayscale(0.7) brightness(0.7)',
@@ -172,26 +174,14 @@ export function CardDetail({ card, onClose }: { card: Card; onClose: () => void 
               position: 'relative',
               display: 'flex',
               flexDirection: 'column',
-              // Match the tall credit-card layout height so debit cards
-              // aren't clipped/shorter in the dialog header.
-              minHeight: 240,
+              // Credit cards include the utilization meter and Pay all action.
+              // Give that full content room while keeping debit headers compact.
+              minHeight: isCredit ? 320 : 240,
             }}
           >
             {/* Close button */}
-            <IconButton
-              onClick={onClose}
-              size="small"
-              sx={{
-                position: 'absolute',
-                top: 8,
-                right: 8,
-                color: '#fff',
-                bgcolor: 'rgba(255,255,255,0.15)',
-                '&:hover': { bgcolor: 'rgba(255,255,255,0.25)' },
-                zIndex: 2,
-              }}
-            >
-              <CloseIcon sx={{ fontSize: 18 }} />
+            <IconButton onClick={onClose} size="small">
+              <CloseIcon fontSize="small" />
             </IconButton>
 
             <Box
@@ -215,15 +205,7 @@ export function CardDetail({ card, onClose }: { card: Card; onClose: () => void 
                 <Stack direction="row" alignItems="center" spacing={1.5}>
                   <TierLabel bankId={card.bankId} tierId={card.tierId} />
                   {!card.tierId && !isCredit && (
-                    <Typography
-                      sx={{
-                        fontFamily: '"Inter", sans-serif',
-                        fontSize: '14px',
-                        fontWeight: 700,
-                        color: '#ffffff',
-                        mr: 0.5,
-                      }}
-                    >
+                    <Typography variant="sectionSubtitle" sx={{ mr: 0.5 }}>
                       Debit
                     </Typography>
                   )}
@@ -233,32 +215,14 @@ export function CardDetail({ card, onClose }: { card: Card; onClose: () => void 
 
               {/* Card Number and Expiry */}
               <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mt: 0.5, mb: 0.5 }}>
-                <Typography
-                  sx={{
-                    fontSize: '16px',
-                    fontWeight: 700,
-                    letterSpacing: '2px',
-                    fontFamily: 'monospace',
-                    color: '#ffffff',
-                    textShadow: '0 1px 2px rgba(0,0,0,0.3)',
-                  }}
-                >
-                  •••• •••• {maskText(card.last4 ?? '----')}
-                </Typography>
+                <Typography variant="cardDetailNumber">•••• •••• {maskText(card.last4 ?? '----')}</Typography>
 
                 {card.expiryMonth && card.expiryYear && (
                   <Stack direction="row" alignItems="center" spacing={0.5} sx={{ opacity: 0.9 }}>
-                    <Typography sx={{ fontSize: '7px', fontWeight: 700, color: '#ffffff', opacity: 0.7, mr: 0.25 }}>
+                    <Typography variant="cardMicro" className="bank-card-muted" sx={{ mr: 0.25 }}>
                       THRU ▶
                     </Typography>
-                    <Typography
-                      sx={{
-                        fontSize: '12px',
-                        fontWeight: 600,
-                        fontFamily: 'monospace',
-                        color: '#ffffff',
-                      }}
-                    >
+                    <Typography variant="cardExpiry">
                       {maskDigits(`${String(card.expiryMonth).padStart(2, '0')}/${String(card.expiryYear).slice(-2)}`)}
                     </Typography>
                   </Stack>
@@ -271,31 +235,14 @@ export function CardDetail({ card, onClose }: { card: Card; onClose: () => void 
                   <Box sx={{ flex: 1, mr: 2 }}>
                     {isCredit ? (
                       <>
-                        <Typography
-                          sx={{
-                            fontSize: '28px',
-                            fontWeight: 800,
-                            color: '#ffffff',
-                            letterSpacing: '-0.5px',
-                            lineHeight: 1.2,
-                          }}
-                        >
+                        <Typography variant="cardDetailAmount">
                           <Money amount={reconciledDebt} code={card.currency} maxDigits={2} />
                         </Typography>
-                        <Typography
-                          sx={{
-                            fontSize: '10px',
-                            fontWeight: 500,
-                            textTransform: 'uppercase',
-                            letterSpacing: '1px',
-                            color: 'rgba(255,255,255,0.7)',
-                            mt: 0.5,
-                          }}
-                        >
+                        <Typography variant="cardDetailLabel" className="bank-card-muted" sx={{ mt: 0.5 }}>
                           Outstanding Balance
                         </Typography>
                         {hasUnappliedCredit && (
-                          <Typography variant="fieldHint" sx={{ color: 'rgba(255,255,255,0.7)', mt: 0.5 }}>
+                          <Typography variant="fieldHint" className="bank-card-muted" sx={{ mt: 0.5 }}>
                             {maskDigits(`${card.currency} ${unallocatedCredit.toFixed(2)}`)} of past payments/credits
                             applies to no charge
                           </Typography>
@@ -305,23 +252,14 @@ export function CardDetail({ card, onClose }: { card: Card; onClose: () => void 
                             <LinearProgress
                               variant="determinate"
                               value={utilizationPct}
-                              sx={{
-                                height: 6,
-                                borderRadius: 3,
-                                bgcolor: 'rgba(255,255,255,0.25)',
-                                '& .MuiLinearProgress-bar': {
-                                  bgcolor:
-                                    utilizationPct > 95 ? '#ef4444' : utilizationPct > 80 ? '#F9AB00' : '#4ade80',
-                                  borderRadius: 3,
-                                },
-                              }}
+                              className={`bank-card-utilization-detail bank-card-utilization-detail--${utilizationPct > 95 ? 'error' : utilizationPct > 80 ? 'warning' : 'success'}`}
                             />
                             <Stack direction="row" justifyContent="space-between" sx={{ mt: 0.5 }}>
-                              <Typography sx={{ fontSize: '9px', color: 'rgba(255,255,255,0.7)' }}>
+                              <Typography variant="cardMicro" className="bank-card-muted">
                                 {utilizationPct}% utilized
                               </Typography>
                               {card.creditLimit != null && (
-                                <Typography sx={{ fontSize: '9px', color: 'rgba(255,255,255,0.7)' }}>
+                                <Typography variant="cardMicro" className="bank-card-muted">
                                   Limit: {maskDigits(`${card.currency} ${card.creditLimit.toLocaleString()}`)}
                                 </Typography>
                               )}
@@ -332,43 +270,16 @@ export function CardDetail({ card, onClose }: { card: Card; onClose: () => void 
                           variant="contained"
                           disabled={totalDebt <= 0}
                           onClick={openPayAll}
-                          sx={{
-                            mt: 2,
-                            bgcolor: 'rgba(255,255,255,0.2)',
-                            color: '#ffffff',
-                            fontWeight: 600,
-                            px: 3,
-                            borderRadius: '12px',
-                            '&:hover': { bgcolor: 'rgba(255,255,255,0.3)' },
-                            '&.Mui-disabled': { bgcolor: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.4)' },
-                          }}
+                          className="bank-card-pay-action"
+                          sx={{ mt: 2 }}
                         >
                           Pay all
                         </Button>
                       </>
                     ) : (
                       <>
-                        <Typography
-                          sx={{
-                            fontSize: '28px',
-                            fontWeight: 800,
-                            color: '#ffffff',
-                            letterSpacing: '-0.5px',
-                            lineHeight: 1.2,
-                          }}
-                        >
-                          {formattedBalance}
-                        </Typography>
-                        <Typography
-                          sx={{
-                            fontSize: '10px',
-                            fontWeight: 500,
-                            textTransform: 'uppercase',
-                            letterSpacing: '1px',
-                            color: 'rgba(255,255,255,0.7)',
-                            mt: 0.5,
-                          }}
-                        >
+                        <Typography variant="cardDetailAmount">{formattedBalance}</Typography>
+                        <Typography variant="cardDetailLabel" className="bank-card-muted" sx={{ mt: 0.5 }}>
                           Available Balance
                         </Typography>
                       </>
@@ -387,6 +298,7 @@ export function CardDetail({ card, onClose }: { card: Card; onClose: () => void 
             card={card}
             categories={categories}
             groups={cycleGroups}
+            transactions={allTransactions}
             mask={maskDigits}
             onLoadMore={loadNextCycle}
             onPay={openPayOne}
@@ -453,7 +365,7 @@ export function CardDetail({ card, onClose }: { card: Card; onClose: () => void 
           <Button disabled={payCard.isPending} onClick={() => setPayOpen(false)}>
             Cancel
           </Button>
-          <Button variant="contained" disabled={payCard.isPending || !payment.valid} onClick={handlePay}>
+          <Button variant="primaryAction" disabled={payCard.isPending || !payment.valid} onClick={handlePay}>
             {payCard.isPending ? 'Saving…' : 'Confirm'}
           </Button>
         </DialogActions>

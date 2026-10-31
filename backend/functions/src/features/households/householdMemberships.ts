@@ -1,4 +1,5 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
+import { getAuth } from 'firebase-admin/auth';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import type { UserProfile, Household, NotificationSettings, JoinRequest, JoinStatus } from '@kippa/domain';
 import { buildMessagePayload } from '../../domain/notifications/payload.js';
@@ -192,16 +193,24 @@ export const listHouseholdMembers = onCall(async (req) => {
   const ownerUid = household?.createdBy;
 
   return {
-    members: membersSnap.docs.map((d) => {
+    members: await Promise.all(membersSnap.docs.map(async (d) => {
       const u = d.data() as Partial<UserProfile>;
+      let photoURL = u.photoURL ?? null;
+      if (!photoURL) {
+        try {
+          photoURL = (await getAuth().getUser(d.id)).photoURL ?? null;
+        } catch {
+          // Keep the member list available if a legacy or deleted auth profile has no photo.
+        }
+      }
       return {
         uid: d.id,
         displayName: u.displayName ?? 'Unknown',
         email: u.email ?? '',
-        photoURL: u.photoURL ?? null,
+        photoURL,
         isOwner: d.id === ownerUid,
       };
-    }),
+    })),
   };
 });
 export const leaveHousehold = onCall(async (req) => {

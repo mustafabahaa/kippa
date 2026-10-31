@@ -1,8 +1,6 @@
 import { useState } from 'react';
 import {
   Button,
-  Card,
-  CardContent,
   Checkbox,
   Dialog,
   DialogActions,
@@ -39,6 +37,7 @@ function TypeSelect({
     <FormControl fullWidth>
       <InputLabel id={id}>Account Type</InputLabel>
       <Select
+        size="medium"
         labelId={id}
         value={value}
         label="Account Type"
@@ -54,36 +53,55 @@ function TypeSelect({
   );
 }
 
-export function AddAccountCard({
-  baseCurrency,
-  busy,
-  onCreate,
-}: {
+export function AddAccountDialog(props: {
+  open: boolean;
   baseCurrency: CurrencyCode;
   busy: boolean;
+  onClose: () => void;
+  onCreate: (draft: { name: string; type: AccountType; currency: CurrencyCode }) => Promise<void>;
+}) {
+  return props.open ? <AddAccountDialogInner key={props.baseCurrency} {...props} /> : null;
+}
+
+function AddAccountDialogInner({
+  open,
+  baseCurrency,
+  busy,
+  onClose,
+  onCreate,
+}: {
+  open: boolean;
+  baseCurrency: CurrencyCode;
+  busy: boolean;
+  onClose: () => void;
   onCreate: (draft: { name: string; type: AccountType; currency: CurrencyCode }) => Promise<void>;
 }) {
   const [draft, setDraft] = useState({ name: '', type: 'running' as AccountType, currency: baseCurrency });
+
   const create = async () => {
     if (!draft.name.trim()) return;
     await onCreate({ ...draft, name: draft.name.trim() });
     setDraft((current) => ({ ...current, name: '' }));
   };
   return (
-    <Card sx={{ position: { lg: 'sticky' }, top: { lg: 24 } }}>
-      <CardContent>
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm" aria-labelledby="create-account-title">
+      <DialogTitle component="div" sx={{ pb: 2 }}>
+        <Typography id="create-account-title" variant="h3">
+          Add account
+        </Typography>
+        <Typography variant="body2" color="text.secondary">
+          Add a bank, cash, or wallet account to your household.
+        </Typography>
+      </DialogTitle>
+      <DialogContent>
         <Stack spacing={2.5}>
-          <div>
-            <Typography variant="h3">Add new account</Typography>
-            <Typography variant="body2" color="text.secondary">
-              Connect cash, a wallet, or a bank balance.
-            </Typography>
-          </div>
           <TextField
+            autoFocus
             fullWidth
-            label="Account Name"
+            label="Account name"
             value={draft.name}
             onChange={(event) => setDraft({ ...draft, name: event.target.value })}
+            disabled={busy}
           />
           <TypeSelect id="acc-type-label" value={draft.type} onChange={(type) => setDraft({ ...draft, type })} />
           <CurrencySelect
@@ -91,12 +109,17 @@ export function AddAccountCard({
             value={draft.currency}
             onChange={(currency) => setDraft({ ...draft, currency })}
           />
-          <Button fullWidth variant="contained" onClick={create} loading={busy}>
-            Create Account
-          </Button>
         </Stack>
-      </CardContent>
-    </Card>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose} color="inherit" disabled={busy}>
+          Cancel
+        </Button>
+        <Button onClick={create} variant="primaryAction" loading={busy} disabled={!draft.name.trim()}>
+          Create account
+        </Button>
+      </DialogActions>
+    </Dialog>
   );
 }
 
@@ -113,13 +136,20 @@ export function EditAccountDialog({
 }) {
   const [draft, setDraft] = useState(account);
   return (
-    <Dialog open onClose={onClose}>
-      <DialogTitle>Edit Account</DialogTitle>
+    <Dialog open onClose={onClose} fullWidth maxWidth="sm" aria-labelledby="edit-account-title">
+      <DialogTitle component="div" sx={{ pb: 2 }}>
+        <Typography id="edit-account-title" variant="h3">
+          Edit account
+        </Typography>
+        <Typography variant="body2" color="text.secondary">
+          Update the account name, type, currency, or availability.
+        </Typography>
+      </DialogTitle>
       <DialogContent>
-        <Stack spacing={2} sx={{ mt: 1 }}>
+        <Stack spacing={2.5}>
           <TextField
             fullWidth
-            label="Account Name"
+            label="Account name"
             value={draft.name}
             onChange={(event) => setDraft({ ...draft, name: event.target.value })}
           />
@@ -136,7 +166,7 @@ export function EditAccountDialog({
                 onChange={(event) => setDraft({ ...draft, isActive: event.target.checked })}
               />
             }
-            label="Account is Active"
+            label="Account is active"
           />
         </Stack>
       </DialogContent>
@@ -144,11 +174,11 @@ export function EditAccountDialog({
         <Button onClick={onClose}>Cancel</Button>
         <Button
           onClick={() => onSave({ ...draft, name: draft.name.trim() })}
-          variant="contained"
+          variant="primaryAction"
           loading={busy}
           disabled={!draft.name.trim()}
         >
-          Save Changes
+          Save changes
         </Button>
       </DialogActions>
     </Dialog>

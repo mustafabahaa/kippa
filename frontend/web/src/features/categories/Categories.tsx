@@ -1,39 +1,22 @@
 import { useState } from 'react';
 import { useSnackbar } from 'notistack';
-import {
-  Box,
-  Card,
-  CardContent,
-  Container,
-  Stack,
-  Typography,
-  Button,
-  TextField,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  Skeleton,
-  Grid,
-  Paper,
-  IconButton,
-  Tooltip,
-  Switch,
-} from '@mui/material';
+import { Box, Chip, Container, Stack, Typography, Button, ButtonBase, Skeleton, Tooltip, Switch } from '@mui/material';
 import type { Category } from '@kippa/domain';
-import { CategoryIcon, EditIcon } from '@/components/AppIcon';
-import { CardHeading } from '@/features/shared/components/CardHeading';
+import { SectionHeading } from '@/features/shared/components/SectionHeading';
 import { PageHeader } from '@/features/shared/components/PageHeader';
 import { dedupeMerchantKeywords } from '@/libs/merchantSuggestions';
 import { useCategories, useCreateCategoryMutation, useUpdateCategoryMutation } from '@/hooks/useFinance';
 import { CategoryNameDialog } from './components/CategoryNameDialog';
-import { MerchantKeywordsEditor } from './components/MerchantKeywordsEditor';
 
 import { useAppContext } from '@/hooks/useAppContext';
+
+const sectionIndent = { xs: 0, md: 2 } as const;
+const contentIndent = { xs: 0, md: 2 } as const;
 
 export function Categories() {
   const { householdId } = useAppContext();
   const { enqueueSnackbar } = useSnackbar();
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [newCatName, setNewCatName] = useState('');
   const [newCatType, setNewCatType] = useState<'income' | 'expense'>('expense');
   const [newCatMerchants, setNewCatMerchants] = useState<string[]>([]);
@@ -59,6 +42,7 @@ export function Categories() {
 
     setNewCatName('');
     setNewCatMerchants([]);
+    setIsCreateDialogOpen(false);
   };
 
   const handleRenameCategory = async () => {
@@ -79,71 +63,95 @@ export function Categories() {
   };
 
   const handleToggleEssential = async (category: Category) => {
+    const isEssential = category.essential !== true;
     try {
       await updateCategoryMutation.mutateAsync({
         householdId,
         categoryId: category.id,
-        updates: { essential: category.essential !== true },
+        updates: { essential: isEssential },
+      });
+      enqueueSnackbar(isEssential ? 'Category marked as essential' : 'Category marked as non-essential', {
+        variant: 'success',
+        autoHideDuration: 3500,
+        persist: false,
       });
     } catch (error) {
-      enqueueSnackbar(error instanceof Error ? error.message : 'Could not update category', { variant: 'error' });
+      enqueueSnackbar(error instanceof Error ? error.message : 'Could not update category', {
+        variant: 'error',
+        autoHideDuration: 4500,
+        persist: false,
+      });
     }
   };
 
   const renderCategoryGroup = (type: 'income' | 'expense', title: string) => {
     const items = categories.filter((category) => category.type === type);
     return (
-      <Card>
-        <CardContent sx={{ p: { xs: 2, sm: 2.5 } }}>
-          <Box sx={{ mb: 2 }}>
-            <CardHeading
-              icon={<CategoryIcon variant="Bulk" />}
-              title={title}
-              subtitle={`${items.length} configured`}
-              trailing={
-                <Typography
-                  sx={{
-                    color: type === 'income' ? 'success.main' : 'text.secondary',
-                    fontSize: 11,
-                    fontWeight: 700,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.06em',
-                  }}
-                >
-                  {type}
-                </Typography>
-              }
-            />
-          </Box>
+      <Box component="section" sx={{ px: sectionIndent }}>
+        <Stack spacing={{ xs: 2, md: 2.5 }}>
+          <SectionHeading
+            title={title}
+            subtitle={`${items.length} configured`}
+            trailing={<Chip label={type} size="small" color={type === 'income' ? 'success' : 'default'} />}
+          />
 
           {isLoading ? (
-            <Grid container spacing={1}>
-              {[1, 2, 3, 4].map((item) => (
-                <Grid key={item} size={{ xs: 12, sm: 6 }}>
-                  <Skeleton height={48} sx={{ borderRadius: '10px' }} />
-                </Grid>
+            <Box
+              sx={{
+                px: contentIndent,
+                display: 'grid',
+                gridTemplateColumns: { xs: '1fr', md: 'repeat(2, minmax(0, 1fr))', lg: 'repeat(3, minmax(0, 1fr))' },
+                columnGap: { xs: 0, md: 3 },
+              }}
+            >
+              {[...Array(6).keys()].map((item) => (
+                <Skeleton key={item} height={56} />
               ))}
-            </Grid>
+            </Box>
           ) : items.length === 0 ? (
-            <Box sx={{ py: 4, textAlign: 'center', borderRadius: '12px', bgcolor: 'action.hover' }}>
-              <Typography sx={{ color: 'text.secondary', fontSize: 12 }}>No {type} categories yet</Typography>
+            <Box sx={{ px: contentIndent, py: 2 }}>
+              <Typography variant="body2" color="text.secondary">
+                No {type} categories yet.
+              </Typography>
             </Box>
           ) : (
-            <Grid container spacing={1}>
+            <Box
+              sx={{
+                px: contentIndent,
+                display: 'grid',
+                gridTemplateColumns: { xs: '1fr', md: 'repeat(2, minmax(0, 1fr))', lg: 'repeat(3, minmax(0, 1fr))' },
+                columnGap: { xs: 0, md: 3 },
+              }}
+            >
               {items.map((category) => (
-                <Grid key={category.id} size={{ xs: 12, sm: 6 }}>
-                  <Paper
-                    variant="categoryRow"
-                    data-category-type={type}
-                    sx={{ minHeight: 46, px: 1.25, py: 0.75, display: 'flex', alignItems: 'center', gap: 1.25 }}
+                <Stack
+                  key={category.id}
+                  direction="row"
+                  justifyContent="space-between"
+                  alignItems="center"
+                  spacing={1}
+                  sx={{ minWidth: 0, py: 1.5, borderBottom: 1, borderColor: 'divider' }}
+                >
+                  <ButtonBase
+                    component="button"
+                    aria-label={`Edit category ${category.name}`}
+                    onClick={() =>
+                      setRenameCategory({
+                        id: category.id,
+                        name: category.name,
+                        merchants: category.merchantKeywords ?? [],
+                      })
+                    }
+                    sx={{ minWidth: 0, flex: 1, display: 'block', textAlign: 'left' }}
                   >
-                    <Box className="category-dot" />
-                    <Typography
-                      variant="cardSubtitle"
-                      sx={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
-                    >
+                    <Typography variant="sectionTitle" noWrap>
                       {category.name}
                     </Typography>
+                    <Typography variant="sectionSubtitle" color="text.secondary" noWrap>
+                      {category.merchantKeywords?.length ?? 0} merchant matches
+                    </Typography>
+                  </ButtonBase>
+                  <Stack direction="row" alignItems="center" spacing={0.5} sx={{ flexShrink: 0 }}>
                     {type === 'expense' && (
                       <Tooltip
                         title={
@@ -155,103 +163,61 @@ export function Categories() {
                         <Switch
                           size="small"
                           checked={category.essential === true}
-                          disabled={updateCategoryMutation.isPending}
                           onChange={() => handleToggleEssential(category)}
                           slotProps={{ input: { 'aria-label': `Mark ${category.name} as essential` } }}
-                          sx={{ flexShrink: 0 }}
                         />
                       </Tooltip>
                     )}
-                    <Tooltip title="Edit name and merchants">
-                      <IconButton
-                        size="small"
-                        className="category-row-action"
-                        aria-label={`Edit ${category.name}`}
-                        onClick={() =>
-                          setRenameCategory({
-                            id: category.id,
-                            name: category.name,
-                            merchants: category.merchantKeywords ?? [],
-                          })
-                        }
-                        sx={{ flexShrink: 0 }}
-                      >
-                        <EditIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-                  </Paper>
-                </Grid>
+                  </Stack>
+                </Stack>
               ))}
-            </Grid>
+            </Box>
           )}
-        </CardContent>
-      </Card>
+        </Stack>
+      </Box>
     );
   };
 
   return (
     <Container maxWidth="xl" sx={{ py: 1, px: { xs: 2, sm: 3, lg: 5 } }}>
-      <Stack spacing={3}>
-        <PageHeader title="Categories" subtitle="Organize income and spending for reports and budget cycles" />
+      <Stack spacing={{ xs: 2, md: 3 }} sx={{ width: '100%', maxWidth: 1160, mx: 'auto' }}>
+        <PageHeader
+          title="Categories"
+          subtitle="Organize income and spending for reports and budget cycles"
+          action={
+            <Button variant="contained" onClick={() => setIsCreateDialogOpen(true)}>
+              Add category
+            </Button>
+          }
+        />
 
-        <Grid container spacing={{ xs: 2, lg: 3 }} alignItems="flex-start">
-          <Grid size={{ xs: 12, md: 8 }}>
-            <Stack spacing={2}>
-              {renderCategoryGroup('income', 'Income categories')}
-              {renderCategoryGroup('expense', 'Expense categories')}
-            </Stack>
-          </Grid>
-
-          <Grid size={{ xs: 12, md: 4 }}>
-            <Card sx={{ position: { md: 'sticky' }, top: { md: 96 } }}>
-              <CardContent sx={{ p: { xs: 2, sm: 2.5 } }}>
-                <Typography sx={{ fontSize: 15, fontWeight: 750, color: 'text.primary' }}>Add a category</Typography>
-                <Typography sx={{ color: 'text.secondary', fontSize: 11.5, mt: 0.5, mb: 2.5 }}>
-                  New categories become available immediately in entry and budgeting.
-                </Typography>
-                <Stack spacing={2}>
-                  <TextField
-                    fullWidth
-                    label="Category name"
-                    placeholder="e.g. Subscriptions"
-                    value={newCatName}
-                    onChange={(e) => setNewCatName(e.target.value)}
-                  />
-                  <FormControl fullWidth>
-                    <InputLabel id="cat-type-label">Type</InputLabel>
-                    <Select
-                      labelId="cat-type-label"
-                      value={newCatType}
-                      label="Type"
-                      onChange={(e) => setNewCatType(e.target.value as 'income' | 'expense')}
-                    >
-                      <MenuItem value="expense">Expense</MenuItem>
-                      <MenuItem value="income">Income</MenuItem>
-                    </Select>
-                  </FormControl>
-                  <MerchantKeywordsEditor
-                    keywords={newCatMerchants}
-                    onChange={setNewCatMerchants}
-                    disabled={createCategoryMutation.isPending}
-                  />
-                  <Button
-                    fullWidth
-                    variant="contained"
-                    onClick={handleCreateCategory}
-                    loading={createCategoryMutation.isPending}
-                    sx={{ borderRadius: '10px', fontWeight: 700 }}
-                  >
-                    Create Category
-                  </Button>
-                </Stack>
-              </CardContent>
-            </Card>
-          </Grid>
-        </Grid>
+        <Stack spacing={{ xs: 3, md: 4 }}>
+          {renderCategoryGroup('income', 'Income categories')}
+          {renderCategoryGroup('expense', 'Expense categories')}
+        </Stack>
       </Stack>
       <CategoryNameDialog
+        open={isCreateDialogOpen}
+        title="Add category"
+        description="New categories are available immediately in entry and budgeting."
+        confirmLabel="Create category"
+        value={newCatName}
+        placeholder="e.g. Subscriptions"
+        categoryType={newCatType}
+        loading={createCategoryMutation.isPending}
+        merchants={newCatMerchants}
+        onChange={setNewCatName}
+        onCategoryTypeChange={setNewCatType}
+        onMerchantsChange={setNewCatMerchants}
+        onClose={() => {
+          if (!createCategoryMutation.isPending) setIsCreateDialogOpen(false);
+        }}
+        onConfirm={handleCreateCategory}
+      />
+      <CategoryNameDialog
         open={!!renameCategory}
-        title="Edit Category"
+        title="Edit category"
+        description="Update the category name and merchant matches."
         confirmLabel="Save"
         value={renameCategory?.name ?? ''}
         merchants={renameCategory?.merchants ?? []}

@@ -1,5 +1,5 @@
 import { Suspense } from 'react';
-import { Box, CircularProgress, Container } from '@mui/material';
+import { Box, Container, useTheme } from '@mui/material';
 import { Outlet, useLocation } from 'react-router-dom';
 import { OfflineBanner } from '@/components/OfflineBanner';
 import { TopBar } from '@/components/app-shell/TopBar';
@@ -9,6 +9,7 @@ import { useAppContext } from '@/hooks/useAppContext';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { useThemeMode } from '@/hooks/useThemeMode';
 import { useLoanReminders } from '@/features/loans/useLoanReminders';
+import { AppLoadingScreen } from './AppLoadingScreen';
 
 const PAGE_TITLES: Record<string, string> = {
   '/': 'Dashboard',
@@ -18,7 +19,7 @@ const PAGE_TITLES: Record<string, string> = {
   '/cycles/report': 'Cycle Report',
   '/transactions': 'Transactions',
   '/pending': 'Pending Review',
-  '/activity': 'Activity Log',
+  '/activity': 'Activity history',
   '/accounts': 'Bank Accounts',
   '/accounts/statements': 'Statements',
   '/household': 'Household',
@@ -31,10 +32,12 @@ const PAGE_TITLES: Record<string, string> = {
 export function AppShell() {
   const { userProfile, householdId, userHouseholds, switchHousehold, logout } = useAppContext();
   const isOnline = useOnlineStatus();
-  const { modePref, setModePref, resolvedMode } = useThemeMode();
+  const { modePref, setModePref } = useThemeMode();
+  const theme = useTheme();
   const { pathname } = useLocation();
 
-  const logoSrc = resolvedMode === 'dark' ? '/icons/icon-dark.svg' : '/icons/icon.svg';
+  const logoSrc =
+    theme.palette.mode === 'dark' ? '/icons/logo_white_transparent.png' : '/icons/logo_black_transparent.png';
   const pageTitle = PAGE_TITLES[pathname];
   useLoanReminders();
 
@@ -55,7 +58,7 @@ export function AppShell() {
         <SideNav />
         <Box
           component="main"
-          sx={{ ml: { md: '264px' }, minHeight: '100dvh', bgcolor: 'background.paper', overflowX: 'clip' }}
+          sx={{ ml: { md: '72px' }, minHeight: '100dvh', bgcolor: 'background.default', overflowX: 'clip' }}
         >
           <TopBar
             logoSrc={logoSrc}
@@ -68,30 +71,19 @@ export function AppShell() {
             logout={logout}
           />
           <Container
-            maxWidth={pathname === '/ai' ? false : 'lg'}
+            maxWidth={false}
             sx={{
               py: pathname === '/ai' ? 0 : { xs: 2, sm: 3 },
               px: pathname === '/ai' ? 0 : { xs: 2, sm: 3 },
+              maxWidth: pathname === '/ai' ? 'none' : 1440,
+              mx: 'auto',
               '& > .MuiContainer-root': {
                 maxWidth: 'none !important',
                 p: '0 !important',
               },
             }}
           >
-            <Suspense
-              fallback={
-                <Box
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    minHeight: '40vh',
-                  }}
-                >
-                  <CircularProgress color="primary" size={32} thickness={4} />
-                </Box>
-              }
-            >
+            <Suspense fallback={<AppLoadingScreen theme={theme} />}>
               <Outlet />
             </Suspense>
           </Container>

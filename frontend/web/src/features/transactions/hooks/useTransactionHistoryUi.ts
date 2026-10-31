@@ -3,8 +3,8 @@ import type { FinanceTransaction } from '@kippa/domain';
 type State = {
   editingTx: FinanceTransaction | null;
   searchTerm: string;
-  selectedAccount: string;
-  selectedCategory: string;
+  selectedAccountIds: string[] | null;
+  selectedCategoryIds: string[] | null;
   selectedCycleId: string;
   visibleCount: number;
 };
@@ -22,8 +22,8 @@ export function useTransactionHistoryUi() {
     {
       editingTx: null,
       searchTerm: '',
-      selectedAccount: 'all',
-      selectedCategory: 'all',
+      selectedAccountIds: null,
+      selectedCategoryIds: null,
       selectedCycleId: 'active',
       visibleCount: PAGE_SIZE,
     },
@@ -38,8 +38,8 @@ export function useTransactionHistoryUi() {
     resetPage: () => dispatch({ key: 'visibleCount', value: PAGE_SIZE }),
     setEditingTx: setter('editingTx'),
     setSearchTerm: setter('searchTerm'),
-    setSelectedAccount: setter('selectedAccount'),
-    setSelectedCategory: setter('selectedCategory'),
+    setSelectedAccountIds: setter('selectedAccountIds'),
+    setSelectedCategoryIds: setter('selectedCategoryIds'),
     setSelectedCycleId: setter('selectedCycleId'),
   };
 }

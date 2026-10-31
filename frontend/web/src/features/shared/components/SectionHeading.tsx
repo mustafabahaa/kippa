@@ -2,18 +2,18 @@ import type { ReactNode } from 'react';
 import { Box, Paper, Stack, Typography } from '@mui/material';
 
 /**
- * Shared card/section heading using the canonical icon-badge treatment:
- * a 44×44 secondary-tinted rounded badge (`Paper variant="cardHeaderIcon"`)
- * plus `cardTitle`/`cardSubtitle` typography. Use this for every card and
- * section header so header styling stays consistent across features.
+ * Shared content heading using the canonical icon-badge treatment:
+ * a 44×44 secondary-tinted rounded badge (`Paper variant="iconBadge"`)
+ * plus `sectionTitle`/`sectionSubtitle` typography. Use it for headed groups so
+ * heading style stays consistent across features.
  */
-export function CardHeading({
+export function SectionHeading({
   icon,
   title,
   subtitle,
   trailing,
 }: {
-  icon: ReactNode;
+  icon?: ReactNode;
   title: string;
   subtitle?: string;
   trailing?: ReactNode;
@@ -28,13 +28,13 @@ export function CardHeading({
       spacing={2}
     >
       <Stack direction="row" spacing={1.5} alignItems="center" sx={{ minWidth: 0 }}>
-        <Paper variant="cardHeaderIcon">{icon}</Paper>
+        {icon && <Paper variant="iconBadge">{icon}</Paper>}
         <Box sx={{ minWidth: 0 }}>
-          <Typography variant="cardTitle" noWrap>
+          <Typography variant="sectionTitle" noWrap>
             {title}
           </Typography>
           {subtitle && (
-            <Typography variant="cardSubtitle" color="text.secondary">
+            <Typography variant="sectionSubtitle" color="text.secondary">
               {subtitle}
             </Typography>
           )}

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Alert, Box, Button, CircularProgress, Paper, Stack, Typography } from '@mui/material';
-import { CheckCircleIcon, CloseIcon, ContentCopyIcon, KeyIcon, NotesIcon } from '@/components/AppIcon';
 import { cancelAiConnection, getAiConnection, startAiConnection, type AiConnectionDevice } from './services/connection';
+import { CheckCircleIcon, CloseIcon, ContentCopyIcon, KeyIcon, MessageIcon } from '@/components/AppIcon';
 
 export type AiConnectionStatus = 'checking' | 'connected' | 'disconnected';
 
@@ -16,10 +16,13 @@ export function AiConnectionPanel({ onStatusChange }: Props) {
   const [error, setError] = useState('');
   const abortRef = useRef<AbortController | null>(null);
 
-  const updateStatus = useCallback((next: AiConnectionStatus) => {
-    setStatus(next);
-    onStatusChange(next);
-  }, [onStatusChange]);
+  const updateStatus = useCallback(
+    (next: AiConnectionStatus) => {
+      setStatus(next);
+      onStatusChange(next);
+    },
+    [onStatusChange],
+  );
 
   useEffect(() => {
     let active = true;
@@ -86,7 +89,7 @@ export function AiConnectionPanel({ onStatusChange }: Props) {
       sx={{ flex: 1, textAlign: 'center', py: { xs: 3, sm: 6 } }}
     >
       <Paper variant="assistantAvatar">
-        <NotesIcon />
+        <MessageIcon />
       </Paper>
       <Box>
         <Typography variant="h6">Connect Kip to ChatGPT</Typography>
@@ -109,13 +112,13 @@ export function AiConnectionPanel({ onStatusChange }: Props) {
               </Typography>
             </Box>
             <Stack direction="row" alignItems="center" spacing={1.5}>
-              <KeyIcon fontSize="small" />
+              <KeyIcon />
               <Typography variant="h6" sx={{ flex: 1 }}>
                 {device.code}
               </Typography>
               <Button
                 variant="segmented"
-                startIcon={<ContentCopyIcon fontSize="small" />}
+                startIcon={<ContentCopyIcon />}
                 onClick={() => void navigator.clipboard.writeText(device.code)}
               >
                 Copy
@@ -131,7 +134,7 @@ export function AiConnectionPanel({ onStatusChange }: Props) {
               >
                 Open ChatGPT sign-in
               </Button>
-              <Button variant="segmented" startIcon={<CloseIcon fontSize="small" />} onClick={() => void cancel()}>
+              <Button variant="segmented" startIcon={<CloseIcon />} onClick={() => void cancel()}>
                 Cancel
               </Button>
             </Stack>
@@ -139,7 +142,7 @@ export function AiConnectionPanel({ onStatusChange }: Props) {
         </Paper>
       )}
       {!device && !isConnecting && (
-        <Button variant="primaryAction" onClick={() => void connect()} startIcon={<CheckCircleIcon fontSize="small" />}>
+        <Button variant="primaryAction" onClick={() => void connect()} startIcon={<CheckCircleIcon />}>
           Connect ChatGPT
         </Button>
       )}

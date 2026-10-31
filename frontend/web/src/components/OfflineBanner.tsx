@@ -1,5 +1,5 @@
+import { IconCloudOff } from '@tabler/icons-react';
 import { AppBar, Toolbar, Typography } from '@mui/material';
-import { CloudOffIcon } from '@/components/AppIcon';
 
 export interface OfflineBannerProps {
   isOnline: boolean;
@@ -14,7 +14,7 @@ export function OfflineBanner({ isOnline }: OfflineBannerProps) {
   return (
     <AppBar position="sticky" color="warning" elevation={0} sx={{ top: 0 }}>
       <Toolbar variant="dense" sx={{ justifyContent: 'center', gap: 1, minHeight: '40px !important' }}>
-        <CloudOffIcon fontSize="small" />
+        <IconCloudOff size={22} strokeWidth={1.8} />
         <Typography variant="body2" sx={{ fontWeight: 600 }}>
           You're offline — changes will sync when reconnected
         </Typography>

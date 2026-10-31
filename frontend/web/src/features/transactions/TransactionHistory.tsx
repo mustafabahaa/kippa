@@ -1,26 +1,7 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
-import {
-  Box,
-  Stack,
-  Typography,
-  TextField,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Card,
-  Skeleton,
-  Button,
-} from '@mui/material';
-import { SearchIcon } from '@/components/AppIcon';
+import { Autocomplete, Box, Stack, TextField, Skeleton, Button, Chip } from '@mui/material';
 
 import {
   useAccounts,
@@ -30,21 +11,24 @@ import {
   useVoidTransactionMutation,
   useCycles,
   useActiveCycle,
-  useHouseholdBaseCurrency,
 } from '@/hooks/useFinance';
 import { useAppContext } from '@/hooks/useAppContext';
-import { usePrivacyMask } from '@/hooks/usePrivacyMask';
 import { EditTransactionDialog } from './components/EditTransactionDialog';
+import { VoidTransactionDialog } from './components/VoidTransactionDialog';
+import { PageHeader } from '@/features/shared/components/PageHeader';
+import { SectionHeading } from '@/features/shared/components/SectionHeading';
 import { EmptyLayout } from '@/features/shared/components/EmptyLayout';
 import { useTransactionHistoryUi } from './hooks/useTransactionHistoryUi';
-import { TransactionHistoryRow } from './components/TransactionHistoryRow';
+import { TransactionsListItem } from '@/features/dashboard/components/TransactionsListItem';
+import { MultiSelectFilter } from '@/features/shared/components/MultiSelectFilter';
 
+const sectionIndent = { xs: 0, md: 2 } as const;
+const contentIndent = { xs: 0, md: 2 } as const;
 export function TransactionHistory() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { enqueueSnackbar } = useSnackbar();
   const { householdId } = useAppContext();
-  const baseCurrency = useHouseholdBaseCurrency();
-  const { maskDigits } = usePrivacyMask();
+  const [voidingTxId, setVoidingTxId] = useState<string | null>(null);
 
   // Filter States
   const {
@@ -52,13 +36,13 @@ export function TransactionHistory() {
     loadMore,
     resetPage,
     searchTerm,
-    selectedAccount,
-    selectedCategory,
+    selectedAccountIds,
+    selectedCategoryIds,
     selectedCycleId,
     setEditingTx,
     setSearchTerm,
-    setSelectedAccount,
-    setSelectedCategory,
+    setSelectedAccountIds,
+    setSelectedCategoryIds,
     setSelectedCycleId,
     visibleCount,
   } = useTransactionHistoryUi();
@@ -68,20 +52,20 @@ export function TransactionHistory() {
     setSearchTerm(value);
     resetPage();
   };
-  const handleCategoryChange = (value: string) => {
-    setSelectedCategory(value);
+  const handleCategoryChange = (value: string[] | null) => {
+    setSelectedCategoryIds(value);
     resetPage();
   };
-  const handleAccountChange = (value: string) => {
-    setSelectedAccount(value);
+  const handleAccountChange = (value: string[] | null) => {
+    setSelectedAccountIds(value);
     resetPage();
   };
   const handleTypeChange = (value: string) => {
     setSearchParams(value === 'all' ? {} : { type: value });
     resetPage();
   };
-  const handleCycleChange = (value: string) => {
-    setSelectedCycleId(value);
+  const handleCycleChange = (value: string | null) => {
+    setSelectedCycleId(value ?? 'all');
     resetPage();
   };
 
@@ -100,17 +84,38 @@ export function TransactionHistory() {
   const { data: transactions = [], isLoading: txsLoading } = useTransactions(householdId, queryCycleId);
   const { data: ledgerLines = [], isLoading: linesLoading } = useLedgerLines(householdId, queryCycleId);
 
+  const accountOptions = accounts.map((account) => ({
+    id: account.id,
+    label: account.name,
+  }));
+  const categoryOptions = categories.map((category) => ({
+    id: category.id,
+    label: category.name,
+  }));
+  const cycleOptions = [
+    { id: 'all', label: 'All cycles' },
+    { id: 'active', label: 'Active cycle' },
+    ...cycles.filter((cycle) => cycle.status !== 'open').map((cycle) => ({ id: cycle.id, label: cycle.name })),
+  ];
+  const typeOptions = [
+    { id: 'all', label: 'All types' },
+    { id: 'expense', label: 'Expense' },
+    { id: 'income', label: 'Income' },
+    { id: 'transfer', label: 'Transfer' },
+    { id: 'adjustment', label: 'Reconciliation' },
+  ];
+
   const voidTxMutation = useVoidTransactionMutation();
 
   // Void Transaction
-  const handleVoid = async (txId: string) => {
-    if (window.confirm('Are you sure you want to void this transaction? This updates balances immediately.')) {
-      try {
-        await voidTxMutation.mutateAsync({ householdId, transactionId: txId });
-        enqueueSnackbar('Transaction voided successfully.', { variant: 'success' });
-      } catch (err: any) {
-        enqueueSnackbar(err.message || 'Failed to void transaction', { variant: 'error' });
-      }
+  const handleVoid = async () => {
+    if (!voidingTxId) return;
+    try {
+      await voidTxMutation.mutateAsync({ householdId, transactionId: voidingTxId });
+      enqueueSnackbar('Transaction voided successfully.', { variant: 'success' });
+      setVoidingTxId(null);
+    } catch (err: any) {
+      enqueueSnackbar(err.message || 'Failed to void transaction', { variant: 'error' });
     }
   };
 
@@ -121,15 +126,15 @@ export function TransactionHistory() {
 
     // 2. Category Filter
     let catMatch = true;
-    if (selectedCategory !== 'all') {
-      catMatch = tx.categoryId === selectedCategory;
+    if (selectedCategoryIds !== null) {
+      catMatch = selectedCategoryIds.includes(tx.categoryId ?? '');
     }
 
     // 3. Account Filter
     let accMatch = true;
-    if (selectedAccount !== 'all') {
+    if (selectedAccountIds !== null) {
       const txLines = ledgerLines.filter((l) => l.transactionId === tx.id);
-      accMatch = txLines.some((l) => l.accountId === selectedAccount);
+      accMatch = txLines.some((l) => selectedAccountIds.includes(l.accountId));
     }
 
     // 4. Type Filter
@@ -145,196 +150,182 @@ export function TransactionHistory() {
 
   if (isLoading) {
     return (
-      <Box sx={{ py: 0.5 }}>
-        <Stack spacing={3}>
-          <Skeleton variant="text" width="40%" height={32} />
-          <Skeleton variant="rectangular" width="100%" height={80} sx={{ borderRadius: '16px' }} />
-          <Skeleton variant="rectangular" width="100%" height={300} sx={{ borderRadius: '20px' }} />
+      <Stack spacing={{ xs: 2, md: 2.5 }} sx={{ width: '100%' }}>
+        <PageHeader title="Transactions" subtitle="Search and review your household activity." />
+        <Stack spacing={2} sx={{ width: '100%', maxWidth: 900, alignSelf: 'center' }}>
+          <Box component="section" sx={{ px: sectionIndent }}>
+            <Stack spacing={1.25} sx={{ px: contentIndent }}>
+              <Stack spacing={0.5}>
+                <Skeleton variant="text" width={100} height={26} />
+                <Skeleton variant="text" width={350} height={20} />
+              </Stack>
+              <Box
+                sx={{
+                  display: 'grid',
+                  gridTemplateColumns: {
+                    xs: '1fr',
+                    sm: 'repeat(2, minmax(0, 1fr))',
+                    lg: 'repeat(4, minmax(0, 1fr))',
+                  },
+                  gap: 1.25,
+                }}
+              >
+                <Skeleton variant="rounded" height={56} sx={{ gridColumn: { xs: 'auto', sm: 'span 2' } }} />
+                <Skeleton variant="rounded" height={56} />
+                <Skeleton variant="rounded" height={56} />
+                <Skeleton variant="rounded" height={56} sx={{ gridColumn: { xs: 'auto', sm: 'span 2' } }} />
+                <Skeleton variant="rounded" height={56} sx={{ gridColumn: { xs: 'auto', sm: 'span 2' } }} />
+              </Box>
+            </Stack>
+          </Box>
+
+          <Box component="section" sx={{ px: sectionIndent }}>
+            <Stack spacing={{ xs: 2, md: 2.5 }}>
+              <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ px: contentIndent }}>
+                <Skeleton variant="text" width={120} height={28} />
+                <Skeleton variant="rounded" width={64} height={28} />
+              </Stack>
+              <Stack spacing={2.5} sx={{ px: contentIndent }}>
+                {[...Array(5).keys()].map((index) => (
+                  <Stack key={index} direction="row" spacing={1.5} alignItems="center">
+                    <Skeleton variant="circular" width={32} height={32} />
+                    <Stack spacing={0.25} sx={{ flex: 1, minWidth: 0 }}>
+                      <Skeleton variant="text" width={120} height={28} />
+                      <Skeleton variant="text" width={100} height={20} />
+                      <Skeleton variant="text" width={88} height={18} />
+                    </Stack>
+                    <Stack spacing={0.25} alignItems="flex-end" sx={{ width: { xs: 96, sm: 220 } }}>
+                      <Skeleton variant="text" width={80} height={22} />
+                      <Skeleton variant="text" width="100%" height={18} />
+                    </Stack>
+                    <Skeleton variant="circular" width={24} height={24} />
+                  </Stack>
+                ))}
+              </Stack>
+            </Stack>
+          </Box>
         </Stack>
-      </Box>
+      </Stack>
     );
   }
 
   return (
-    <Box sx={{ py: 0.5 }}>
-      <Stack spacing={2.5}>
-        <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={2}>
-          <Box>
-            <Typography variant="h1" sx={{ fontSize: '24px', fontWeight: 800, color: 'text.primary' }}>
-              Transaction History
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-              View, search, and manage your household transactions.
-            </Typography>
-          </Box>
+    <Stack spacing={{ xs: 2, md: 2.5 }} sx={{ width: '100%' }}>
+      <PageHeader title="Transactions" subtitle="Search and review your household activity." />
+
+      <Stack spacing={{ xs: 2, md: 2.5 }} sx={{ width: '100%', maxWidth: 900, alignSelf: 'center' }}>
+        <Box component="section" sx={{ px: sectionIndent }}>
+          <Stack spacing={1.25} sx={{ px: contentIndent }}>
+            <SectionHeading title="Filters" subtitle="Narrow transactions by cycle, account, category, or type." />
+            <Box
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))', lg: 'repeat(4, minmax(0, 1fr))' },
+                gap: 1.25,
+              }}
+            >
+              <TextField
+                sx={{ gridColumn: { xs: 'auto', sm: 'span 2' } }}
+                label="Search"
+                placeholder="Search descriptions"
+                value={searchTerm}
+                onChange={(event) => handleSearch(event.target.value)}
+                fullWidth
+              />
+
+              <Autocomplete
+                options={cycleOptions}
+                value={cycleOptions.find((option) => option.id === selectedCycleId) ?? cycleOptions[0]}
+                onChange={(event, option) => {
+                  void event;
+                  handleCycleChange(option?.id ?? null);
+                }}
+                getOptionLabel={(option) => option.label}
+                isOptionEqualToValue={(option, value) => option.id === value.id}
+                renderInput={(params) => <TextField {...params} label="Cycle" />}
+              />
+
+              <Autocomplete
+                options={typeOptions}
+                value={typeOptions.find((option) => option.id === selectedType) ?? typeOptions[0]}
+                onChange={(event, option) => {
+                  void event;
+                  handleTypeChange(option?.id ?? 'all');
+                }}
+                getOptionLabel={(option) => option.label}
+                isOptionEqualToValue={(option, value) => option.id === value.id}
+                renderInput={(params) => <TextField {...params} label="Type" />}
+              />
+
+              <Box sx={{ gridColumn: { xs: 'auto', sm: 'span 2' } }}>
+                <MultiSelectFilter
+                  label="Accounts"
+                  allLabel="All accounts"
+                  searchPlaceholder={selectedAccountIds?.length === 0 ? 'No accounts selected' : 'Search accounts'}
+                  options={accountOptions}
+                  selectedIds={selectedAccountIds}
+                  onChange={handleAccountChange}
+                />
+              </Box>
+
+              <Box sx={{ gridColumn: { xs: 'auto', sm: 'span 2' } }}>
+                <MultiSelectFilter
+                  label="Categories"
+                  allLabel="All categories"
+                  searchPlaceholder={selectedCategoryIds?.length === 0 ? 'No categories selected' : 'Search categories'}
+                  options={categoryOptions}
+                  selectedIds={selectedCategoryIds}
+                  onChange={handleCategoryChange}
+                />
+              </Box>
+            </Box>
+          </Stack>
         </Box>
 
-        <Stack spacing={1.5}>
-          <TextField
-            placeholder="Search description..."
-            value={searchTerm}
-            onChange={(e) => handleSearch(e.target.value)}
-            fullWidth
-            slotProps={{
-              input: {
-                startAdornment: <SearchIcon sx={{ color: 'text.secondary', mr: 1, fontSize: 20 }} />,
-              },
-            }}
-            sx={{
-              '& .MuiOutlinedInput-root': { bgcolor: 'surfaceContainerLow' },
-              '& .MuiOutlinedInput-notchedOutline': {
-                borderColor: 'transparent !important',
-                borderWidth: '0 !important',
-              },
-            }}
-          />
-
-          <Box
-            sx={{
-              display: 'grid',
-              gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))', lg: 'repeat(4, minmax(0, 1fr))' },
-              gap: 1.5,
-            }}
-          >
-            <FormControl fullWidth>
-              <InputLabel id="history-cycle-label">Budget Cycle</InputLabel>
-              <Select
-                labelId="history-cycle-label"
-                value={selectedCycleId}
-                label="Budget Cycle"
-                onChange={(e) => handleCycleChange(e.target.value)}
-              >
-                <MenuItem value="all">All Cycles</MenuItem>
-                <MenuItem value="active">Active Cycle</MenuItem>
-                {cycles
-                  .filter((c) => c.status !== 'open')
-                  .map((c) => (
-                    <MenuItem key={c.id} value={c.id}>
-                      {c.name} ({c.status})
-                    </MenuItem>
-                  ))}
-              </Select>
-            </FormControl>
-
-            <FormControl fullWidth>
-              <InputLabel id="history-account-label">Account</InputLabel>
-              <Select
-                labelId="history-account-label"
-                value={selectedAccount}
-                label="Account"
-                onChange={(e) => handleAccountChange(e.target.value)}
-              >
-                <MenuItem value="all">All Accounts</MenuItem>
-                {accounts.map((a) => (
-                  <MenuItem key={a.id} value={a.id}>
-                    {a.name}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-
-            <FormControl fullWidth>
-              <InputLabel id="history-category-label">Category</InputLabel>
-              <Select
-                labelId="history-category-label"
-                value={selectedCategory}
-                label="Category"
-                onChange={(e) => handleCategoryChange(e.target.value)}
-              >
-                <MenuItem value="all">All Categories</MenuItem>
-                {categories.map((c) => (
-                  <MenuItem key={c.id} value={c.id}>
-                    {c.name}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-
-            <FormControl fullWidth>
-              <InputLabel id="history-type-label">Type</InputLabel>
-              <Select
-                labelId="history-type-label"
-                value={selectedType}
-                label="Type"
-                onChange={(e) => handleTypeChange(e.target.value)}
-              >
-                <MenuItem value="all">All Types</MenuItem>
-                <MenuItem value="expense">Expense</MenuItem>
-                <MenuItem value="income">Income</MenuItem>
-                <MenuItem value="transfer">Transfer</MenuItem>
-                <MenuItem value="adjustment">Reconciliation</MenuItem>
-              </Select>
-            </FormControl>
-          </Box>
-        </Stack>
-
-        {/* Table Container */}
-        <TableContainer
-          component={Card}
-          sx={{ border: 0, boxShadow: 'none', overflow: 'hidden', '&:hover': { transform: 'none', boxShadow: 'none' } }}
-        >
-          <Table sx={{ tableLayout: { xs: 'fixed', md: 'auto' } }}>
-            <TableHead>
-              <TableRow>
-                <TableCell align="center" sx={{ width: 64, py: 1.75 }}>
-                  Type
-                </TableCell>
-                <TableCell sx={{ py: 1.75 }}>Transaction</TableCell>
-                <TableCell sx={{ py: 1.75, display: { xs: 'none', md: 'table-cell' } }}>Account Info</TableCell>
-                <TableCell align="right" sx={{ width: { xs: 120, sm: 160 }, py: 1.75 }}>
-                  Amount
-                </TableCell>
-                <TableCell align="center" sx={{ width: { xs: 92, sm: 112 }, py: 1.75 }}>
-                  Actions
-                </TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
+        <Box component="section" sx={{ px: sectionIndent }}>
+          <Stack spacing={{ xs: 2, md: 2.5 }}>
+            <SectionHeading title="Activity" trailing={<Chip size="small" label={`${filteredTxs.length} results`} />} />
+            <Stack spacing={1.5} sx={{ px: contentIndent }}>
               {filteredTxs.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={5} sx={{ p: 2, borderBottom: 0 }}>
-                    <EmptyLayout
-                      icon={<SearchIcon sx={{ fontSize: 28 }} />}
-                      title="No matching transactions"
-                      description="Try changing your search term or filters to find what you’re looking for."
-                    />
-                  </TableCell>
-                </TableRow>
+                <EmptyLayout
+                  title="No matching transactions"
+                  description="Try changing your search or filters to find what you’re looking for."
+                />
               ) : (
-                filteredTxs
-                  .slice(0, visibleCount)
-                  .map((transaction) => (
-                    <TransactionHistoryRow
-                      key={transaction.id}
-                      transaction={transaction}
-                      accounts={accounts}
-                      categories={categories}
-                      ledgerLines={ledgerLines}
-                      baseCurrency={baseCurrency}
-                      maskDigits={maskDigits}
-                      onEdit={setEditingTx}
-                      onVoid={handleVoid}
-                    />
-                  ))
+                <>
+                  <Stack className="kippa-stepper">
+                    {filteredTxs.slice(0, visibleCount).map((transaction) => (
+                      <TransactionsListItem
+                        key={transaction.id}
+                        tx={transaction}
+                        categories={categories}
+                        ledgerLines={ledgerLines}
+                        accounts={accounts}
+                        onEdit={setEditingTx}
+                        onVoid={setVoidingTxId}
+                      />
+                    ))}
+                  </Stack>
+                  {visibleCount < filteredTxs.length && (
+                    <Button variant="segmented" onClick={loadMore} sx={{ alignSelf: 'center' }}>
+                      Load more · {filteredTxs.length - visibleCount} remaining
+                    </Button>
+                  )}
+                </>
               )}
-            </TableBody>
-          </Table>
-          {visibleCount < filteredTxs.length && (
-            <Box sx={{ textAlign: 'center', py: 1.5 }}>
-              <Button
-                size="small"
-                onClick={loadMore}
-                sx={{ fontWeight: 600, fontSize: '12px', color: 'primary.main', textTransform: 'none', px: 2 }}
-              >
-                Load more ({filteredTxs.length - visibleCount} remaining)
-              </Button>
-            </Box>
-          )}
-        </TableContainer>
+            </Stack>
+          </Stack>
+        </Box>
       </Stack>
 
       {/* Shared Edit Dialog */}
       {editingTx && <EditTransactionDialog open transaction={editingTx} onClose={() => setEditingTx(null)} />}
-    </Box>
+      <VoidTransactionDialog
+        open={Boolean(voidingTxId)}
+        loading={voidTxMutation.isPending}
+        onClose={() => setVoidingTxId(null)}
+        onConfirm={handleVoid}
+      />
+    </Stack>
   );
 }

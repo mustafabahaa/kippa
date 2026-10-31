@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import {
+  Box,
   Button,
   Checkbox,
   Dialog,
@@ -12,6 +13,10 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import { format, isValid, parseISO } from 'date-fns';
 
 export type NewCycleValues = {
   name: string;
@@ -48,52 +53,77 @@ export function CreateCycleDialog({ busy, onClose, onCreate, open }: CreateCycle
       setNameError(false);
     }
   };
+  const startDate = values.startDate ? parseISO(values.startDate) : null;
+  const endDate = values.endDate ? parseISO(values.endDate) : null;
 
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="xs">
-      <DialogTitle>Create Budget Cycle</DialogTitle>
-      <DialogContent>
-        <Stack spacing={2.5} sx={{ mt: 1 }}>
-          <TextField
-            fullWidth
-            label="Cycle Name"
-            placeholder="e.g. July 2026"
-            value={values.name}
-            onChange={(event) => update('name', event.target.value)}
-            error={nameError}
-            helperText={nameError ? 'A cycle name is required.' : undefined}
-          />
-          <Grid container spacing={2}>
-            <Grid size={6}>
-              <TextField
-                fullWidth
-                type="date"
-                label="Start Date"
-                value={values.startDate}
-                onChange={(event) => update('startDate', event.target.value)}
-                slotProps={{ inputLabel: { shrink: true } }}
-              />
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm" aria-labelledby="create-cycle-title">
+      <DialogTitle component="div" sx={{ pb: 2 }}>
+        <Typography id="create-cycle-title" variant="h3">New budget cycle</Typography>
+        <Typography variant="body2" color="text.secondary">
+          Choose a name and date range for this household budget period.
+        </Typography>
+      </DialogTitle>
+      <DialogContent sx={{ mt: 2, pt: 2, px: { xs: 3, sm: 5 } }}>
+        <Stack spacing={3}>
+          <Box>
+            <Typography variant="h5">Cycle details</Typography>
+            <Typography variant="body2" color="text.secondary">
+              Set the period Kippa should use for budgets and spending.
+            </Typography>
+          </Box>
+          <Stack spacing={2} sx={{ px: { xs: 1, sm: 2 } }}>
+            <TextField
+              fullWidth
+              label="Cycle name"
+              placeholder="e.g. July 2026"
+              value={values.name}
+              onChange={(event) => update('name', event.target.value)}
+              error={nameError}
+              helperText={nameError ? 'A cycle name is required.' : undefined}
+            />
+            <Grid container spacing={1.5}>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <LocalizationProvider dateAdapter={AdapterDateFns}>
+                  <DatePicker
+                    label="Start date"
+                    value={startDate && isValid(startDate) ? startDate : null}
+                    onChange={(value) => {
+                      if (value && isValid(value)) update('startDate', format(value, 'yyyy-MM-dd'));
+                    }}
+                    slotProps={{ textField: { fullWidth: true } }}
+                  />
+                </LocalizationProvider>
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <LocalizationProvider dateAdapter={AdapterDateFns}>
+                  <DatePicker
+                    label="Target end date"
+                    value={endDate && isValid(endDate) ? endDate : null}
+                    onChange={(value) => update('endDate', value && isValid(value) ? format(value, 'yyyy-MM-dd') : '')}
+                    slotProps={{ textField: { fullWidth: true } }}
+                  />
+                </LocalizationProvider>
+              </Grid>
             </Grid>
-            <Grid size={6}>
-              <TextField
-                fullWidth
-                type="date"
-                label="Target End Date"
-                value={values.endDate}
-                onChange={(event) => update('endDate', event.target.value)}
-                slotProps={{ inputLabel: { shrink: true } }}
-              />
-            </Grid>
-          </Grid>
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={values.status === 'open'}
-                onChange={(event) => update('status', event.target.checked ? 'open' : 'planned')}
-              />
-            }
-            label="Set as active immediately (will close current active cycle)"
-          />
+          </Stack>
+          <Stack spacing={1}>
+            <Typography variant="h5">Cycle status</Typography>
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={values.status === 'open'}
+                  onChange={(event) => update('status', event.target.checked ? 'open' : 'planned')}
+                />
+              }
+              label="Start this cycle now"
+            />
+            {values.status === 'open' && (
+              <Typography variant="body2" color="text.secondary" sx={{ pl: { xs: 4, sm: 5 } }}>
+                Starting now will close the currently active cycle.
+              </Typography>
+            )}
+          </Stack>
         </Stack>
       </DialogContent>
       <DialogActions>
@@ -128,29 +158,39 @@ export function CloseCycleDialog({ busy, onClose, onConfirm, open }: CloseCycleD
   };
 
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="xs">
-      <DialogTitle color="error">Close Budget Cycle</DialogTitle>
-      <DialogContent>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-          Closing the active cycle compiles balances, carries forward leftovers and locks edits. Confirm items below:
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm" aria-labelledby="close-cycle-title">
+      <DialogTitle component="div" sx={{ pb: 2 }}>
+        <Typography id="close-cycle-title" variant="h3">Close budget cycle</Typography>
+        <Typography variant="body2" color="text.secondary">
+          This locks the cycle and compiles the household’s balances and leftover budget.
         </Typography>
+      </DialogTitle>
+      <DialogContent sx={{ mt: 2, pt: 2, px: { xs: 3, sm: 5 } }}>
         <Stack spacing={2.5}>
-          {CONFIRMATIONS.map((label, index) => (
-            <FormControlLabel
-              key={label}
-              control={
-                <Checkbox
-                  checked={confirmed[index]}
-                  onChange={(event) =>
-                    setConfirmed((current) =>
-                      current.map((value, itemIndex) => (itemIndex === index ? event.target.checked : value)),
-                    )
-                  }
-                />
-              }
-              label={label}
-            />
-          ))}
+          <Box>
+            <Typography variant="h5">Review before closing</Typography>
+            <Typography variant="body2" color="text.secondary">
+              Confirm each item before Kippa finalizes this cycle.
+            </Typography>
+          </Box>
+          <Stack spacing={1.5} sx={{ px: { xs: 1, sm: 2 } }}>
+            {CONFIRMATIONS.map((label, index) => (
+              <FormControlLabel
+                key={label}
+                control={
+                  <Checkbox
+                    checked={confirmed[index]}
+                    onChange={(event) =>
+                      setConfirmed((current) =>
+                        current.map((value, itemIndex) => (itemIndex === index ? event.target.checked : value)),
+                      )
+                    }
+                  />
+                }
+                label={label}
+              />
+            ))}
+          </Stack>
         </Stack>
       </DialogContent>
       <DialogActions>

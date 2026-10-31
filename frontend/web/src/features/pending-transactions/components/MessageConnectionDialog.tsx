@@ -111,7 +111,7 @@ export function MessageConnectionDialog({
                       </Typography>
                     </Box>
                     <IconButton aria-label={`Copy ${label}`} onClick={() => onCopy(value, label)}>
-                      <ContentCopyIcon fontSize="small" />
+                      <ContentCopyIcon />
                     </IconButton>
                   </Stack>
                 ))}

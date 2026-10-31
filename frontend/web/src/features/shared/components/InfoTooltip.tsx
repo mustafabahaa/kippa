@@ -1,6 +1,6 @@
+import { IconInfoCircle } from '@tabler/icons-react';
 import { Box, Tooltip, SxProps, Theme } from '@mui/material';
 import { ReactNode } from 'react';
-import { InfoOutlinedIcon } from '@/components/AppIcon';
 
 interface InfoTooltipProps {
   /** Plain-text explanation shown inside the tooltip popover. */
@@ -41,7 +41,7 @@ export function InfoTooltip({ text, label, iconSize = 14, sx }: InfoTooltipProps
         }}
       >
         {label}
-        <InfoOutlinedIcon sx={{ fontSize: `${iconSize}px`, color: 'text.secondary', opacity: 0.7 }} />
+        <IconInfoCircle size={iconSize} strokeWidth={1.8} />
       </Box>
     </Tooltip>
   );

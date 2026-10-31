@@ -3,25 +3,25 @@ import { useSnackbar } from 'notistack';
 import {
   Box,
   Button,
-  Card,
   Chip,
   CircularProgress,
-  Divider,
+  InputAdornment,
+  Paper,
   Skeleton,
   Stack,
   Tab,
   Tabs,
+  TextField,
   Typography,
-  alpha,
 } from '@mui/material';
+import { KeyIcon, SearchIcon } from '@/components/AppIcon';
 import { PageHeader } from '@/features/shared/components/PageHeader';
 import { PendingReviewDialog } from './components/PendingReviewDialog';
 import { MessageConnectionDialog } from './components/MessageConnectionDialog';
 import { EmptyLayout } from '@/features/shared/components/EmptyLayout';
-import { CardHeading } from '@/features/shared/components/CardHeading';
+import { SectionHeading } from '@/features/shared/components/SectionHeading';
 import { TransactionIcon } from '@/features/transactions/components/TransactionIcon';
 import { Money } from '@/components/Money';
-import { CheckCircleIcon, HistoryIcon, KeyIcon } from '@/components/AppIcon';
 import { useAppContext } from '@/hooks/useAppContext';
 import {
   useAccounts,
@@ -37,6 +37,8 @@ import { suggestCategoryIds } from '@/libs/merchantSuggestions';
 import { useMessageConnections } from './hooks/useMessageConnections';
 import { usePendingReviewState } from './hooks/usePendingReviewState';
 type PendingItemState = 'idle' | 'approving' | 'discarding' | 'settled';
+const sectionIndent = { xs: 0, md: 2 } as const;
+const contentIndent = { xs: 0, md: 2 } as const;
 
 const PREVIEW_PENDING_ITEMS: PendingFinancialMessage[] = [
   {
@@ -114,6 +116,7 @@ export function PendingTransactions() {
     isFetching: historyFetching,
   } = useResolvedPendingFinancialMessages(householdId);
   const [tab, setTab] = useState<'review' | 'history'>('review');
+  const [searchQuery, setSearchQuery] = useState('');
   const {
     accountId,
     categoryId,
@@ -131,6 +134,36 @@ export function PendingTransactions() {
   const connections = useMessageConnections(householdId);
   const previewMode = import.meta.env.DEV && new URLSearchParams(window.location.search).get('preview-pending') === '1';
   const pending = previewMode ? PREVIEW_PENDING_ITEMS : remotePending;
+  const normalizedSearch = searchQuery.trim().toLocaleLowerCase();
+  const filteredPending = useMemo(
+    () =>
+      !normalizedSearch
+        ? pending
+        : pending.filter((item) =>
+            [item.description, item.counterparty, item.provider, item.kind, item.date, item.messagePreview]
+              .filter(Boolean)
+              .some((value) => value!.toLocaleLowerCase().includes(normalizedSearch)),
+          ),
+    [normalizedSearch, pending],
+  );
+  const filteredResolved = useMemo(
+    () =>
+      !normalizedSearch
+        ? resolved
+        : resolved.filter((item) =>
+            [
+              item.snapshot.description,
+              item.snapshot.counterparty,
+              item.snapshot.provider,
+              item.snapshot.kind,
+              item.state,
+              item.resolvedByDisplayName,
+            ]
+              .filter(Boolean)
+              .some((value) => value!.toLocaleLowerCase().includes(normalizedSearch)),
+          ),
+    [normalizedSearch, resolved],
+  );
   // Show the empty state only after a check has actually settled. The query
   // is shared with the nav badge and polls every 30s, so a cached (possibly
   // stale, possibly empty) list often renders first — keep the skeleton up
@@ -264,8 +297,8 @@ export function PendingTransactions() {
   return (
     <Stack spacing={3}>
       <PageHeader
-        title="Message activity"
-        subtitle="Review detected bank activity and keep a complete resolution history."
+        title="Pending transactions"
+        subtitle="Review detected activity before it is added to your household ledger."
         action={
           <Chip
             label={tab === 'review' ? `${pending.length} pending` : `${resolved.length} resolved`}
@@ -274,185 +307,203 @@ export function PendingTransactions() {
         }
       />
 
-      <Box
-        sx={{
-          px: { xs: 2, sm: 2.5 },
-          py: 2,
-          borderRadius: 'card',
-          bgcolor: (theme) => alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.12 : 0.06),
-          display: 'flex',
-          alignItems: { xs: 'flex-start', sm: 'center' },
-          justifyContent: 'space-between',
-          gap: 2,
-          flexDirection: { xs: 'column', sm: 'row' },
-        }}
-      >
-        <Stack direction="row" spacing={1.5} alignItems="center">
-          <KeyIcon sx={{ color: 'primary.main' }} />
-          <Box>
-            <Typography sx={{ fontSize: 14, fontWeight: 750 }}>Secure message connection</Typography>
-            <Typography sx={{ fontSize: 12, color: 'text.secondary' }}>
-              {activeConnections
-                ? `${activeConnections} active secure connection`
-                : 'Connect your bank message automation securely'}
-            </Typography>
-          </Box>
-        </Stack>
-        <Button variant="outlined" onClick={() => setSetupOpen(true)}>
-          {activeConnections ? 'Manage' : 'Connect'}
-        </Button>
-      </Box>
-
-      <Tabs value={tab} onChange={(...[, value]) => setTab(value)} variant="fullWidth">
-        <Tab value="review" label="Review" />
-        <Tab value="history" label="History" icon={<HistoryIcon fontSize="small" />} iconPosition="start" />
-      </Tabs>
-
-      {tab === 'review' &&
-        (reviewChecking ? (
-          <Stack spacing={1}>
-            {[0, 1, 2].map((item) => (
-              <Skeleton key={item} variant="rounded" height={76} />
-            ))}
-          </Stack>
-        ) : pending.length === 0 ? (
-          <EmptyLayout
-            icon={<CheckCircleIcon sx={{ fontSize: 28 }} />}
-            title="Nothing waiting for you"
-            description="Detected bank activity will appear here. No ledger entry is created until you approve it."
+      <Box component="section" sx={{ px: sectionIndent }}>
+        <Stack spacing={2.5}>
+          <SectionHeading
+            icon={<KeyIcon fontSize="small" />}
+            title="Secure message connection"
+            subtitle={
+              activeConnections
+                ? `${activeConnections} active secure connection${activeConnections === 1 ? '' : 's'}`
+                : 'Connect your bank message automation securely.'
+            }
+            trailing={
+              <Button variant="segmented" onClick={() => setSetupOpen(true)}>
+                {activeConnections ? 'Manage' : 'Connect'}
+              </Button>
+            }
           />
-        ) : (
-          <Card sx={{ overflow: 'hidden', '&:hover': { transform: 'none' } }}>
-            <Box sx={{ px: { xs: 2, sm: 2.5 }, py: 2 }}>
-              <Typography sx={{ fontSize: 16, fontWeight: 800 }}>Detected activity</Typography>
-              <Typography sx={{ fontSize: 12, color: 'text.secondary', mt: 0.25 }}>Tap an item to review it</Typography>
-            </Box>
-            <Divider />
-            {pending.map((item, index) => (
-              <Box key={item.id}>
-                <Box
-                  component="button"
-                  type="button"
-                  onClick={() => openReview(item)}
-                  disabled={(itemStates[item.id] ?? 'idle') !== 'idle'}
-                  sx={{
-                    width: '100%',
-                    minHeight: 72,
-                    px: { xs: 2, sm: 2.5 },
-                    py: 1.25,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 1.5,
-                    border: 0,
-                    bgcolor: 'transparent',
-                    color: 'text.primary',
-                    textAlign: 'left',
-                    cursor: 'pointer',
-                    opacity: (itemStates[item.id] ?? 'idle') === 'idle' ? 1 : 0.6,
-                    '&:hover': { bgcolor: 'action.hover' },
-                  }}
-                >
-                  {(itemStates[item.id] ?? 'idle') === 'idle' ? (
-                    <TransactionIcon type={item.kind} size={40} />
-                  ) : (
-                    <CircularProgress size={32} />
-                  )}
-                  <Box sx={{ flex: 1, minWidth: 0 }}>
-                    <Stack direction="row" spacing={1} alignItems="center">
-                      <Typography noWrap sx={{ fontSize: 13.5, fontWeight: 800, flex: 1 }}>
-                        {item.description}
-                      </Typography>
-                      <Typography sx={{ fontSize: 13, fontWeight: 800, whiteSpace: 'nowrap' }}>
-                        <Money amount={item.amount} code={item.currency} maxDigits={2} />
-                      </Typography>
-                    </Stack>
-                    <Typography noWrap sx={{ fontSize: 11.5, color: 'text.secondary', mt: 0.25 }}>
-                      {item.provider.toUpperCase()} · {item.kind} · {item.date}
-                    </Typography>
-                  </Box>
-                </Box>
-                {index < pending.length - 1 && <Divider sx={{ ml: 8.5 }} />}
-              </Box>
-            ))}
-          </Card>
-        ))}
 
-      {tab === 'history' &&
-        (historyChecking ? (
-          <Stack spacing={1}>
-            {[0, 1, 2].map((item) => (
-              <Skeleton key={item} variant="rounded" height={76} />
-            ))}
-          </Stack>
-        ) : resolved.length === 0 ? (
-          <EmptyLayout
-            icon={<HistoryIcon sx={{ fontSize: 28 }} />}
-            title="No review history yet"
-            description="Approved and discarded message activity will appear here after you resolve it."
-          />
-        ) : (
-          <Card sx={{ overflow: 'hidden', '&:hover': { transform: 'none' } }}>
-            <Box sx={{ px: { xs: 2, sm: 2.5 }, py: 2 }}>
-              <CardHeading
-                icon={<HistoryIcon variant="Bulk" />}
-                title="Resolved activity"
-                subtitle="The latest 100 reviewed messages"
+          <Tabs
+            value={tab}
+            onChange={(event, value) => {
+              void event;
+              setTab(value);
+            }}
+          >
+            <Tab value="review" label="Needs review" />
+            <Tab value="history" label="History" />
+          </Tabs>
+
+          <Stack spacing={2.5} sx={{ px: contentIndent }}>
+            {!(tab === 'review' ? reviewChecking : historyChecking) && (
+              <TextField
+                label={tab === 'review' ? 'Search pending activity' : 'Search review history'}
+                placeholder="Description, provider, or person"
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
+                sx={{ width: '100%', maxWidth: 440 }}
+                slotProps={{
+                  input: {
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <SearchIcon fontSize="small" />
+                      </InputAdornment>
+                    ),
+                  },
+                }}
               />
-            </Box>
-            <Divider />
-            {resolved.map((item, index) => {
-              const restoring = restoreMutation.isPending && restoreMutation.variables?.pendingId === item.id;
-              return (
-                <Box key={item.id}>
-                  <Box
-                    sx={{
-                      minHeight: 72,
-                      px: { xs: 2, sm: 2.5 },
-                      py: 1.25,
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 1.5,
-                    }}
-                  >
-                    <TransactionIcon type={item.snapshot.kind} size={40} />
-                    <Box sx={{ flex: 1, minWidth: 0 }}>
-                      <Stack direction="row" spacing={1} alignItems="center">
-                        <Typography noWrap sx={{ fontSize: 13.5, fontWeight: 800, flex: 1 }}>
-                          {item.snapshot.description}
-                        </Typography>
-                        <Typography sx={{ fontSize: 13, fontWeight: 800, whiteSpace: 'nowrap' }}>
-                          <Money amount={item.snapshot.amount} code={item.snapshot.currency} maxDigits={2} />
-                        </Typography>
-                      </Stack>
-                      <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 0.25 }}>
-                        <Chip
-                          label={item.state === 'approved' ? 'Approved' : 'Discarded'}
-                          color={item.state === 'approved' ? 'success' : 'default'}
-                          size="small"
-                          variant="outlined"
-                        />
-                        <Typography noWrap sx={{ fontSize: 11.5, color: 'text.secondary' }}>
-                          {new Date(item.resolvedAt).toLocaleString()} · {item.resolvedByDisplayName}
-                        </Typography>
-                      </Stack>
-                    </Box>
-                    {item.state === 'discarded' && (
-                      <Button
-                        size="small"
-                        variant="outlined"
-                        disabled={restoring}
-                        onClick={() => restoreDiscarded(item.id)}
+            )}
+
+            {tab === 'review' &&
+              (reviewChecking ? (
+                <Stack spacing={1}>
+                  {[0, 1, 2].map((item) => (
+                    <Skeleton key={item} variant="rounded" height={76} />
+                  ))}
+                </Stack>
+              ) : filteredPending.length === 0 ? (
+                <EmptyLayout
+                  title={pending.length ? 'No matching activity' : 'Nothing waiting for you'}
+                  description={
+                    pending.length
+                      ? 'Try another search to find a pending item.'
+                      : 'Detected bank activity will appear here. No ledger entry is created until you approve it.'
+                  }
+                />
+              ) : (
+                <Stack spacing={1.5} component="section">
+                  <SectionHeading
+                    title="Needs review"
+                    subtitle="Confirm or discard detected bank activity."
+                    trailing={<Chip size="small" label={`${filteredPending.length} results`} />}
+                  />
+                  <Stack className="kippa-stepper" sx={{ px: contentIndent }}>
+                    {filteredPending.map((item) => (
+                      <Paper
+                        key={item.id}
+                        component="button"
+                        type="button"
+                        onClick={() => openReview(item)}
+                        disabled={(itemStates[item.id] ?? 'idle') !== 'idle'}
+                        variant="timelineRow"
+                        sx={{
+                          width: '100%',
+                          minHeight: 80,
+                          px: { xs: 1, sm: 2 },
+                          py: 1.5,
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 1.5,
+                          color: 'text.primary',
+                          textAlign: 'left',
+                          cursor: 'pointer',
+                          opacity: (itemStates[item.id] ?? 'idle') === 'idle' ? 1 : 0.6,
+                        }}
                       >
-                        {restoring ? 'Restoring…' : 'Restore'}
-                      </Button>
-                    )}
-                  </Box>
-                  {index < resolved.length - 1 && <Divider sx={{ ml: 8.5 }} />}
-                </Box>
-              );
-            })}
-          </Card>
-        ))}
+                        {(itemStates[item.id] ?? 'idle') === 'idle' ? (
+                          <TransactionIcon className="kippa-stepper-node" type={item.kind} size={36} />
+                        ) : (
+                          <CircularProgress size={32} />
+                        )}
+                        <Box sx={{ flex: 1, minWidth: 0 }}>
+                          <Typography noWrap variant="sectionLabel">
+                            {item.description}
+                          </Typography>
+                          <Typography noWrap variant="sectionSubtitle" color="text.secondary">
+                            {item.provider.toUpperCase()} · {item.kind} · {item.date}
+                          </Typography>
+                        </Box>
+                        <Typography variant="transactionAmount" sx={{ whiteSpace: 'nowrap' }}>
+                          <Money amount={item.amount} code={item.currency} maxDigits={2} />
+                        </Typography>
+                      </Paper>
+                    ))}
+                  </Stack>
+                </Stack>
+              ))}
+
+            {tab === 'history' &&
+              (historyChecking ? (
+                <Stack spacing={1}>
+                  {[0, 1, 2].map((item) => (
+                    <Skeleton key={item} variant="rounded" height={76} />
+                  ))}
+                </Stack>
+              ) : filteredResolved.length === 0 ? (
+                <EmptyLayout
+                  title={resolved.length ? 'No matching history' : 'No review history yet'}
+                  description={
+                    resolved.length
+                      ? 'Try another search to find a resolved item.'
+                      : 'Approved and discarded message activity will appear here after you resolve it.'
+                  }
+                />
+              ) : (
+                <Stack spacing={1.5} component="section">
+                  <SectionHeading
+                    title="Review history"
+                    subtitle="The latest 100 resolved items."
+                    trailing={<Chip size="small" label={`${filteredResolved.length} results`} />}
+                  />
+                  <Stack className="kippa-stepper" sx={{ px: contentIndent }}>
+                    {filteredResolved.map((item) => {
+                      const restoring = restoreMutation.isPending && restoreMutation.variables?.pendingId === item.id;
+                      return (
+                        <Paper
+                          key={item.id}
+                          component="article"
+                          variant="timelineRow"
+                          sx={{
+                            minHeight: 80,
+                            px: { xs: 1, sm: 2 },
+                            py: 1.5,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 1.5,
+                          }}
+                        >
+                          <TransactionIcon className="kippa-stepper-node" type={item.snapshot.kind} size={36} />
+                          <Box sx={{ flex: 1, minWidth: 0 }}>
+                            <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={1}>
+                              <Typography noWrap variant="sectionLabel" sx={{ minWidth: 0 }}>
+                                {item.snapshot.description}
+                              </Typography>
+                              <Typography variant="transactionAmount" sx={{ whiteSpace: 'nowrap' }}>
+                                <Money amount={item.snapshot.amount} code={item.snapshot.currency} maxDigits={2} />
+                              </Typography>
+                            </Stack>
+                            <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 0.25 }}>
+                              <Chip
+                                label={item.state === 'approved' ? 'Approved' : 'Discarded'}
+                                color={item.state === 'approved' ? 'success' : 'default'}
+                                size="small"
+                                variant="outlined"
+                              />
+                              <Typography noWrap variant="sectionSubtitle" color="text.secondary">
+                                {new Date(item.resolvedAt).toLocaleString()} · {item.resolvedByDisplayName}
+                              </Typography>
+                            </Stack>
+                          </Box>
+                          {item.state === 'discarded' && (
+                            <Button
+                              size="small"
+                              variant="segmented"
+                              disabled={restoring}
+                              onClick={() => restoreDiscarded(item.id)}
+                            >
+                              {restoring ? 'Restoring…' : 'Restore'}
+                            </Button>
+                          )}
+                        </Paper>
+                      );
+                    })}
+                  </Stack>
+                </Stack>
+              ))}
+          </Stack>
+        </Stack>
+      </Box>
 
       <PendingReviewDialog
         accountId={accountId}

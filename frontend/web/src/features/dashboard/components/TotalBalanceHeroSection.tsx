@@ -1,4 +1,5 @@
-import { Box, Card, CardContent, Chip, Skeleton, Stack, Typography } from '@mui/material';
+import { IconBuildingBank } from '@tabler/icons-react';
+import { Box, Card, CardContent, Chip, Paper, Skeleton, Stack, Typography } from '@mui/material';
 import {
   useAccounts,
   useTransactions,
@@ -16,10 +17,9 @@ import { useAppContext } from '@/hooks/useAppContext';
 import { InfoTooltip } from '@/features/shared/components/InfoTooltip';
 import { metricExplanations } from '@/features/shared/constants/metricExplanations';
 import { ForeignBalanceTooltip } from '@/features/shared/components/ForeignBalanceTooltip';
-import { AccountBalanceIcon } from '@/components/AppIcon';
-import { DashboardCardHeading } from './DashboardCardHeading';
+import { DashboardSectionHeading } from './DashboardSectionHeading';
 
-export function TotalBalanceHeroCard() {
+export function TotalBalanceHeroSection() {
   const { householdId } = useAppContext();
   const { data: accounts, isLoading: accountsLoading } = useAccounts(householdId);
   const { data: transactions, isLoading: txsLoading } = useTransactions(householdId);
@@ -40,7 +40,7 @@ export function TotalBalanceHeroCard() {
 
   if (isLoading || !accounts || !transactions || !ledgerLines) {
     return (
-      <Card sx={{ height: 375 }}>
+      <Card variant="dashboardSection">
         <CardContent>
           <Box>
             <Skeleton variant="text" width="50%" height={24} animation="wave" />
@@ -70,86 +70,57 @@ export function TotalBalanceHeroCard() {
     data.accountBalances.find((item) => item.accountId === accountId)?.balance ?? 0;
 
   return (
-    <Card sx={{ height: 375 }}>
-      <CardContent sx={{ height: '100%' }}>
-        <Stack sx={{ minHeight: 260 }}>
-          <DashboardCardHeading
-            icon={<AccountBalanceIcon variant="Bulk" />}
+    <Card variant="dashboardSection">
+      <CardContent>
+        <Stack>
+          <DashboardSectionHeading
+            icon={<IconBuildingBank size={22} strokeWidth={1.8} />}
             title="My balance"
-            trailing={<Chip label="All accounts" />}
+            trailing={<Chip label="All accounts" variant="outlined" />}
           />
 
-          <Box sx={{ mt: 3 }}>
-            <Typography sx={{ color: 'text.secondary', fontSize: 12 }}>
+          <Box sx={{ mt: 2.5 }}>
+            <Typography variant="body2" color="text.secondary">
               <Box component="span">
                 <InfoTooltip label={<span>Total balance</span>} text={metricExplanations.totalBaseEquivalent} />
               </Box>
             </Typography>
-            <Typography
-              sx={{
-                color: 'text.primary',
-                fontSize: { xs: 36, lg: 40 },
-                lineHeight: 1.05,
-                fontWeight: 500,
-                letterSpacing: '-0.055em',
-                mt: 1,
-                fontVariantNumeric: 'tabular-nums',
-              }}
-            >
+            <Typography variant="amountValue" color="text.primary" sx={{ mt: 0.5 }}>
               <Money amount={data.totalBaseEquivalent} code={baseCurrency} maxDigits={2} />
             </Typography>
           </Box>
 
-          <Box sx={{ mt: 'auto', pt: 2 }}>
-            <Typography
-              sx={{
-                color: 'text.secondary',
-                fontSize: 9.5,
-                fontWeight: 700,
-                textTransform: 'uppercase',
-                letterSpacing: '0.06em',
-                mb: 0.75,
-              }}
-            >
+          <Box sx={{ mt: 2.5 }}>
+            <Typography variant="overline" color="text.secondary" sx={{ mb: 0.5 }}>
               Accounts
             </Typography>
-            <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 0.75 }}>
+            <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 1 }}>
               {accounts.map((account) => {
                 const balance = balanceFor(account.id);
                 return (
-                  <ForeignBalanceTooltip
-                    key={account.id}
-                    amount={balance}
-                    currency={account.currency}
-                    baseCurrency={baseCurrency}
-                    rate={displayRates[account.currency]}
-                  >
-                    <Stack
-                      tabIndex={account.currency === baseCurrency ? undefined : 0}
-                      sx={{
-                        minWidth: 0,
-                        bgcolor: 'action.hover',
-                        px: 1,
-                        py: 0.7,
-                        borderRadius: '9px',
-                        cursor: account.currency === baseCurrency ? 'default' : 'help',
-                      }}
+                  <Paper key={account.id} variant="dashboardAccountRow" sx={{ minWidth: 0 }}>
+                    <Typography noWrap variant="body2" color="text.secondary">
+                      {account.name}
+                    </Typography>
+                    <ForeignBalanceTooltip
+                      amount={balance}
+                      currency={account.currency}
+                      baseCurrency={baseCurrency}
+                      rate={displayRates[account.currency]}
                     >
-                      <Typography noWrap sx={{ color: 'text.secondary', fontSize: 9.5, fontWeight: 600 }}>
-                        {account.name}
-                      </Typography>
                       <Typography
                         noWrap
+                        variant="h6"
+                        tabIndex={account.currency === baseCurrency ? undefined : 0}
                         sx={{
                           color: account.type === 'credit' && balance < 0 ? 'error.main' : 'text.primary',
-                          fontSize: 11,
-                          fontWeight: 750,
+                          cursor: account.currency === baseCurrency ? 'default' : 'help',
                         }}
                       >
                         <Money amount={balance} code={account.currency} maxDigits={2} />
                       </Typography>
-                    </Stack>
-                  </ForeignBalanceTooltip>
+                    </ForeignBalanceTooltip>
+                  </Paper>
                 );
               })}
             </Box>

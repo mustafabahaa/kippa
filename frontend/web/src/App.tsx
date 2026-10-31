@@ -3,7 +3,6 @@ import { Routes, Route, BrowserRouter, Navigate } from 'react-router-dom';
 import { ThemeProvider, CssBaseline } from '@mui/material';
 import { createAppTheme } from '@kippa/design-system';
 import { useThemeMode } from '@/hooks/useThemeMode';
-import { AppBackground } from '@/features/shared/components/AppBackground';
 import { useAppContext } from '@/hooks/useAppContext';
 import { AppLoadingScreen } from '@/components/app-shell/AppLoadingScreen';
 import { AppShell } from '@/components/app-shell/AppShell';
@@ -33,7 +32,9 @@ const Notifications = lazy(() =>
 const TransactionHistory = lazy(() =>
   import('@/features/transactions/TransactionHistory').then((m) => ({ default: m.TransactionHistory })),
 );
-const AuditLog = lazy(() => import('@/features/activity/AuditLog').then((m) => ({ default: m.AuditLog })));
+const ActivityHistory = lazy(() =>
+  import('@/features/activity/ActivityHistory').then((m) => ({ default: m.ActivityHistory })),
+);
 const PendingTransactions = lazy(() =>
   import('@/features/pending-transactions/PendingTransactions').then((m) => ({ default: m.PendingTransactions })),
 );
@@ -57,7 +58,6 @@ export default function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <AppBackground />
       <BrowserRouter>
         <Suspense fallback={<AppLoadingScreen theme={theme} />}>
           <Routes>
@@ -74,7 +74,7 @@ export default function App() {
                 <Route path="cycles/report" element={<CycleReport />} />
                 <Route path="transactions" element={<TransactionHistory />} />
                 <Route path="pending" element={<PendingTransactions />} />
-                <Route path="activity" element={<AuditLog />} />
+                <Route path="activity" element={<ActivityHistory />} />
                 <Route path="accounts" element={<Accounts />} />
                 <Route path="accounts/statements" element={<AccountStatements />} />
                 <Route path="household" element={<Household />} />

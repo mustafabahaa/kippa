@@ -11,15 +11,14 @@ import {
   Select,
   MenuItem,
   Button,
-  RadioGroup,
-  FormControlLabel,
-  Radio,
   Typography,
   Box,
   Stack,
-  Divider,
-  alpha,
 } from '@mui/material';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import { format, isValid, parseISO } from 'date-fns';
 import { useSnackbar } from 'notistack';
 import {
   useAccounts,
@@ -30,7 +29,6 @@ import {
 } from '@/hooks/useFinance';
 import { useAppContext } from '@/hooks/useAppContext';
 import { FinanceTransaction } from '@kippa/domain';
-import { TransactionTypeChip } from './TransactionTypeChip';
 import { useTransactionEditFields } from '../hooks/useTransactionEditFields';
 import { findPrimaryLedgerLine, resolveEditedCurrency, resolveEditedSignedAmount } from '@/libs/transactionEdit';
 
@@ -54,6 +52,7 @@ export const EditTransactionDialog: React.FC<EditTransactionDialogProps> = ({ op
   if (!transaction) return null;
 
   const isRegularTx = transaction.type === 'expense' || transaction.type === 'income';
+  const selectedDate = fields.date ? parseISO(fields.date) : null;
 
   const handleSave = async () => {
     const amount = parseFloat(fields.amount);
@@ -105,196 +104,157 @@ export const EditTransactionDialog: React.FC<EditTransactionDialogProps> = ({ op
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle
-        component="div"
-        sx={{ fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'space-between', pb: 1 }}
-      >
-        <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
-          Edit Transaction
-        </Typography>
-        <TransactionTypeChip type={transaction.type} />
+      <DialogTitle component="div" sx={{ pb: 2 }}>
+        <Stack
+          direction={{ xs: 'column', sm: 'row' }}
+          spacing={2}
+          alignItems={{ xs: 'flex-start', sm: 'center' }}
+          justifyContent="space-between"
+        >
+          <Box>
+            <Typography variant="h3">Edit transaction</Typography>
+            <Typography variant="body2" color="text.secondary">
+              Make changes to this household transaction.
+            </Typography>
+          </Box>
+          {isRegularTx && (
+            <Stack direction="row" spacing={1}>
+              <Button
+                variant={fields.type === 'expense' ? 'segmentedSelected' : 'segmented'}
+                aria-pressed={fields.type === 'expense'}
+                onClick={() => setField('type', 'expense')}
+              >
+                Expense
+              </Button>
+              <Button
+                variant={fields.type === 'income' ? 'segmentedSelected' : 'segmented'}
+                aria-pressed={fields.type === 'income'}
+                onClick={() => setField('type', 'income')}
+              >
+                Income
+              </Button>
+            </Stack>
+          )}
+        </Stack>
       </DialogTitle>
 
-      <DialogContent sx={{ pt: 1.5 }}>
-        <Grid container spacing={3} sx={{ mt: 0.5 }}>
-          {/* Read-only Warning and Info for Special Transactions */}
-          {!isRegularTx && (
-            <Grid size={{ xs: 12 }}>
-              <Box
-                sx={{
-                  p: 2,
-                  borderRadius: '12px',
-                  bgcolor: (theme) => alpha(theme.palette.info.main, 0.05),
-                  border: (theme) => `1px solid ${alpha(theme.palette.info.main, 0.1)}`,
-                }}
-              >
-                <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic', mb: 1.5 }}>
-                  For ledger integrity, the type, accounts, and amount of a{' '}
-                  {transaction.type === 'adjustment' ? 'Reconciliation' : transaction.type} transaction cannot be
-                  modified.
-                </Typography>
-                <Stack spacing={1}>
-                  <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
-                    Amount:{' '}
-                    <span style={{ fontWeight: 'normal' }}>
-                      {fields.amount} {findPrimaryLedgerLine(transaction.id, ledgerLines)?.currency || baseCurrency}
-                    </span>
-                  </Typography>
-                  <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
-                    Account: <span style={{ fontWeight: 'normal' }}>{getAccountName(fields.accountId)}</span>
-                  </Typography>
-                </Stack>
-              </Box>
-            </Grid>
-          )}
-
-          {/* Section 1: Financial Details */}
-          <Grid size={{ xs: 12 }}>
-            <Typography
-              variant="caption"
-              sx={{ fontWeight: 700, color: 'primary.main', textTransform: 'uppercase', letterSpacing: '1px' }}
-            >
-              Financial Details
-            </Typography>
-            <Divider sx={{ mt: 1, mb: 1 }} />
-          </Grid>
-
-          {isRegularTx && (
-            <Grid size={{ xs: 12 }}>
-              <Typography variant="body2" sx={{ mb: 1, color: 'text.secondary', fontWeight: 'medium' }}>
-                Transaction Type
+      <DialogContent sx={{ mt: 2, pt: 2, pl: { xs: 3, sm: 5 }, pr: 3 }}>
+        <Stack spacing={3}>
+          <Stack spacing={2.5}>
+            <Box>
+              <Typography variant="h5">Transaction details</Typography>
+              <Typography variant="body2" color="text.secondary">
+                {isRegularTx
+                  ? 'Update the amount, account, date, category, or note.'
+                  : 'Amount and account are fixed for this transaction. You can update the date or note.'}
               </Typography>
-              <RadioGroup row value={fields.type} onChange={(e) => setField('type', e.target.value)} sx={{ gap: 2 }}>
-                <FormControlLabel value="expense" control={<Radio />} label="Expense" />
-                <FormControlLabel value="income" control={<Radio />} label="Income" />
-              </RadioGroup>
-            </Grid>
-          )}
+            </Box>
 
-          {isRegularTx ? (
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <TextField
-                type="number"
-                fullWidth
-                label="Amount"
-                helperText={
-                  findPrimaryLedgerLine(transaction.id, ledgerLines)?.cardFee
-                    ? 'Includes bank fees. Change the fee in the card payment dialog.'
-                    : undefined
-                }
-                value={fields.amount}
-                onChange={(e) => setField('amount', e.target.value)}
-              />
-            </Grid>
-          ) : null}
-
-          {isRegularTx && (
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <FormControl fullWidth>
-                <InputLabel id="edit-tx-acc-label">Account</InputLabel>
-                <Select
-                  labelId="edit-tx-acc-label"
-                  value={fields.accountId}
-                  label="Account"
-                  onChange={(e) => setField('accountId', e.target.value)}
-                >
-                  {accounts.map((a) => (
-                    <MenuItem key={a.id} value={a.id}>
-                      {a.name}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-          )}
-
-          {/* Section 2: Metadata & Notes */}
-          <Grid size={{ xs: 12 }} sx={{ mt: 1 }}>
-            <Typography
-              variant="caption"
-              sx={{ fontWeight: 700, color: 'primary.main', textTransform: 'uppercase', letterSpacing: '1px' }}
-            >
-              Classification & Details
-            </Typography>
-            <Divider sx={{ mt: 1, mb: 1 }} />
-          </Grid>
-
-          {/* Date Picker */}
-          <Grid size={{ xs: 12, sm: isRegularTx ? 6 : 12 }}>
-            <TextField
-              type="date"
-              fullWidth
-              label="Date"
-              slotProps={{ inputLabel: { shrink: true } }}
-              value={fields.date}
-              onChange={(e) => setField('date', e.target.value)}
-            />
-          </Grid>
-
-          {/* Category Selector (Regular only) */}
-          {isRegularTx && (
-            <Grid size={{ xs: 12, sm: 6 }}>
-              {fields.type === 'expense' ? (
-                <FormControl fullWidth>
-                  <InputLabel id="edit-tx-cat-label">Category</InputLabel>
-                  <Select
-                    labelId="edit-tx-cat-label"
-                    value={fields.categoryId}
-                    label="Category"
-                    onChange={(e) => setField('categoryId', e.target.value)}
-                  >
-                    {categories
-                      .filter((c) => c.type === 'expense')
-                      .map((c) => (
-                        <MenuItem key={c.id} value={c.id}>
-                          {c.name}
-                        </MenuItem>
-                      ))}
-                  </Select>
-                </FormControl>
-              ) : (
-                <FormControl fullWidth>
-                  <InputLabel id="edit-tx-cat-income-label">Income Category</InputLabel>
-                  <Select
-                    labelId="edit-tx-cat-income-label"
-                    value={fields.categoryId}
-                    label="Income Category"
-                    onChange={(e) => setField('categoryId', e.target.value)}
-                  >
-                    {categories
-                      .filter((c) => c.type === 'income')
-                      .map((c) => (
-                        <MenuItem key={c.id} value={c.id}>
-                          {c.name}
-                        </MenuItem>
-                      ))}
-                  </Select>
-                </FormControl>
+            <Stack spacing={2} sx={{ pl: { xs: 1, sm: 2 } }}>
+              {!isRegularTx && (
+                <Typography variant="body2" color="text.primary">
+                  {fields.amount} {findPrimaryLedgerLine(transaction.id, ledgerLines)?.currency || baseCurrency} ·{' '}
+                  {getAccountName(fields.accountId)}
+                </Typography>
               )}
-            </Grid>
-          )}
 
-          {/* Description */}
-          <Grid size={{ xs: 12 }}>
-            <TextField
-              fullWidth
-              multiline
-              rows={2}
-              label="Description / Notes"
-              placeholder="Add details or notes about this transaction..."
-              value={fields.description}
-              onChange={(e) => setField('description', e.target.value)}
-            />
-          </Grid>
-        </Grid>
+              {isRegularTx && (
+                <Grid container spacing={1.5}>
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <TextField
+                      type="number"
+                      fullWidth
+                      label="Amount"
+                      helperText={
+                        findPrimaryLedgerLine(transaction.id, ledgerLines)?.cardFee
+                          ? 'Includes bank fees. Change the fee in the card payment dialog.'
+                          : undefined
+                      }
+                      value={fields.amount}
+                      onChange={(e) => setField('amount', e.target.value)}
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <FormControl fullWidth>
+                      <InputLabel id="edit-tx-acc-label">Account</InputLabel>
+                      <Select
+                        size="medium"
+                        labelId="edit-tx-acc-label"
+                        value={fields.accountId}
+                        label="Account"
+                        onChange={(e) => setField('accountId', e.target.value)}
+                      >
+                        {accounts.map((a) => (
+                          <MenuItem key={a.id} value={a.id}>
+                            {a.name}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Grid>
+                </Grid>
+              )}
+
+              <Grid container spacing={1.5}>
+                <Grid size={{ xs: 12, sm: isRegularTx ? 6 : 12 }}>
+                  <LocalizationProvider dateAdapter={AdapterDateFns}>
+                    <DatePicker
+                      label="Date"
+                      value={selectedDate && isValid(selectedDate) ? selectedDate : null}
+                      onChange={(newValue) => {
+                        if (newValue && isValid(newValue)) setField('date', format(newValue, 'yyyy-MM-dd'));
+                      }}
+                      slotProps={{ textField: { fullWidth: true } }}
+                    />
+                  </LocalizationProvider>
+                </Grid>
+
+                {isRegularTx && (
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <FormControl fullWidth>
+                      <InputLabel id="edit-tx-cat-label">Category</InputLabel>
+                      <Select
+                        size="medium"
+                        labelId="edit-tx-cat-label"
+                        value={fields.categoryId}
+                        label="Category"
+                        onChange={(e) => setField('categoryId', e.target.value)}
+                      >
+                        {categories
+                          .filter((c) => c.type === fields.type)
+                          .map((c) => (
+                            <MenuItem key={c.id} value={c.id}>
+                              {c.name}
+                            </MenuItem>
+                          ))}
+                      </Select>
+                    </FormControl>
+                  </Grid>
+                )}
+                <Grid size={{ xs: 12 }}>
+                  <TextField
+                    fullWidth
+                    multiline
+                    minRows={2}
+                    maxRows={5}
+                    label="Description"
+                    placeholder="Add a note"
+                    value={fields.description}
+                    onChange={(e) => setField('description', e.target.value)}
+                  />
+                </Grid>
+              </Grid>
+            </Stack>
+          </Stack>
+        </Stack>
       </DialogContent>
 
-      <DialogActions sx={{ px: 3, pb: 2.5 }}>
+      <DialogActions>
         <Button onClick={onClose} color="inherit">
           Cancel
         </Button>
         <Button onClick={handleSave} variant="contained" loading={updateMutation.isPending}>
-          Save Changes
+          Save changes
         </Button>
       </DialogActions>
     </Dialog>

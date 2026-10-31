@@ -6,6 +6,10 @@ import {
   setDoc as firestoreSetDoc,
   writeBatch as firestoreWriteBatch,
   query,
+  orderBy,
+  startAfter,
+  limit,
+  QueryDocumentSnapshot,
   where,
   onSnapshot,
   Firestore,
@@ -50,6 +54,27 @@ export const dbLib = {
     }
     const snapshot = await firestoreGetDocs(colRef);
     return snapshot.docs.map((d) => d.data());
+  },
+
+  async getDocsPage(
+    householdId: string,
+    collectionName: string,
+    pageSize: number,
+    cursor?: QueryDocumentSnapshot,
+  ): Promise<{ items: any[]; nextCursor: QueryDocumentSnapshot | null }> {
+    const firestore = requireFirestore();
+    const path = householdId === 'system' ? collectionName : `households/${householdId}/${collectionName}`;
+    const colRef = collection(firestore, path);
+    let pageQuery = query(colRef, orderBy('createdAt', 'desc'));
+    if (cursor) pageQuery = query(pageQuery, startAfter(cursor));
+    pageQuery = query(pageQuery, limit(pageSize));
+
+    const snapshot = await firestoreGetDocs(pageQuery);
+    const lastDocument = snapshot.docs.at(-1);
+    return {
+      items: snapshot.docs.map((item) => ({ ...item.data(), id: item.id })),
+      nextCursor: lastDocument ?? null,
+    };
   },
 
   /**

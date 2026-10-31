@@ -1,14 +1,14 @@
-import { Box, Button, Card, CardContent, Chip, Paper, Skeleton, Stack, Typography } from '@mui/material';
+import { IconCalendar, IconCreditCardPay } from '@tabler/icons-react';
+import { Box, Button, Card, CardContent, Chip, LinearProgress, Skeleton, Stack, Typography } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import { CalendarMonthIcon, PaymentsIcon } from '@/components/AppIcon';
 import { Money } from '@/components/Money';
 import { useAppContext } from '@/hooks/useAppContext';
 import { useAccounts, useLedgerLines, useLoans, useTransactions } from '@/hooks/useFinance';
 import { calculateAccountBalance } from '@/libs/financeCalculations';
 import { getLoanProgress } from '@/libs/loanCalculations';
-import { DashboardCardHeading } from './DashboardCardHeading';
+import { DashboardSectionHeading } from './DashboardSectionHeading';
 
-export function LoanProgressCard() {
+export function LoanProgressSection() {
   const navigate = useNavigate();
   const { householdId } = useAppContext();
   const { data: loans = [], isLoading: loansLoading } = useLoans(householdId);
@@ -37,33 +37,19 @@ export function LoanProgressCard() {
       : 'Complete';
 
   return (
-    <Card sx={{ height: 375 }}>
+    <Card variant="dashboardSection" sx={{ height: 375 }}>
       <CardContent sx={{ height: '100%' }}>
-        <Stack justifyContent="space-between" sx={{ height: '100%' }}>
+        <Stack spacing={2} sx={{ height: '100%' }}>
           <Stack spacing={2.5}>
-            <DashboardCardHeading
-              icon={<PaymentsIcon variant="Bulk" />}
+            <DashboardSectionHeading
+              icon={<IconCreditCardPay size={22} strokeWidth={1.8} />}
               title={loan.name}
               subtitle={`${progress.paidInstallments} of ${loan.totalInstallments} payments`}
               trailing={<Chip label={`${progress.progressPercent.toFixed(0)}% paid`} color="success" />}
             />
 
             <Stack spacing={0.75}>
-              <Box
-                sx={{
-                  display: 'grid',
-                  gridTemplateColumns: `repeat(${loan.totalInstallments}, minmax(2px, 1fr))`,
-                  gap: { xs: 0.25, sm: 0.375 },
-                }}
-              >
-                {Array.from({ length: loan.totalInstallments }, (...[, index]) => (
-                  <Paper
-                    key={index}
-                    variant={index < progress.paidInstallments ? 'loanProgressSegmentPaid' : 'loanProgressSegment'}
-                    sx={{ height: 42 }}
-                  />
-                ))}
-              </Box>
+              <LinearProgress color="loan" variant="determinate" value={progress.progressPercent} />
               <Stack direction="row" justifyContent="space-between">
                 <Typography variant="loanMeta" color="text.secondary">
                   {progress.paidInstallments} paid
@@ -96,7 +82,7 @@ export function LoanProgressCard() {
             </Stack>
 
             <Stack direction="row" spacing={1} alignItems="center">
-              <CalendarMonthIcon color={shortfall > 0 ? 'warning' : 'success'} />
+              <IconCalendar color={shortfall > 0 ? 'warning' : 'success'} size={22} strokeWidth={1.8} />
               <Typography variant="body1">
                 {shortfall > 0 ? (
                   <>
@@ -110,7 +96,7 @@ export function LoanProgressCard() {
             </Stack>
           </Stack>
 
-          <Button variant="contained" fullWidth onClick={() => navigate('/loans')}>
+          <Button variant="contained" sx={{ alignSelf: 'flex-start' }} onClick={() => navigate('/loans')}>
             View loan
           </Button>
         </Stack>

@@ -1,5 +1,5 @@
+import { IconBell } from '@tabler/icons-react';
 import { IconButton, Badge, Tooltip } from '@mui/material';
-import { NotificationsIcon } from '@/components/AppIcon';
 
 import { useUnreadActivityCount } from '@/hooks/useFinance';
 import { useAppContext } from '@/hooks/useAppContext';
@@ -22,13 +22,9 @@ export function ActivityBell({ onClick }: ActivityBellProps) {
 
   return (
     <Tooltip title={label}>
-      <IconButton
-        aria-label={label}
-        onClick={onClick}
-        sx={{ p: 0.5, width: 40, height: 40, border: '1px solid', borderColor: 'divider' }}
-      >
+      <IconButton aria-label={label} onClick={onClick} size="medium" sx={{ width: 40, height: 40 }}>
         <Badge badgeContent={unreadCount} color="error">
-          <NotificationsIcon sx={{ color: 'primary.main' }} />
+          <IconBell size={22} strokeWidth={1.8} />
         </Badge>
       </IconButton>
     </Tooltip>

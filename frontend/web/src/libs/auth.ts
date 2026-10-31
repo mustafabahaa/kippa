@@ -21,6 +21,20 @@ async function hasPrivateAccess(user: FirebaseUser, forceRefresh = false): Promi
   return token.claims.kippaAccess === true;
 }
 
+async function refreshPhotoURL(user: FirebaseUser): Promise<string | undefined> {
+  try {
+    await user.reload();
+  } catch {
+    // Keep the cached profile photo if Firebase is temporarily unavailable.
+  }
+  return (
+    auth?.currentUser?.photoURL ||
+    user.photoURL ||
+    user.providerData.find((provider) => provider.providerId === 'google.com' && provider.photoURL)?.photoURL ||
+    undefined
+  );
+}
+
 function requireAuth(): Auth {
   if (!isFirebaseReady || !auth) {
     throw new Error(FIREBASE_REQUIRED_MSG);
@@ -53,13 +67,14 @@ export const authLib = {
           callback(null);
           return;
         }
+        const authPhotoURL = await refreshPhotoURL(fbUser);
         const profile = (await dbLib.getDoc('system', 'users', fbUser.uid)) as UserProfile | null;
         if (profile) {
           // Sync photoURL only (non-membership field). Membership fields
           // (householdId/householdIds/role) are server-only now, so we re-pin
           // them to their existing values to keep the rules happy.
-          if (fbUser.photoURL && profile.photoURL !== fbUser.photoURL) {
-            const updatedProfile = { ...profile, photoURL: fbUser.photoURL };
+          if (authPhotoURL && profile.photoURL !== authPhotoURL) {
+            const updatedProfile = { ...profile, photoURL: authPhotoURL };
             await dbLib.setDoc('system', 'users', fbUser.uid, {
               ...updatedProfile,
               householdId: profile.householdId,
@@ -79,7 +94,7 @@ export const authLib = {
             householdIds: [],
             role: 'owner',
             createdAt: new Date().toISOString(),
-            photoURL: fbUser.photoURL || undefined,
+            photoURL: authPhotoURL,
           };
           callback(tempProfile);
         }
@@ -98,12 +113,13 @@ export const authLib = {
       await firebaseSignOut(firebaseAuth);
       throw new Error('This Google account is not authorized to use Kippa.');
     }
+    const authPhotoURL = await refreshPhotoURL(fbUser);
 
     const profile = (await dbLib.getDoc('system', 'users', fbUser.uid)) as UserProfile | null;
     if (profile) {
       // Sync photoURL only (non-membership field).
-      if (fbUser.photoURL && profile.photoURL !== fbUser.photoURL) {
-        const updatedProfile = { ...profile, photoURL: fbUser.photoURL };
+      if (authPhotoURL && profile.photoURL !== authPhotoURL) {
+        const updatedProfile = { ...profile, photoURL: authPhotoURL };
         await dbLib.setDoc('system', 'users', fbUser.uid, {
           ...updatedProfile,
           householdId: profile.householdId,
@@ -123,7 +139,7 @@ export const authLib = {
       householdIds: [],
       role: 'owner',
       createdAt: new Date().toISOString(),
-      photoURL: fbUser.photoURL || undefined,
+      photoURL: authPhotoURL,
     };
     await dbLib.setDoc('system', 'users', fbUser.uid, newProfile);
     return newProfile;

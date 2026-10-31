@@ -143,30 +143,8 @@ export function SaveFeedbackOverlay({
               position: 'relative',
             }}
           >
-            <ReceiptLongIcon
-              fontSize="inherit"
-              sx={{
-                fontSize: { xs: 72, sm: 80 },
-                position: 'absolute',
-                animation: 'fastEntryReceiptOut 1100ms ease-out both',
-                '@keyframes fastEntryReceiptOut': {
-                  '0%, 45%': { opacity: 1, transform: 'scale(1) rotate(0deg)' },
-                  '62%, 100%': { opacity: 0, transform: 'scale(0.55) rotate(-18deg)' },
-                },
-              }}
-            />
-            <CheckCircleIcon
-              fontSize="inherit"
-              sx={{
-                fontSize: { xs: 72, sm: 80 },
-                position: 'absolute',
-                animation: 'fastEntryCheckIn 1100ms cubic-bezier(0.22, 1, 0.36, 1) both',
-                '@keyframes fastEntryCheckIn': {
-                  '0%, 48%': { opacity: 0, transform: 'scale(0.35) rotate(18deg)' },
-                  '68%, 100%': { opacity: 1, transform: 'scale(1) rotate(0deg)' },
-                },
-              }}
-            />
+            <ReceiptLongIcon fontSize="small" />
+            <CheckCircleIcon fontSize="small" />
           </Box>
         </Stack>
       </Paper>

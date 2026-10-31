@@ -1,14 +1,6 @@
+import { IconArrowsExchange, IconBellRinging, IconBuildingBank, IconCalendar, IconCategory2, IconCreditCardPay, IconHistory, IconHome, IconReceipt } from '@tabler/icons-react';
 import { Menu, MenuItem, Divider, ListItemIcon, ListItemText, Typography } from '@mui/material';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { AccountBalanceIcon } from '@/components/AppIcon';
-import { ReceiptLongIcon } from '@/components/AppIcon';
-import { CategoryIcon } from '@/components/AppIcon';
-import { HomeIcon } from '@/components/AppIcon';
-import { NotificationsActiveIcon } from '@/components/AppIcon';
-import { HistoryIcon } from '@/components/AppIcon';
-import { CalendarMonthIcon } from '@/components/AppIcon';
-import { SyncAltIcon } from '@/components/AppIcon';
-import { PaymentsIcon } from '@/components/AppIcon';
 
 interface QuickNavMenuProps {
   anchorEl: HTMLElement | null;
@@ -55,32 +47,32 @@ const SECTIONS = [
   {
     title: 'Money',
     items: [
-      { label: 'Bank Accounts', icon: <AccountBalanceIcon fontSize="small" />, path: '/accounts' },
-      { label: 'Statements', icon: <ReceiptLongIcon fontSize="small" />, path: '/accounts/statements' },
-      { label: 'Transactions', icon: <ReceiptLongIcon fontSize="small" />, path: '/transactions' },
-      { label: 'Categories', icon: <CategoryIcon fontSize="small" />, path: '/categories' },
+      { label: 'Bank Accounts', icon: <IconBuildingBank size={22} strokeWidth={1.8} />, path: '/accounts' },
+      { label: 'Statements', icon: <IconReceipt size={22} strokeWidth={1.8} />, path: '/accounts/statements' },
+      { label: 'Transactions', icon: <IconReceipt size={22} strokeWidth={1.8} />, path: '/transactions' },
+      { label: 'Categories', icon: <IconCategory2 size={22} strokeWidth={1.8} />, path: '/categories' },
     ],
   },
   {
     title: 'Planning',
     items: [
-      { label: 'Budget Cycles', icon: <CalendarMonthIcon fontSize="small" />, path: '/cycles' },
-      { label: 'Cycle Reports', icon: <HistoryIcon fontSize="small" />, path: '/cycles/report' },
-      { label: 'Loans', icon: <PaymentsIcon fontSize="small" />, path: '/loans' },
-      { label: 'Reconciliation', icon: <SyncAltIcon fontSize="small" />, path: '/reconciliation' },
+      { label: 'Budget Cycles', icon: <IconCalendar size={22} strokeWidth={1.8} />, path: '/cycles' },
+      { label: 'Cycle Reports', icon: <IconHistory size={22} strokeWidth={1.8} />, path: '/cycles/report' },
+      { label: 'Loans', icon: <IconCreditCardPay size={22} strokeWidth={1.8} />, path: '/loans' },
+      { label: 'Reconciliation', icon: <IconArrowsExchange size={22} strokeWidth={1.8} />, path: '/reconciliation' },
     ],
   },
   {
     title: 'Household',
     items: [
-      { label: 'Household Sharing', icon: <HomeIcon fontSize="small" />, path: '/household' },
-      { label: 'Activity Log', icon: <HistoryIcon fontSize="small" />, path: '/activity' },
+      { label: 'Household Sharing', icon: <IconHome size={22} strokeWidth={1.8} />, path: '/household' },
+      { label: 'Activity history', icon: <IconHistory size={22} strokeWidth={1.8} />, path: '/activity' },
     ],
   },
   {
     title: 'Settings',
     items: [
-      { label: 'Reminders & Alerts', icon: <NotificationsActiveIcon fontSize="small" />, path: '/notifications' },
+      { label: 'Reminders & Alerts', icon: <IconBellRinging size={22} strokeWidth={1.8} />, path: '/notifications' },
     ],
   },
 ] as const;
@@ -116,7 +108,6 @@ export function QuickNavMenu({ anchorEl, open, onClose }: QuickNavMenuProps) {
             borderRadius: '12px',
             border: '1px solid',
             borderColor: 'divider',
-            boxShadow: 'rgba(0, 0, 0, 0.08) 0px 12px 24px -4px, rgba(0, 0, 0, 0.04) 0px 4px 12px -2px',
             '&::before': {
               content: '""',
               display: 'block',

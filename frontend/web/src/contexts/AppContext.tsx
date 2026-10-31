@@ -92,15 +92,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     return () => unsub();
   }, [householdId, isOwner]);
 
-  // Member list (owner view) — via Callable because rules restrict users/{uid}
-  // reads to the doc owner.
+  // Member list via Callable because rules restrict users/{uid} reads to
+  // the doc owner. Any household member may request these shared profile fields.
   const { data: householdMembers = [], isLoading: isMembersLoading } = useQuery({
     queryKey: ['householdMembers', householdId],
     queryFn: async () => {
       if (!householdId || !userProfile) return [];
       return authLib.listHouseholdMembers(householdId);
     },
-    enabled: !!householdId && isOwner && !!userProfile,
+    enabled: !!householdId && !!userProfile,
   });
 
   const loginWithGoogle = async () => {

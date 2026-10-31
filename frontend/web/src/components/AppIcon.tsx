@@ -30,6 +30,7 @@ import {
   Key,
   Logout,
   Minus,
+  Message2,
   Moon,
   Note,
   Notification,
@@ -132,6 +133,7 @@ export const KeyIcon = createAppIcon(Key);
 export const LightModeIcon = createAppIcon(Sun);
 export const LogoutIcon = createAppIcon(Logout);
 export const NotesIcon = createAppIcon(Note);
+export const MessageIcon = createAppIcon(Message2);
 export const NotificationsIcon = createAppIcon(Notification);
 export const NotificationsActiveIcon = createAppIcon(NotificationBing);
 export const PaymentsIcon = createAppIcon(CardPos);

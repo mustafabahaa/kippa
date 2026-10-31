@@ -3,7 +3,6 @@ import type { EntryMode } from '@/libs/fastEntryTransaction';
 
 type State = {
   amountStr: string;
-  categoryDialogOpen: boolean;
   categorySearch: string;
   datePickerOpen: boolean;
   description: string;
@@ -17,7 +16,6 @@ type State = {
 };
 const initialState: State = {
   amountStr: '0',
-  categoryDialogOpen: false,
   categorySearch: '',
   datePickerOpen: false,
   description: '',
@@ -49,7 +47,6 @@ export function useFastEntryFormState() {
   return {
     ...state,
     setAmountStr: setter('amountStr'),
-    setCategoryDialogOpen: setter('categoryDialogOpen'),
     setCategorySearch: setter('categorySearch'),
     setDatePickerOpen: setter('datePickerOpen'),
     setDescription: setter('description'),

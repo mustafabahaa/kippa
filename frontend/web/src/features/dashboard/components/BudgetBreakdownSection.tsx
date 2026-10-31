@@ -1,3 +1,4 @@
+import { IconChartBar, IconCreditCardPay, IconPigMoney } from '@tabler/icons-react';
 import {
   Box,
   Card,
@@ -25,14 +26,12 @@ import { computeDashboard } from '@/libs/selectors';
 import { useAppContext } from '@/hooks/useAppContext';
 import { Money } from '@/components/Money';
 import { usePrivacyMask } from '@/hooks/usePrivacyMask';
-import { BarChartIcon, PaymentsIcon, SavingsIcon } from '@/components/AppIcon';
-import { CategoryIcon } from '@/components/AppIcon';
-import { DashboardCardHeading } from './DashboardCardHeading';
+import { DashboardSectionHeading } from './DashboardSectionHeading';
 import { CategoryPaceChart } from './CategoryPaceChart';
 
 const formatMaskedValue = (value: number, mask: (value: string) => string) => mask(Math.round(value).toLocaleString());
 
-export function BudgetBreakdownCard() {
+export function BudgetBreakdownSection() {
   const { householdId } = useAppContext();
   const theme = useTheme();
   const { maskNumber } = usePrivacyMask();
@@ -83,11 +82,10 @@ export function BudgetBreakdownCard() {
   const spentPercent = totalPlanned > 0 ? Math.round((totalSpent / totalPlanned) * 100) : 0;
 
   return (
-    <Card>
+    <Card variant="dashboardSection">
       <CardContent>
         <Stack spacing={3}>
-          <DashboardCardHeading
-            icon={<CategoryIcon variant="Bulk" />}
+          <DashboardSectionHeading
             title="Budget Breakdown"
             subtitle="Planned versus actual spending by category"
             trailing={activeCycle ? <Chip label={activeCycle.name} /> : undefined}
@@ -101,7 +99,7 @@ export function BudgetBreakdownCard() {
                 valueColor: 'text.primary',
                 accent: theme.palette.secondary.main,
                 meta: `${data.categoryStatus.length} category allocations`,
-                Icon: PaymentsIcon,
+                Icon: IconCreditCardPay,
               },
               {
                 label: 'Total spent',
@@ -109,7 +107,7 @@ export function BudgetBreakdownCard() {
                 valueColor: totalSpent > totalPlanned ? 'error.main' : 'text.primary',
                 accent: totalSpent > totalPlanned ? theme.palette.error.main : theme.palette.primary.main,
                 meta: `${spentPercent}% of the cycle plan`,
-                Icon: BarChartIcon,
+                Icon: IconChartBar,
               },
               {
                 label: totalRemaining < 0 ? 'Over budget' : 'Remaining',
@@ -117,7 +115,7 @@ export function BudgetBreakdownCard() {
                 valueColor: totalRemaining < 0 ? 'error.main' : 'success.main',
                 accent: totalRemaining < 0 ? theme.palette.error.main : theme.palette.success.main,
                 meta: totalRemaining < 0 ? 'Requires budget attention' : 'Available to spend',
-                Icon: SavingsIcon,
+                Icon: IconPigMoney,
               },
             ].map((metric) => (
               <Box
@@ -162,7 +160,7 @@ export function BudgetBreakdownCard() {
                       bgcolor: alpha(metric.accent, 0.1),
                     }}
                   >
-                    <metric.Icon fontSize="small" />
+                    <metric.Icon size={22} />
                   </Box>
                 </Stack>
                 <Typography noWrap sx={{ color: 'text.secondary', fontSize: 9.5, fontWeight: 600, mt: 1.25 }}>
@@ -184,7 +182,7 @@ export function BudgetBreakdownCard() {
                   spacing={1}
                 >
                   <Stack direction="row" alignItems="center" spacing={1}>
-                    <PaymentsIcon color="primary" />
+                    <IconCreditCardPay size={22} strokeWidth={1.8} />
                     <Box>
                       <Typography variant="body1">{commitment.loanName}</Typography>
                       <Typography variant="body2" color="text.secondary">

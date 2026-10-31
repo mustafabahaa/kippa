@@ -1,9 +1,6 @@
 import { useState, useMemo, useRef } from 'react';
 import { useSnackbar } from 'notistack';
-import { Box, Container, Stack, Typography, Button, Grid, Skeleton, IconButton } from '@mui/material';
-import { EmptyLayout } from '@/features/shared/components/EmptyLayout';
-import { AddIcon } from '@/components/AppIcon';
-import { HistoryIcon } from '@/components/AppIcon';
+import { Box, Stack, Typography, Button, Grid, Skeleton, Divider } from '@mui/material';
 import {
   useCategories,
   useCycles,
@@ -12,6 +9,7 @@ import {
   useAllBudgetAllocations,
   useAllExpectedIncomes,
   useAccounts,
+  useLoans,
   useDisplayRates,
   useBudgetAllocations,
   useCreateCycleMutation,
@@ -22,11 +20,15 @@ import { CycleAnalytics } from '@/features/budget-cycles/CycleAnalytics';
 import { useAppContext } from '@/hooks/useAppContext';
 import { PageHeader } from '@/features/shared/components/PageHeader';
 import { CloseCycleDialog, CreateCycleDialog, type NewCycleValues } from './components/CycleDialogs';
-import { ActiveCycleCard, CycleHistoryCard, type CycleHistoryStats } from './components/CycleCards';
+import { ActiveCycleSection, CycleHistoryItem, type CycleHistoryStats } from './components/CycleSections';
 import { getDaysInfo } from './cycleUtils';
 import { BudgetAllocationDialog } from './components/BudgetAllocationDialog';
 import { calculateCycleData } from '@/libs/budgetAnalytics';
 import { useNavigate } from 'react-router-dom';
+import { DashboardSectionHeading } from '@/features/dashboard/components/DashboardSectionHeading';
+
+const sectionIndent = { xs: 0, md: 4 } as const;
+const contentIndent = { xs: 0, md: 4 } as const;
 
 // ── Main Component ───────────────────────────────────────────────────────
 
@@ -58,7 +60,7 @@ export function BudgetCycles() {
     editingCycleId ?? undefined,
   );
 
-  // Per-cycle analytics (planned/spent/saved) + transaction counts for history cards.
+  // Per-cycle analytics (planned/spent/saved) + transaction counts for history items.
   // Mirrors the data already computed in CycleAnalytics so no new queries beyond what
   // that panel already loads.
   const { data: transactions = [] } = useTransactions(householdId);
@@ -66,6 +68,7 @@ export function BudgetCycles() {
   const { data: allAllocations = [] } = useAllBudgetAllocations(householdId);
   const { data: allExpectedIncomes = [] } = useAllExpectedIncomes(householdId);
   const { data: accounts = [] } = useAccounts(householdId);
+  const { data: loans = [] } = useLoans(householdId);
   const foreignCodes = Array.from(new Set(accounts.map((a) => a.currency).filter((c) => c !== baseCurrency)));
   const { data: displayRates = {} } = useDisplayRates(baseCurrency, foreignCodes);
 
@@ -80,6 +83,7 @@ export function BudgetCycles() {
       allExpectedIncomes,
       baseCurrency,
       displayRates,
+      loans,
     );
     cycleData.forEach((datum) => {
       map.set(datum.id, {
@@ -89,7 +93,7 @@ export function BudgetCycles() {
       });
     });
     return map;
-  }, [cycles, transactions, ledgerLines, allAllocations, allExpectedIncomes, displayRates, baseCurrency]);
+  }, [cycles, transactions, ledgerLines, allAllocations, allExpectedIncomes, displayRates, baseCurrency, loans]);
 
   // The cycle object being edited
   const editingCycle = editingCycleId ? cycles.find((c) => c.id === editingCycleId) : null;
@@ -166,119 +170,118 @@ export function BudgetCycles() {
 
   if (isLoading) {
     return (
-      <Container maxWidth="xl" sx={{ py: 1, px: { xs: 2, sm: 3, lg: 5 } }}>
+      <Stack spacing={{ xs: 2, md: 3 }}>
+        <PageHeader title="Budget Cycles" subtitle="Plan your household budget and review past cycles." />
         <Stack spacing={3}>
-          <Box sx={{ mt: 1 }}>
-            <Skeleton variant="text" width="60%" height={32} />
-            <Skeleton variant="text" width="40%" height={20} />
-          </Box>
-          <Skeleton variant="rectangular" width="100%" height={180} sx={{ borderRadius: '20px' }} />
-          <Skeleton variant="rectangular" width="100%" height={100} sx={{ borderRadius: '20px' }} />
+          <Skeleton variant="text" width="45%" height={32} />
+          <Skeleton variant="rounded" height={360} />
+          <Skeleton variant="rounded" height={200} />
         </Stack>
-      </Container>
+      </Stack>
     );
   }
 
   const activeDaysInfo = activeCycle ? getDaysInfo(activeCycle.startDate, activeCycle.endDate) : null;
 
   return (
-    <Container maxWidth="xl" sx={{ py: 1, px: { xs: 2, sm: 3, lg: 5 } }}>
-      <Stack spacing={3}>
-        {/* Page Header */}
-        <PageHeader
-          title="Budget Cycles"
-          subtitle={activeCycle ? `Active: ${activeCycle.name}` : 'No active cycle'}
-          action={
-            <IconButton
-              onClick={() => setOpenCreateDialog(true)}
-              sx={{
-                bgcolor: 'secondary.main',
-                color: 'secondary.contrastText',
-                width: 40,
-                height: 40,
-                borderRadius: '12px',
-                '&:hover': { bgcolor: 'primary.dark' },
-              }}
-            >
-              <AddIcon sx={{ fontSize: 22 }} />
-            </IconButton>
-          }
-        />
+    <Stack spacing={{ xs: 2, md: 3 }}>
+      <PageHeader
+        title="Budget Cycles"
+        subtitle={activeCycle ? `Keep your household plan on track · ${activeCycle.name}` : 'Plan your household budget and review past cycles.'}
+        action={<Button variant="contained" onClick={() => setOpenCreateDialog(true)}>New cycle</Button>}
+      />
 
-        <Grid container spacing={3} alignItems="flex-start">
-          <Grid size={{ xs: 12, lg: 8 }}>
-            <CycleAnalytics />
-          </Grid>
-          <Grid size={{ xs: 12, lg: 4 }}>
-            {activeCycle ? (
-              <ActiveCycleCard
-                cycle={activeCycle}
-                daysInfo={activeDaysInfo!}
-                onCloseCycle={() => setOpenCloseDialog(true)}
-                isEditingBudget={editingCycleId === activeCycle.id}
-                onToggleBudget={() => handleToggleBudgetForCycle(activeCycle.id)}
-              />
-            ) : (
-              <EmptyLayout
-                title="No active budget cycle"
-                description="Create a new cycle to start allocating budgets and tracking expenses."
-                action={
-                  <Button variant="contained" startIcon={<AddIcon />} onClick={() => setOpenCreateDialog(true)}>
-                    New Cycle
-                  </Button>
-                }
-              />
-            )}
-          </Grid>
-        </Grid>
-
-        <BudgetAllocationDialog
-          allocations={dbAllocations}
-          categories={categories}
-          cycle={editingCycle}
-          cycles={cycles}
-          currency={baseCurrency}
-          householdId={householdId}
-          isLoading={allocsLoading}
-          isSaving={isSavingBudget}
-          saveRef={saveBudgetRef}
-          totalBudget={totalBudget}
-          onClose={() => setEditingCycleId(null)}
-          onSavingChange={setIsSavingBudget}
-          onTotalChange={setTotalBudget}
-        />
-
-        {/* ── Cycle History Timeline ── */}
-        <Box>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-            <HistoryIcon sx={{ fontSize: 20, color: 'text.secondary' }} />
-            <Typography variant="body1" sx={{ fontWeight: 700, color: 'text.primary', fontSize: '15px' }}>
-              Previous Cycles
-            </Typography>
-          </Box>
-
-          {sortedHistory.length > 0 ? (
-            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'repeat(2, minmax(0, 1fr))' }, gap: 2 }}>
-              {sortedHistory.map((cycle) => (
-                <CycleHistoryCard
-                  key={cycle.id}
-                  cycle={cycle}
-                  isEditing={editingCycleId === cycle.id}
-                  onToggleBudget={() => handleToggleBudgetForCycle(cycle.id)}
-                  onViewReport={
-                    cycle.status === 'closed'
-                      ? () => navigate(`/cycles/report?cycle=${encodeURIComponent(cycle.id)}`)
-                      : undefined
-                  }
-                  stats={cycleStatsById.get(cycle.id)}
-                />
-              ))}
+      <Box component="section" sx={{ px: sectionIndent }}>
+        <Stack spacing={{ xs: 2, md: 3 }}>
+          <DashboardSectionHeading
+            title="Overview"
+            subtitle="Compare spending across cycles and manage the current plan."
+          />
+          <Box sx={{ px: contentIndent }}>
+            <Box sx={{ maxWidth: 1180 }}>
+              <Grid container columns={{ xs: 12, md: 10 }} spacing={{ xs: 3, md: 5 }} alignItems="flex-start">
+                <Grid size={{ xs: 12, md: 6 }} sx={{ minWidth: 0 }}>
+                  <CycleAnalytics />
+                </Grid>
+                <Grid size={{ xs: 12, md: 4 }} sx={{ minWidth: 0 }}>
+                  {activeCycle ? (
+                    <ActiveCycleSection
+                      cycle={activeCycle}
+                      daysInfo={activeDaysInfo!}
+                      stats={cycleStatsById.get(activeCycle.id)}
+                      onCloseCycle={() => setOpenCloseDialog(true)}
+                      isEditingBudget={editingCycleId === activeCycle.id}
+                      onToggleBudget={() => handleToggleBudgetForCycle(activeCycle.id)}
+                    />
+                  ) : (
+                    <Stack spacing={1} alignItems="flex-start">
+                      <Typography variant="h5">No active budget cycle</Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Create a cycle to start allocating budgets and tracking expenses.
+                      </Typography>
+                      <Button variant="contained" onClick={() => setOpenCreateDialog(true)}>
+                        Start a cycle
+                      </Button>
+                    </Stack>
+                  )}
+                </Grid>
+              </Grid>
             </Box>
-          ) : (
-            <EmptyLayout title="No previous cycles found" description="Closed budget cycles will be listed here." />
-          )}
-        </Box>
-      </Stack>
+          </Box>
+        </Stack>
+      </Box>
+
+      <BudgetAllocationDialog
+        allocations={dbAllocations}
+        categories={categories}
+        cycle={editingCycle}
+        cycles={cycles}
+        currency={baseCurrency}
+        householdId={householdId}
+        isLoading={allocsLoading}
+        isSaving={isSavingBudget}
+        saveRef={saveBudgetRef}
+        totalBudget={totalBudget}
+        onClose={() => setEditingCycleId(null)}
+        onSavingChange={setIsSavingBudget}
+        onTotalChange={setTotalBudget}
+      />
+
+      <Box component="section" sx={{ px: sectionIndent }}>
+        <Stack spacing={{ xs: 2, md: 3 }}>
+          <DashboardSectionHeading title="Cycle history" subtitle="Review completed and planned budget periods." />
+
+          <Box sx={{ px: contentIndent }}>
+            <Box sx={{ maxWidth: 1180 }}>
+              {sortedHistory.length > 0 ? (
+                <Stack spacing={{ xs: 2.5, md: 3 }} divider={<Divider />}>
+                  {sortedHistory.map((cycle) => (
+                    <CycleHistoryItem
+                      key={cycle.id}
+                      cycle={cycle}
+                      isEditing={editingCycleId === cycle.id}
+                      onToggleBudget={() => handleToggleBudgetForCycle(cycle.id)}
+                      onViewReport={
+                        cycle.status === 'closed'
+                          ? () => navigate(`/cycles/report?cycle=${encodeURIComponent(cycle.id)}`)
+                          : undefined
+                      }
+                      stats={cycleStatsById.get(cycle.id)}
+                    />
+                  ))}
+                </Stack>
+              ) : (
+                <Stack spacing={1} alignItems="flex-start">
+                  <Typography variant="h5">No previous cycles yet</Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Closed and planned budget cycles will appear here.
+                  </Typography>
+                </Stack>
+              )}
+            </Box>
+          </Box>
+        </Stack>
+      </Box>
 
       <CreateCycleDialog
         busy={createCycleMutation.isPending || updateCycleStatusMutation.isPending}
@@ -292,6 +295,6 @@ export function BudgetCycles() {
         onConfirm={handleCloseCycle}
         open={openCloseDialog}
       />
-    </Container>
+    </Stack>
   );
 }

@@ -28,6 +28,10 @@ declare module '@mui/material/Button' {
 
 declare module '@mui/material/Paper' {
   interface PaperPropsVariantOverrides {
+    dashboardSection: true;
+    bankCard: true;
+    bankCardHeader: true;
+    cardDetailDialog: true;
     amountPanel: true;
     amountPanelInactive: true;
     selectable: true;
@@ -42,9 +46,10 @@ declare module '@mui/material/Paper' {
     assistantAction: true;
     assistantChart: true;
     saveFeedbackOverlay: true;
-    loanProgressSegment: true;
-    loanProgressSegmentPaid: true;
-    cardHeaderIcon: true;
+    iconBadge: true;
+    balanceTile: true;
+    dashboardAccountRow: true;
+    timelineRow: true;
     categoryCapacity: true;
     categoryCapacitySpent: true;
     categoryCapacityOver: true;
@@ -56,6 +61,7 @@ declare module '@mui/material/styles' {
     sectionLabel: React.CSSProperties;
     fieldHint: React.CSSProperties;
     amountValue: React.CSSProperties;
+    amountPlaceholder: React.CSSProperties;
     amountCurrency: React.CSSProperties;
     assistantPromptLabel: React.CSSProperties;
     assistantPromptTitle: React.CSSProperties;
@@ -64,14 +70,23 @@ declare module '@mui/material/styles' {
     loanMetric: React.CSSProperties;
     loanMetricCompact: React.CSSProperties;
     loanMeta: React.CSSProperties;
-    cardTitle: React.CSSProperties;
-    cardSubtitle: React.CSSProperties;
+    sectionTitle: React.CSSProperties;
+    sectionSubtitle: React.CSSProperties;
+    cardAmount: React.CSSProperties;
+    cardNumber: React.CSSProperties;
+    cardDetailNumber: React.CSSProperties;
+    cardDetailAmount: React.CSSProperties;
+    cardDetailLabel: React.CSSProperties;
+    cardMicro: React.CSSProperties;
+    cardExpiry: React.CSSProperties;
+    transactionAmount: React.CSSProperties;
   }
 
   interface TypographyVariantsOptions {
     sectionLabel?: React.CSSProperties;
     fieldHint?: React.CSSProperties;
     amountValue?: React.CSSProperties;
+    amountPlaceholder?: React.CSSProperties;
     amountCurrency?: React.CSSProperties;
     assistantPromptLabel?: React.CSSProperties;
     assistantPromptTitle?: React.CSSProperties;
@@ -80,8 +95,16 @@ declare module '@mui/material/styles' {
     loanMetric?: React.CSSProperties;
     loanMetricCompact?: React.CSSProperties;
     loanMeta?: React.CSSProperties;
-    cardTitle?: React.CSSProperties;
-    cardSubtitle?: React.CSSProperties;
+    sectionTitle?: React.CSSProperties;
+    sectionSubtitle?: React.CSSProperties;
+    cardAmount?: React.CSSProperties;
+    cardNumber?: React.CSSProperties;
+    cardDetailNumber?: React.CSSProperties;
+    cardDetailAmount?: React.CSSProperties;
+    cardDetailLabel?: React.CSSProperties;
+    cardMicro?: React.CSSProperties;
+    cardExpiry?: React.CSSProperties;
+    transactionAmount?: React.CSSProperties;
   }
 }
 
@@ -90,6 +113,7 @@ declare module '@mui/material/Typography' {
     sectionLabel: true;
     fieldHint: true;
     amountValue: true;
+    amountPlaceholder: true;
     amountCurrency: true;
     assistantPromptLabel: true;
     assistantPromptTitle: true;
@@ -98,7 +122,15 @@ declare module '@mui/material/Typography' {
     loanMetric: true;
     loanMetricCompact: true;
     loanMeta: true;
-    cardTitle: true;
-    cardSubtitle: true;
+    sectionTitle: true;
+    sectionSubtitle: true;
+    cardAmount: true;
+    cardNumber: true;
+    cardDetailNumber: true;
+    cardDetailAmount: true;
+    cardDetailLabel: true;
+    cardMicro: true;
+    cardExpiry: true;
+    transactionAmount: true;
   }
 }

@@ -1,10 +1,22 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
-import { Box, Card, CardContent, Stack, Typography, Button, TextField, Chip, Skeleton } from '@mui/material';
-import { AccountBalanceIcon } from '@/components/AppIcon';
-import { SavingsIcon } from '@/components/AppIcon';
-import { PaymentsIcon } from '@/components/AppIcon';
-import { CheckCircleIcon } from '@/components/AppIcon';
+import {
+  Box,
+  Button,
+  Chip,
+  FormControl,
+  Grid,
+  InputAdornment,
+  InputLabel,
+  MenuItem,
+  Select,
+  Skeleton,
+  Stack,
+  TextField,
+  Typography,
+} from '@mui/material';
+import type { AccountType, Reconciliation as ReconModel } from '@kippa/domain';
 import {
   useAccounts,
   useTransactions,
@@ -15,99 +27,96 @@ import {
   useSaveReconciliationMutation,
   useHouseholdBaseCurrency,
 } from '@/hooks/useFinance';
-import { Reconciliation as ReconModel } from '@kippa/domain';
 import { useAppContext } from '@/hooks/useAppContext';
 import { PageHeader } from '@/features/shared/components/PageHeader';
+import { SectionHeading } from '@/features/shared/components/SectionHeading';
 import { usePrivacyMask } from '@/hooks/usePrivacyMask';
 import { calculateAccountBalances } from '@/libs/financeCalculations';
 import { ReconciliationHistory } from './components/ReconciliationHistory';
-import { AccountPicker } from '@/features/shared/components/AccountPicker';
+import { AccountBalanceIcon, CheckCircleIcon, PaymentsIcon, SavingsIcon } from '@/components/AppIcon';
 
 type AdjustmentReason =
   'forgotten expense' | 'bank fee' | 'exchange difference' | 'cash counting correction' | 'unknown difference';
 
+const sectionIndent = { xs: 0, md: 4 } as const;
+const contentIndent = { xs: 0, md: 2 } as const;
+
+const adjustmentReasons: AdjustmentReason[] = [
+  'forgotten expense',
+  'bank fee',
+  'exchange difference',
+  'cash counting correction',
+  'unknown difference',
+];
+
+function accountTypeLabel(type: AccountType) {
+  if (type === 'running') return 'Running bank';
+  if (type === 'savings') return 'Savings bank';
+  return type.charAt(0).toUpperCase() + type.slice(1);
+}
+
 export function Reconciliation() {
+  const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
   const { householdId, userProfile } = useAppContext();
   const baseCurrency = useHouseholdBaseCurrency();
   const { maskDigits, privacyMode } = usePrivacyMask();
 
-  const getAccountIcon = (type: string, size = '14px') => {
-    const iconStyle = { fontSize: size, color: 'inherit' };
-    if (type.toLowerCase() === 'savings' || type.toLowerCase() === 'savings bank') {
-      return <SavingsIcon sx={iconStyle} />;
-    }
-    if (type.toLowerCase() === 'cash' || type.toLowerCase() === 'wallet') {
-      return <PaymentsIcon sx={iconStyle} />;
-    }
-    return <AccountBalanceIcon sx={iconStyle} />;
-  };
-
-  // Queries
   const { data: accounts = [], isLoading: accountsLoading } = useAccounts(householdId);
   const { data: transactions = [], isLoading: txsLoading } = useTransactions(householdId);
   const { data: ledgerLines = [], isLoading: linesLoading } = useLedgerLines(householdId);
   const { data: cycles = [] } = useCycles(householdId);
-  const { data: history = [], isLoading: historyLoading } = useReconciliationHistory(householdId);
+  const {
+    data: historyData,
+    isLoading: historyLoading,
+    hasNextPage: hasNextHistoryPage = false,
+    isFetchingNextPage: isFetchingHistoryPage,
+    fetchNextPage: fetchNextHistoryPage,
+  } = useReconciliationHistory(householdId);
+  const historyPages = historyData?.pages.map((page) => page.items) ?? [];
 
-  // Mutations
   const createTxMutation = useCreateTransactionMutation();
   const saveReconMutation = useSaveReconciliationMutation();
 
-  // Sort accounts so base-currency accounts come first, then cash, then everything else.
   const sortedAccounts = [...accounts].sort((a, b) => {
-    const rank = (acc: typeof a) => {
-      if (acc.currency === baseCurrency) return 0;
-      if (acc.type === 'cash') return 1;
+    const rank = (account: (typeof accounts)[number]) => {
+      if (account.currency === baseCurrency) return 0;
+      if (account.type === 'cash') return 1;
       return 2;
     };
     return rank(a) - rank(b);
   });
 
   const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null);
-  const selectedAccount = accounts.find((a) => a.id === selectedAccountId) || sortedAccounts[0] || null;
+  const selectedAccount = accounts.find((account) => account.id === selectedAccountId) || sortedAccounts[0] || null;
   const [actualBalanceInput, setActualBalanceInput] = useState('');
   const [reason, setReason] = useState<AdjustmentReason>('forgotten expense');
   const [note, setNote] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
-
-  const activeCycle = cycles.find((c) => c.status === 'open') || null;
-
+  const activeCycle = cycles.find((cycle) => cycle.status === 'open') || null;
   const isLoading = accountsLoading || txsLoading || linesLoading || historyLoading;
 
-  if (isLoading) {
-    return (
-      <Box sx={{ py: 0.5 }}>
-        <Stack spacing={3}>
-          <Box sx={{ mt: 1 }}>
-            <Skeleton variant="text" width="60%" height={32} />
-            <Skeleton variant="text" width="40%" height={20} />
-          </Box>
-          <Skeleton variant="rectangular" width="100%" height={200} sx={{ borderRadius: '20px' }} />
-        </Stack>
-      </Box>
-    );
-  }
-
   const balancesMap = calculateAccountBalances(accounts, transactions, ledgerLines);
+  const calculatedBalance = selectedAccount ? balancesMap[selectedAccount.id] || 0 : 0;
+  const parsedActualBalance = actualBalanceInput.trim() ? Number(actualBalanceInput) : null;
+  const hasActualBalance = parsedActualBalance !== null && Number.isFinite(parsedActualBalance);
+  const actualBalance = parsedActualBalance ?? 0;
+  const difference = hasActualBalance ? Number((actualBalance - calculatedBalance).toFixed(2)) : 0;
+  const isMatched = hasActualBalance && Math.abs(difference) < 0.01;
 
-  const getCalculatedBalance = (): number => {
-    if (!selectedAccount) return 0;
-    return balancesMap[selectedAccount.id] || 0;
+  const getAccountIcon = (type: AccountType) => {
+    if (type === 'savings') return <SavingsIcon variant="Linear" />;
+    if (type === 'cash' || type === 'wallet') return <PaymentsIcon variant="Linear" />;
+    return <AccountBalanceIcon variant="Linear" />;
   };
 
-  const calculatedBalance = getCalculatedBalance();
-  const actualBalance = parseFloat(actualBalanceInput) || 0;
-  const difference = selectedAccount ? Number((actualBalance - calculatedBalance).toFixed(2)) : 0;
-
   const handleResolve = async () => {
-    if (!selectedAccount) return;
+    if (!selectedAccount || !hasActualBalance || !userProfile) return;
     setIsProcessing(true);
 
     try {
       let adjustmentTransactionId: string | null = null;
 
-      // 1. If difference is non-zero, write an adjustment transaction
       if (Math.abs(difference) > 0.001) {
         adjustmentTransactionId = await createTxMutation.mutateAsync({
           householdId,
@@ -115,7 +124,7 @@ export function Reconciliation() {
             type: 'adjustment',
             date: new Date().toISOString().split('T')[0],
             description: `Balance Correction (${reason}): ${note || 'Manual Reconciliation adjustment'}`,
-            createdBy: userProfile!.uid,
+            createdBy: userProfile.uid,
             budgetCycleId: activeCycle?.id || null,
           },
           lines: [
@@ -128,7 +137,6 @@ export function Reconciliation() {
         });
       }
 
-      // 2. Log Reconciliation event
       const reconId = crypto.randomUUID();
       const reconLog: ReconModel = {
         id: reconId,
@@ -139,22 +147,19 @@ export function Reconciliation() {
         actualBalance,
         difference,
         currency: selectedAccount.currency,
-        createdBy: userProfile!.uid,
+        createdBy: userProfile.uid,
         createdAt: new Date().toISOString(),
         adjustmentTransactionId,
         note: note.trim() || null,
       };
 
-      await saveReconMutation.mutateAsync({
-        householdId,
-        reconId,
-        reconLog,
-      });
-
+      await saveReconMutation.mutateAsync({ householdId, reconId, reconLog });
       enqueueSnackbar(
-        privacyMode
-          ? 'Reconciliation saved! Difference corrected.'
-          : `Reconciliation saved! Difference of ${difference.toFixed(2)} ${selectedAccount.currency} corrected.`,
+        isMatched
+          ? 'Reconciliation saved. Your balance matches.'
+          : privacyMode
+            ? 'Reconciliation saved. Difference corrected.'
+            : `Reconciliation saved. Difference of ${difference.toFixed(2)} ${selectedAccount.currency} corrected.`,
         { variant: 'success' },
       );
       setActualBalanceInput('');
@@ -166,219 +171,253 @@ export function Reconciliation() {
     }
   };
 
-  // Sort history locally
-  const sortedHistory = [...history].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  const handleNextHistoryPage = async () => {
+    const result = await fetchNextHistoryPage();
+    return Boolean(result.data?.pages.at(-1)?.items.length);
+  };
+
+  if (isLoading) {
+    return (
+      <Stack spacing={{ xs: 2, md: 3 }}>
+        <PageHeader title="Reconciliation" subtitle="Compare recorded balances with your bank or cash totals." />
+        <Box component="section" sx={{ px: sectionIndent }}>
+          <Box sx={{ maxWidth: 1180, mx: 'auto' }}>
+            <Grid container spacing={{ xs: 3, lg: 4 }}>
+              <Grid size={{ xs: 12, lg: 5 }}>
+                <Stack spacing={2.5}>
+                  <Stack direction="row" spacing={1.5} alignItems="center">
+                    <Skeleton variant="rounded" width={44} height={44} />
+                    <Box>
+                      <Skeleton variant="text" width={190} height={24} />
+                      <Skeleton variant="text" width={290} height={18} />
+                    </Box>
+                  </Stack>
+                  <Box sx={{ px: contentIndent }}>
+                    <Stack spacing={2.5}>
+                      <Skeleton variant="rounded" width="100%" height={48} />
+                      <Stack direction="row" spacing={3}>
+                        <Skeleton variant="text" width="30%" height={80} />
+                        <Skeleton variant="text" width="30%" height={80} />
+                        <Skeleton variant="text" width="30%" height={80} />
+                      </Stack>
+                      <Skeleton variant="rounded" width="70%" height={56} />
+                      <Skeleton variant="rounded" width={220} height={42} />
+                    </Stack>
+                  </Box>
+                </Stack>
+              </Grid>
+              <Grid size={{ xs: 12, lg: 7 }}>
+                <Stack spacing={2}>
+                  <Skeleton variant="text" width={230} height={28} />
+                  {[1, 2, 3, 4].map((item) => (
+                    <Stack key={item} direction="row" spacing={1.5} sx={{ py: 1.5 }}>
+                      <Skeleton variant="rounded" width={44} height={44} />
+                      <Box sx={{ flex: 1 }}>
+                        <Skeleton variant="text" width="55%" height={22} />
+                        <Skeleton variant="text" width="75%" height={18} />
+                      </Box>
+                      <Skeleton variant="text" width={100} height={24} />
+                    </Stack>
+                  ))}
+                </Stack>
+              </Grid>
+            </Grid>
+          </Box>
+        </Box>
+      </Stack>
+    );
+  }
 
   return (
-    <Box sx={{ py: 0.5 }}>
-      <Stack spacing={3}>
-        <PageHeader
-          title="Reconciliation"
-          subtitle="Audit your account balances manually to keep records perfectly aligned."
-        />
+    <Stack spacing={{ xs: 2, md: 3 }}>
+      <PageHeader title="Reconciliation" subtitle="Compare recorded balances with your bank or cash totals." />
 
-        <Box
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: { xs: 'minmax(0, 1fr)', lg: 'minmax(0, 7fr) minmax(320px, 5fr)' },
-            gap: 3,
-            alignItems: 'start',
-          }}
-        >
-          <Card>
-            <CardContent>
-              <Stack spacing={2.5}>
-                <AccountPicker
-                  accounts={sortedAccounts}
-                  label="Select Account"
-                  onSelect={(accountId) => {
-                    setSelectedAccountId(accountId);
-                    setActualBalanceInput('');
-                  }}
-                  selectedAccountId={selectedAccountId}
-                  emptyMessage="Create an account first, then come back here to balance-check it."
+      <Box component="section" sx={{ px: sectionIndent }}>
+        <Box sx={{ maxWidth: 1180, mx: 'auto' }}>
+          <Grid container spacing={{ xs: 3, lg: 4 }} alignItems="start">
+            <Grid size={{ xs: 12, lg: 5 }} sx={{ minWidth: 0 }}>
+              <Stack spacing={{ xs: 2, md: 2.5 }}>
+                <SectionHeading
+                  icon={<AccountBalanceIcon variant="Linear" />}
+                  title="Balance check"
+                  subtitle="Confirm the balance on your statement or in your wallet."
                 />
 
-                {selectedAccount && (
-                  <Stack spacing={2.5}>
-                    {/* Balance comparison: Calculated → Actual = Difference */}
-                    <Box
-                      sx={{
-                        p: 2,
-                        borderRadius: 3,
-                        bgcolor: 'surfaceContainerLow',
-                      }}
-                    >
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                        {/* Calculated */}
-                        <Box sx={{ flex: 1, minWidth: 0 }}>
-                          <Typography
-                            variant="body2"
-                            sx={{ color: 'text.secondary', fontSize: '11px', fontWeight: 500, mb: 0.5 }}
+                <Box sx={{ px: contentIndent }}>
+                  {accounts.length === 0 ? (
+                    <Stack spacing={1} alignItems="flex-start">
+                      <Typography variant="body2" color="text.secondary">
+                        Create an account first, then come back here to balance-check it.
+                      </Typography>
+                      <Button onClick={() => navigate('/accounts')}>Go to accounts</Button>
+                    </Stack>
+                  ) : selectedAccount ? (
+                    <Stack spacing={{ xs: 2.5, md: 3 }}>
+                      <Box sx={{ width: '100%', maxWidth: 420 }}>
+                        <FormControl fullWidth>
+                          <InputLabel id="reconciliation-account-label">Account</InputLabel>
+                          <Select
+                            size="medium"
+                            labelId="reconciliation-account-label"
+                            label="Account"
+                            value={selectedAccount.id}
+                            onChange={(event) => {
+                              setSelectedAccountId(event.target.value);
+                              setActualBalanceInput('');
+                              setNote('');
+                            }}
                           >
+                            {sortedAccounts.map((account) => (
+                              <MenuItem key={account.id} value={account.id}>
+                                {account.name} · {accountTypeLabel(account.type)} · {account.currency}
+                              </MenuItem>
+                            ))}
+                          </Select>
+                        </FormControl>
+                      </Box>
+
+                      <Box
+                        sx={{
+                          display: 'grid',
+                          gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, minmax(0, 1fr))' },
+                          columnGap: { xs: 0, sm: 3 },
+                          rowGap: { xs: 2, sm: 0 },
+                          alignItems: 'center',
+                        }}
+                      >
+                        <Stack spacing={0.5}>
+                          <Typography variant="fieldHint" color="text.secondary">
                             Calculated
                           </Typography>
-                          <Typography
-                            variant="body1"
-                            sx={{ fontWeight: 'bold', fontSize: '15px', color: 'text.primary' }}
-                          >
-                            {maskDigits(`${calculatedBalance.toLocaleString(undefined, { minimumFractionDigits: 2 })}`)}
+                          <Typography variant="loanMetric">
+                            {maskDigits(calculatedBalance.toLocaleString(undefined, { minimumFractionDigits: 2 }))}
                           </Typography>
-                          <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '10px' }}>
+                          <Typography variant="sectionSubtitle" color="text.secondary">
                             {selectedAccount.currency}
                           </Typography>
-                        </Box>
+                        </Stack>
 
-                        <Typography sx={{ color: 'text.disabled', fontSize: '20px', fontWeight: 300, px: 0.5 }}>
-                          −
-                        </Typography>
-
-                        {/* Actual input */}
-                        <Box sx={{ flex: 1, minWidth: 0 }}>
-                          <Typography
-                            variant="body2"
-                            sx={{ color: 'text.secondary', fontSize: '11px', fontWeight: 500, mb: 0.5 }}
-                          >
+                        <Stack spacing={0.5}>
+                          <Typography variant="fieldHint" color="text.secondary">
                             Actual
                           </Typography>
                           <TextField
                             type="number"
-                            variant="standard"
+                            size="small"
                             placeholder="0.00"
-                            fullWidth
-                            value={
-                              privacyMode && actualBalanceInput ? maskDigits(actualBalanceInput) : actualBalanceInput
-                            }
-                            onChange={(e) => setActualBalanceInput(e.target.value)}
-                            sx={{
-                              '& .MuiInput-root': {
-                                fontSize: '15px',
-                                fontWeight: 'bold',
-                                color: 'text.primary',
-                                '&:before': { display: 'none' },
-                                '&:after': { display: 'none' },
+                            value={actualBalanceInput}
+                            onChange={(event) => setActualBalanceInput(event.target.value)}
+                            slotProps={{
+                              htmlInput: { inputMode: 'decimal', step: '0.01' },
+                              input: {
+                                endAdornment: (
+                                  <InputAdornment position="end">{selectedAccount.currency}</InputAdornment>
+                                ),
                               },
-                              '& .MuiInput-input': { py: 0, px: 0 },
                             }}
                           />
-                          <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '10px' }}>
-                            {selectedAccount.currency}
-                          </Typography>
-                        </Box>
+                        </Stack>
 
-                        <Typography sx={{ color: 'text.disabled', fontSize: '20px', fontWeight: 300, px: 0.5 }}>
-                          =
-                        </Typography>
-
-                        {/* Difference */}
-                        <Box sx={{ flex: 1, minWidth: 0 }}>
-                          <Typography
-                            variant="body2"
-                            sx={{ color: 'text.secondary', fontSize: '11px', fontWeight: 500, mb: 0.5 }}
-                          >
+                        <Stack spacing={0.5}>
+                          <Typography variant="fieldHint" color="text.secondary">
                             Difference
                           </Typography>
                           <Typography
-                            variant="body1"
-                            sx={{
-                              fontWeight: 'bold',
-                              fontSize: '15px',
-                              color:
-                                Math.abs(difference) < 0.01
-                                  ? 'text.primary'
-                                  : difference > 0
-                                    ? 'success.main'
-                                    : 'error.main',
-                            }}
+                            variant="loanMetric"
+                            color={
+                              !hasActualBalance || Math.abs(difference) < 0.01
+                                ? 'text.primary'
+                                : difference > 0
+                                  ? 'success.main'
+                                  : 'error.main'
+                            }
                           >
-                            {difference > 0 ? '+' : ''}
-                            {maskDigits(`${difference.toLocaleString(undefined, { minimumFractionDigits: 2 })}`)}
+                            {hasActualBalance
+                              ? `${difference > 0 ? '+' : ''}${maskDigits(difference.toLocaleString(undefined, { minimumFractionDigits: 2 }))}`
+                              : '—'}
                           </Typography>
-                          <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '10px' }}>
-                            {selectedAccount.currency}
+                          <Typography variant="sectionSubtitle" color="text.secondary">
+                            {hasActualBalance ? selectedAccount.currency : 'Enter actual balance'}
                           </Typography>
-                        </Box>
+                        </Stack>
                       </Box>
 
-                      {Math.abs(difference) < 0.01 && actualBalanceInput !== '' && (
-                        <Box sx={{ mt: 1.5, display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                          <CheckCircleIcon sx={{ fontSize: '14px', color: 'success.main' }} />
-                          <Typography variant="body2" sx={{ color: 'success.main', fontSize: '11px', fontWeight: 600 }}>
-                            Perfect match — records are aligned.
+                      {isMatched ? (
+                        <Stack direction="row" spacing={1} alignItems="center">
+                          <CheckCircleIcon variant="Linear" color="success" fontSize="small" />
+                          <Typography variant="body2" color="success.main">
+                            Perfect match. Your records are aligned.
                           </Typography>
-                        </Box>
-                      )}
-                    </Box>
-
-                    {Math.abs(difference) > 0.001 && (
-                      <Stack spacing={2.5}>
-                        <Box>
-                          <Typography
-                            variant="body1"
-                            sx={{ fontWeight: 'bold', color: 'text.primary', fontSize: '14px', mb: 1 }}
-                          >
-                            Reason for Adjustment
-                          </Typography>
-                          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                            {(
-                              [
-                                'forgotten expense',
-                                'bank fee',
-                                'exchange difference',
-                                'cash counting correction',
-                              ] as AdjustmentReason[]
-                            ).map((r) => {
-                              const isSel = reason === r;
-                              return (
-                                <Chip
-                                  key={r}
-                                  label={r}
-                                  onClick={() => setReason(r)}
-                                  variant={isSel ? 'filled' : 'outlined'}
-                                  sx={{
-                                    fontSize: '13px',
-                                    height: 36,
-                                    borderRadius: '12px',
-                                    bgcolor: isSel ? 'secondary.main' : 'background.paper',
-                                    color: isSel ? 'secondary.contrastText' : 'text.secondary',
-                                    borderColor: isSel ? 'secondary.main' : 'divider',
-                                    fontWeight: isSel ? 'bold' : 'normal',
-                                    textTransform: 'capitalize',
-                                    '&:hover': { bgcolor: isSel ? 'secondary.main' : 'action.hover' },
-                                  }}
-                                />
-                              );
-                            })}
+                        </Stack>
+                      ) : hasActualBalance ? (
+                        <Stack spacing={2}>
+                          <Box>
+                            <Typography variant="sectionTitle">Adjustment details</Typography>
+                            <Typography variant="sectionSubtitle" color="text.secondary">
+                              Select why the balance differs. Add context for your household if needed.
+                            </Typography>
                           </Box>
-                        </Box>
+                          <Box sx={{ pl: { xs: 0, sm: 2 } }}>
+                            <Stack spacing={2}>
+                              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                                {adjustmentReasons.map((item) => {
+                                  const isSelected = reason === item;
+                                  return (
+                                    <Chip
+                                      key={item}
+                                      label={item.replace(/\b\w/g, (character) => character.toUpperCase())}
+                                      variant={isSelected ? 'filterSelected' : 'filter'}
+                                      clickable
+                                      aria-pressed={isSelected}
+                                      onClick={() => setReason(item)}
+                                    />
+                                  );
+                                })}
+                              </Box>
+                              <TextField
+                                variant="filled"
+                                label="Adjustment note (optional)"
+                                placeholder="Add context for your household"
+                                value={note}
+                                onChange={(event) => setNote(event.target.value)}
+                                multiline
+                                minRows={3}
+                                fullWidth
+                              />
+                            </Stack>
+                          </Box>
+                        </Stack>
+                      ) : null}
 
-                        <TextField
-                          label="Adjustment Note"
-                          fullWidth
-                          placeholder="Explain the reason..."
-                          value={note}
-                          onChange={(e) => setNote(e.target.value)}
-                        />
-                      </Stack>
-                    )}
-
-                    <Button onClick={handleResolve} loading={isProcessing} fullWidth variant="contained">
-                      Apply Correction & Reconcile
-                    </Button>
-                  </Stack>
-                )}
+                      <Button
+                        variant="contained"
+                        onClick={handleResolve}
+                        loading={isProcessing}
+                        disabled={!hasActualBalance || !userProfile}
+                        sx={{ alignSelf: 'flex-start' }}
+                      >
+                        {isMatched ? 'Confirm balance' : 'Apply correction'}
+                      </Button>
+                    </Stack>
+                  ) : null}
+                </Box>
               </Stack>
-            </CardContent>
-          </Card>
+            </Grid>
 
-          <ReconciliationHistory
-            accounts={accounts}
-            history={sortedHistory}
-            mask={maskDigits}
-            renderAccountIcon={getAccountIcon}
-          />
+            <Grid size={{ xs: 12, lg: 7 }} sx={{ minWidth: 0 }}>
+              <ReconciliationHistory
+                accounts={accounts}
+                pages={historyPages}
+                hasNextPage={hasNextHistoryPage}
+                isFetchingNextPage={isFetchingHistoryPage}
+                onNextPage={handleNextHistoryPage}
+                mask={maskDigits}
+                renderAccountIcon={getAccountIcon}
+              />
+            </Grid>
+          </Grid>
         </Box>
-      </Stack>
-    </Box>
+      </Box>
+    </Stack>
   );
 }

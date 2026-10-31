@@ -1,303 +1,218 @@
+import {
+  IconBuildingBank,
+  IconArrowsLeftRight,
+  IconBell,
+  IconChartBar,
+  IconCalendarStats,
+  IconCategory,
+  IconChevronDown,
+  IconClock,
+  IconCreditCardPay,
+  IconFileText,
+  IconGitCompare,
+  IconHistory,
+  IconHome,
+  IconLayoutDashboard,
+  IconListDetails,
+  IconMessage2,
+  IconPlus,
+  IconReportAnalytics,
+  IconReceipt,
+  IconArrowDownRight,
+  IconArrowUpRight,
+  IconUsers,
+  IconWallet,
+} from '@tabler/icons-react';
 import { useState } from 'react';
-import {
-  Box,
-  Button,
-  InputAdornment,
-  List,
-  ListItemButton,
-  ListItemIcon,
-  ListItemText,
-  Stack,
-  TextField,
-  Typography,
-} from '@mui/material';
+import type { MouseEvent } from 'react';
+import { Box, ButtonBase, ListItemIcon, ListItemText, Menu, MenuItem, Tooltip } from '@mui/material';
 import { useLocation, useNavigate } from 'react-router-dom';
-import {
-  AccountBalanceIcon,
-  AddIcon,
-  BarChartIcon,
-  DashboardIcon,
-  ExpandLessIcon,
-  HomeIcon,
-  ReceiptLongIcon,
-  SearchIcon,
-  NotesIcon,
-  PaymentsIcon,
-} from '@/components/AppIcon';
+import { useTheme } from '@mui/material/styles';
 
-type NavChild = { label: string; path: string };
-type NavItem = { label: string; path: string; icon: typeof DashboardIcon; children?: NavChild[] };
+type NavChild = { label: string; path: string; icon: typeof IconLayoutDashboard };
+type NavItem = { label: string; path: string; icon: typeof IconLayoutDashboard; children?: NavChild[] };
 
-const menuItems: NavItem[] = [
-  { label: 'Dashboard', path: '/', icon: DashboardIcon },
-  { label: 'Ask Kip', path: '/ai', icon: NotesIcon },
-  { label: 'Loans', path: '/loans', icon: PaymentsIcon },
-  {
-    label: 'Analytics',
-    path: '/cycles',
-    icon: BarChartIcon,
-    children: [
-      { label: 'Budget cycles', path: '/cycles' },
-      { label: 'Cycle reports', path: '/cycles/report' },
-      { label: 'Categories', path: '/categories' },
-    ],
-  },
-  {
-    label: 'Transactions',
-    path: '/transactions',
-    icon: ReceiptLongIcon,
-    children: [
-      { label: 'All transactions', path: '/transactions' },
-      { label: 'Pending review', path: '/pending' },
-      { label: 'Expenses', path: '/transactions?type=expense' },
-      { label: 'Income', path: '/transactions?type=income' },
-      { label: 'Transfers', path: '/transactions?type=transfer' },
-    ],
-  },
-  {
-    label: 'Accounts & cards',
-    path: '/accounts',
-    icon: AccountBalanceIcon,
-    children: [
-      { label: 'Account overview', path: '/accounts' },
-      { label: 'Statements', path: '/accounts/statements' },
-      { label: 'Reconciliation', path: '/reconciliation' },
-    ],
-  },
-  {
-    label: 'Household',
-    path: '/household',
-    icon: HomeIcon,
-    children: [
-      { label: 'Members & settings', path: '/household' },
-      { label: 'Notifications', path: '/notifications' },
-      { label: 'Activity history', path: '/activity' },
-    ],
-  },
+const menuGroups: NavItem[][] = [
+  [
+    { label: 'Dashboard', path: '/', icon: IconLayoutDashboard },
+    { label: 'Ask Kip', path: '/ai', icon: IconMessage2 },
+    { label: 'Loans', path: '/loans', icon: IconCreditCardPay },
+  ],
+  [
+    {
+      label: 'Analytics',
+      path: '/cycles',
+      icon: IconChartBar,
+      children: [
+        { label: 'Budget cycles', path: '/cycles', icon: IconCalendarStats },
+        { label: 'Cycle reports', path: '/cycles/report', icon: IconReportAnalytics },
+        { label: 'Categories', path: '/categories', icon: IconCategory },
+      ],
+    },
+  ],
+  [
+    {
+      label: 'Transactions',
+      path: '/transactions',
+      icon: IconReceipt,
+      children: [
+        { label: 'All transactions', path: '/transactions', icon: IconListDetails },
+        { label: 'Pending review', path: '/pending', icon: IconClock },
+        { label: 'Expenses', path: '/transactions?type=expense', icon: IconArrowDownRight },
+        { label: 'Income', path: '/transactions?type=income', icon: IconArrowUpRight },
+        { label: 'Transfers', path: '/transactions?type=transfer', icon: IconArrowsLeftRight },
+      ],
+    },
+  ],
+  [
+    {
+      label: 'Accounts & cards',
+      path: '/accounts',
+      icon: IconBuildingBank,
+      children: [
+        { label: 'Account overview', path: '/accounts', icon: IconWallet },
+        { label: 'Statements', path: '/accounts/statements', icon: IconFileText },
+        { label: 'Reconciliation', path: '/reconciliation', icon: IconGitCompare },
+      ],
+    },
+    {
+      label: 'Household',
+      path: '/household',
+      icon: IconHome,
+      children: [
+        { label: 'Members & settings', path: '/household', icon: IconUsers },
+        { label: 'Notifications', path: '/notifications', icon: IconBell },
+        { label: 'Activity history', path: '/activity', icon: IconHistory },
+      ],
+    },
+  ],
 ];
 
 export function SideNav() {
+  const theme = useTheme();
   const navigate = useNavigate();
   const { pathname, search } = useLocation();
-  const [query, setQuery] = useState('');
-  const [expanded, setExpanded] = useState<Record<string, boolean>>({ Transactions: true });
+  const [menu, setMenu] = useState<{ anchor: HTMLElement; item: NavItem } | null>(null);
+  const logoSrc =
+    theme.palette.mode === 'dark' ? '/icons/logo_white_transparent.png' : '/icons/logo_black_transparent.png';
 
-  const matches = (item: NavItem) => {
-    const normalizedQuery = query.trim().toLowerCase();
-    return (
-      item.label.toLowerCase().includes(normalizedQuery) ||
-      item.children?.some((child) => child.label.toLowerCase().includes(normalizedQuery))
-    );
+  const isActive = (item: NavItem) =>
+    pathname === item.path || Boolean(item.children?.some((child) => pathname === child.path.split('?')[0]));
+
+  const openItem = (event: MouseEvent<HTMLElement>, item: NavItem) => {
+    if (item.children?.length) {
+      setMenu({ anchor: event.currentTarget, item });
+      return;
+    }
+    navigate(item.path);
   };
-  const visibleMenu = menuItems.filter(matches);
 
-  const renderItem = (item: NavItem) => {
-    const Icon = item.icon;
-    const active =
-      pathname === item.path || Boolean(item.children?.some((child) => pathname === child.path.split('?')[0]));
-    const hasChildren = Boolean(item.children?.length);
-    const isExpanded = hasChildren && ((expanded[item.label] ?? active) || query.trim().length > 0);
-    return (
-      <Box key={`${item.label}-${item.path}`}>
-        <ListItemButton
-          selected={active}
-          onClick={() => navigate(item.path)}
-          sx={{
-            minHeight: 44,
-            mb: 0.25,
-            px: 1.25,
-            borderRadius: '10px',
-            color: 'text.primary',
-            transition: 'background-color 160ms ease, color 160ms ease',
-            '&.Mui-selected': { bgcolor: 'action.selected' },
-            '&.Mui-selected:hover': { bgcolor: 'action.selected' },
-          }}
-        >
-          <ListItemIcon sx={{ minWidth: 34, color: active ? 'primary.dark' : 'text.primary' }}>
-            <Icon fontSize="small" variant={active ? 'Bold' : 'Linear'} />
-          </ListItemIcon>
-          <ListItemText
-            primary={item.label}
-            slotProps={{ primary: { fontSize: 13.5, lineHeight: 1.2, fontWeight: active ? 700 : 500 } }}
-          />
-          {hasChildren && (
-            <Box
-              component="span"
-              role="button"
-              aria-label={`${isExpanded ? 'Collapse' : 'Expand'} ${item.label}`}
-              onClick={(event) => {
-                event.stopPropagation();
-                setExpanded((current) => ({ ...current, [item.label]: !current[item.label] }));
-              }}
-              sx={{ p: 0.75, mr: -0.75, color: 'text.primary', cursor: 'pointer' }}
-            >
-              <ExpandLessIcon
-                sx={{
-                  fontSize: 17,
-                  transform: isExpanded ? 'none' : 'rotate(180deg)',
-                  transition: 'transform 160ms ease',
-                }}
-              />
-            </Box>
-          )}
-        </ListItemButton>
-
-        {isExpanded && item.children && (
-          <Stack
-            spacing={0.25}
-            sx={{
-              position: 'relative',
-              ml: 2.75,
-              mb: 0.75,
-              pl: 2.25,
-              '&::before': {
-                content: '""',
-                position: 'absolute',
-                top: 2,
-                bottom: 10,
-                left: 0,
-                width: '1px',
-                bgcolor: 'divider',
-              },
-            }}
-          >
-            {item.children.map((child) => {
-              const childActive = child.path.includes('?')
-                ? `${pathname}${search}` === child.path
-                : pathname === child.path;
-              return (
-                <ListItemButton
-                  key={child.path}
-                  selected={childActive}
-                  onClick={() => navigate(child.path)}
-                  sx={{
-                    position: 'relative',
-                    minHeight: 34,
-                    px: 1,
-                    py: 0.5,
-                    borderRadius: 2,
-                    color: 'text.primary',
-                    '&::before': {
-                      content: '""',
-                      position: 'absolute',
-                      left: -18,
-                      top: '50%',
-                      width: 12,
-                      height: '1px',
-                      bgcolor: 'divider',
-                    },
-                    '&.Mui-selected': { bgcolor: 'transparent', color: 'primary.main' },
-                    '&.Mui-selected:hover': { bgcolor: 'action.hover' },
-                  }}
-                >
-                  <ListItemText
-                    primary={child.label}
-                    slotProps={{ primary: { fontSize: 12.5, lineHeight: 1.3, fontWeight: childActive ? 700 : 500 } }}
-                  />
-                </ListItemButton>
-              );
-            })}
-          </Stack>
-        )}
-      </Box>
-    );
-  };
+  const closeMenu = () => setMenu(null);
 
   return (
     <Box
       component="aside"
+      aria-label="Workspace sidebar"
       sx={{
         display: { xs: 'none', md: 'flex' },
         position: 'fixed',
         inset: '0 auto 0 0',
+        width: 72,
         zIndex: 1200,
-        width: 264,
-        px: 2,
-        py: 2.25,
         flexDirection: 'column',
-        bgcolor: 'background.paper',
+        alignItems: 'center',
+        px: 1.25,
+        py: 2.25,
+        bgcolor: 'background.sidebar',
         borderRight: '1px solid',
         borderColor: 'divider',
       }}
     >
-      <Stack direction="row" alignItems="center" spacing={1.25} sx={{ px: 0.5, minHeight: 48, mb: 2.25 }}>
-        <Box component="img" src="/icons/icon.svg" alt="Kippa" sx={{ width: 34, height: 34, borderRadius: '9px' }} />
-        <Typography sx={{ color: 'text.primary', fontSize: 22, fontWeight: 800, letterSpacing: '-0.045em' }}>
-          Kippa
-        </Typography>
-      </Stack>
-
-      <TextField
-        value={query}
-        onChange={(event) => setQuery(event.target.value)}
-        placeholder="Search navigation"
-        size="small"
-        fullWidth
-        slotProps={{
-          input: {
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon fontSize="small" />
-              </InputAdornment>
-            ),
-          },
-        }}
-        sx={{
-          mb: 2.5,
-          '& .MuiOutlinedInput-root': { height: 42, borderRadius: '12px', bgcolor: 'action.hover' },
-          '& .MuiOutlinedInput-notchedOutline': { borderColor: 'transparent' },
-          '& input': { fontSize: '13px !important' },
-        }}
-      />
+      <Tooltip title="Kippa" placement="right">
+        <ButtonBase
+          onClick={() => navigate('/')}
+          aria-label="Kippa home"
+          sx={{ width: 48, height: 48, mb: 2, borderRadius: 2 }}
+        >
+          <Box component="img" src={logoSrc} alt="" sx={{ width: 36, height: 36, objectFit: 'contain' }} />
+        </ButtonBase>
+      </Tooltip>
 
       <Box
-        sx={{
-          flex: 1,
-          minHeight: 0,
-          overflowY: 'auto',
-          overflowX: 'hidden',
-          pr: 0.5,
-          mr: -0.5,
-          scrollbarWidth: 'thin',
-          scrollbarColor: 'transparent transparent',
-          '&:hover': { scrollbarColor: 'divider transparent' },
-        }}
+        component="nav"
+        aria-label="Desktop navigation"
+        sx={{ display: 'flex', flex: 1, minHeight: 0, flexDirection: 'column', justifyContent: 'center', gap: 2 }}
       >
-        <Typography
-          sx={{
-            px: 1.25,
-            mb: 0.75,
-            color: 'text.secondary',
-            fontSize: 11,
-            fontWeight: 650,
-            letterSpacing: '0.06em',
-            textTransform: 'uppercase',
-          }}
-        >
-          Menu
-        </Typography>
-        <List disablePadding>{visibleMenu.map(renderItem)}</List>
+        {menuGroups.map((group, index) => (
+          <Box key={index} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.75 }}>
+            {group.map((item) => {
+              const Icon = item.icon;
+              const active = isActive(item);
+              return (
+                <Tooltip key={item.path} title={item.label} placement="right">
+                  <ButtonBase
+                    className="kippa-desktop-nav-item"
+                    aria-label={item.label}
+                    aria-current={active ? 'page' : undefined}
+                    aria-haspopup={item.children ? 'menu' : undefined}
+                    data-open={menu?.item.path === item.path ? 'true' : undefined}
+                    onClick={(event) => openItem(event, item)}
+                  >
+                    <Box
+                      className="kippa-nav-icon-wrap"
+                      sx={{ position: 'relative', width: 22, height: 22, display: 'grid', placeItems: 'center' }}
+                    >
+                      <Icon size={22} strokeWidth={1.8} />
+                      {item.children && (
+                        <IconChevronDown className="kippa-nav-submenu-caret" size={11} strokeWidth={2} />
+                      )}
+                    </Box>
+                  </ButtonBase>
+                </Tooltip>
+              );
+            })}
+          </Box>
+        ))}
       </Box>
 
-      <Box sx={{ flexShrink: 0, pt: 2 }}>
-        <Box
-          sx={{ p: 1.75, borderRadius: '16px', bgcolor: 'action.hover', border: '1px solid', borderColor: 'divider' }}
+      <Tooltip title="Quick entry" placement="right">
+        <ButtonBase
+          className="kippa-desktop-quick-entry"
+          aria-label="Quick entry"
+          onClick={() => navigate('/entry')}
+          sx={{ width: 48, height: 48, flexShrink: 0, borderRadius: '50%', mb: 1 }}
         >
-          <Typography sx={{ color: 'text.primary', fontSize: 13, fontWeight: 750 }}>Record something new</Typography>
-          <Typography sx={{ color: 'text.secondary', fontSize: 11, lineHeight: 1.5, mt: 0.5, mb: 1.25 }}>
-            Add an expense, income, or transfer without leaving your flow.
-          </Typography>
-          <Button
-            size="small"
-            variant="contained"
-            startIcon={<AddIcon fontSize="small" />}
-            onClick={() => navigate('/entry')}
-            sx={{ minHeight: 36, width: '100%', borderRadius: '9px', px: 1.5, fontSize: 12 }}
-          >
-            Quick entry
-          </Button>
-        </Box>
-      </Box>
+          <IconPlus size={22} strokeWidth={1.8} />
+        </ButtonBase>
+      </Tooltip>
+
+      <Menu
+        anchorEl={menu?.anchor ?? null}
+        open={Boolean(menu)}
+        onClose={closeMenu}
+        anchorOrigin={{ vertical: 'center', horizontal: 'right' }}
+        transformOrigin={{ vertical: 'center', horizontal: 'left' }}
+      >
+        {menu?.item.children?.map((child) => {
+          const active = child.path.includes('?') ? `${pathname}${search}` === child.path : pathname === child.path;
+          return (
+            <MenuItem
+              className="kippa-submenu-item"
+              key={child.path}
+              selected={active}
+              onClick={() => {
+                closeMenu();
+                navigate(child.path);
+              }}
+            >
+              <ListItemIcon>
+                <child.icon size={19} strokeWidth={1.8} />
+              </ListItemIcon>
+              <ListItemText primary={child.label} />
+            </MenuItem>
+          );
+        })}
+      </Menu>
     </Box>
   );
 }

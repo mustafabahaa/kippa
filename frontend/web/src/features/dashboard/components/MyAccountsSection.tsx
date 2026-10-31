@@ -1,9 +1,6 @@
+import { IconBuildingBank, IconCreditCard, IconCreditCardPay, IconPigMoney } from '@tabler/icons-react';
 import { useState } from 'react';
 import { Box, Card, CardContent, Chip, Divider, Paper, Skeleton, Stack, Typography } from '@mui/material';
-import { AccountBalanceIcon } from '@/components/AppIcon';
-import { SavingsIcon } from '@/components/AppIcon';
-import { PaymentsIcon } from '@/components/AppIcon';
-import { CreditCardIcon } from '@/components/AppIcon';
 import {
   useAccounts,
   useTransactions,
@@ -21,9 +18,9 @@ import { Money } from '@/components/Money';
 import type { Card as CardType } from '@kippa/domain';
 import { ForeignBalanceTooltip } from '@/features/shared/components/ForeignBalanceTooltip';
 import { calculateAccountBalances } from '@/libs/financeCalculations';
-import { DashboardCardHeading } from './DashboardCardHeading';
+import { DashboardSectionHeading } from './DashboardSectionHeading';
 
-export function MyAccountsCard() {
+export function MyAccountsSection() {
   const { householdId } = useAppContext();
   const { data: accounts, isLoading: accountsLoading } = useAccounts(householdId);
   const { data: transactions, isLoading: txsLoading } = useTransactions(householdId);
@@ -39,15 +36,15 @@ export function MyAccountsCard() {
   const getAccountIcon = (type: string) => {
     switch (type) {
       case 'savings':
-        return <SavingsIcon variant="Bulk" />;
+        return <IconPigMoney size={22} strokeWidth={1.8} />;
       case 'cash':
       case 'wallet':
-        return <PaymentsIcon variant="Bulk" />;
+        return <IconCreditCardPay size={22} strokeWidth={1.8} />;
       case 'credit':
-        return <CreditCardIcon variant="Bulk" />;
+        return <IconCreditCard size={22} strokeWidth={1.8} />;
       case 'running':
       default:
-        return <AccountBalanceIcon variant="Bulk" />;
+        return <IconBuildingBank size={22} strokeWidth={1.8} />;
     }
   };
 
@@ -59,7 +56,7 @@ export function MyAccountsCard() {
         <Skeleton variant="text" width="30%" height={24} animation="wave" sx={{ mb: 1.5 }} />
         <Stack spacing={1}>
           {[1, 2].map((i) => (
-            <Card key={i} sx={{ borderRadius: '16px' }}>
+            <Card key={i} variant="dashboardSection">
               <CardContent sx={{ p: 1.5, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <Stack direction="row" spacing={1.5} alignItems="center" sx={{ width: '60%' }}>
                   <Skeleton variant="circular" width={40} height={40} animation="wave" />
@@ -89,11 +86,11 @@ export function MyAccountsCard() {
 
   return (
     <>
-      <Card>
+      <Card variant="dashboardSection">
         <CardContent>
           <Stack spacing={2.5}>
-            <DashboardCardHeading
-              icon={<AccountBalanceIcon variant="Bulk" />}
+            <DashboardSectionHeading
+              icon={<IconBuildingBank size={22} strokeWidth={1.8} />}
               title="My Accounts"
               subtitle="Cash, banks and linked cards"
               trailing={<Chip label={`${visibleAccounts.length} accounts`} />}
@@ -108,44 +105,44 @@ export function MyAccountsCard() {
                   const linked = cards.filter((c) => c.parentAccountId === acc.id || c.paymentAccountId === acc.id);
                   return (
                     <Box key={acc.id}>
-                      <ForeignBalanceTooltip
-                        amount={bal}
-                        currency={acc.currency}
-                        baseCurrency={baseCurrency}
-                        rate={displayRates[acc.currency]}
+                      <Stack
+                        direction="row"
+                        alignItems="center"
+                        justifyContent="space-between"
+                        spacing={2}
+                        sx={{ minHeight: 72, py: 1.5 }}
                       >
-                        <Stack
-                          direction="row"
-                          alignItems="center"
-                          justifyContent="space-between"
-                          spacing={2}
-                          tabIndex={acc.currency === baseCurrency ? undefined : 0}
-                          sx={{ minHeight: 72, py: 1.5, cursor: acc.currency === baseCurrency ? 'default' : 'help' }}
+                        <Stack direction="row" spacing={1.5} alignItems="center" sx={{ minWidth: 0 }}>
+                          <Paper variant="iconBadge">{getAccountIcon(acc.type)}</Paper>
+                          <Box sx={{ minWidth: 0 }}>
+                            <Typography
+                              noWrap
+                              sx={{ fontSize: 13, lineHeight: '20px', fontWeight: 800, color: 'text.primary' }}
+                            >
+                              {acc.name}
+                            </Typography>
+                            <Typography
+                              sx={{
+                                fontSize: 11,
+                                lineHeight: '16px',
+                                fontWeight: 600,
+                                color: 'text.secondary',
+                                textTransform: 'capitalize',
+                              }}
+                            >
+                              {acc.type}
+                            </Typography>
+                          </Box>
+                        </Stack>
+                        <ForeignBalanceTooltip
+                          amount={bal}
+                          currency={acc.currency}
+                          baseCurrency={baseCurrency}
+                          rate={displayRates[acc.currency]}
                         >
-                          <Stack direction="row" spacing={1.5} alignItems="center" sx={{ minWidth: 0 }}>
-                            <Paper variant="cardHeaderIcon">{getAccountIcon(acc.type)}</Paper>
-                            <Box sx={{ minWidth: 0 }}>
-                              <Typography
-                                noWrap
-                                sx={{ fontSize: 13, lineHeight: '20px', fontWeight: 800, color: 'text.primary' }}
-                              >
-                                {acc.name}
-                              </Typography>
-                              <Typography
-                                sx={{
-                                  fontSize: 11,
-                                  lineHeight: '16px',
-                                  fontWeight: 600,
-                                  color: 'text.secondary',
-                                  textTransform: 'capitalize',
-                                }}
-                              >
-                                {acc.type}
-                              </Typography>
-                            </Box>
-                          </Stack>
                           <Typography
                             noWrap
+                            tabIndex={acc.currency === baseCurrency ? undefined : 0}
                             sx={{
                               fontSize: 15,
                               lineHeight: '22px',
@@ -153,12 +150,13 @@ export function MyAccountsCard() {
                               color: bal < 0 ? 'error.main' : 'text.primary',
                               fontVariantNumeric: 'tabular-nums',
                               textAlign: 'right',
+                              cursor: acc.currency === baseCurrency ? 'default' : 'help',
                             }}
                           >
                             <Money amount={bal} code={acc.currency} maxDigits={2} />
                           </Typography>
-                        </Stack>
-                      </ForeignBalanceTooltip>
+                        </ForeignBalanceTooltip>
+                      </Stack>
 
                       {linked.length > 0 && (
                         <Box sx={{ pb: 2 }}>

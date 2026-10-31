@@ -1,3 +1,4 @@
+import { IconChartBar } from '@tabler/icons-react';
 import { Box, Card, CardContent, Chip, Skeleton, Stack, Typography, useTheme, alpha } from '@mui/material';
 import {
   useAccounts,
@@ -14,10 +15,9 @@ import {
 import { computeDashboard, DashboardData } from '@/libs/selectors';
 import { Money } from '@/components/Money';
 import { useAppContext } from '@/hooks/useAppContext';
-import { BarChartIcon } from '@/components/AppIcon';
-import { DashboardCardHeading } from './DashboardCardHeading';
+import { DashboardSectionHeading } from './DashboardSectionHeading';
 
-export function BudgetPulseCard() {
+export function BudgetPulseSection() {
   const { householdId } = useAppContext();
   const theme = useTheme();
   const { data: accounts } = useAccounts(householdId);
@@ -58,7 +58,7 @@ export function BudgetPulseCard() {
 
   if (isLoading) {
     return (
-      <Card>
+      <Card variant="dashboardSection">
         <CardContent sx={{ p: 2 }}>
           <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1.5 }}>
             <Skeleton variant="text" width="35%" height={24} animation="wave" />
@@ -93,10 +93,10 @@ export function BudgetPulseCard() {
     .slice(0, 3);
 
   return (
-    <Card sx={{ height: 375 }}>
+    <Card variant="dashboardSection" sx={{ height: 375 }}>
       <CardContent sx={{ height: '100%' }}>
-        <DashboardCardHeading
-          icon={<BarChartIcon variant="Bulk" />}
+        <DashboardSectionHeading
+          icon={<IconChartBar size={22} strokeWidth={1.8} />}
           title="Remaining monthly"
           trailing={
             <Chip
@@ -162,7 +162,7 @@ export function BudgetPulseCard() {
                     borderRadius: '13px 13px 9px 9px',
                     bgcolor: index === 0 ? 'primary.dark' : index === 1 ? 'secondary.main' : 'primary.light',
                     color:
-                      index === 0 ? 'primary.contrastText' : index === 1 ? 'secondary.contrastText' : 'primary.dark',
+                      index === 0 ? 'primary.contrastText' : index === 1 ? 'secondary.contrastText' : 'primary.contrastText',
                   }}
                 >
                   <Box>

@@ -1,9 +1,5 @@
+import { IconHourglass, IconLayoutDashboard, IconMessage2, IconPlus, IconReceipt } from '@tabler/icons-react';
 import { Paper, Box, Typography, useTheme, alpha, Badge } from '@mui/material';
-import { DashboardIcon } from '@/components/AppIcon';
-import { NotesIcon } from '@/components/AppIcon';
-import { ReceiptLongIcon } from '@/components/AppIcon';
-import { AddIcon } from '@/components/AppIcon';
-import { HourglassEmptyIcon } from '@/components/AppIcon';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useState, useEffect, useRef } from 'react';
 import type { ReactNode } from 'react';
@@ -17,13 +13,13 @@ interface NavItem {
 }
 
 const LEFT_ITEMS: NavItem[] = [
-  { label: 'Dashboard', path: '/', icon: <DashboardIcon /> },
-  { label: 'Kip', path: '/ai', icon: <NotesIcon /> },
+  { label: 'Dashboard', path: '/', icon: <IconLayoutDashboard size={22} strokeWidth={1.8} /> },
+  { label: 'Kip', path: '/ai', icon: <IconMessage2 size={22} strokeWidth={1.8} /> },
 ];
 
 const RIGHT_ITEMS: NavItem[] = [
-  { label: 'Transactions', path: '/transactions', icon: <ReceiptLongIcon /> },
-  { label: 'Pending', path: '/pending', icon: <HourglassEmptyIcon /> },
+  { label: 'Transactions', path: '/transactions', icon: <IconReceipt size={22} strokeWidth={1.8} /> },
+  { label: 'Pending', path: '/pending', icon: <IconHourglass size={22} strokeWidth={1.8} /> },
 ];
 
 export function BottomNav() {
@@ -35,8 +31,6 @@ export function BottomNav() {
   const pendingCount = pendingItems.length;
 
   const isEntry = pathname === '/entry';
-  const isDark = theme.palette.mode === 'dark';
-
   const containerRef = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ width: 0, height: 64 });
 
@@ -192,7 +186,6 @@ export function BottomNav() {
             zIndex: -1,
             pointerEvents: 'none',
             overflow: 'visible',
-            filter: `drop-shadow(0 0 16px ${alpha(theme.palette.primary.main, 0.15)}) drop-shadow(0 0 40px ${alpha(theme.palette.primary.main, 0.08)})`,
           }}
         >
           <path
@@ -230,22 +223,16 @@ export function BottomNav() {
             alignItems: 'center',
             justifyContent: 'center',
             cursor: 'pointer',
-            boxShadow: isDark
-              ? `0 4px 16px ${alpha(theme.palette.primary.main, 0.5)}`
-              : `0 4px 14px ${alpha(theme.palette.primary.main, 0.4)}`,
             transition:
-              'transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.2s ease, box-shadow 0.2s ease',
+              'transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.2s ease',
             '&:hover': {
               transform: 'scale(1.1)',
-              boxShadow: isDark
-                ? `0 6px 22px ${alpha(theme.palette.primary.main, 0.65)}`
-                : `0 6px 20px ${alpha(theme.palette.primary.main, 0.5)}`,
             },
             '&:active': { transform: 'scale(0.92)' },
             '& .MuiSvgIcon-root': { fontSize: '30px' },
           }}
         >
-          <AddIcon />
+          <IconPlus size={22} strokeWidth={1.8} />
         </Box>
 
         {RIGHT_ITEMS.map(renderNavItem)}

@@ -3,8 +3,6 @@ import {
   Alert,
   Box,
   Button,
-  Card,
-  CardContent,
   CircularProgress,
   FormControl,
   InputLabel,
@@ -135,23 +133,23 @@ export function McpConsentPage() {
   };
 
   return (
-    <Box sx={{ minHeight: '100vh', display: 'grid', placeItems: 'center', p: { xs: 2, sm: 4 } }}>
-      <Card sx={{ width: '100%', maxWidth: 560 }}>
-        <CardContent>
-          <Stack spacing={3}>
-            <Box>
-              <Typography variant="h3">Authorize MCP access</Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                Review which household data this client is requesting before you continue.
-              </Typography>
-            </Box>
+    <Box sx={{ minHeight: '100vh', display: 'grid', placeItems: 'center', px: { xs: 2, sm: 4 }, py: { xs: 4, sm: 6 } }}>
+      <Box sx={{ width: '100%', maxWidth: 620 }}>
+        <Stack spacing={3}>
+          <Box>
+            <Typography variant="h2">Authorize access</Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+              Review what this client can access in your household before continuing.
+            </Typography>
+          </Box>
 
-            {error && <Alert severity="error">{error}</Alert>}
-            {isLoadingRequest ? (
-              <Stack alignItems="center" sx={{ py: 4 }}>
-                <CircularProgress aria-label="Loading authorization request" />
-              </Stack>
-            ) : request ? (
+          {error && <Alert severity="error">{error}</Alert>}
+          {isLoadingRequest ? (
+            <Stack alignItems="center" sx={{ py: 4 }}>
+              <CircularProgress aria-label="Loading authorization request" />
+            </Stack>
+          ) : request ? (
+            <Stack spacing={3} sx={{ pl: { xs: 0, sm: 2 } }}>
               <Stack spacing={2.5}>
                 <Box>
                   <Typography variant="sectionLabel" color="text.secondary">
@@ -173,6 +171,8 @@ export function McpConsentPage() {
                   </Typography>
                   <Typography variant="body2">{new Date(request.expiresAt).toLocaleString()}</Typography>
                 </Box>
+              </Stack>
+              <Stack spacing={2.5}>
                 <Alert severity={requestsWriteAccess ? 'warning' : 'info'}>
                   {requestsWriteAccess
                     ? 'This client can view household information and create, update, or delete Kippa records. It cannot move money or make payments through your bank.'
@@ -190,17 +190,20 @@ export function McpConsentPage() {
                             ? 'Read household financial information'
                             : scope === 'kippa:write'
                               ? 'Create, update, and delete Kippa records'
-                            : scope === 'offline_access'
-                              ? 'Stay connected for up to 30 days'
-                              : scope}
+                              : scope === 'offline_access'
+                                ? 'Stay connected for up to 30 days'
+                                : scope}
                         </Typography>
                       ))}
                     </Stack>
                   </Box>
                 )}
+              </Stack>
+              <Stack spacing={2}>
                 <FormControl fullWidth disabled={isLoadingHouseholds || isSubmitting}>
                   <InputLabel id="mcp-household-label">Household</InputLabel>
                   <Select
+                    size="medium"
                     labelId="mcp-household-label"
                     label="Household"
                     value={selectedHouseholdId}
@@ -217,7 +220,12 @@ export function McpConsentPage() {
                 {!isOwner && (
                   <Alert severity="warning">Approval is available only to the owner of the selected household.</Alert>
                 )}
-                <Stack direction={{ xs: 'column-reverse', sm: 'row' }} spacing={1.5} justifyContent="flex-end">
+                <Stack
+                  direction={{ xs: 'column-reverse', sm: 'row' }}
+                  spacing={1.5}
+                  justifyContent="flex-end"
+                  alignItems={{ xs: 'stretch', sm: 'center' }}
+                >
                   <Button
                     variant="outlined"
                     color="inherit"
@@ -227,7 +235,7 @@ export function McpConsentPage() {
                     Deny
                   </Button>
                   <Button
-                    variant="contained"
+                    variant="primaryAction"
                     disabled={
                       isSubmitting ||
                       !!error ||
@@ -243,10 +251,10 @@ export function McpConsentPage() {
                   </Button>
                 </Stack>
               </Stack>
-            ) : null}
-          </Stack>
-        </CardContent>
-      </Card>
+            </Stack>
+          ) : null}
+        </Stack>
+      </Box>
     </Box>
   );
 }

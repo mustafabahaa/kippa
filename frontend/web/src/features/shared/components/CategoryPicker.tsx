@@ -1,5 +1,5 @@
-import { AddIcon, SearchIcon } from '@/components/AppIcon';
 import { EmptyLayout } from '@/features/shared/components/EmptyLayout';
+import { AddIcon, SearchIcon } from '@/components/AppIcon';
 import {
   Box,
   Button,
@@ -17,18 +17,26 @@ import type { Category } from '@kippa/domain';
 
 type CategoryChipsProps = {
   categories: Category[];
+  expanded?: boolean;
   mode: 'expense' | 'income';
-  onOpenAll: () => void;
+  onOpenAll?: () => void;
+  onSearchChange?: (query: string) => void;
   onSelect: (categoryId: string) => void;
+  onToggleExpanded?: () => void;
+  searchValue?: string;
   selectedCategoryId: string | null;
   totalCount: number;
 };
 
 export function CategoryChips({
   categories,
+  expanded = false,
   mode,
   onOpenAll,
+  onSearchChange,
   onSelect,
+  onToggleExpanded,
+  searchValue,
   selectedCategoryId,
   totalCount,
 }: CategoryChipsProps) {
@@ -43,27 +51,56 @@ export function CategoryChips({
           description={`Create ${mode} categories first to tag your ${mode} entries.`}
         />
       ) : (
-        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-          {categories.map((category) => {
-            const isSelected = selectedCategoryId === category.id;
-            return (
-              <Chip
-                key={category.id}
-                label={category.name}
-                onClick={() => onSelect(category.id)}
-                variant={isSelected ? 'filterSelected' : 'filter'}
-              />
-            );
-          })}
-          {totalCount > categories.length && (
-            <Chip
-              icon={<AddIcon fontSize="small" />}
-              label={`More (${totalCount - categories.length})`}
-              onClick={onOpenAll}
-              variant="filterAction"
+        <Stack spacing={1.25}>
+          {searchValue !== undefined && onSearchChange && (
+            <TextField
+              size="small"
+              placeholder="Search categories"
+              value={searchValue}
+              onChange={(event) => onSearchChange(event.target.value)}
+              sx={{ width: 240, maxWidth: '100%' }}
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon fontSize="small" />
+                    </InputAdornment>
+                  ),
+                },
+              }}
             />
           )}
-        </Box>
+          {categories.length > 0 ? (
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+              {categories.map((category) => {
+                const isSelected = selectedCategoryId === category.id;
+                return (
+                  <Chip
+                    key={category.id}
+                    label={category.name}
+                    onClick={() => onSelect(category.id)}
+                    aria-pressed={isSelected}
+                    variant={isSelected ? 'filterSelected' : 'filter'}
+                  />
+                );
+              })}
+              {(searchValue === undefined || searchValue === '') &&
+                ((onToggleExpanded && (expanded || totalCount > categories.length)) ||
+                  (!onToggleExpanded && onOpenAll && totalCount > categories.length)) && (
+                <Chip
+                  icon={expanded ? undefined : <AddIcon fontSize="small" />}
+                  label={expanded ? 'Show less' : `More (${totalCount - categories.length})`}
+                  onClick={onToggleExpanded ?? onOpenAll}
+                  variant="filterAction"
+                />
+                )}
+            </Box>
+          ) : (
+            <Typography variant="body2" color="text.secondary">
+              {searchValue ? `No categories match “${searchValue}”.` : 'No categories available.'}
+            </Typography>
+          )}
+        </Stack>
       )}
     </Box>
   );
@@ -123,6 +160,7 @@ export function CategoryDialog({
                     key={category.id}
                     label={category.name}
                     onClick={() => onSelect(category.id)}
+                    aria-pressed={isSelected}
                     variant={isSelected ? 'filterSelected' : 'filter'}
                   />
                 );

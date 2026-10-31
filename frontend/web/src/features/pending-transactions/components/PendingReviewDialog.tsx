@@ -16,11 +16,11 @@ import {
   Typography,
 } from '@mui/material';
 import type { Account, Category, PendingFinancialMessage } from '@kippa/domain';
-import { CheckCircleIcon, DeleteIcon } from '@/components/AppIcon';
 import { Money } from '@/components/Money';
 import { calculateCardPayment } from '@/libs/cardPayment';
 import { DEFAULT_CARD_FEE_RATE } from '@/libs/creditCardFees';
 import { PendingCategoryPicker } from './PendingCategoryPicker';
+import { CheckCircleIcon, DeleteIcon } from '@/components/AppIcon';
 
 type Props = {
   accountId: string;
@@ -180,6 +180,7 @@ export function PendingReviewDialog(props: Props) {
                 {item.kind === 'income' ? 'To account' : 'From account'}
               </InputLabel>
               <Select
+                size="medium"
                 labelId="pending-account-label"
                 value={accountId}
                 label={item.kind === 'income' ? 'To account' : 'From account'}
@@ -196,6 +197,7 @@ export function PendingReviewDialog(props: Props) {
               <FormControl fullWidth>
                 <InputLabel id="pending-destination-label">To account</InputLabel>
                 <Select
+                  size="medium"
                   labelId="pending-destination-label"
                   value={destinationAccountId}
                   label="To account"

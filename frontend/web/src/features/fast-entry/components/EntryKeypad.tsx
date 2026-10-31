@@ -17,6 +17,24 @@ type Props = {
 };
 const KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '0', 'back'];
 
+function formatEntryAmount(amount: string, currency: string) {
+  const isEmpty = amount === '' || amount === '0';
+  if (isEmpty) return { text: `${currency} 0.00`, isPlaceholder: true };
+
+  const hasTrailingDecimal = amount.endsWith('.');
+  const numericAmount = Number(amount);
+  if (!Number.isFinite(numericAmount)) return { text: `${currency} ${amount}`, isPlaceholder: false };
+
+  const formatted = new Intl.NumberFormat('en-US', {
+    minimumFractionDigits: hasTrailingDecimal ? 0 : 2,
+    maximumFractionDigits: 2,
+  }).format(numericAmount);
+  return {
+    text: `${currency} ${formatted}${hasTrailingDecimal ? '.' : ''}`,
+    isPlaceholder: false,
+  };
+}
+
 export function EntryKeypad(props: Props) {
   const {
     activeDestination,
@@ -35,6 +53,8 @@ export function EntryKeypad(props: Props) {
   const sourceActive = !activeDestination || !crossCurrency;
   const source = Number(amount);
   const destination = Number(destinationAmount);
+  const sourceDisplay = formatEntryAmount(amount, sourceCurrency);
+  const destinationDisplay = formatEntryAmount(destinationAmount, destinationCurrency);
   const saveLabel = mode === 'expense' ? 'Save Expense' : mode === 'income' ? 'Save Income' : 'Save Transaction';
   return (
     <Box sx={{ order: 1, minWidth: 0 }}>
@@ -43,42 +63,34 @@ export function EntryKeypad(props: Props) {
         variant={sourceActive ? 'amountPanel' : 'amountPanelInactive'}
         sx={{
           display: 'flex',
-          flexDirection: 'column',
           alignItems: 'center',
+          justifyContent: 'center',
           py: 2,
           mb: 1.5,
           cursor: crossCurrency ? 'pointer' : 'default',
         }}
       >
-        <Typography variant="body2" color="inherit">
-          {mode === 'transfer' ? 'Source Amount' : 'Amount to Log'}
+        <Typography
+          aria-label={`${mode === 'transfer' ? 'Source amount' : 'Amount to log'}: ${sourceDisplay.text}`}
+          color={sourceDisplay.isPlaceholder ? 'text.secondary' : 'inherit'}
+          variant={sourceDisplay.isPlaceholder ? 'amountPlaceholder' : 'amountValue'}
+        >
+          {sourceDisplay.text}
         </Typography>
-        <Box display="flex" alignItems="baseline" gap={0.5}>
-          <Typography color="inherit" variant="amountCurrency">
-            {sourceCurrency}
-          </Typography>
-          <Typography color="inherit" variant="amountValue">
-            {amount}
-          </Typography>
-        </Box>
       </Paper>
       {crossCurrency && (
         <Paper
           onClick={onDestinationFocus}
           variant={activeDestination ? 'amountPanel' : 'amountPanelInactive'}
-          sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 1.5, mb: 1.5, cursor: 'pointer' }}
+          sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', py: 1.5, mb: 1.5, cursor: 'pointer' }}
         >
-          <Typography variant="body2" color="inherit">
-            Destination Amount
+          <Typography
+            aria-label={`Destination amount: ${destinationDisplay.text}`}
+            color={destinationDisplay.isPlaceholder ? 'text.secondary' : 'inherit'}
+            variant={destinationDisplay.isPlaceholder ? 'amountPlaceholder' : 'amountValue'}
+          >
+            {destinationDisplay.text}
           </Typography>
-          <Box display="flex" alignItems="baseline" gap={0.5}>
-            <Typography color="inherit" variant="amountCurrency">
-              {destinationCurrency}
-            </Typography>
-            <Typography color="inherit" variant="amountValue">
-              {destinationAmount}
-            </Typography>
-          </Box>
         </Paper>
       )}
       {crossCurrency && source > 0 && destination > 0 && (
@@ -90,12 +102,13 @@ export function EntryKeypad(props: Props) {
         {KEYS.map((key) => (
           <Button
             key={key}
+            aria-label={key === 'back' ? 'Delete last digit' : key}
             onClick={() => onKeyPress(key)}
             disableRipple
             fullWidth
             variant={key === 'back' ? 'keypadBack' : 'keypad'}
           >
-            {key === 'back' ? <BackspaceIcon /> : key}
+            {key === 'back' ? <BackspaceIcon fontSize="small" /> : key}
           </Button>
         ))}
       </Box>
@@ -109,14 +122,14 @@ export function EntryKeypad(props: Props) {
           display: { xs: 'flex', lg: 'none' },
           position: 'fixed',
           right: 18,
-          bottom: 96,
+          bottom: 'calc(76px + env(safe-area-inset-bottom))',
           zIndex: (theme) => theme.zIndex.appBar + 1,
           minWidth: 112,
           gap: 1,
         }}
       >
         <CheckCircleIcon fontSize="small" />
-        {saving ? 'Saving…' : 'Save'}
+        {saving ? 'Saving…' : saveLabel}
       </Fab>
     </Box>
   );

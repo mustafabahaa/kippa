@@ -14,7 +14,7 @@ interface EmptyLayoutProps {
  */
 export function EmptyLayout({ title, description, action, icon }: EmptyLayoutProps) {
   const theme = useTheme();
-  const logoSrc = theme.palette.mode === 'dark' ? '/icons/icon-dark.svg' : '/icons/icon.svg';
+  const logoSrc = theme.palette.mode === 'dark' ? '/icons/logo_white_transparent.png' : '/icons/logo_black_transparent.png';
 
   return (
     <Box
@@ -61,7 +61,6 @@ export function EmptyLayout({ title, description, action, icon }: EmptyLayoutPro
             height: 52,
             opacity: 0.25,
             mb: 2,
-            filter: theme.palette.mode === 'dark' ? 'none' : 'grayscale(100%)',
           }}
         />
       )}

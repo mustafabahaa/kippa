@@ -1,7 +1,7 @@
+import { IconCopy } from '@tabler/icons-react';
 import { useState, useEffect, useCallback } from 'react';
 import { useSnackbar } from 'notistack';
 import { Box, Button, Stack, Typography, Chip } from '@mui/material';
-import { ContentCopyIcon } from '@/components/AppIcon';
 import { useSaveAllocationsBatchMutation, useHouseholdBaseCurrency } from '@/hooks/useFinance';
 import { Money } from '@/components/Money';
 import { usePrivacyMask } from '@/hooks/usePrivacyMask';
@@ -150,7 +150,7 @@ export function BudgetAllocationsConfig({
         <Typography variant="body1" sx={{ fontWeight: 700, color: 'text.primary', fontSize: '15px' }}>
           Category Budgets ({baseCurrency})
         </Typography>
-        <Button variant="text" startIcon={<ContentCopyIcon />} onClick={handleCopyPreviousAllocations}>
+        <Button variant="text" startIcon={<IconCopy size={22} strokeWidth={1.8} />} onClick={handleCopyPreviousAllocations}>
           Copy previous
         </Button>
       </Box>

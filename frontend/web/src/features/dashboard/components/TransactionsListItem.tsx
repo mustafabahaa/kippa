@@ -1,11 +1,24 @@
-import React from 'react';
-import { Box, Typography, Stack, IconButton } from '@mui/material';
-import { EditIcon } from '@/components/AppIcon';
-import { DeleteIcon } from '@/components/AppIcon';
+import { IconDotsVertical, IconEdit, IconTrash } from '@tabler/icons-react';
+import React, { useState } from 'react';
+import {
+  Badge,
+  Box,
+  IconButton,
+  ListItemIcon,
+  ListItemText,
+  Menu,
+  MenuItem,
+  Paper,
+  Stack,
+  Tooltip,
+  Typography,
+} from '@mui/material';
 import { FinanceTransaction, Category, LedgerLine, Account } from '@kippa/domain';
-import { TransactionIcon } from '@/features/transactions/components/TransactionIcon';
+import { useAppContext } from '@/hooks/useAppContext';
 import { useHouseholdBaseCurrency } from '@/hooks/useFinance';
 import { usePrivacyMask } from '@/hooks/usePrivacyMask';
+import { auth } from '@/config/firebase';
+import { UserAvatar } from '@/components/UserAvatar';
 import { formatShortTime } from '@/libs/dateFormatting';
 
 interface TransactionsListItemProps {
@@ -25,7 +38,9 @@ export const TransactionsListItem: React.FC<TransactionsListItemProps> = ({
   onEdit,
   onVoid,
 }) => {
+  const [actionsAnchor, setActionsAnchor] = useState<HTMLElement | null>(null);
   const baseCurrency = useHouseholdBaseCurrency();
+  const { userProfile, householdMembers } = useAppContext();
   const cat = categories.find((c) => c.id === tx.categoryId);
 
   // Find amount and accounts from ledgerLines
@@ -34,12 +49,25 @@ export const TransactionsListItem: React.FC<TransactionsListItemProps> = ({
   const amount = firstLine ? Number(Math.abs(firstLine.signedAmount).toFixed(2)) : 0;
   const currency = firstLine ? firstLine.currency : baseCurrency;
   const { maskDigits } = usePrivacyMask();
-  const isIncome = tx.type === 'income' || (tx.type === 'adjustment' && (firstLine?.signedAmount || 0) >= 0);
-  const txAccount = firstLine ? accounts.find((a) => a.id === firstLine.accountId) : null;
-  const isCreditCard = tx.type === 'expense' && txAccount?.type === 'credit';
+  const householdMember = householdMembers.find((member) => member.uid === tx.createdBy);
+  const isCurrentUser = tx.createdBy === userProfile?.uid;
+  const creator =
+    isCurrentUser && userProfile
+      ? {
+          ...householdMember,
+          ...userProfile,
+          photoURL: auth?.currentUser?.photoURL || userProfile.photoURL || householdMember?.photoURL,
+        }
+      : householdMember;
+  const parsedTransactionDate = new Date(`${tx.date}T12:00:00`);
+  const transactionDate = Number.isNaN(parsedTransactionDate.getTime())
+    ? tx.date
+    : new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric' }).format(parsedTransactionDate);
 
-  // Helper to render type-specific description layout
   const renderItemDetails = () => {
+    let title: string;
+    let description: string | null | undefined;
+
     switch (tx.type) {
       case 'transfer': {
         const fromLine = txLines.find((l) => l.signedAmount < 0);
@@ -50,209 +78,155 @@ export const TransactionsListItem: React.FC<TransactionsListItemProps> = ({
         if (crossCurrency) {
           const fromAmt = fromLine ? Number(Math.abs(fromLine.signedAmount).toFixed(2)) : 0;
           const toAmt = toLine ? Number(Math.abs(toLine.signedAmount).toFixed(2)) : 0;
-          return (
-            <Box sx={{ minWidth: 0, flex: 1 }}>
-              <Typography variant="body1" sx={{ fontWeight: 'bold', fontSize: '13.5px', color: 'text.primary' }}>
-                {tx.description || 'Transfer'}
-              </Typography>
-              <Typography
-                variant="body2"
-                sx={{ color: 'text.secondary', fontSize: '11px', mt: 0.25, fontWeight: 'medium' }}
-              >
-                {maskDigits(`${fromAmt} ${fromLine?.currency}`)} ➔ {maskDigits(`${toAmt} ${toLine?.currency}`)}
-              </Typography>
-              <Typography
-                variant="caption"
-                sx={{ color: 'text.secondary', display: 'block', fontSize: '10px', mt: 0.25, opacity: 0.8 }}
-              >
-                {tx.date} • {formatShortTime(tx.createdAt)}
-              </Typography>
-              <Typography
-                variant="body1"
-                sx={{ fontWeight: 'bold', color: 'text.primary', fontSize: '13.5px', whiteSpace: 'nowrap', mt: 0.5 }}
-              >
-                Transfer Completed
-              </Typography>
-            </Box>
-          );
+          title = tx.description || 'Transfer';
+          description = `${maskDigits(`${fromAmt} ${fromLine?.currency}`)} → ${maskDigits(`${toAmt} ${toLine?.currency}`)}`;
+          break;
         }
-        return (
-          <Box sx={{ minWidth: 0, flex: 1 }}>
-            <Typography variant="body1" sx={{ fontWeight: 'bold', fontSize: '13.5px', color: 'text.primary' }}>
-              {tx.description || 'Transfer'}
-            </Typography>
-            <Typography
-              variant="body2"
-              sx={{ color: 'text.secondary', fontSize: '11px', mt: 0.25, fontWeight: 'medium' }}
-            >
-              {fromAcc?.name || 'Wallet'} ➔ {toAcc?.name || 'Bank'}
-            </Typography>
-            <Typography
-              variant="caption"
-              sx={{ color: 'text.secondary', display: 'block', fontSize: '10px', mt: 0.25, opacity: 0.8 }}
-            >
-              {tx.date} • {formatShortTime(tx.createdAt)}
-            </Typography>
-            <Typography
-              variant="body1"
-              sx={{ fontWeight: 'bold', color: 'text.primary', fontSize: '13.5px', whiteSpace: 'nowrap', mt: 0.5 }}
-            >
-              -{maskDigits(`${amount.toLocaleString()} ${currency}`)}
-            </Typography>
-          </Box>
-        );
+        title = tx.description || 'Transfer';
+        description = `${fromAcc?.name || 'Wallet'} → ${toAcc?.name || 'Bank'}`;
+        break;
       }
 
-      case 'adjustment': {
-        return (
-          <Box sx={{ minWidth: 0, flex: 1 }}>
-            <Typography variant="body1" sx={{ fontWeight: 'bold', fontSize: '13.5px', color: 'text.primary' }}>
-              Reconciliation
-            </Typography>
-            {tx.description && (
-              <Typography
-                variant="body2"
-                sx={{ color: 'text.secondary', fontSize: '11px', mt: 0.25, wordBreak: 'break-word' }}
-              >
-                {tx.description}
-              </Typography>
-            )}
-            <Typography
-              variant="caption"
-              sx={{ color: 'text.secondary', display: 'block', fontSize: '10px', mt: 0.25, opacity: 0.8 }}
-            >
-              {tx.date} • {formatShortTime(tx.createdAt)}
-            </Typography>
-            <Typography
-              variant="body1"
-              sx={{
-                fontWeight: 'bold',
-                color: isIncome ? 'success.main' : 'error.main',
-                fontSize: '13.5px',
-                whiteSpace: 'nowrap',
-                mt: 0.5,
-              }}
-            >
-              {isIncome ? '+' : '-'}
-              {maskDigits(`${amount.toLocaleString()} ${currency}`)}
-            </Typography>
-          </Box>
-        );
-      }
-
-      case 'income': {
-        return (
-          <Box sx={{ minWidth: 0, flex: 1 }}>
-            <Typography variant="body1" sx={{ fontWeight: 'bold', fontSize: '13.5px', color: 'text.primary' }}>
-              {cat?.name || 'Income'}
-            </Typography>
-            {tx.description && (
-              <Typography
-                variant="body2"
-                sx={{ color: 'text.secondary', fontSize: '11px', mt: 0.25, wordBreak: 'break-word' }}
-              >
-                {tx.description}
-              </Typography>
-            )}
-            <Typography
-              variant="caption"
-              sx={{ color: 'text.secondary', display: 'block', fontSize: '10px', mt: 0.25, opacity: 0.8 }}
-            >
-              {tx.date} • {formatShortTime(tx.createdAt)}
-            </Typography>
-            <Typography
-              variant="body1"
-              sx={{ fontWeight: 'bold', color: 'success.main', fontSize: '13.5px', whiteSpace: 'nowrap', mt: 0.5 }}
-            >
-              +{maskDigits(`${amount.toLocaleString()} ${currency}`)}
-            </Typography>
-          </Box>
-        );
-      }
-
+      case 'adjustment':
+        title = 'Reconciliation';
+        description = tx.description;
+        break;
+      case 'income':
+        title = cat?.name || 'Income';
+        description = tx.description;
+        break;
       case 'expense':
       default: {
-        return (
-          <Box sx={{ minWidth: 0, flex: 1 }}>
-            <Typography variant="body1" sx={{ fontWeight: 'bold', fontSize: '13.5px', color: 'text.primary' }}>
-              {cat?.name || 'Expense'}
-            </Typography>
-            {tx.description && (
-              <Typography
-                variant="body2"
-                sx={{ color: 'text.secondary', fontSize: '11px', mt: 0.25, wordBreak: 'break-word' }}
-              >
-                {tx.description}
-              </Typography>
-            )}
-            <Typography
-              variant="caption"
-              sx={{ color: 'text.secondary', display: 'block', fontSize: '10px', mt: 0.25, opacity: 0.8 }}
-            >
-              {tx.date} • {formatShortTime(tx.createdAt)}
-            </Typography>
-            <Typography
-              variant="body1"
-              sx={{ fontWeight: 'bold', color: 'text.primary', fontSize: '13.5px', whiteSpace: 'nowrap', mt: 0.5 }}
-            >
-              -{maskDigits(`${amount.toLocaleString()} ${currency}`)}
-            </Typography>
-          </Box>
-        );
+        title = cat?.name || 'Expense';
+        description = tx.description;
+        break;
       }
     }
+
+    return (
+      <Stack spacing={0.5} alignItems="flex-end" sx={{ minWidth: 0, width: '100%', textAlign: 'right' }}>
+        <Typography variant="h6" noWrap color="text.primary" sx={{ minWidth: 0, textAlign: 'right' }}>
+          {title}
+        </Typography>
+        {description && (
+          <Typography
+            variant="sectionSubtitle"
+            color="text.secondary"
+            sx={{ width: '100%', maxWidth: '100%', textAlign: 'right', whiteSpace: 'normal', overflowWrap: 'anywhere' }}
+          >
+            {description}
+          </Typography>
+        )}
+      </Stack>
+    );
   };
 
   return (
-    <Box
-      sx={{
-        minHeight: 76,
-        px: 1.5,
-        py: 1.25,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        gap: 1.5,
-        bgcolor: 'background.paper',
-        transition: 'opacity 0.18s ease',
-        '&:hover': {
-          '& .transaction-actions': { opacity: 1 },
-        },
-        opacity: tx.status === 'voided' ? 0.5 : 1,
-      }}
-    >
-      <Box display="flex" alignItems="center" gap={1.5} sx={{ minWidth: 0, flex: 1 }}>
-        <TransactionIcon type={tx.type} size={36} isCreditCard={isCreditCard} />
-        {renderItemDetails()}
-      </Box>
-
-      <Stack
-        className="transaction-actions"
-        direction="row"
-        spacing={0.5}
-        alignItems="center"
-        sx={{ flexShrink: 0, opacity: { xs: 1, md: 0.42 }, transition: 'opacity 0.18s ease' }}
+    <>
+      <Paper
+        variant="timelineRow"
+        sx={{
+          minHeight: 84,
+          px: 2,
+          py: 1.5,
+          display: 'grid',
+          gridTemplateColumns: {
+            xs: 'minmax(0, 1fr) auto',
+            lg: 'minmax(160px, 1fr) minmax(0, 1.2fr) auto',
+          },
+          gridTemplateAreas: {
+            xs: '"timeline actions" "details details"',
+            lg: '"timeline details actions"',
+          },
+          columnGap: { xs: 1.5, sm: 2.5 },
+          rowGap: { xs: 1, lg: 0 },
+          alignItems: 'center',
+          opacity: tx.status === 'voided' ? 0.5 : 1,
+        }}
       >
+        <Box display="flex" alignItems="center" gap={1.5} sx={{ minWidth: 0, gridArea: 'timeline' }}>
+          {creator ? (
+            <Tooltip title={`Added by ${creator.displayName}`}>
+              <Badge
+                className="kippa-transaction-avatar-badge"
+                overlap="circular"
+                anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+                badgeContent={<Box className="kippa-transaction-type-dot" data-type={tx.type} />}
+              >
+                <UserAvatar
+                  className="kippa-stepper-node"
+                  photoURLs={[
+                    isCurrentUser ? auth?.currentUser?.photoURL : undefined,
+                    creator.photoURL,
+                    householdMember?.photoURL,
+                  ]}
+                  displayName={creator.displayName}
+                  sx={{ width: 28, height: 28 }}
+                />
+              </Badge>
+            </Tooltip>
+          ) : (
+            <Box className="kippa-transaction-type-dot" data-type={tx.type} aria-hidden="true" />
+          )}
+          <Stack spacing={0.25} sx={{ minWidth: 0, flex: 1 }}>
+            <Typography variant="transactionAmount" color="text.primary" noWrap>
+              {maskDigits(`${amount.toLocaleString()} ${currency}`)}
+            </Typography>
+            {creator && (
+              <Typography variant="body2" color="text.primary" noWrap>
+                {creator.displayName}
+              </Typography>
+            )}
+            <Typography variant="caption" color="text.secondary" noWrap>
+              {transactionDate} · {formatShortTime(tx.createdAt)}
+            </Typography>
+          </Stack>
+        </Box>
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end', width: '100%', minWidth: 0, gridArea: 'details' }}>
+          {renderItemDetails()}
+        </Box>
         <IconButton
           size="small"
-          aria-label={tx.description ? `Edit ${tx.description}` : 'Edit transaction'}
-          onClick={() => onEdit(tx)}
-          disabled={tx.status === 'voided'}
-          sx={{ width: 36, height: 36 }}
+          aria-label={`Actions for ${tx.description || 'transaction'}`}
+          aria-haspopup="menu"
+          aria-expanded={Boolean(actionsAnchor)}
+          onClick={(event) => setActionsAnchor(event.currentTarget)}
+          sx={{ gridArea: 'actions', justifySelf: { xs: 'start', sm: 'auto' }, width: 36, height: 36 }}
         >
-          <EditIcon sx={{ fontSize: '18px' }} />
+          <IconDotsVertical size={20} strokeWidth={1.8} />
         </IconButton>
-        <IconButton
-          size="small"
-          color="error"
-          aria-label={tx.description ? `Delete ${tx.description}` : 'Delete transaction'}
-          onClick={() => onVoid(tx.id)}
+      </Paper>
+      <Menu
+        anchorEl={actionsAnchor}
+        open={Boolean(actionsAnchor)}
+        onClose={() => setActionsAnchor(null)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+      >
+        <MenuItem
           disabled={tx.status === 'voided'}
-          sx={{ width: 36, height: 36 }}
+          onClick={() => {
+            setActionsAnchor(null);
+            onEdit(tx);
+          }}
         >
-          <DeleteIcon sx={{ fontSize: '18px' }} />
-        </IconButton>
-      </Stack>
-    </Box>
+          <ListItemIcon>
+            <IconEdit size={18} strokeWidth={1.8} />
+          </ListItemIcon>
+          <ListItemText>Edit transaction</ListItemText>
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            setActionsAnchor(null);
+            onVoid(tx.id);
+          }}
+        >
+          <ListItemIcon>
+            <IconTrash size={18} strokeWidth={1.8} />
+          </ListItemIcon>
+          <ListItemText>Void transaction</ListItemText>
+        </MenuItem>
+      </Menu>
+    </>
   );
 };

@@ -13,6 +13,7 @@
     "@emotion/styled": "^11.14.1"
   },
   "peerDependencies": {
+    "@mui/x-date-pickers": "^9.7.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0"
   }

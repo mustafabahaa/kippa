@@ -1,12 +1,15 @@
-import { useState, useEffect } from 'react';
-import { AppBar, Toolbar, Stack, Typography, IconButton, Tooltip, Avatar } from '@mui/material';
-import { ExploreIcon } from '@/components/AppIcon';
-import { useNavigate } from 'react-router-dom';
+import { IconChevronRight, IconMenu2, IconMoon, IconSun } from '@tabler/icons-react';
+import { useState } from 'react';
+import { AppBar, Toolbar, Stack, Typography, IconButton, Tooltip, Breadcrumbs, Link } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
+import { Link as RouterLink, useLocation, useNavigate } from 'react-router-dom';
 import { ActivityBell } from '@/features/activity/ActivityBell';
 import { ProfileMenu } from '@/components/app-shell/ProfileMenu';
 import { QuickNavMenu } from '@/components/app-shell/QuickNavMenu';
 import type { ThemeModePref } from '@/contexts/themeModeContext';
 import type { UserProfile, Household } from '@kippa/domain';
+import { auth } from '@/config/firebase';
+import { UserAvatar } from '@/components/UserAvatar';
 
 interface TopBarProps {
   logoSrc: string;
@@ -30,36 +33,53 @@ export function TopBar({
   logout,
 }: TopBarProps) {
   const navigate = useNavigate();
+  const { pathname, search } = useLocation();
+  const theme = useTheme();
   const [profileAnchorEl, setProfileAnchorEl] = useState<null | HTMLElement>(null);
   const isProfileMenuOpen = Boolean(profileAnchorEl);
   const [navAnchorEl, setNavAnchorEl] = useState<null | HTMLElement>(null);
   const isNavMenuOpen = Boolean(navAnchorEl);
-  const [scrolled, setScrolled] = useState(false);
-
-  useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 0);
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
   const currentHousehold = userHouseholds.find((hh) => hh.id === householdId);
   const householdName = currentHousehold ? currentHousehold.name : 'Personal Household';
+  const pageLabel =
+    pathname === '/transactions' && search
+      ? ({ '?type=expense': 'Expenses', '?type=income': 'Income', '?type=transfer': 'Transfers' }[search] ??
+        'Transactions')
+      : ({
+          '/': 'Dashboard',
+          '/entry': 'Quick entry',
+          '/reconciliation': 'Reconciliation',
+          '/cycles': 'Budget cycles',
+          '/cycles/report': 'Cycle report',
+          '/transactions': 'Transactions',
+          '/pending': 'Pending review',
+          '/activity': 'Activity history',
+          '/accounts': 'Accounts & cards',
+          '/accounts/statements': 'Statements',
+          '/household': 'Household',
+          '/categories': 'Categories',
+          '/notifications': 'Notifications',
+          '/ai': 'Ask Kip',
+          '/loans': 'Loans',
+        }[pathname] ?? 'Workspace');
+  const parentCrumb =
+    pathname === '/cycles' || pathname === '/cycles/report' || pathname === '/categories'
+      ? { label: 'Analytics', path: '/cycles' }
+      : pathname === '/pending' || pathname === '/transactions'
+        ? { label: 'Transactions', path: '/transactions' }
+        : pathname === '/accounts/statements' || pathname === '/reconciliation'
+          ? { label: 'Accounts & cards', path: '/accounts' }
+          : pathname === '/notifications' || pathname === '/activity'
+            ? { label: 'Household', path: '/household' }
+            : null;
 
   return (
     <>
       <AppBar
         position="sticky"
         color="transparent"
-        elevation={scrolled ? 1 : 0}
-        sx={{
-          top: 0,
-          zIndex: (theme) => theme.zIndex.appBar,
-          py: 0.5,
-          bgcolor: scrolled ? 'background.default' : 'transparent',
-          backdropFilter: scrolled ? 'blur(12px)' : 'none',
-          WebkitBackdropFilter: scrolled ? 'blur(12px)' : 'none',
-          transition: 'background-color 0.3s ease, box-shadow 0.3s ease, backdrop-filter 0.3s ease',
-        }}
+        elevation={0}
+        sx={{ top: 0, zIndex: (theme) => theme.zIndex.appBar, py: 0.5 }}
       >
         <Toolbar sx={{ justifyContent: 'space-between', minHeight: { xs: 64, md: 76 }, px: { xs: 2, sm: 3, lg: 5 } }}>
           {/* Left: Logo & Brand Name */}
@@ -76,20 +96,57 @@ export function TopBar({
             </Typography>
           </Stack>
 
+          <Stack sx={{ display: { xs: 'none', md: 'flex' }, minWidth: 0, flex: 1, ml: 2 }}>
+            <Breadcrumbs
+              aria-label="Breadcrumb"
+              separator={<IconChevronRight size={16} strokeWidth={1.8} />}
+              sx={{ '& .MuiBreadcrumbs-ol': { flexWrap: 'nowrap' } }}
+            >
+              <Link component={RouterLink} to="/" underline="hover" color="text.secondary" variant="body2">
+                Workspace
+              </Link>
+              {parentCrumb && parentCrumb.label !== pageLabel && (
+                <Link
+                  component={RouterLink}
+                  to={parentCrumb.path}
+                  underline="hover"
+                  color="text.secondary"
+                  variant="body2"
+                >
+                  {parentCrumb.label}
+                </Link>
+              )}
+              <Typography variant="body2" color="text.primary" aria-current="page" noWrap>
+                {pageLabel}
+              </Typography>
+            </Breadcrumbs>
+          </Stack>
+
           {/* Right: Activity Bell, Quick Nav & Profile */}
           <Stack direction="row" spacing={1} alignItems="center">
-            <Stack sx={{ display: { xs: 'flex', md: 'none' } }}>
-              <ActivityBell onClick={() => navigate('/activity')} />
-            </Stack>
-            <Tooltip title="Navigate">
+            <Tooltip title={`Switch to ${theme.palette.mode === 'dark' ? 'light' : 'dark'} mode`}>
+              <IconButton
+                aria-label={`Switch to ${theme.palette.mode === 'dark' ? 'light' : 'dark'} mode`}
+                onClick={() => setModePref(theme.palette.mode === 'dark' ? 'light' : 'dark')}
+                sx={{ width: 40, height: 40 }}
+              >
+                {theme.palette.mode === 'dark' ? (
+                  <IconSun size={20} strokeWidth={1.8} />
+                ) : (
+                  <IconMoon size={20} strokeWidth={1.8} />
+                )}
+              </IconButton>
+            </Tooltip>
+            <ActivityBell onClick={() => navigate('/activity')} />
+            <Tooltip title="Open navigation">
               <IconButton
                 onClick={(e) => setNavAnchorEl(e.currentTarget)}
                 aria-label="navigation menu"
                 aria-controls="quick-nav-menu"
                 aria-haspopup="true"
-                sx={{ p: 0.5, width: 40, height: 40, border: '1px solid', borderColor: 'divider' }}
+                sx={{ width: 40, height: 40 }}
               >
-                <ExploreIcon sx={{ color: 'primary.main' }} />
+                <IconMenu2 size={20} strokeWidth={1.8} />
               </IconButton>
             </Tooltip>
             <Tooltip title="Account Menu">
@@ -100,12 +157,19 @@ export function TopBar({
                 aria-haspopup="true"
                 sx={{ p: 0.5, border: '1px solid', borderColor: 'divider', width: 40, height: 40 }}
               >
-                <Avatar
-                  src={userProfile?.photoURL || undefined}
-                  sx={{ bgcolor: 'primary.main', width: 32, height: 32, fontSize: '0.875rem', fontWeight: 600 }}
-                >
-                  {userProfile?.displayName ? userProfile.displayName.charAt(0).toUpperCase() : 'U'}
-                </Avatar>
+                <UserAvatar
+                  photoURLs={[auth?.currentUser?.photoURL, userProfile?.photoURL]}
+                  displayName={userProfile?.displayName}
+                  sx={{
+                    bgcolor: 'primary.main',
+                    color: 'primary.contrastText',
+                    filter: auth?.currentUser?.photoURL || userProfile?.photoURL ? 'grayscale(1)' : undefined,
+                    width: 32,
+                    height: 32,
+                    fontSize: '0.875rem',
+                    fontWeight: 600,
+                  }}
+                />
               </IconButton>
             </Tooltip>
           </Stack>

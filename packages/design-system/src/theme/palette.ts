@@ -12,6 +12,9 @@ declare module '@mui/material/styles' {
     chart?: { colors?: string[] };
     creditCard?: { main?: string; light?: string };
   }
+  interface TypeBackground {
+    sidebar: string;
+  }
 }
 
 export function createPalette(mode: KippaThemeMode): PaletteOptions {
@@ -20,30 +23,30 @@ export function createPalette(mode: KippaThemeMode): PaletteOptions {
   const isDark = mode === 'dark';
   return {
     mode,
-    primary: { main: c.primaryContainer, dark: c.primary, light: c.primaryFixedDim, contrastText: c.onPrimary },
-    secondary: { main: c.secondary, light: c.secondaryContainer, contrastText: c.onSecondary },
-    success: { main: isDark ? '#72d9b3' : c.success },
-    warning: { main: isDark ? '#ffbf5b' : c.warning },
-    error: { main: isDark ? '#ff6b6b' : c.error, contrastText: c.onError },
-    info: { main: isDark ? c.primaryFixedDim : c.primary, light: t.infoAccent },
-    background: { default: t.surface, paper: t.surfacePure },
+    primary: {
+      main: isDark ? '#FFFFFF' : c.primary,
+      dark: isDark ? '#E5E5E5' : '#262626',
+      light: isDark ? '#FFFFFF' : '#404040',
+      contrastText: isDark ? '#0D0D0D' : '#FFFFFF',
+    },
+    secondary: {
+      main: isDark ? '#D4D4D4' : c.secondary,
+      light: c.secondaryContainer,
+      contrastText: isDark ? '#0D0D0D' : '#FFFFFF',
+    },
+    success: { main: isDark ? '#8FC6A0' : c.success },
+    warning: { main: isDark ? '#E6B36A' : c.warning },
+    error: { main: isDark ? '#E58A8A' : c.error, contrastText: c.onError },
+    info: { main: isDark ? '#FFFFFF' : c.primary, light: t.infoAccent },
+    background: { default: t.surface, paper: t.surfacePure, sidebar: t.surfaceOffWhite },
     text: { primary: t.textPrimary, secondary: t.textSecondary, disabled: t.disabled },
     divider: t.borderGray,
     action: {
-      hover: alpha(c.primaryContainer, isDark ? 0.12 : 0.06),
-      selected: alpha(c.primaryContainer, isDark ? 0.2 : 0.1),
+      hover: alpha(isDark ? '#FFFFFF' : '#0D0D0D', isDark ? 0.08 : 0.05),
+      selected: alpha(isDark ? '#FFFFFF' : '#0D0D0D', isDark ? 0.14 : 0.08),
     },
     chart: {
-      colors: [
-        c.primaryContainer,
-        c.secondary,
-        c.tertiary,
-        c.primaryFixedDim,
-        c.tertiaryContainer,
-        c.secondaryContainer,
-        c.warning,
-        c.error,
-      ],
+      colors: [isDark ? '#FFFFFF' : '#0D0D0D', ...designTokens.dataColors],
     },
     creditCard: { main: c.creditCard, light: alpha(c.creditCard, 0.1) },
   };

@@ -1,22 +1,19 @@
-import { Card, CardContent, Skeleton } from '@mui/material';
-import { EmptyLayout } from '@/features/shared/components/EmptyLayout';
+import { Skeleton, Stack, Typography } from '@mui/material';
 
 export function AnalyticsPlaceholder({ loading }: { loading: boolean }) {
   return (
-    <Card sx={{ height: '100%' }}>
-      <CardContent>
-        {loading ? (
-          <>
-            <Skeleton variant="text" width="40%" height={28} animation="wave" />
-            <Skeleton variant="rectangular" width="100%" height={200} sx={{ mt: 2 }} animation="wave" />
-          </>
-        ) : (
-          <EmptyLayout
-            title="No analytics data yet"
-            description="Once you have at least one completed budget cycle with transactions, trends and insights will appear here."
-          />
-        )}
-      </CardContent>
-    </Card>
+    loading ? (
+      <Stack spacing={2}>
+        <Skeleton variant="text" width="40%" height={28} animation="wave" />
+        <Skeleton variant="rounded" width="100%" height={200} animation="wave" />
+      </Stack>
+    ) : (
+      <Stack spacing={1}>
+        <Typography variant="h5">No analytics data yet</Typography>
+        <Typography variant="body2" color="text.secondary">
+          Once a cycle has transactions, cash flow and category trends will appear here.
+        </Typography>
+      </Stack>
+    )
   );
 }

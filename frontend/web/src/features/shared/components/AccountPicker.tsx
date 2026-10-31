@@ -11,16 +11,15 @@ type AccountPickerProps = {
 };
 
 function AccountTypeIcon({ type }: { type: string }) {
-  const iconSx = { fontSize: 14, color: 'inherit' };
   const normalizedType = type.toLowerCase();
 
   if (normalizedType === 'savings' || normalizedType === 'savings bank') {
-    return <SavingsIcon sx={iconSx} />;
+    return <SavingsIcon fontSize="small" />;
   }
   if (normalizedType === 'cash' || normalizedType === 'wallet') {
-    return <PaymentsIcon sx={iconSx} />;
+    return <PaymentsIcon fontSize="small" />;
   }
-  return <AccountBalanceIcon sx={iconSx} />;
+  return <AccountBalanceIcon fontSize="small" />;
 }
 
 export function AccountPicker({ accounts, emptyMessage, label, onSelect, selectedAccountId }: AccountPickerProps) {
@@ -44,7 +43,7 @@ export function AccountPicker({ accounts, emptyMessage, label, onSelect, selecte
                 key={account.id}
                 variant={isSelected ? 'selectableSelected' : 'selectable'}
                 sx={{
-                  flex: { xs: '1 1 calc(50% - 9px)', sm: '1 1 0' },
+                  flex: '1 1 calc(50% - 6px)',
                   minWidth: 0,
                 }}
               >
@@ -66,10 +65,10 @@ export function AccountPicker({ accounts, emptyMessage, label, onSelect, selecte
                     >
                       <AccountTypeIcon type={account.type} />
                     </Box>
-                    <Typography variant="body2" color="text.secondary" sx={{ textTransform: 'capitalize' }}>
+                    <Typography variant="body2" color="text.secondary">
                       {account.type}
                     </Typography>
-                    {isSelected && <CheckCircleIcon sx={{ ml: 'auto', fontSize: 17, color: 'primary.main' }} />}
+                    {isSelected && <CheckCircleIcon fontSize="small" sx={{ ml: 'auto' }} />}
                   </Box>
                   <Typography
                     variant="sectionLabel"
