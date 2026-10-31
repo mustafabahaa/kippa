@@ -132,6 +132,8 @@ declare module '@mui/material/styles' {
     accountName: React.CSSProperties;
     accountType: React.CSSProperties;
     accountBalance: React.CSSProperties;
+    systemStatusCode: React.CSSProperties;
+    systemStatusTitle: React.CSSProperties;
     chartTooltipValue: React.CSSProperties;
     chartCycleLabel: React.CSSProperties;
     chartLegendLabel: React.CSSProperties;
@@ -189,6 +191,8 @@ declare module '@mui/material/styles' {
     accountName?: React.CSSProperties;
     accountType?: React.CSSProperties;
     accountBalance?: React.CSSProperties;
+    systemStatusCode?: React.CSSProperties;
+    systemStatusTitle?: React.CSSProperties;
     chartTooltipValue?: React.CSSProperties;
     chartCycleLabel?: React.CSSProperties;
     chartLegendLabel?: React.CSSProperties;
@@ -259,5 +263,7 @@ declare module '@mui/material/Typography' {
     accountName: true;
     accountType: true;
     accountBalance: true;
+    systemStatusCode: true;
+    systemStatusTitle: true;
   }
 }

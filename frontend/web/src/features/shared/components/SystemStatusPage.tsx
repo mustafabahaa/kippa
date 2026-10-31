@@ -1,6 +1,12 @@
-import { Box, Button } from '@mui/material';
+import { Box, Button, Typography, useTheme } from '@mui/material';
+import {
+  SystemStatusAction,
+  SystemStatusCode,
+  SystemStatusContent,
+  SystemStatusLogo,
+  SystemStatusTitle,
+} from '@kippa/design-system';
 import { Link } from 'react-router-dom';
-import { EmptyLayout } from './EmptyLayout';
 
 export type SystemStatus = 'notFound' | 'error';
 
@@ -21,31 +27,34 @@ const copy = {
 } satisfies Record<SystemStatus, { title: string; description: string }>;
 
 export function SystemStatusPage({ status, onRetry }: SystemStatusPageProps) {
+  const theme = useTheme();
   const content = copy[status];
+  const logoSrc = theme.palette.mode === 'dark' ? '/icons/logo_white_transparent.png' : '/icons/logo_black_transparent.png';
   const action = onRetry ? (
     <Button variant="contained" onClick={onRetry}>
       Reload page
     </Button>
   ) : (
     <Button component={Link} to="/" variant="contained">
-      Go to dashboard
+      Back to Kippa
     </Button>
   );
 
   return (
-    <Box
-      sx={{
-        display: 'flex',
-        minHeight: '100dvh',
-        alignItems: 'center',
-        justifyContent: 'center',
-        px: 2,
-        py: 3,
-      }}
-    >
-      <Box sx={{ width: '100%', maxWidth: 520 }}>
-        <EmptyLayout title={content.title} description={content.description} action={action} />
-      </Box>
+    <Box sx={{ display: 'grid', minHeight: '100dvh', placeItems: 'center', px: 2, py: 4 }}>
+      <SystemStatusContent>
+        <SystemStatusLogo src={logoSrc} alt="Kippa" />
+        <SystemStatusCode variant="systemStatusCode" color="text.secondary">
+          {status === 'notFound' ? '404' : 'ERROR'}
+        </SystemStatusCode>
+        <SystemStatusTitle variant="systemStatusTitle" color="text.primary">
+          {content.title}
+        </SystemStatusTitle>
+        <Typography variant="body2" color="text.secondary">
+          {content.description}
+        </Typography>
+        <SystemStatusAction>{action}</SystemStatusAction>
+      </SystemStatusContent>
     </Box>
   );
 }

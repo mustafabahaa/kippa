@@ -20,6 +20,13 @@ export {
   AiAssistantStreamCursor,
 } from './components/AiAssistantPrimitives';
 export {
+  SystemStatusAction,
+  SystemStatusCode,
+  SystemStatusContent,
+  SystemStatusLogo,
+  SystemStatusTitle,
+} from './components/SystemStatusPrimitives';
+export {
   BudgetAllocationActions,
   BudgetAllocationRemoveButton,
   BudgetAllocationRow,

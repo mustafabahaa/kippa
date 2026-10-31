@@ -201,7 +201,7 @@ async function streamGeminiReply(args: AssistantReplyRequest): Promise<string> {
   try {
     const result = streamText({
       model: google(AI_MODEL),
-      system: `${SYSTEM_PROMPT}${memoryContext}`,
+      instructions: `${SYSTEM_PROMPT}${memoryContext}`,
       messages: modelMessages,
       tools: toAiSdkTools(
         createAiToolRegistry(),

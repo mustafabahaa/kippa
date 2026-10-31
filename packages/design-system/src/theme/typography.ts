@@ -45,6 +45,8 @@ export const typography: ThemeOptions['typography'] = {
   accountName: { display: 'block', fontSize: '13px', lineHeight: '20px', fontWeight: 700 },
   accountType: { display: 'block', fontSize: '11px', lineHeight: '16px', fontWeight: 600, textTransform: 'capitalize' },
   accountBalance: { display: 'block', fontSize: '15px', lineHeight: '22px', fontWeight: 700, fontVariantNumeric: 'tabular-nums' },
+  systemStatusCode: { display: 'block', fontSize: 'clamp(48px, 9vw, 72px)', lineHeight: 1, fontWeight: 650, letterSpacing: '-0.06em', fontVariantNumeric: 'tabular-nums' },
+  systemStatusTitle: { display: 'block', fontSize: '24px', lineHeight: '32px', fontWeight: 650, letterSpacing: '-0.025em' },
   profileMenuName: { display: 'block', fontSize: '14.5px', lineHeight: '22px', fontWeight: 600 },
   profileHouseholdName: { display: 'block', fontSize: '13px', lineHeight: '20px', fontWeight: 600 },
   profileHouseholdId: { display: 'block', fontSize: '11px', lineHeight: '16px', fontWeight: 500 },
