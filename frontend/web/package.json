@@ -12,7 +12,8 @@
     "deploy": "npm run build && firebase deploy",
     "deploy:firebase": "firebase deploy --project YOUR_FIREBASE_PROJECT_ID",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "icons": "node scripts/generate-icons.mjs"
   },
   "dependencies": {
     "@ai-sdk/google": "4.0.31",
