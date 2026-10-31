@@ -1,4 +1,5 @@
-import { IconReceipt } from '@tabler/icons-react';
+import { ReceiptLongIcon } from '@/components/AppIcon';
+
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
@@ -49,7 +50,7 @@ export function TransactionsSection() {
     return (
       <Box>
         <Skeleton variant="text" width="40%" height={24} animation="wave" sx={{ mb: 1.5 }} />
-        <Skeleton variant="rectangular" width="100%" height={150} sx={{ borderRadius: '20px' }} animation="wave" />
+        <Skeleton variant="rounded" width="100%" height={150} animation="wave" />
       </Box>
     );
   }
@@ -67,24 +68,24 @@ export function TransactionsSection() {
           minHeight: 0,
         }}
       >
-        <CardContent sx={{ display: { md: 'flex' }, flexDirection: { md: 'column' }, flex: { md: 1 }, minHeight: { md: 0 }, overflow: { md: 'hidden' } }}>
+        <CardContent
+          sx={{
+            display: { md: 'flex' },
+            flexDirection: { md: 'column' },
+            flex: { md: 1 },
+            minHeight: { md: 0 },
+            overflow: { md: 'hidden' },
+          }}
+        >
           <Stack spacing={2.5} sx={{ flex: { md: 1 }, minHeight: { md: 0 } }}>
             <DashboardSectionHeading
-              icon={<IconReceipt size={22} strokeWidth={1.8} />}
+              icon={<ReceiptLongIcon size={22} strokeWidth={1.8} />}
               title="Recent Transactions"
               subtitle="Latest household activity"
               trailing={
                 <Stack direction="row" spacing={1} alignItems="center">
-                  <Chip
-                    size="small"
-                    label={`${Math.min(transactions.length, RECENT_TRANSACTION_LIMIT)} recent`}
-                  />
-                  <Chip
-                    size="small"
-                    label="View all"
-                    clickable
-                    onClick={() => navigate('/transactions')}
-                  />
+                  <Chip size="small" label={`${Math.min(transactions.length, RECENT_TRANSACTION_LIMIT)} recent`} />
+                  <Chip size="small" label="View all" clickable onClick={() => navigate('/transactions')} />
                 </Stack>
               }
             />

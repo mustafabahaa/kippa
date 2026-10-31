@@ -3,6 +3,8 @@ import '@mui/material/Button';
 import '@mui/material/Paper';
 import '@mui/material/styles';
 import '@mui/material/Typography';
+import '@mui/material/MenuItem';
+import '@mui/material/Avatar';
 
 declare module '@mui/material/Chip' {
   interface ChipPropsVariantOverrides {
@@ -53,6 +55,52 @@ declare module '@mui/material/Paper' {
     categoryCapacity: true;
     categoryCapacitySpent: true;
     categoryCapacityOver: true;
+    budgetCategoryRow: true;
+    profileHouseholdRow: true;
+    navigationMenu: true;
+    workspaceSidebar: true;
+    emptyState: true;
+    emptyStateIcon: true;
+    emptyStateLogo: true;
+  }
+}
+
+declare module '@mui/material/Typography' {
+  interface TypographyPropsVariantOverrides {
+    budgetMetricLabel: true;
+    budgetMetricValue: true;
+    budgetMetricMeta: true;
+    budgetColumnHeading: true;
+    budgetEmptyMessage: true;
+    budgetCategoryName: true;
+    budgetPercent: true;
+    budgetCellLabel: true;
+    budgetCellValue: true;
+    budgetPulseStatus: true;
+    budgetPulseValue: true;
+    budgetPulseValueSuffix: true;
+    budgetPulseSummary: true;
+    budgetPulsePercent: true;
+    budgetPulsePercentCompact: true;
+    budgetPulseCategory: true;
+    budgetPulseAmount: true;
+    offlineBannerMessage: true;
+    accountName: true;
+    accountType: true;
+    accountBalance: true;
+  }
+}
+
+declare module '@mui/material/MenuItem' {
+  interface MenuItemOwnProps {
+    kippaTone?: 'destructive';
+  }
+}
+
+declare module '@mui/material/Avatar' {
+  interface AvatarPropsVariantOverrides {
+    profileMenu: true;
+    appBar: true;
   }
 }
 
@@ -72,6 +120,21 @@ declare module '@mui/material/styles' {
     loanMeta: React.CSSProperties;
     sectionTitle: React.CSSProperties;
     sectionSubtitle: React.CSSProperties;
+    profileMenuName: React.CSSProperties;
+    profileHouseholdName: React.CSSProperties;
+    profileHouseholdId: React.CSSProperties;
+    pageTitle: React.CSSProperties;
+    emptyStateTitle: React.CSSProperties;
+    emptyStateDescription: React.CSSProperties;
+    tooltipEmphasis: React.CSSProperties;
+    tooltipDetail: React.CSSProperties;
+    offlineBannerMessage: React.CSSProperties;
+    accountName: React.CSSProperties;
+    accountType: React.CSSProperties;
+    accountBalance: React.CSSProperties;
+    chartTooltipValue: React.CSSProperties;
+    chartCycleLabel: React.CSSProperties;
+    chartLegendLabel: React.CSSProperties;
     cardAmount: React.CSSProperties;
     cardNumber: React.CSSProperties;
     cardDetailNumber: React.CSSProperties;
@@ -80,6 +143,23 @@ declare module '@mui/material/styles' {
     cardMicro: React.CSSProperties;
     cardExpiry: React.CSSProperties;
     transactionAmount: React.CSSProperties;
+    budgetMetricLabel: React.CSSProperties;
+    budgetMetricValue: React.CSSProperties;
+    budgetMetricMeta: React.CSSProperties;
+    budgetColumnHeading: React.CSSProperties;
+    budgetEmptyMessage: React.CSSProperties;
+    budgetCategoryName: React.CSSProperties;
+    budgetPercent: React.CSSProperties;
+    budgetCellLabel: React.CSSProperties;
+    budgetCellValue: React.CSSProperties;
+    budgetPulseStatus: React.CSSProperties;
+    budgetPulseValue: React.CSSProperties;
+    budgetPulseValueSuffix: React.CSSProperties;
+    budgetPulseSummary: React.CSSProperties;
+    budgetPulsePercent: React.CSSProperties;
+    budgetPulsePercentCompact: React.CSSProperties;
+    budgetPulseCategory: React.CSSProperties;
+    budgetPulseAmount: React.CSSProperties;
   }
 
   interface TypographyVariantsOptions {
@@ -97,6 +177,21 @@ declare module '@mui/material/styles' {
     loanMeta?: React.CSSProperties;
     sectionTitle?: React.CSSProperties;
     sectionSubtitle?: React.CSSProperties;
+    profileMenuName?: React.CSSProperties;
+    profileHouseholdName?: React.CSSProperties;
+    profileHouseholdId?: React.CSSProperties;
+    pageTitle?: React.CSSProperties;
+    emptyStateTitle?: React.CSSProperties;
+    emptyStateDescription?: React.CSSProperties;
+    tooltipEmphasis?: React.CSSProperties;
+    tooltipDetail?: React.CSSProperties;
+    offlineBannerMessage?: React.CSSProperties;
+    accountName?: React.CSSProperties;
+    accountType?: React.CSSProperties;
+    accountBalance?: React.CSSProperties;
+    chartTooltipValue?: React.CSSProperties;
+    chartCycleLabel?: React.CSSProperties;
+    chartLegendLabel?: React.CSSProperties;
     cardAmount?: React.CSSProperties;
     cardNumber?: React.CSSProperties;
     cardDetailNumber?: React.CSSProperties;
@@ -105,6 +200,23 @@ declare module '@mui/material/styles' {
     cardMicro?: React.CSSProperties;
     cardExpiry?: React.CSSProperties;
     transactionAmount?: React.CSSProperties;
+    budgetMetricLabel?: React.CSSProperties;
+    budgetMetricValue?: React.CSSProperties;
+    budgetMetricMeta?: React.CSSProperties;
+    budgetColumnHeading?: React.CSSProperties;
+    budgetEmptyMessage?: React.CSSProperties;
+    budgetCategoryName?: React.CSSProperties;
+    budgetPercent?: React.CSSProperties;
+    budgetCellLabel?: React.CSSProperties;
+    budgetCellValue?: React.CSSProperties;
+    budgetPulseStatus?: React.CSSProperties;
+    budgetPulseValue?: React.CSSProperties;
+    budgetPulseValueSuffix?: React.CSSProperties;
+    budgetPulseSummary?: React.CSSProperties;
+    budgetPulsePercent?: React.CSSProperties;
+    budgetPulsePercentCompact?: React.CSSProperties;
+    budgetPulseCategory?: React.CSSProperties;
+    budgetPulseAmount?: React.CSSProperties;
   }
 }
 
@@ -124,6 +236,17 @@ declare module '@mui/material/Typography' {
     loanMeta: true;
     sectionTitle: true;
     sectionSubtitle: true;
+    profileMenuName: true;
+    profileHouseholdName: true;
+    profileHouseholdId: true;
+    pageTitle: true;
+    emptyStateTitle: true;
+    emptyStateDescription: true;
+    tooltipEmphasis: true;
+    tooltipDetail: true;
+    chartTooltipValue: true;
+    chartCycleLabel: true;
+    chartLegendLabel: true;
     cardAmount: true;
     cardNumber: true;
     cardDetailNumber: true;
@@ -132,5 +255,9 @@ declare module '@mui/material/Typography' {
     cardMicro: true;
     cardExpiry: true;
     transactionAmount: true;
+    offlineBannerMessage: true;
+    accountName: true;
+    accountType: true;
+    accountBalance: true;
   }
 }

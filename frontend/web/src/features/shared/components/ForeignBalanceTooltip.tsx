@@ -23,7 +23,7 @@ export function ForeignBalanceTooltip({ amount, currency, baseCurrency, rate, ch
       enterTouchDelay={300}
       title={
         <Stack spacing={0.5} sx={{ py: 0.25 }}>
-          <Typography sx={{ color: 'inherit', fontSize: 12, fontWeight: 700 }}>
+          <Typography variant="tooltipEmphasis" color="inherit">
             {hasRate ? (
               <>
                 Base equivalent: <Money amount={amount * rate} code={baseCurrency} maxDigits={2} />
@@ -32,7 +32,7 @@ export function ForeignBalanceTooltip({ amount, currency, baseCurrency, rate, ch
               'Base equivalent unavailable'
             )}
           </Typography>
-          <Typography sx={{ color: 'inherit', fontSize: 11, fontWeight: 500 }}>
+          <Typography variant="tooltipDetail" color="inherit">
             {hasRate ? (
               <>
                 Current rate: 1 {currency} = <Money amount={rate} code={baseCurrency} maxDigits={4} />

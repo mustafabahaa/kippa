@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useSnackbar } from 'notistack';
-import { Box, Chip, Container, Stack, Typography, Button, ButtonBase, Skeleton, Tooltip, Switch } from '@mui/material';
+import { Box, Chip, Container, Stack, Typography, Button, ButtonBase, Skeleton, Tooltip, Switch, Paper } from '@mui/material';
 import type { Category } from '@kippa/domain';
 import { SectionHeading } from '@/features/shared/components/SectionHeading';
 import { PageHeader } from '@/features/shared/components/PageHeader';
@@ -124,13 +124,15 @@ export function Categories() {
               }}
             >
               {items.map((category) => (
-                <Stack
+                <Paper
+                  component={Stack}
                   key={category.id}
+                  variant="categoryListRow"
                   direction="row"
                   justifyContent="space-between"
                   alignItems="center"
                   spacing={1}
-                  sx={{ minWidth: 0, py: 1.5, borderBottom: 1, borderColor: 'divider' }}
+                  sx={{ minWidth: 0 }}
                 >
                   <ButtonBase
                     component="button"
@@ -169,7 +171,7 @@ export function Categories() {
                       </Tooltip>
                     )}
                   </Stack>
-                </Stack>
+                </Paper>
               ))}
             </Box>
           )}

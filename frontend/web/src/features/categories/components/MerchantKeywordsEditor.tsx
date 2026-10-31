@@ -1,4 +1,5 @@
-import { IconCircleX, IconPlus, IconShoppingCart } from '@tabler/icons-react';
+import { AddIcon, CloseIcon, ShoppingCartIcon } from '@/components/AppIcon';
+
 import { useState } from 'react';
 import { Box, Chip, IconButton, Stack, TextField, Typography } from '@mui/material';
 import { EmptyLayout } from '@/features/shared/components/EmptyLayout';
@@ -27,7 +28,7 @@ export function MerchantKeywordsEditor({ keywords, onChange, disabled = false, e
   return (
     <Stack spacing={1.5}>
       <Stack direction="row" spacing={1} alignItems="center">
-        <IconShoppingCart size={22} strokeWidth={1.8} />
+        <ShoppingCartIcon size={22} strokeWidth={1.8} />
         <Typography variant="sectionLabel">Merchants</Typography>
       </Stack>
       <Typography variant="fieldHint" color="text.secondary">
@@ -49,7 +50,7 @@ export function MerchantKeywordsEditor({ keywords, onChange, disabled = false, e
           disabled={disabled}
         />
         <IconButton aria-label="Add" onClick={add} disabled={!draft.trim() || disabled} size="medium">
-          <IconPlus size={22} strokeWidth={1.8} />
+          <AddIcon size={22} strokeWidth={1.8} />
         </IconButton>
       </Stack>
       {keywords.length > 0 ? (
@@ -59,14 +60,14 @@ export function MerchantKeywordsEditor({ keywords, onChange, disabled = false, e
               key={merchant}
               label={merchant}
               onDelete={() => onChange(keywords.filter((entry) => entry !== merchant))}
-              deleteIcon={<IconCircleX aria-label={`Remove ${merchant}`} size={22} strokeWidth={1.8} />}
+              deleteIcon={<CloseIcon aria-label={`Remove ${merchant}`} size={22} strokeWidth={1.8} />}
               disabled={disabled}
             />
           ))}
         </Box>
       ) : emptyState ? (
         <EmptyLayout
-          icon={<IconShoppingCart size={22} strokeWidth={1.8} />}
+          icon={<ShoppingCartIcon size={22} strokeWidth={1.8} />}
           title="No merchants yet"
           description="Add a merchant above and new transactions from it will auto-fill this category."
         />

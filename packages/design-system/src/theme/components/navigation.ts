@@ -2,7 +2,41 @@ import { alpha, type Components, type Theme } from '@mui/material/styles';
 import { designTokens } from '../../foundations/tokens';
 import type { OverrideContext } from './types';
 
+declare module '@mui/material/Avatar' {
+  interface AvatarPropsVariantOverrides {
+    profileMenu: true;
+    appBar: true;
+  }
+}
+
 export const navigationOverrides = ({ mode, tokens: t }: OverrideContext): Components<Theme> => ({
+  MuiAvatar: {
+    variants: [
+      {
+        props: { variant: 'profileMenu' },
+        style: {
+          width: 44,
+          height: 44,
+          backgroundColor: mode === 'dark' ? '#FFFFFF' : '#0D0D0D',
+          color: mode === 'dark' ? '#0D0D0D' : '#FFFFFF',
+          fontSize: '1.1rem',
+          fontWeight: 600,
+        },
+      },
+      {
+        props: { variant: 'appBar' },
+        style: {
+          width: 32,
+          height: 32,
+          backgroundColor: mode === 'dark' ? '#FFFFFF' : '#0D0D0D',
+          color: mode === 'dark' ? '#0D0D0D' : '#FFFFFF',
+          fontSize: '0.875rem',
+          fontWeight: 600,
+          filter: 'grayscale(1)',
+        },
+      },
+    ],
+  },
   MuiAppBar: {
     defaultProps: { elevation: 0, color: 'transparent' },
     styleOverrides: {

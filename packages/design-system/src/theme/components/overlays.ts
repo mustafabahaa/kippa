@@ -3,6 +3,12 @@ import type {} from '@mui/x-date-pickers/themeAugmentation';
 import { designTokens } from '../../foundations/tokens';
 import type { OverrideContext } from './types';
 
+declare module '@mui/material/MenuItem' {
+  interface MenuItemOwnProps {
+    kippaTone?: 'destructive';
+  }
+}
+
 export const overlayOverrides = ({ mode, tokens: t }: OverrideContext): Components<Theme> => ({
   MuiDialog: {
     styleOverrides: {
@@ -64,11 +70,23 @@ export const overlayOverrides = ({ mode, tokens: t }: OverrideContext): Componen
         color: t.textPrimary,
         opacity: 1,
         '& .MuiListItemIcon-root': { minWidth: 36, color: t.textSecondary },
+        '& .MuiListItemText-primary': { color: t.textPrimary, fontSize: 14, fontWeight: 500 },
+        '& .MuiListItemText-secondary': { fontSize: 12 },
         '&.Mui-selected': { backgroundColor: mode === 'dark' ? 'rgba(255,255,255,.08)' : 'rgba(13,13,13,.06)' },
         '&.Mui-selected .MuiListItemIcon-root': { color: t.textPrimary },
         '&.Mui-selected:hover': { backgroundColor: mode === 'dark' ? 'rgba(255,255,255,.12)' : 'rgba(13,13,13,.09)' },
       },
     },
+    variants: [
+      {
+        props: { kippaTone: 'destructive' },
+        style: {
+          color: designTokens.color.error,
+          '& .MuiListItemIcon-root, & .MuiListItemText-primary': { color: designTokens.color.error },
+          '& .MuiListItemText-primary': { fontWeight: 600 },
+        },
+      },
+    ],
   },
   MuiTooltip: {
     styleOverrides: {

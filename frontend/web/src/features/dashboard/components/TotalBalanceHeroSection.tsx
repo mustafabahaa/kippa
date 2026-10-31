@@ -1,4 +1,5 @@
-import { IconBuildingBank } from '@tabler/icons-react';
+import { AccountBalanceIcon } from '@/components/AppIcon';
+
 import { Box, Card, CardContent, Chip, Paper, Skeleton, Stack, Typography } from '@mui/material';
 import {
   useAccounts,
@@ -47,8 +48,8 @@ export function TotalBalanceHeroSection() {
             <Skeleton variant="text" width="80%" height={48} animation="wave" sx={{ mt: 1 }} />
           </Box>
           <Stack direction="row" spacing={1} sx={{ mt: 2 }}>
-            <Skeleton variant="rectangular" width="30%" height={28} sx={{ borderRadius: '16px' }} animation="wave" />
-            <Skeleton variant="rectangular" width="30%" height={28} sx={{ borderRadius: '16px' }} animation="wave" />
+            <Skeleton variant="rounded" width="30%" height={28} animation="wave" />
+            <Skeleton variant="rounded" width="30%" height={28} animation="wave" />
           </Stack>
         </CardContent>
       </Card>
@@ -74,7 +75,7 @@ export function TotalBalanceHeroSection() {
       <CardContent>
         <Stack>
           <DashboardSectionHeading
-            icon={<IconBuildingBank size={22} strokeWidth={1.8} />}
+            icon={<AccountBalanceIcon size={22} strokeWidth={1.8} />}
             title="My balance"
             trailing={<Chip label="All accounts" variant="outlined" />}
           />
@@ -112,10 +113,8 @@ export function TotalBalanceHeroSection() {
                         noWrap
                         variant="h6"
                         tabIndex={account.currency === baseCurrency ? undefined : 0}
-                        sx={{
-                          color: account.type === 'credit' && balance < 0 ? 'error.main' : 'text.primary',
-                          cursor: account.currency === baseCurrency ? 'default' : 'help',
-                        }}
+                        color={account.type === 'credit' && balance < 0 ? 'error.main' : 'text.primary'}
+                        sx={{ cursor: account.currency === baseCurrency ? 'default' : 'help' }}
                       >
                         <Money amount={balance} code={account.currency} maxDigits={2} />
                       </Typography>

@@ -1,11 +1,5 @@
-import {
-  IconCalendarEvent,
-  IconChartBar,
-  IconChevronUp,
-  IconCircleCheck,
-  IconClock,
-  IconEdit,
-} from '@tabler/icons-react';
+import { BarChartIcon, CheckCircleIcon, EditIcon, EventIcon, ExpandLessIcon, TimerIcon } from '@/components/AppIcon';
+
 import { Box, Button, Chip, Grid, LinearProgress, Stack, Typography } from '@mui/material';
 import type { BudgetCycle, CurrencyCode } from '@kippa/domain';
 import { Money } from '@/components/Money';
@@ -32,7 +26,7 @@ export function ActiveCycleSection({
   return (
     <Stack spacing={2.5}>
       <SectionHeading
-        icon={<IconCalendarEvent size={22} strokeWidth={1.8} />}
+        icon={<EventIcon size={22} strokeWidth={1.8} />}
         title={cycle.name}
         subtitle={`${formatCycleDate(cycle.startDate)}${cycle.endDate ? ` — ${formatCycleDate(cycle.endDate)}` : ' — Ongoing'}`}
         trailing={<Chip label="Active" color="success" />}
@@ -52,7 +46,7 @@ export function ActiveCycleSection({
         </Stack>
       ) : (
         <Stack direction="row" spacing={1} alignItems="center">
-          <IconClock size={20} strokeWidth={1.8} />
+          <TimerIcon size={20} strokeWidth={1.8} />
           <Typography variant="body2" color="text.secondary">
             Day {daysInfo.elapsed + 1} · no end date set
           </Typography>
@@ -62,27 +56,30 @@ export function ActiveCycleSection({
       {stats?.plannedBudget != null && (
         <Grid container spacing={1.5}>
           <Grid size={{ xs: 12, sm: 4 }}>
-            <Typography variant="fieldHint" color="text.secondary">Planned</Typography>
+            <Typography variant="fieldHint" color="text.secondary">
+              Planned
+            </Typography>
             <Typography variant="loanMetricCompact">
               <Money amount={stats.plannedBudget} code={stats.baseCurrency} />
             </Typography>
           </Grid>
           <Grid size={{ xs: 12, sm: 4 }}>
-            <Typography variant="fieldHint" color="text.secondary">Spent</Typography>
+            <Typography variant="fieldHint" color="text.secondary">
+              Spent
+            </Typography>
             <Typography variant="loanMetricCompact">
               <Money amount={stats.actualExpense ?? 0} code={stats.baseCurrency} />
             </Typography>
           </Grid>
           <Grid size={{ xs: 12, sm: 4 }}>
-            <Typography variant="fieldHint" color="text.secondary">Remaining</Typography>
+            <Typography variant="fieldHint" color="text.secondary">
+              Remaining
+            </Typography>
             <Typography
               variant="loanMetricCompact"
-              color={(stats.plannedBudget - (stats.actualExpense ?? 0)) < 0 ? 'error.main' : 'text.primary'}
+              color={stats.plannedBudget - (stats.actualExpense ?? 0) < 0 ? 'error.main' : 'text.primary'}
             >
-              <Money
-                amount={stats.plannedBudget - (stats.actualExpense ?? 0)}
-                code={stats.baseCurrency}
-              />
+              <Money amount={stats.plannedBudget - (stats.actualExpense ?? 0)} code={stats.baseCurrency} />
             </Typography>
           </Grid>
         </Grid>
@@ -91,12 +88,14 @@ export function ActiveCycleSection({
       <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} alignItems={{ sm: 'center' }}>
         <Button
           variant="contained"
-          startIcon={isEditingBudget ? <IconChevronUp size={20} strokeWidth={1.8} /> : <IconEdit size={20} strokeWidth={1.8} />}
+          startIcon={
+            isEditingBudget ? <ExpandLessIcon size={20} strokeWidth={1.8} /> : <EditIcon size={20} strokeWidth={1.8} />
+          }
           onClick={onToggleBudget}
         >
           {isEditingBudget ? 'Hide budget' : 'Edit budget'}
         </Button>
-        <Button variant="outlined" startIcon={<IconCircleCheck size={20} strokeWidth={1.8} />} onClick={onCloseCycle}>
+        <Button variant="outlined" startIcon={<CheckCircleIcon size={20} strokeWidth={1.8} />} onClick={onCloseCycle}>
           Close cycle
         </Button>
       </Stack>
@@ -119,8 +118,9 @@ type CycleHistoryItemProps = {
 };
 
 export function CycleHistoryItem({ cycle, isEditing, onToggleBudget, onViewReport, stats }: CycleHistoryItemProps) {
-  const utilization =
-    stats?.plannedBudget ? Math.round(((stats.actualExpense ?? 0) / stats.plannedBudget) * 100) : null;
+  const utilization = stats?.plannedBudget
+    ? Math.round(((stats.actualExpense ?? 0) / stats.plannedBudget) * 100)
+    : null;
   const overBudget = utilization !== null && utilization > 100;
   const statusLabel = cycle.status === 'planned' ? 'Planned' : 'Closed';
 
@@ -136,19 +136,26 @@ export function CycleHistoryItem({ cycle, isEditing, onToggleBudget, onViewRepor
           <Box sx={{ minWidth: 0 }}>
             <Typography variant="loanTitle">{cycle.name}</Typography>
             <Typography variant="loanMeta" color="text.secondary">
-              {formatCycleDate(cycle.startDate)}{cycle.endDate ? ` — ${formatCycleDate(cycle.endDate)}` : ''}
+              {formatCycleDate(cycle.startDate)}
+              {cycle.endDate ? ` — ${formatCycleDate(cycle.endDate)}` : ''}
             </Typography>
           </Box>
           <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap" alignItems="center">
             <Chip label={statusLabel} variant="outlined" />
             {onViewReport && (
-              <Button variant="segmented" startIcon={<IconChartBar size={20} strokeWidth={1.8} />} onClick={onViewReport}>
+              <Button
+                variant="segmented"
+                startIcon={<BarChartIcon size={20} strokeWidth={1.8} />}
+                onClick={onViewReport}
+              >
                 View report
               </Button>
             )}
             <Button
               variant="segmented"
-              startIcon={isEditing ? <IconChevronUp size={20} strokeWidth={1.8} /> : <IconEdit size={20} strokeWidth={1.8} />}
+              startIcon={
+                isEditing ? <ExpandLessIcon size={20} strokeWidth={1.8} /> : <EditIcon size={20} strokeWidth={1.8} />
+              }
               onClick={onToggleBudget}
             >
               {isEditing ? 'Hide budget' : 'Edit budget'}
@@ -160,20 +167,26 @@ export function CycleHistoryItem({ cycle, isEditing, onToggleBudget, onViewRepor
           <Stack spacing={1}>
             <Stack direction="row" spacing={{ xs: 2, sm: 4 }} useFlexGap flexWrap="wrap">
               <Box>
-                <Typography variant="fieldHint" color="text.secondary">Planned</Typography>
+                <Typography variant="fieldHint" color="text.secondary">
+                  Planned
+                </Typography>
                 <Typography variant="loanMetricCompact">
                   {stats.plannedBudget != null ? <Money amount={stats.plannedBudget} code={stats.baseCurrency} /> : '—'}
                 </Typography>
               </Box>
               <Box>
-                <Typography variant="fieldHint" color="text.secondary">Spent</Typography>
+                <Typography variant="fieldHint" color="text.secondary">
+                  Spent
+                </Typography>
                 <Typography variant="loanMetricCompact" color={overBudget ? 'error.main' : 'text.primary'}>
                   {stats.actualExpense != null ? <Money amount={stats.actualExpense} code={stats.baseCurrency} /> : '—'}
                 </Typography>
               </Box>
               {utilization !== null && (
                 <Box>
-                  <Typography variant="fieldHint" color="text.secondary">Budget used</Typography>
+                  <Typography variant="fieldHint" color="text.secondary">
+                    Budget used
+                  </Typography>
                   <Typography variant="loanMetricCompact" color={overBudget ? 'error.main' : 'text.primary'}>
                     {utilization}%
                   </Typography>

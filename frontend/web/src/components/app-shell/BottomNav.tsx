@@ -1,5 +1,12 @@
-import { IconHourglass, IconLayoutDashboard, IconMessage2, IconPlus, IconReceipt } from '@tabler/icons-react';
-import { Paper, Box, Typography, useTheme, alpha, Badge } from '@mui/material';
+import { AddIcon, DashboardIcon, HourglassEmptyIcon, MessageIcon, ReceiptLongIcon } from '@/components/AppIcon';
+
+import { Box } from '@mui/material';
+import {
+  MobileBottomNavigationAction,
+  MobileBottomNavigationItem,
+  MobileBottomNavigationShape,
+  MobileBottomNavigationShell,
+} from '@kippa/design-system';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useState, useEffect, useRef } from 'react';
 import type { ReactNode } from 'react';
@@ -13,19 +20,18 @@ interface NavItem {
 }
 
 const LEFT_ITEMS: NavItem[] = [
-  { label: 'Dashboard', path: '/', icon: <IconLayoutDashboard size={22} strokeWidth={1.8} /> },
-  { label: 'Kip', path: '/ai', icon: <IconMessage2 size={22} strokeWidth={1.8} /> },
+  { label: 'Dashboard', path: '/', icon: <DashboardIcon size={22} strokeWidth={1.8} /> },
+  { label: 'Kip', path: '/ai', icon: <MessageIcon size={22} strokeWidth={1.8} /> },
 ];
 
 const RIGHT_ITEMS: NavItem[] = [
-  { label: 'Transactions', path: '/transactions', icon: <IconReceipt size={22} strokeWidth={1.8} /> },
-  { label: 'Pending', path: '/pending', icon: <IconHourglass size={22} strokeWidth={1.8} /> },
+  { label: 'Transactions', path: '/transactions', icon: <ReceiptLongIcon size={22} strokeWidth={1.8} /> },
+  { label: 'Pending', path: '/pending', icon: <HourglassEmptyIcon size={22} strokeWidth={1.8} /> },
 ];
 
 export function BottomNav() {
   const navigate = useNavigate();
   const { pathname } = useLocation();
-  const theme = useTheme();
   const { householdId } = useAppContext();
   const { data: pendingItems = [] } = usePendingFinancialMessages(householdId);
   const pendingCount = pendingItems.length;
@@ -50,72 +56,17 @@ export function BottomNav() {
     const isActive = pathname === item.path;
     const isPending = item.path === '/pending';
     return (
-      <Box
-        component="button"
-        type="button"
+      <MobileBottomNavigationItem
         key={item.path}
+        active={isActive}
+        label={item.label}
+        icon={item.icon}
         onClick={() => navigate(item.path)}
-        aria-label={
+        badgeCount={isPending ? pendingCount : 0}
+        ariaLabel={
           isPending && pendingCount > 0 ? `Pending review, ${pendingCount} items require attention` : item.label
         }
-        sx={{
-          border: 0,
-          bgcolor: 'transparent',
-          font: 'inherit',
-          flex: 1,
-          minWidth: 0,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: '2px',
-          py: '6px',
-          px: { xs: 1, sm: 1.5 },
-          borderRadius: '24px',
-          cursor: 'pointer',
-          color: isActive ? 'primary.main' : 'text.primary',
-          transition: 'all 0.2s ease',
-          '&:hover': { transform: 'scale(1.08)' },
-          '&:active': { transform: 'scale(0.92)' },
-          '& .MuiSvgIcon-root': {
-            fontSize: '22px',
-            transition: 'all 0.2s ease',
-          },
-        }}
-      >
-        {isPending ? (
-          <Badge
-            color="warning"
-            badgeContent={pendingCount}
-            max={99}
-            invisible={pendingCount === 0}
-            overlap="circular"
-            sx={{
-              '& .MuiBadge-badge': {
-                minWidth: 18,
-                height: 18,
-                px: 0.5,
-                fontSize: 10,
-                fontWeight: 800,
-              },
-            }}
-          >
-            {item.icon}
-          </Badge>
-        ) : (
-          item.icon
-        )}
-        <Typography
-          sx={{
-            fontSize: '10px',
-            fontWeight: isActive ? 700 : 500,
-            lineHeight: 1,
-            whiteSpace: 'nowrap',
-          }}
-        >
-          {item.label}
-        </Typography>
-      </Box>
+      />
     );
   };
 
@@ -154,47 +105,11 @@ export function BottomNav() {
   };
 
   return (
-    <Paper
+    <MobileBottomNavigationShell
       ref={containerRef}
-      elevation={0}
-      sx={{
-        display: { xs: 'block', md: 'none' },
-        position: 'fixed',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        zIndex: 1000,
-        bgcolor: 'transparent',
-        boxShadow: 'none',
-        padding: '6px 6px calc(6px + env(safe-area-inset-bottom))',
-        overflow: 'visible',
-        animation: 'navFloatIn 0.35s cubic-bezier(0.22, 1, 0.36, 1)',
-        '@keyframes navFloatIn': {
-          from: { opacity: 0, transform: 'translateY(20px)' },
-          to: { opacity: 1, transform: 'translateY(0)' },
-        },
-      }}
     >
       {size.width > 0 && (
-        <svg
-          width={size.width}
-          height={size.height}
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            zIndex: -1,
-            pointerEvents: 'none',
-            overflow: 'visible',
-          }}
-        >
-          <path
-            d={getPathData()}
-            fill={theme.palette.background.paper}
-            stroke={alpha(theme.palette.primary.main, 0.25)}
-            strokeWidth={1}
-          />
-        </svg>
+        <MobileBottomNavigationShape width={size.width} height={size.height} path={getPathData()} />
       )}
 
       <Box
@@ -208,35 +123,12 @@ export function BottomNav() {
         {LEFT_ITEMS.map(renderNavItem)}
 
         {/* Center + button — emerges from the notch in the pill above */}
-        <Box
-          onClick={() => navigate('/entry')}
-          sx={{
-            width: 56,
-            height: 56,
-            mt: '-34px',
-            mx: '6px',
-            flexShrink: 0,
-            borderRadius: '50%',
-            bgcolor: isEntry ? 'primary.dark' : 'primary.main',
-            color: 'primary.contrastText',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            cursor: 'pointer',
-            transition:
-              'transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.2s ease',
-            '&:hover': {
-              transform: 'scale(1.1)',
-            },
-            '&:active': { transform: 'scale(0.92)' },
-            '& .MuiSvgIcon-root': { fontSize: '30px' },
-          }}
-        >
-          <IconPlus size={22} strokeWidth={1.8} />
-        </Box>
+        <MobileBottomNavigationAction active={isEntry} onClick={() => navigate('/entry')}>
+          <AddIcon size={30} strokeWidth={1.8} />
+        </MobileBottomNavigationAction>
 
         {RIGHT_ITEMS.map(renderNavItem)}
       </Box>
-    </Paper>
+    </MobileBottomNavigationShell>
   );
 }

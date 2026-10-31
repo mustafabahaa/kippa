@@ -1,4 +1,5 @@
-import { IconChevronRight, IconMenu2, IconMoon, IconSun } from '@tabler/icons-react';
+import { ChevronRightIcon, DarkModeIcon, LightModeIcon, MenuIcon } from '@/components/AppIcon';
+
 import { useState } from 'react';
 import { AppBar, Toolbar, Stack, Typography, IconButton, Tooltip, Breadcrumbs, Link } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
@@ -91,7 +92,7 @@ export function TopBar({
             sx={{ cursor: 'pointer', userSelect: 'none', display: { xs: 'flex', md: 'none' } }}
           >
             <img src={logoSrc} alt="Kippa Logo" style={{ height: 32, width: 'auto' }} />
-            <Typography variant="h3" sx={{ fontWeight: 'bold', letterSpacing: '0.05em', color: 'primary.main' }}>
+            <Typography variant="h3" color="primary.main">
               Kippa
             </Typography>
           </Stack>
@@ -99,7 +100,7 @@ export function TopBar({
           <Stack sx={{ display: { xs: 'none', md: 'flex' }, minWidth: 0, flex: 1, ml: 2 }}>
             <Breadcrumbs
               aria-label="Breadcrumb"
-              separator={<IconChevronRight size={16} strokeWidth={1.8} />}
+              separator={<ChevronRightIcon size={16} strokeWidth={1.8} />}
               sx={{ '& .MuiBreadcrumbs-ol': { flexWrap: 'nowrap' } }}
             >
               <Link component={RouterLink} to="/" underline="hover" color="text.secondary" variant="body2">
@@ -131,9 +132,9 @@ export function TopBar({
                 sx={{ width: 40, height: 40 }}
               >
                 {theme.palette.mode === 'dark' ? (
-                  <IconSun size={20} strokeWidth={1.8} />
+                  <LightModeIcon size={20} strokeWidth={1.8} />
                 ) : (
-                  <IconMoon size={20} strokeWidth={1.8} />
+                  <DarkModeIcon size={20} strokeWidth={1.8} />
                 )}
               </IconButton>
             </Tooltip>
@@ -146,7 +147,7 @@ export function TopBar({
                 aria-haspopup="true"
                 sx={{ width: 40, height: 40 }}
               >
-                <IconMenu2 size={20} strokeWidth={1.8} />
+                <MenuIcon size={20} strokeWidth={1.8} />
               </IconButton>
             </Tooltip>
             <Tooltip title="Account Menu">
@@ -155,20 +156,12 @@ export function TopBar({
                 aria-label="account profile menu"
                 aria-controls="profile-menu"
                 aria-haspopup="true"
-                sx={{ p: 0.5, border: '1px solid', borderColor: 'divider', width: 40, height: 40 }}
+                sx={{ p: 0.5, width: 40, height: 40 }}
               >
                 <UserAvatar
                   photoURLs={[auth?.currentUser?.photoURL, userProfile?.photoURL]}
                   displayName={userProfile?.displayName}
-                  sx={{
-                    bgcolor: 'primary.main',
-                    color: 'primary.contrastText',
-                    filter: auth?.currentUser?.photoURL || userProfile?.photoURL ? 'grayscale(1)' : undefined,
-                    width: 32,
-                    height: 32,
-                    fontSize: '0.875rem',
-                    fontWeight: 600,
-                  }}
+                  variant="appBar"
                 />
               </IconButton>
             </Tooltip>

@@ -4,8 +4,8 @@
   "description": "Private Kippa household finance ledger for USD salary, EGP spending, balances, and budget cycles.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#FFFFFF",
-  "theme_color": "#FFFFFF",
+  "background_color": "#0C0C0C",
+  "theme_color": "#0C0C0C",
   "orientation": "portrait-primary",
   "icons": [
     {
@@ -34,4 +34,3 @@
     }
   ]
 }
-

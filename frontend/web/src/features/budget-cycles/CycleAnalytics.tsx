@@ -11,7 +11,12 @@ import {
   useTheme,
   alpha,
 } from '@mui/material';
-import { LineChart } from '@mui/x-charts/LineChart';
+import {
+  CycleCashFlowColumn,
+  CycleCashFlowGuide,
+  CycleChartSwatch,
+  CycleTrendLineChart,
+} from '@kippa/design-system';
 import {
   useCycles,
   useTransactions,
@@ -162,13 +167,13 @@ export function CycleAnalytics() {
               },
             ].map((item) => (
               <Stack key={item.label} direction="row" spacing={0.75} alignItems="center">
-                <Box sx={{ width: 10, height: 10, borderRadius: '3px', bgcolor: item.color }} />
-                <Typography variant="body2" sx={{ color: 'text.secondary', fontWeight: 600 }}>
+                <CycleChartSwatch swatchColor={item.color} />
+                <Typography variant="chartLegendLabel" color="text.secondary">
                   {item.label}
                 </Typography>
               </Stack>
             ))}
-            <Typography variant="body2" sx={{ color: 'text.secondary', ml: { sm: 'auto' } }}>
+            <Typography variant="body2" color="text.secondary" sx={{ ml: { sm: 'auto' } }}>
               Actual cash flow by cycle
             </Typography>
           </Stack>
@@ -191,17 +196,7 @@ export function CycleAnalytics() {
                 pb: 4,
               }}
             >
-              <Box
-                sx={{
-                  position: 'absolute',
-                  left: 0,
-                  right: 0,
-                  top: '47%',
-                  borderTop: '1px dashed',
-                  borderColor: alpha(theme.palette.primary.main, 0.55),
-                  pointerEvents: 'none',
-                }}
-              />
+              <CycleCashFlowGuide />
 
               {cycleData.map((cycle, index) => {
                 const capacity =
@@ -223,118 +218,16 @@ export function CycleAnalytics() {
                 );
 
                 return (
-                  <Box
+                  <CycleCashFlowColumn
                     key={cycle.id}
-                    sx={{
-                      flex: '1 1 0',
-                      minWidth: { xs: 34, sm: 54 },
-                      height: '100%',
-                      position: 'relative',
-                      display: 'flex',
-                      alignItems: 'flex-end',
-                      justifyContent: 'center',
-                      '&:hover .flow-tooltip, &:focus-within .flow-tooltip': {
-                        opacity: 1,
-                        transform: 'translate(-50%, -8px)',
-                      },
-                    }}
-                  >
-                    <Box
-                      tabIndex={0}
-                      aria-label={`${cycle.name}: income ${cycle.actualIncome.toLocaleString()} ${baseCurrency}, spent ${cycle.actualExpense.toLocaleString()} ${baseCurrency}`}
-                      sx={{
-                        width: '100%',
-                        height: `${capacityHeight}%`,
-                        maxWidth: 76,
-                        minHeight: 84,
-                        position: 'relative',
-                        overflow: 'hidden',
-                        borderRadius: '18px 18px 12px 12px',
-                        bgcolor: alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.16 : 0.075),
-                        backgroundImage: `repeating-linear-gradient(135deg, transparent 0 9px, ${alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.12 : 0.07)} 9px 11px)`,
-                        outline: 'none',
-                      }}
-                    >
-                      <Box
-                        sx={{
-                          position: 'absolute',
-                          insetInline: 0,
-                          bottom: 0,
-                          height: `${incomeHeight}%`,
-                          minHeight: 5,
-                          bgcolor: 'primary.dark',
-                          borderRadius: '14px 14px 10px 10px',
-                          transition: 'height 300ms ease',
-                        }}
-                      />
-                      <Box
-                        sx={{
-                          position: 'absolute',
-                          insetInline: 0,
-                          bottom: 0,
-                          height: `${spendHeight}%`,
-                          minHeight: 4,
-                          bgcolor: 'secondary.main',
-                          borderRadius: '14px 14px 10px 10px',
-                          transition: 'height 300ms ease',
-                        }}
-                      />
-                    </Box>
-
-                    <Box
-                      className="flow-tooltip"
-                      sx={{
-                        position: 'absolute',
-                        zIndex: 2,
-                        left: '50%',
-                        bottom: `${Math.min(88, capacityHeight)}%`,
-                        opacity: 0,
-                        transform: 'translate(-50%, 0)',
-                        transition: 'opacity 160ms ease, transform 160ms ease',
-                        bgcolor: 'text.primary',
-                        color: 'background.paper',
-                        borderRadius: '12px',
-                        px: 1.5,
-                        py: 1,
-                        whiteSpace: 'nowrap',
-                        pointerEvents: 'none',
-                        boxShadow: 3,
-                      }}
-                    >
-                      <Typography sx={{ color: 'inherit', fontSize: '10px', opacity: 0.72 }}>Income</Typography>
-                      <Typography
-                        sx={{
-                          color: 'inherit',
-                          fontSize: '14px',
-                          fontWeight: 750,
-                          fontVariantNumeric: 'tabular-nums',
-                        }}
-                      >
-                        {cycle.actualIncome.toLocaleString()} {baseCurrency}
-                      </Typography>
-                    </Box>
-
-                    <Typography
-                      variant="body2"
-                      title={cycle.name}
-                      sx={{
-                        position: 'absolute',
-                        top: 'calc(100% + 10px)',
-                        left: '50%',
-                        transform: 'translateX(-50%)',
-                        width: '100%',
-                        color: 'text.secondary',
-                        textAlign: 'center',
-                        fontSize: '10px',
-                        fontWeight: 600,
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                      }}
-                    >
-                      {cycle.name}
-                    </Typography>
-                  </Box>
+                    cycleName={cycle.name}
+                    income={cycle.actualIncome}
+                    spent={cycle.actualExpense}
+                    currency={baseCurrency}
+                    capacityHeight={capacityHeight}
+                    incomeHeight={incomeHeight}
+                    spendHeight={spendHeight}
+                  />
                 );
               })}
             </Box>
@@ -354,7 +247,6 @@ export function CycleAnalytics() {
                 value={selectedCategoryId}
                 label="Category"
                 onChange={(e) => setSelectedCategoryId(e.target.value)}
-                sx={{ borderRadius: '8px' }}
               >
                 {expenseCategories.map((c) => (
                   <MenuItem key={c.id} value={c.id}>
@@ -367,7 +259,7 @@ export function CycleAnalytics() {
 
           <Box sx={{ height: { xs: 300, sm: 380 }, width: '100%' }}>
             {categoryTrends.length > 0 && (
-              <LineChart
+              <CycleTrendLineChart
                 xAxis={[
                   {
                     scaleType: 'point',
@@ -394,33 +286,6 @@ export function CycleAnalytics() {
                     position: { vertical: 'bottom', horizontal: 'center' },
                     padding: -5,
                   } as any,
-                }}
-                sx={{
-                  '& .MuiAreaElement-root': {
-                    fill: alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.2 : 0.1),
-                  },
-                  '& .MuiLineElement-root': {
-                    strokeWidth: 3,
-                  },
-                  '& .MuiChartsGrid-line': {
-                    stroke: alpha(theme.palette.text.primary, 0.07),
-                    strokeDasharray: '3 5',
-                  },
-                  '& .MuiChartsAxis-line': {
-                    stroke: theme.palette.divider,
-                    strokeWidth: 1,
-                  },
-                  '& .MuiChartsAxis-tick': {
-                    stroke: theme.palette.divider,
-                  },
-                  '& .MuiChartsAxis-tickLabel text': {
-                    fill: `${theme.palette.text.secondary} !important`,
-                    fontSize: '11px !important',
-                  },
-                  '& .MuiChartsLegend-root text': {
-                    fill: `${theme.palette.text.primary} !important`,
-                    fontSize: '12px !important',
-                  },
                 }}
               />
             )}

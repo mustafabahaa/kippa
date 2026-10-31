@@ -1,4 +1,5 @@
-import { IconChevronUp } from '@tabler/icons-react';
+import { ExpandLessIcon } from '@/components/AppIcon';
+
 import { Fragment, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
@@ -43,6 +44,7 @@ import { PageHeader } from '@/features/shared/components/PageHeader';
 import { SectionHeading } from '@/features/shared/components/SectionHeading';
 import { TransactionIcon } from '@/features/transactions/components/TransactionIcon';
 import { formatCycleDate } from './cycleUtils';
+import { BudgetCycleAccountRow, BudgetCycleSummaryItem } from '@kippa/design-system';
 
 const PAGE_SIZE = 25;
 const sectionIndent = { xs: 0, md: 4 } as const;
@@ -307,11 +309,7 @@ export function CycleReport() {
               const startingAmount = isCredit ? Math.abs(account.openingBalance) : account.openingBalance;
               const endingAmount = isCredit ? Math.abs(account.closingBalance) : account.closingBalance;
               return (
-                <Box
-                  key={account.accountId}
-                  component="article"
-                  sx={{ py: 2.5, borderBottom: 1, borderColor: 'divider' }}
-                >
+                <BudgetCycleAccountRow key={account.accountId}>
                   <Stack spacing={2.5}>
                     <Stack
                       direction="row"
@@ -373,7 +371,7 @@ export function CycleReport() {
                       View account transactions
                     </Button>
                   </Stack>
-                </Box>
+                </BudgetCycleAccountRow>
               );
             })}
           </Box>
@@ -399,11 +397,7 @@ export function CycleReport() {
             }}
           >
             {summary.map((item) => (
-              <Box
-                key={item.label}
-                component="article"
-                sx={{ py: 2.5, borderBottom: { xs: 1, lg: 0 }, borderColor: 'divider' }}
-              >
+              <BudgetCycleSummaryItem key={item.label}>
                 <Stack spacing={1}>
                   <Typography variant="fieldHint" color="text.secondary">
                     {item.label}
@@ -415,7 +409,7 @@ export function CycleReport() {
                     {item.description}
                   </Typography>
                 </Stack>
-              </Box>
+              </BudgetCycleSummaryItem>
             ))}
           </Box>
         </Stack>
@@ -508,7 +502,7 @@ export function CycleReport() {
                               disabled={categoryTransactions.length === 0}
                               onClick={() => toggleCategory(category.categoryId)}
                             >
-                              <IconChevronUp size={22} strokeWidth={1.8} />
+                              <ExpandLessIcon size={22} strokeWidth={1.8} />
                             </IconButton>
                           </TableCell>
                           <TableCell>

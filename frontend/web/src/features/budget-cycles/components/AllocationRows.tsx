@@ -1,5 +1,7 @@
-import { IconTrash } from '@tabler/icons-react';
-import { IconButton, List, ListItem, ListItemText, Stack, TextField } from '@mui/material';
+import { DeleteIcon } from '@/components/AppIcon';
+
+import { List, ListItemText, Stack, TextField } from '@mui/material';
+import { BudgetAllocationActions, BudgetAllocationRemoveButton, BudgetAllocationRow } from '@kippa/design-system';
 
 export interface AllocationRow {
   categoryId: string;
@@ -28,14 +30,8 @@ export function AllocationRows({
       {rows.map((row) => {
         const categoryName = getCategoryName(row.categoryId);
         return (
-          <ListItem
+          <BudgetAllocationRow
             key={row.categoryId}
-            sx={{
-              px: 0,
-              py: 0.5,
-              minHeight: 48,
-              '&:hover .allocation-actions, &:focus-within .allocation-actions': { opacity: 1 },
-            }}
             secondaryAction={
               <Stack direction="row" alignItems="center" spacing={0.75}>
                 <TextField
@@ -49,22 +45,21 @@ export function AllocationRows({
                     htmlInput: { min: 0, style: { textAlign: 'right', fontWeight: 700, padding: '10px 12px' } },
                   }}
                 />
-                <Stack className="allocation-actions" direction="row" spacing={0.25} sx={{ opacity: { xs: 1, md: 0 } }}>
-                  <IconButton
+                <BudgetAllocationActions className="allocation-actions" direction="row" spacing={0.25}>
+                  <BudgetAllocationRemoveButton
                     aria-label={`Remove ${categoryName}`}
                     size="small"
                     onClick={() => onRemove(row.categoryId)}
                     color="error"
-                    sx={{ width: 30, height: 30 }}
                   >
-                    <IconTrash size={22} strokeWidth={1.8} />
-                  </IconButton>
-                </Stack>
+                    <DeleteIcon size={22} strokeWidth={1.8} />
+                  </BudgetAllocationRemoveButton>
+                </BudgetAllocationActions>
               </Stack>
             }
           >
             <ListItemText primary={categoryName} slotProps={{ primary: { variant: 'body2', fontWeight: 600 } }} />
-          </ListItem>
+          </BudgetAllocationRow>
         );
       })}
     </List>

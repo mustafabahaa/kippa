@@ -114,10 +114,9 @@ export function ReconciliationHistory({ accounts, pages, hasNextPage, isFetching
                           width: 28,
                           height: 28,
                           flex: '0 0 28px',
-                          color: 'text.secondary',
                         }}
                       >
-                        <CheckCircleIcon variant="Linear" />
+                        <CheckCircleIcon variant="Linear" color="secondary" />
                       </Box>
                     )}
                     <Stack spacing={0.25} sx={{ minWidth: 0, flex: 1 }}>

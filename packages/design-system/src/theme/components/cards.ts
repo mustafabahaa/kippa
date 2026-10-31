@@ -5,6 +5,7 @@ import type { OverrideContext } from './types';
 declare module '@mui/material/Paper' {
   interface PaperPropsVariantOverrides {
     categoryRow: true;
+    categoryListRow: true;
     dashboardAccountRow: true;
     timelineRow: true;
     iconBadge: true;
@@ -12,6 +13,13 @@ declare module '@mui/material/Paper' {
     bankCard: true;
     bankCardHeader: true;
     cardDetailDialog: true;
+    budgetCategoryRow: true;
+    profileHouseholdRow: true;
+    navigationMenu: true;
+    workspaceSidebar: true;
+    emptyState: true;
+    emptyStateIcon: true;
+    emptyStateLogo: true;
   }
 }
 
@@ -93,6 +101,88 @@ export const cardOverrides = ({ mode, tokens: t }: OverrideContext): Components<
           },
         },
         {
+          props: { variant: 'navigationMenu' },
+          style: {
+            overflow: 'visible',
+            '&::before': {
+              content: '""',
+              display: 'block',
+              position: 'absolute',
+              top: 0,
+              right: 18,
+              width: 10,
+              height: 10,
+              backgroundColor: t.surfacePure,
+              transform: 'translateY(-50%) rotate(45deg)',
+              zIndex: 0,
+              borderLeft: `1px solid ${t.borderGray}`,
+              borderTop: `1px solid ${t.borderGray}`,
+            },
+          },
+        },
+        {
+          props: { variant: 'workspaceSidebar' },
+          style: {
+            backgroundColor: t.surfaceOffWhite,
+            borderRight: `1px solid ${t.borderGray}`,
+            boxShadow: 'none',
+          },
+        },
+        {
+          props: { variant: 'emptyState' },
+          style: {
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            textAlign: 'center',
+            padding: '32px 24px',
+            borderRadius: 24,
+            border: `2px dashed ${t.borderGray}`,
+            backgroundColor: t.surfacePure,
+            width: '100%',
+            boxSizing: 'border-box',
+            transition: 'all 300ms ease-in-out',
+          },
+        },
+        {
+          props: { variant: 'emptyStateIcon' },
+          style: {
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: 52,
+            height: 52,
+            marginBottom: 16,
+            borderRadius: 12,
+            backgroundColor: alpha(chrome, mode === 'dark' ? 0.08 : 0.05),
+            color: mode === 'dark' ? '#FFFFFF' : designTokens.color.primary,
+            boxShadow: 'none',
+          },
+        },
+        {
+          props: { variant: 'emptyStateLogo' },
+          style: {
+            width: 52,
+            height: 52,
+            marginBottom: 16,
+            padding: 0,
+            objectFit: 'contain',
+            opacity: 0.25,
+            backgroundColor: 'transparent',
+            boxShadow: 'none',
+          },
+        },
+        {
+          props: { variant: 'profileHouseholdRow' },
+          style: {
+            borderRadius: designTokens.radius.subtle * 2,
+            backgroundColor: mode === 'dark' ? 'rgba(255,255,255,.08)' : 'rgba(13,13,13,.05)',
+            border: `1px solid ${t.borderGray}`,
+            boxShadow: 'none',
+          },
+        },
+        {
           props: { variant: 'dashboardAccountRow' },
           style: {
             padding: '10px 0 0',
@@ -112,7 +202,20 @@ export const cardOverrides = ({ mode, tokens: t }: OverrideContext): Components<
             backgroundColor: 'transparent',
             boxShadow: 'none',
             transition: 'background-color 150ms ease',
+            '&[data-voided="true"]': { opacity: 0.5 },
+            '&[data-processing="true"]': { opacity: 0.6 },
             '&:hover': { backgroundColor: alpha(chrome, mode === 'dark' ? 0.06 : 0.04) },
+          },
+        },
+        {
+          props: { variant: 'categoryListRow' },
+          style: {
+            padding: '12px 0',
+            border: 0,
+            borderBottom: `1px solid ${t.borderGray}`,
+            borderRadius: 0,
+            backgroundColor: 'transparent',
+            boxShadow: 'none',
           },
         },
         {
@@ -139,6 +242,16 @@ export const cardOverrides = ({ mode, tokens: t }: OverrideContext): Components<
               transition: 'opacity .15s ease',
             },
             '&:hover .category-row-action, &:focus-within .category-row-action': { opacity: 1, pointerEvents: 'auto' },
+          },
+        },
+        {
+          props: { variant: 'budgetCategoryRow' },
+          style: {
+            border: 0,
+            borderRadius: designTokens.radius.moderate,
+            backgroundColor: 'transparent',
+            boxShadow: 'none',
+            '&:hover': { backgroundColor: t.surfaceContainerLow },
           },
         },
         {
@@ -333,6 +446,23 @@ export const cardOverrides = ({ mode, tokens: t }: OverrideContext): Components<
         {
           props: { variant: 'saveFeedbackOverlay' },
           style: {
+            '--save-origin-x': '50%',
+            '--save-origin-y': 'calc(100% - 122px)',
+            position: 'fixed',
+            inset: 0,
+            cursor: 'pointer',
+            overflow: 'hidden',
+            animation: 'saveFeedbackCover 1600ms cubic-bezier(0.22, 1, 0.36, 1) both',
+            '@keyframes saveFeedbackCover': {
+              '0%': { opacity: 1, clipPath: 'circle(0 at var(--save-origin-x) var(--save-origin-y))' },
+              '22%, 90%': { opacity: 1, clipPath: 'circle(150vmax at var(--save-origin-x) var(--save-origin-y))' },
+              '100%': { opacity: 0, clipPath: 'circle(150vmax at var(--save-origin-x) var(--save-origin-y))' },
+            },
+            '@media (min-width: 1200px)': { '--save-origin-y': 'calc(100% - 96px)' },
+            '@media (prefers-reduced-motion: reduce)': {
+              animation: 'saveFeedbackFade 1600ms ease both',
+              '@keyframes saveFeedbackFade': { '0%, 100%': { opacity: 0 }, '10%, 90%': { opacity: 1 } },
+            },
             borderRadius: 0,
             border: 0,
             backgroundColor: alpha(t.surfacePure, mode === 'dark' ? 0.68 : 0.74),

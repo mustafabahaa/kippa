@@ -1,4 +1,4 @@
-import { Box, Typography, useTheme } from '@mui/material';
+import { Box, Paper, Typography, useTheme } from '@mui/material';
 import { ReactNode } from 'react';
 
 interface EmptyLayoutProps {
@@ -17,62 +17,28 @@ export function EmptyLayout({ title, description, action, icon }: EmptyLayoutPro
   const logoSrc = theme.palette.mode === 'dark' ? '/icons/logo_white_transparent.png' : '/icons/logo_black_transparent.png';
 
   return (
-    <Box
-      sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        textAlign: 'center',
-        py: 4,
-        px: 3,
-        borderRadius: '24px',
-        border: '2px dashed',
-        borderColor: 'divider',
-        bgcolor: 'background.paper',
-        width: '100%',
-        boxSizing: 'border-box',
-        transition: 'all 0.3s ease-in-out',
-      }}
-    >
+    <Paper variant="emptyState">
       {icon ? (
-        <Box
-          sx={{
-            width: 52,
-            height: 52,
-            mb: 2,
-            borderRadius: 3,
-            bgcolor: 'action.hover',
-            color: 'primary.main',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
+        <Paper variant="emptyStateIcon">
           {icon}
-        </Box>
+        </Paper>
       ) : (
-        <Box
+        <Paper
           component="img"
+          variant="emptyStateLogo"
           src={logoSrc}
           alt="Kippa Logo"
-          sx={{
-            width: 52,
-            height: 52,
-            opacity: 0.25,
-            mb: 2,
-          }}
         />
       )}
-      <Typography variant="subtitle1" sx={{ fontWeight: 700, color: 'text.primary', fontSize: '15px' }}>
+      <Typography variant="emptyStateTitle" color="text.primary">
         {title}
       </Typography>
       {description && (
-        <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '13px', mt: 0.75, maxWidth: '80%' }}>
+        <Typography variant="emptyStateDescription" color="text.secondary" sx={{ mt: 0.75, maxWidth: '80%' }}>
           {description}
         </Typography>
       )}
       {action && <Box sx={{ mt: 2.5 }}>{action}</Box>}
-    </Box>
+    </Paper>
   );
 }

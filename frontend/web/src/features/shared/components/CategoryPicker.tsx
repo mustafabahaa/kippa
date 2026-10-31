@@ -87,12 +87,12 @@ export function CategoryChips({
               {(searchValue === undefined || searchValue === '') &&
                 ((onToggleExpanded && (expanded || totalCount > categories.length)) ||
                   (!onToggleExpanded && onOpenAll && totalCount > categories.length)) && (
-                <Chip
-                  icon={expanded ? undefined : <AddIcon fontSize="small" />}
-                  label={expanded ? 'Show less' : `More (${totalCount - categories.length})`}
-                  onClick={onToggleExpanded ?? onOpenAll}
-                  variant="filterAction"
-                />
+                  <Chip
+                    icon={expanded ? undefined : <AddIcon fontSize="small" />}
+                    label={expanded ? 'Show less' : `More (${totalCount - categories.length})`}
+                    onClick={onToggleExpanded ?? onOpenAll}
+                    variant="filterAction"
+                  />
                 )}
             </Box>
           ) : (

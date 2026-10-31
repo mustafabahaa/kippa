@@ -1,5 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import {
+  AiAssistantFooter,
+  AiAssistantLoadingBadge,
+  AiAssistantPage,
+  AiAssistantStreamCursor,
+} from '@kippa/design-system';
+import {
   Alert,
   Box,
   Button,
@@ -420,19 +426,7 @@ export function AiAssistant() {
                   <Markdown remarkPlugins={[remarkGfm]}>{message.content}</Markdown>
                 </Typography>
                 {streaming && (
-                  <Box
-                    component="span"
-                    sx={{
-                      display: 'inline-block',
-                      width: 6,
-                      height: 16,
-                      ml: 0.5,
-                      bgcolor: 'primary.main',
-                      verticalAlign: 'text-bottom',
-                      animation: 'kipCursor 900ms steps(1) infinite',
-                      '@keyframes kipCursor': { '50%': { opacity: 0 } },
-                    }}
-                  />
+                  <AiAssistantStreamCursor />
                 )}
               </Paper>
               {message.charts?.map((chart, index) => (
@@ -446,14 +440,10 @@ export function AiAssistant() {
   };
 
   return (
-    <Box
+    <AiAssistantPage
       sx={{
         height: { xs: 'calc(100dvh - 148px)', md: 'calc(100dvh - 76px)' },
         minHeight: 420,
-        display: 'flex',
-        flexDirection: 'column',
-        bgcolor: 'background.paper',
-        overflow: 'hidden',
       }}
     >
       <Box
@@ -603,21 +593,11 @@ export function AiAssistant() {
                 <AiChart key={`streamed-chart-${index}`} chart={chart} />
               ))}
               {isSending && !streamedText && (
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, color: 'text.secondary' }}>
-                  <Box
-                    sx={{
-                      width: 28,
-                      height: 28,
-                      borderRadius: 2,
-                      bgcolor: 'secondary.main',
-                      color: 'secondary.contrastText',
-                      display: 'grid',
-                      placeItems: 'center',
-                    }}
-                  >
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                  <AiAssistantLoadingBadge>
                     <CircularProgress size={14} color="inherit" />
-                  </Box>
-                  <Typography variant="fieldHint">Kip is checking your data…</Typography>
+                  </AiAssistantLoadingBadge>
+                  <Typography variant="fieldHint" color="text.secondary">Kip is checking your data…</Typography>
                 </Box>
               )}
               {pendingActions.map((action) => (
@@ -792,7 +772,7 @@ export function AiAssistant() {
       </Box>
 
       {aiConnectionStatus === 'connected' && (
-        <Box sx={{ flexShrink: 0, bgcolor: 'background.paper', px: { xs: 2, sm: 3 }, pt: 1.5, pb: { xs: 1.5, md: 2 } }}>
+        <AiAssistantFooter sx={{ px: { xs: 2, sm: 3 }, pt: 1.5, pb: { xs: 1.5, md: 2 } }}>
           <Stack spacing={1} sx={{ width: '100%', maxWidth: 760, mx: 'auto' }}>
             {error && (
               <Alert severity="warning" onClose={() => setError('')}>
@@ -831,7 +811,7 @@ export function AiAssistant() {
               Kip can make mistakes. Financial facts come from your Kippa records.
             </Typography>
           </Stack>
-        </Box>
+        </AiAssistantFooter>
       )}
       <Dialog open={isClearOpen} onClose={() => setIsClearOpen(false)} fullWidth maxWidth="xs">
         <DialogTitle>
@@ -852,6 +832,6 @@ export function AiAssistant() {
           </Button>
         </DialogActions>
       </Dialog>
-    </Box>
+    </AiAssistantPage>
   );
 }

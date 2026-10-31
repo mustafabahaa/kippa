@@ -242,8 +242,8 @@ export function FastEntry() {
       <Box sx={{ py: 0.5, width: '100%', maxWidth: 520, mx: 'auto' }}>
         <Stack spacing={3}>
           <PageHeader title="Quick entry" subtitle="Log expenses, income & transfers" />
-          <Skeleton variant="rectangular" width="100%" height={100} sx={{ borderRadius: '20px' }} />
-          <Skeleton variant="rectangular" width="100%" height={250} sx={{ borderRadius: '20px' }} />
+          <Skeleton variant="rounded" width="100%" height={100} />
+          <Skeleton variant="rounded" width="100%" height={250} />
         </Stack>
       </Box>
     );
@@ -298,11 +298,7 @@ export function FastEntry() {
               {(mode === 'expense' || mode === 'income') && (
                 <CategoryChips
                   categories={
-                    categorySearch
-                      ? filteredCategories
-                      : allCategoriesExpanded
-                        ? sortedCategories
-                        : displayedCategories
+                    categorySearch ? filteredCategories : allCategoriesExpanded ? sortedCategories : displayedCategories
                   }
                   expanded={allCategoriesExpanded}
                   mode={mode}

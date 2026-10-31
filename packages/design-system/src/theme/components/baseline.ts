@@ -17,6 +17,29 @@ export const baselineOverrides = ({ mode, tokens: t }: OverrideContext): Compone
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
       }
+      * {
+        scrollbar-width: thin;
+        scrollbar-color: ${alpha(chrome, mode === 'dark' ? 0.28 : 0.24)} transparent;
+      }
+      *::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+      }
+      *::-webkit-scrollbar-track,
+      *::-webkit-scrollbar-corner {
+        background: transparent;
+        border: 0;
+        box-shadow: none;
+      }
+      *::-webkit-scrollbar-thumb {
+        background-color: ${alpha(chrome, mode === 'dark' ? 0.3 : 0.24)};
+        border: 0;
+        border-radius: 999px;
+        box-shadow: none;
+      }
+      *::-webkit-scrollbar-thumb:hover {
+        background-color: ${alpha(chrome, mode === 'dark' ? 0.45 : 0.38)};
+      }
       .kippa-desktop-nav-item {
         width: 48px;
         height: 48px;
@@ -91,8 +114,8 @@ export const baselineOverrides = ({ mode, tokens: t }: OverrideContext): Compone
         top: 50%;
         bottom: 0;
       }
-      .kippa-stepper > :first-child::before,
-      .kippa-stepper > :last-child::after {
+      .kippa-stepper > :first-of-type::before,
+      .kippa-stepper > :last-of-type::after {
         display: none;
       }
       .kippa-transaction-type-dot[data-type="income"] { background: ${designTokens.color.success}; }

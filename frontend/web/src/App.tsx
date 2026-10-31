@@ -1,5 +1,5 @@
 import { useMemo, lazy, Suspense } from 'react';
-import { Routes, Route, BrowserRouter, Navigate } from 'react-router-dom';
+import { Routes, Route, BrowserRouter, useLocation } from 'react-router-dom';
 import { ThemeProvider, CssBaseline } from '@mui/material';
 import { createAppTheme } from '@kippa/design-system';
 import { useThemeMode } from '@/hooks/useThemeMode';
@@ -7,6 +7,8 @@ import { useAppContext } from '@/hooks/useAppContext';
 import { AppLoadingScreen } from '@/components/app-shell/AppLoadingScreen';
 import { AppShell } from '@/components/app-shell/AppShell';
 import { useNotifications } from '@/notifications/useNotifications';
+import { SystemStatusPage } from '@/features/shared/components/SystemStatusPage';
+import { AppErrorBoundary } from '@/features/shared/components/AppErrorBoundary';
 
 const AuthScreen = lazy(() => import('@/features/auth/AuthScreen').then((m) => ({ default: m.AuthScreen })));
 const Dashboard = lazy(() => import('@/features/dashboard/Dashboard').then((m) => ({ default: m.Dashboard })));
@@ -42,6 +44,29 @@ const AiAssistant = lazy(() => import('@/features/ai/AiAssistant').then((m) => (
 const Loans = lazy(() => import('@/features/loans/Loans').then((m) => ({ default: m.Loans })));
 const McpConsentPage = lazy(() => import('@/features/mcp/McpConsentPage').then((m) => ({ default: m.McpConsentPage })));
 
+const AUTHENTICATED_APP_PATHS = new Set([
+  '/',
+  '/entry',
+  '/reconciliation',
+  '/cycles',
+  '/cycles/report',
+  '/transactions',
+  '/pending',
+  '/activity',
+  '/accounts',
+  '/accounts/statements',
+  '/household',
+  '/categories',
+  '/notifications',
+  '/ai',
+  '/loans',
+]);
+
+function SignedOutRoute() {
+  const { pathname } = useLocation();
+  return AUTHENTICATED_APP_PATHS.has(pathname) ? <AuthScreen /> : <SystemStatusPage status="notFound" />;
+}
+
 export default function App() {
   const { userProfile, householdId, isAuthLoading } = useAppContext();
   const { resolvedMode } = useThemeMode();
@@ -60,34 +85,36 @@ export default function App() {
       <CssBaseline />
       <BrowserRouter>
         <Suspense fallback={<AppLoadingScreen theme={theme} />}>
-          <Routes>
-            <Route
-              path="/mcp/authorize"
-              element={userProfile && householdId ? <McpConsentPage /> : <AuthScreen />}
-            />
-            {userProfile && householdId ? (
-              <Route element={<AppShell />}>
-                <Route index element={<Dashboard />} />
-                <Route path="entry" element={<FastEntry />} />
-                <Route path="reconciliation" element={<Reconciliation />} />
-                <Route path="cycles" element={<BudgetCycles />} />
-                <Route path="cycles/report" element={<CycleReport />} />
-                <Route path="transactions" element={<TransactionHistory />} />
-                <Route path="pending" element={<PendingTransactions />} />
-                <Route path="activity" element={<ActivityHistory />} />
-                <Route path="accounts" element={<Accounts />} />
-                <Route path="accounts/statements" element={<AccountStatements />} />
-                <Route path="household" element={<Household />} />
-                <Route path="categories" element={<Categories />} />
-                <Route path="notifications" element={<Notifications />} />
-                <Route path="ai" element={<AiAssistant />} />
-                <Route path="loans" element={<Loans />} />
-                <Route path="*" element={<Navigate to="/" replace />} />
-              </Route>
-            ) : (
-              <Route path="*" element={<AuthScreen />} />
-            )}
-          </Routes>
+          <AppErrorBoundary>
+            <Routes>
+              <Route
+                path="/mcp/authorize"
+                element={userProfile && householdId ? <McpConsentPage /> : <AuthScreen />}
+              />
+              {userProfile && householdId ? (
+                <Route element={<AppShell />}>
+                  <Route index element={<Dashboard />} />
+                  <Route path="entry" element={<FastEntry />} />
+                  <Route path="reconciliation" element={<Reconciliation />} />
+                  <Route path="cycles" element={<BudgetCycles />} />
+                  <Route path="cycles/report" element={<CycleReport />} />
+                  <Route path="transactions" element={<TransactionHistory />} />
+                  <Route path="pending" element={<PendingTransactions />} />
+                  <Route path="activity" element={<ActivityHistory />} />
+                  <Route path="accounts" element={<Accounts />} />
+                  <Route path="accounts/statements" element={<AccountStatements />} />
+                  <Route path="household" element={<Household />} />
+                  <Route path="categories" element={<Categories />} />
+                  <Route path="notifications" element={<Notifications />} />
+                  <Route path="ai" element={<AiAssistant />} />
+                  <Route path="loans" element={<Loans />} />
+                </Route>
+              ) : (
+                <Route path="*" element={<SignedOutRoute />} />
+              )}
+              {userProfile && householdId && <Route path="*" element={<SystemStatusPage status="notFound" />} />}
+            </Routes>
+          </AppErrorBoundary>
         </Suspense>
       </BrowserRouter>
     </ThemeProvider>

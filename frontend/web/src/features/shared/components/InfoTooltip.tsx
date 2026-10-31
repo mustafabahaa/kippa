@@ -1,5 +1,6 @@
-import { IconInfoCircle } from '@tabler/icons-react';
-import { Box, Tooltip, SxProps, Theme } from '@mui/material';
+import { InfoOutlinedIcon } from '@/components/AppIcon';
+
+import { Box, Tooltip, Typography } from '@mui/material';
 import { ReactNode } from 'react';
 
 interface InfoTooltipProps {
@@ -9,8 +10,6 @@ interface InfoTooltipProps {
   label?: ReactNode;
   /** Override the default icon size. */
   iconSize?: number;
-  /** Custom styling for the inline wrapper. */
-  sx?: SxProps<Theme>;
 }
 
 /**
@@ -20,10 +19,14 @@ interface InfoTooltipProps {
  * Used to demystify jargon like "Spending ratio", "Cycle progress",
  * "Safe Daily", etc. for users who don't know what the metric means.
  */
-export function InfoTooltip({ text, label, iconSize = 14, sx }: InfoTooltipProps) {
+export function InfoTooltip({ text, label, iconSize = 14 }: InfoTooltipProps) {
   return (
     <Tooltip
-      title={<Box sx={{ maxWidth: 260, fontSize: '12.5px', lineHeight: 1.45 }}>{text}</Box>}
+      title={
+        <Typography component="div" variant="sectionSubtitle" sx={{ maxWidth: 260 }}>
+          {text}
+        </Typography>
+      }
       arrow
       enterTouchDelay={0}
       leaveTouchDelay={4000}
@@ -37,11 +40,10 @@ export function InfoTooltip({ text, label, iconSize = 14, sx }: InfoTooltipProps
           gap: 0.4,
           cursor: 'help',
           verticalAlign: 'middle',
-          ...sx,
         }}
       >
         {label}
-        <IconInfoCircle size={iconSize} strokeWidth={1.8} />
+        <InfoOutlinedIcon size={iconSize} strokeWidth={1.8} />
       </Box>
     </Tooltip>
   );

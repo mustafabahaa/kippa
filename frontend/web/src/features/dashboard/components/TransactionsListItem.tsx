@@ -1,4 +1,5 @@
-import { IconDotsVertical, IconEdit, IconTrash } from '@tabler/icons-react';
+import { DeleteIcon, EditIcon, MoreVerticalIcon } from '@/components/AppIcon';
+
 import React, { useState } from 'react';
 import {
   Badge,
@@ -141,8 +142,8 @@ export const TransactionsListItem: React.FC<TransactionsListItemProps> = ({
           columnGap: { xs: 1.5, sm: 2.5 },
           rowGap: { xs: 1, lg: 0 },
           alignItems: 'center',
-          opacity: tx.status === 'voided' ? 0.5 : 1,
         }}
+        data-voided={tx.status === 'voided' ? 'true' : undefined}
       >
         <Box display="flex" alignItems="center" gap={1.5} sx={{ minWidth: 0, gridArea: 'timeline' }}>
           {creator ? (
@@ -193,7 +194,7 @@ export const TransactionsListItem: React.FC<TransactionsListItemProps> = ({
           onClick={(event) => setActionsAnchor(event.currentTarget)}
           sx={{ gridArea: 'actions', justifySelf: { xs: 'start', sm: 'auto' }, width: 36, height: 36 }}
         >
-          <IconDotsVertical size={20} strokeWidth={1.8} />
+          <MoreVerticalIcon size={20} strokeWidth={1.8} />
         </IconButton>
       </Paper>
       <Menu
@@ -211,7 +212,7 @@ export const TransactionsListItem: React.FC<TransactionsListItemProps> = ({
           }}
         >
           <ListItemIcon>
-            <IconEdit size={18} strokeWidth={1.8} />
+            <EditIcon size={18} strokeWidth={1.8} />
           </ListItemIcon>
           <ListItemText>Edit transaction</ListItemText>
         </MenuItem>
@@ -222,7 +223,7 @@ export const TransactionsListItem: React.FC<TransactionsListItemProps> = ({
           }}
         >
           <ListItemIcon>
-            <IconTrash size={18} strokeWidth={1.8} />
+            <DeleteIcon size={18} strokeWidth={1.8} />
           </ListItemIcon>
           <ListItemText>Void transaction</ListItemText>
         </MenuItem>

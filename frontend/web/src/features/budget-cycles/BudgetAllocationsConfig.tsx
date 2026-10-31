@@ -1,7 +1,8 @@
-import { IconCopy } from '@tabler/icons-react';
+import { ContentCopyIcon } from '@/components/AppIcon';
+
 import { useState, useEffect, useCallback } from 'react';
 import { useSnackbar } from 'notistack';
-import { Box, Button, Stack, Typography, Chip } from '@mui/material';
+import { Box, Button, Divider, Stack, Typography, Chip } from '@mui/material';
 import { useSaveAllocationsBatchMutation, useHouseholdBaseCurrency } from '@/hooks/useFinance';
 import { Money } from '@/components/Money';
 import { usePrivacyMask } from '@/hooks/usePrivacyMask';
@@ -147,10 +148,14 @@ export function BudgetAllocationsConfig({
     <Box>
       {/* Header */}
       <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
-        <Typography variant="body1" sx={{ fontWeight: 700, color: 'text.primary', fontSize: '15px' }}>
+        <Typography variant="sectionTitle" color="text.primary">
           Category Budgets ({baseCurrency})
         </Typography>
-        <Button variant="text" startIcon={<IconCopy size={22} strokeWidth={1.8} />} onClick={handleCopyPreviousAllocations}>
+        <Button
+          variant="text"
+          startIcon={<ContentCopyIcon size={22} strokeWidth={1.8} />}
+          onClick={handleCopyPreviousAllocations}
+        >
           Copy previous
         </Button>
       </Box>
@@ -165,34 +170,20 @@ export function BudgetAllocationsConfig({
       />
 
       {/* Category actions */}
-      <Box sx={{ mt: 2.5, pt: 2.25, borderTop: 1, borderColor: 'divider' }}>
+      <Box sx={{ mt: 2.5 }}>
+        <Divider sx={{ mb: 2.25 }} />
         <Stack spacing={0.25} sx={{ mb: 1.25 }}>
-          <Typography variant="sectionLabel" sx={{ color: 'text.primary' }}>
+          <Typography variant="sectionLabel" color="text.primary">
             Add to cycle
           </Typography>
-          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+          <Typography variant="body2" color="text.secondary">
             Choose an existing category. Categories are managed on the Categories page.
           </Typography>
         </Stack>
 
         <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 1 }}>
           {availableCategories.map((cat) => (
-            <Chip
-              key={cat.id}
-              label={cat.name}
-              variant="outlined"
-              onClick={() => handleAddExistingCategory(cat.id)}
-              sx={{
-                height: 36,
-                borderRadius: '12px',
-                bgcolor: 'background.paper',
-                color: 'text.secondary',
-                borderColor: 'divider',
-                fontSize: 13,
-                fontWeight: 400,
-                '&:hover': { bgcolor: 'action.hover' },
-              }}
-            />
+            <Chip key={cat.id} label={cat.name} variant="filter" onClick={() => handleAddExistingCategory(cat.id)} />
           ))}
         </Box>
       </Box>
@@ -204,7 +195,7 @@ export function BudgetAllocationsConfig({
             <Typography variant="body2" color="text.secondary">
               Total Budget
             </Typography>
-            <Typography variant="body1" sx={{ fontWeight: 700, fontSize: '16px' }}>
+            <Typography variant="sectionTitle">
               <Money amount={totalBudget} code={baseCurrency} />
             </Typography>
           </Box>

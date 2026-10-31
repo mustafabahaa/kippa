@@ -1,6 +1,18 @@
-import { IconAdjustments, IconCheck, IconCopy, IconEye, IconEyeOff, IconHome, IconLogout2, IconMoon, IconSun } from '@tabler/icons-react';
+import {
+  CheckIcon,
+  ContentCopyIcon,
+  DarkModeIcon,
+  HomeIcon,
+  LightModeIcon,
+  LogoutIcon,
+  TuneIcon,
+  VisibilityIcon,
+  VisibilityOffIcon,
+} from '@/components/AppIcon';
+
 import {
   Box,
+  Paper,
   Menu,
   MenuItem,
   Divider,
@@ -31,29 +43,6 @@ interface ProfileMenuProps {
   logout: () => Promise<void>;
 }
 
-const menuItemStyle = {
-  mx: 1,
-  my: 0.25,
-  px: 1.5,
-  py: 1,
-  borderRadius: '8px',
-  '&.MuiMenuItem-root': {
-    borderRadius: '8px',
-  },
-  '& .MuiListItemIcon-root': {
-    minWidth: 30,
-    color: 'text.primary',
-  },
-  '& .MuiListItemText-primary': {
-    fontSize: '0.875rem',
-    fontWeight: 500,
-    color: 'text.primary',
-  },
-  '& .MuiListItemText-secondary': {
-    fontSize: '0.75rem',
-  },
-};
-
 export function ProfileMenu({
   anchorEl,
   open,
@@ -82,29 +71,8 @@ export function ProfileMenu({
       slotProps={{
         paper: {
           elevation: 0,
-          sx: {
-            overflow: 'visible',
-            mt: 1.5,
-            minWidth: 280,
-            borderRadius: '12px',
-            border: '1px solid',
-            borderColor: 'divider',
-            '&::before': {
-              content: '""',
-              display: 'block',
-              position: 'absolute',
-              top: 0,
-              right: 18,
-              width: 10,
-              height: 10,
-              bgcolor: 'background.paper',
-              transform: 'translateY(-50%) rotate(45deg)',
-              zIndex: 0,
-              borderLeft: '1px solid',
-              borderTop: '1px solid',
-              borderColor: 'divider',
-            },
-          },
+          variant: 'navigationMenu',
+          sx: { mt: 1.5, minWidth: 280 },
         },
       }}
       transformOrigin={{ horizontal: 'right', vertical: 'top' }}
@@ -116,13 +84,13 @@ export function ProfileMenu({
           <UserAvatar
             photoURLs={[auth?.currentUser?.photoURL, userProfile?.photoURL]}
             displayName={userProfile?.displayName}
-            sx={{ bgcolor: 'primary.main', width: 44, height: 44, fontSize: '1.1rem', fontWeight: 600 }}
+            variant="profileMenu"
           />
           <Box sx={{ minWidth: 0 }}>
-            <Typography variant="body1" noWrap sx={{ fontWeight: 600, color: 'text.primary' }}>
+            <Typography variant="profileMenuName" color="text.primary" noWrap>
               {userProfile?.displayName || 'User'}
             </Typography>
-            <Typography variant="body2" sx={{ color: 'text.secondary', wordBreak: 'break-all', fontSize: '0.75rem' }}>
+            <Typography variant="caption" color="text.secondary" sx={{ wordBreak: 'break-all' }}>
               {userProfile?.email || 'No email associated'}
             </Typography>
           </Box>
@@ -134,41 +102,27 @@ export function ProfileMenu({
       {/* Household sharing info */}
       <Box sx={{ py: 0.75 }}>
         <Typography
-          variant="body2"
-          sx={{
-            fontWeight: 700,
-            color: 'text.secondary',
-            textTransform: 'uppercase',
-            fontSize: '0.65rem',
-            letterSpacing: '0.08em',
-            px: 2.5,
-            mb: 1,
-            display: 'block',
-          }}
+          variant="overline"
+          color="text.secondary"
+          sx={{ px: 2.5, mb: 1, display: 'block' }}
         >
           Current Household
         </Typography>
 
-        <Stack
+        <Paper
+          component={Stack}
+          variant="profileHouseholdRow"
           direction="row"
           spacing={1.5}
           alignItems="center"
-          sx={{
-            mx: 1,
-            px: 1.5,
-            py: 1.25,
-            borderRadius: '8px',
-            bgcolor: 'action.hover',
-            border: '1px solid',
-            borderColor: 'divider',
-          }}
+          sx={{ mx: 1, px: 1.5, py: 1.25 }}
         >
-          <IconHome size={22} strokeWidth={1.8} />
+          <HomeIcon size={22} strokeWidth={1.8} />
           <Box sx={{ flexGrow: 1, minWidth: 0 }}>
-            <Typography variant="body2" noWrap sx={{ fontWeight: 600, color: 'text.primary', fontSize: '0.8125rem' }}>
+            <Typography variant="profileHouseholdName" color="text.primary" noWrap>
               {householdName}
             </Typography>
-            <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', fontSize: '0.6875rem' }}>
+            <Typography variant="profileHouseholdId" color="text.secondary">
               ID: {householdId ? `${householdId.slice(0, 8)}...` : 'None'}
             </Typography>
           </Box>
@@ -180,38 +134,22 @@ export function ProfileMenu({
                   e.stopPropagation();
                   navigator.clipboard.writeText(householdId || '');
                 }}
-                sx={{
-                  p: 0.5,
-                  bgcolor: 'background.paper',
-                  border: '1px solid',
-                  borderColor: 'divider',
-                  borderRadius: '6px',
-                  '&:hover': { bgcolor: 'action.hover' },
-                }}
+                sx={{ p: 0.5 }}
               >
-                <IconCopy size={22} strokeWidth={1.8} />
+                <ContentCopyIcon size={22} strokeWidth={1.8} />
               </IconButton>
             </Tooltip>
           )}
-        </Stack>
+        </Paper>
       </Box>
 
       {/* Quick Switch Households */}
       {userHouseholds.length > 1 && (
         <>
           <Typography
-            variant="body2"
-            sx={{
-              fontWeight: 700,
-              color: 'text.secondary',
-              textTransform: 'uppercase',
-              fontSize: '0.65rem',
-              letterSpacing: '0.08em',
-              px: 2.5,
-              mt: 1.5,
-              mb: 0.5,
-              display: 'block',
-            }}
+            variant="overline"
+            color="text.secondary"
+            sx={{ px: 2.5, mt: 1.5, mb: 0.5, display: 'block' }}
           >
             Switch Household
           </Typography>
@@ -228,10 +166,9 @@ export function ProfileMenu({
                     console.error('Failed to switch household:', err);
                   }
                 }}
-                sx={menuItemStyle}
               >
                 <ListItemIcon>
-                  <IconHome size={22} strokeWidth={1.8} />
+                  <HomeIcon size={22} strokeWidth={1.8} />
                 </ListItemIcon>
                 <ListItemText primary={hh.name} secondary={`ID: ${hh.id.slice(0, 8)}...`} />
               </MenuItem>
@@ -244,25 +181,16 @@ export function ProfileMenu({
 
       {/* Appearance / Theme */}
       <Typography
-        variant="body2"
-        sx={{
-          fontWeight: 700,
-          color: 'text.secondary',
-          textTransform: 'uppercase',
-          fontSize: '0.65rem',
-          letterSpacing: '0.08em',
-          px: 2.5,
-          mt: 0.5,
-          mb: 0.5,
-          display: 'block',
-        }}
+        variant="overline"
+        color="text.secondary"
+        sx={{ px: 2.5, mt: 0.5, mb: 0.5, display: 'block' }}
       >
         Appearance
       </Typography>
       {[
-        { value: 'light' as ThemeModePref, label: 'Light', Icon: IconSun },
-        { value: 'dark' as ThemeModePref, label: 'Dark', Icon: IconMoon },
-        { value: 'system' as ThemeModePref, label: 'System default', Icon: IconAdjustments },
+        { value: 'light' as ThemeModePref, label: 'Light', Icon: LightModeIcon },
+        { value: 'dark' as ThemeModePref, label: 'Dark', Icon: DarkModeIcon },
+        { value: 'system' as ThemeModePref, label: 'System default', Icon: TuneIcon },
       ].map(({ value, label, Icon }) => {
         const selected = modePref === value;
         return (
@@ -272,13 +200,13 @@ export function ProfileMenu({
               setModePref(value);
               handleClose();
             }}
-            sx={{ ...menuItemStyle, py: 0.75 }}
+            sx={{ py: 0.75 }}
           >
             <ListItemIcon>
               <Icon size={22} strokeWidth={1.8} />
             </ListItemIcon>
             <ListItemText primary={label} />
-            {selected && <IconCheck size={22} strokeWidth={1.8} />}
+            {selected && <CheckIcon size={22} strokeWidth={1.8} />}
           </MenuItem>
         );
       })}
@@ -291,13 +219,17 @@ export function ProfileMenu({
           setPrivacyMode(!privacyMode);
           handleClose();
         }}
-        sx={{ ...menuItemStyle, py: 0.75 }}
+        sx={{ py: 0.75 }}
       >
         <ListItemIcon>
-          {privacyMode ? <IconEyeOff size={22} strokeWidth={1.8} /> : <IconEye size={22} strokeWidth={1.8} />}
+          {privacyMode ? (
+            <VisibilityOffIcon size={22} strokeWidth={1.8} />
+          ) : (
+            <VisibilityIcon size={22} strokeWidth={1.8} />
+          )}
         </ListItemIcon>
         <ListItemText primary={privacyMode ? 'Privacy Mode On' : 'Privacy Mode'} secondary="Hide balances" />
-        {privacyMode && <IconCheck size={22} strokeWidth={1.8} />}
+        {privacyMode && <CheckIcon size={22} strokeWidth={1.8} />}
       </MenuItem>
 
       <Divider sx={{ my: 1 }} />
@@ -307,15 +239,10 @@ export function ProfileMenu({
           handleClose();
           logout();
         }}
-        sx={{
-          ...menuItemStyle,
-          color: 'error.main',
-          '& .MuiListItemIcon-root': { minWidth: 30, color: 'error.main' },
-          '& .MuiListItemText-primary': { fontSize: '0.875rem', fontWeight: 600, color: 'error.main' },
-        }}
+        kippaTone="destructive"
       >
         <ListItemIcon>
-          <IconLogout2 size={22} strokeWidth={1.8} />
+          <LogoutIcon size={22} strokeWidth={1.8} />
         </ListItemIcon>
         <ListItemText primary="Sign Out" />
       </MenuItem>

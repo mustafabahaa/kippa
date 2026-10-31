@@ -201,8 +201,6 @@ export function AuthScreen() {
     <Box
       sx={{
         minHeight: '100dvh',
-        bgcolor: 'background.default',
-        color: 'text.primary',
         display: 'grid',
         placeItems: 'center',
         px: { xs: 3, sm: 5 },
@@ -223,7 +221,6 @@ export function AuthScreen() {
             sx={{
               width: 42,
               height: 42,
-              borderRadius: 2.5,
               display: 'grid',
               placeItems: 'center',
             }}

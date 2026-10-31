@@ -386,6 +386,7 @@ export function PendingTransactions() {
                         type="button"
                         onClick={() => openReview(item)}
                         disabled={(itemStates[item.id] ?? 'idle') !== 'idle'}
+                        data-processing={(itemStates[item.id] ?? 'idle') !== 'idle' || undefined}
                         variant="timelineRow"
                         sx={{
                           width: '100%',
@@ -395,10 +396,8 @@ export function PendingTransactions() {
                           display: 'flex',
                           alignItems: 'center',
                           gap: 1.5,
-                          color: 'text.primary',
                           textAlign: 'left',
                           cursor: 'pointer',
-                          opacity: (itemStates[item.id] ?? 'idle') === 'idle' ? 1 : 0.6,
                         }}
                       >
                         {(itemStates[item.id] ?? 'idle') === 'idle' ? (

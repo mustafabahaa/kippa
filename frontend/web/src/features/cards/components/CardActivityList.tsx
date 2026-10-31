@@ -1,4 +1,5 @@
-import { IconCircleCheck } from '@tabler/icons-react';
+import { CheckCircleIcon } from '@/components/AppIcon';
+
 import { Badge, Box, Button, Divider, Paper, Stack, Typography } from '@mui/material';
 import type { CardCharge, CardChargeGroup } from '@/libs/cardActivity';
 import type { Card, Category, FinanceTransaction } from '@kippa/domain';
@@ -7,6 +8,7 @@ import { UserAvatar } from '@/components/UserAvatar';
 import { auth } from '@/config/firebase';
 import { useAppContext } from '@/hooks/useAppContext';
 import { formatShortTime } from '@/libs/dateFormatting';
+import { CardActivityText } from '@kippa/design-system';
 
 type Props = {
   card: Card;
@@ -121,16 +123,11 @@ export function CardActivityList({
                       </Box>
                     )}
                     <Stack spacing={0.25} sx={{ minWidth: 0, flex: 1 }}>
-                      <Typography
-                        variant="transactionAmount"
-                        color={charge.paid ? 'text.disabled' : 'text.primary'}
-                        noWrap
-                        sx={{ textDecoration: charge.paid ? 'line-through' : 'none' }}
-                      >
+                      <CardActivityText paid={charge.paid} variant="transactionAmount" noWrap>
                         {mask(
                           `−${card.currency} ${charge.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}`,
                         )}
-                      </Typography>
+                      </CardActivityText>
                       {creator && (
                         <Typography variant="body2" color="text.primary" noWrap>
                           {creator.displayName}
@@ -142,13 +139,9 @@ export function CardActivityList({
                     </Stack>
                   </Box>
                   <Box sx={{ minWidth: 0, gridArea: 'details' }}>
-                    <Typography
-                      variant="sectionLabel"
-                      color={charge.paid ? 'text.disabled' : 'text.primary'}
-                      sx={{ textDecoration: charge.paid ? 'line-through' : 'none' }}
-                    >
+                    <CardActivityText paid={charge.paid} variant="sectionLabel">
                       {category?.name ?? charge.txType}
-                    </Typography>
+                    </CardActivityText>
                     {charge.description && (
                       <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25, overflowWrap: 'anywhere' }}>
                         {charge.description}
@@ -167,7 +160,7 @@ export function CardActivityList({
                     sx={{ flexShrink: 0, gridArea: 'actions', justifySelf: 'end' }}
                   >
                     {charge.paid ? (
-                      <IconCircleCheck size={22} strokeWidth={1.8} aria-label="Paid" />
+                      <CheckCircleIcon size={22} strokeWidth={1.8} aria-label="Paid" />
                     ) : (
                       card.kind === 'credit' && (
                         <Button size="small" onClick={() => onPay(charge)}>

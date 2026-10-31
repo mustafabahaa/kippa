@@ -164,11 +164,11 @@ export function CardDetail({ card, onClose }: { card: Card; onClose: () => void 
           kind={card.kind}
           tierId={card.tierId}
           surface="bankCardHeader"
+          inactive={!card.isActive}
           sx={{ flexShrink: 0 }}
         >
           <Box
             sx={{
-              filter: card.isActive ? 'none' : 'grayscale(0.7) brightness(0.7)',
               p: 2.5,
               pb: 3,
               position: 'relative',
@@ -218,7 +218,7 @@ export function CardDetail({ card, onClose }: { card: Card; onClose: () => void 
                 <Typography variant="cardDetailNumber">•••• •••• {maskText(card.last4 ?? '----')}</Typography>
 
                 {card.expiryMonth && card.expiryYear && (
-                  <Stack direction="row" alignItems="center" spacing={0.5} sx={{ opacity: 0.9 }}>
+                  <Stack direction="row" alignItems="center" spacing={0.5}>
                     <Typography variant="cardMicro" className="bank-card-muted" sx={{ mr: 0.25 }}>
                       THRU ▶
                     </Typography>

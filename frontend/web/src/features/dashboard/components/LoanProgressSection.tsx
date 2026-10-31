@@ -1,5 +1,6 @@
-import { IconCalendar, IconCreditCardPay } from '@tabler/icons-react';
-import { Box, Button, Card, CardContent, Chip, LinearProgress, Skeleton, Stack, Typography } from '@mui/material';
+import { CalendarMonthIcon, PaymentsIcon } from '@/components/AppIcon';
+
+import { Box, Button, Card, CardContent, Chip, Divider, LinearProgress, Skeleton, Stack, Typography } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { Money } from '@/components/Money';
 import { useAppContext } from '@/hooks/useAppContext';
@@ -42,7 +43,7 @@ export function LoanProgressSection() {
         <Stack spacing={2} sx={{ height: '100%' }}>
           <Stack spacing={2.5}>
             <DashboardSectionHeading
-              icon={<IconCreditCardPay size={22} strokeWidth={1.8} />}
+              icon={<PaymentsIcon size={22} strokeWidth={1.8} />}
               title={loan.name}
               subtitle={`${progress.paidInstallments} of ${loan.totalInstallments} payments`}
               trailing={<Chip label={`${progress.progressPercent.toFixed(0)}% paid`} color="success" />}
@@ -60,7 +61,7 @@ export function LoanProgressSection() {
               </Stack>
             </Stack>
 
-            <Stack direction="row" spacing={2} divider={<Box sx={{ width: '1px', bgcolor: 'divider' }} />}>
+            <Stack direction="row" spacing={2} divider={<Divider orientation="vertical" flexItem />}>
               <Box sx={{ flex: 1, minWidth: 0 }}>
                 <Typography component="div" variant="fieldHint" color="text.secondary">
                   NEXT · {shortDate(progress.nextDueDate)}
@@ -82,7 +83,7 @@ export function LoanProgressSection() {
             </Stack>
 
             <Stack direction="row" spacing={1} alignItems="center">
-              <IconCalendar color={shortfall > 0 ? 'warning' : 'success'} size={22} strokeWidth={1.8} />
+              <CalendarMonthIcon color={shortfall > 0 ? 'warning' : 'success'} size={22} strokeWidth={1.8} />
               <Typography variant="body1">
                 {shortfall > 0 ? (
                   <>

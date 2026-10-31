@@ -1,4 +1,4 @@
-import { Box, Paper, Typography } from '@mui/material';
+import { Box, Chip, Paper, Typography } from '@mui/material';
 import { BankCardArtwork, CardChip, ContactlessIcon } from '@kippa/design-system';
 import type { ReactNode } from 'react';
 import type { CardKind, CardNetwork } from '@kippa/domain';
@@ -71,13 +71,7 @@ export function NetworkLogo({ network }: { network?: CardNetwork }) {
       </Typography>
     );
   }
-  return (
-    <Box aria-label="Meeza" role="img" sx={{ border: '1px solid currentColor', borderRadius: 0.5, px: 0.75, py: 0.25 }}>
-      <Typography variant="overline" sx={{ lineHeight: 1 }}>
-        meeza
-      </Typography>
-    </Box>
-  );
+  return <Chip aria-label="Meeza" label="meeza" size="small" variant="outlined" />;
 }
 
 /** Kept for the detail screen's metadata, without tier-specific styling. */

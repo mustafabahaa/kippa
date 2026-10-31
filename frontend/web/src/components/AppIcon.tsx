@@ -3,8 +3,12 @@ import { Box, type SvgIconProps } from '@mui/material';
 import {
   Add,
   AddSquare,
+  ArrowDown,
+  ArrowDown2,
   ArrowLeft,
+  ArrowRight2,
   ArrowSwapHorizontal,
+  ArrowUp,
   ArrowUp2,
   BackSquare,
   Backward,
@@ -26,11 +30,13 @@ import {
   EyeSlash,
   Filter,
   Home2,
+  HambergerMenu,
   InfoCircle,
   Key,
   Logout,
   Minus,
   Message2,
+  More2,
   Moon,
   Note,
   Notification,
@@ -42,15 +48,17 @@ import {
   Setting2,
   ShoppingCart,
   Sun,
+  DocumentText,
   TickCircle,
   TickSquare,
   Timer1,
   Trash,
+  Wallet,
 } from 'iconsax-react';
 
 type IconsaxVariant = 'Linear' | 'Outline' | 'Broken' | 'Bold' | 'Bulk' | 'TwoTone';
 type IconsaxComponent = ComponentType<{ color?: string; size?: string | number; variant?: IconsaxVariant }>;
-type AppIconProps = SvgIconProps & { variant?: IconsaxVariant };
+type AppIconProps = SvgIconProps & { variant?: IconsaxVariant; size?: number | string };
 
 const semanticIconColors: Partial<Record<NonNullable<SvgIconProps['color']>, string>> = {
   action: 'action.active',
@@ -67,11 +75,11 @@ const semanticIconColors: Partial<Record<NonNullable<SvgIconProps['color']>, str
 function createAppIcon(Icon: IconsaxComponent) {
   const IconBox = Box as ElementType;
   return forwardRef<SVGSVGElement, AppIconProps>(function AppIcon(
-    { color = 'inherit', fontSize = 'medium', htmlColor, sx, variant = 'Linear', ...props },
+    { color = 'inherit', fontSize = 'medium', htmlColor, size, sx, variant = 'Linear', ...props },
     ref,
   ) {
     const fontSizeValue =
-      fontSize === 'small' ? 20 : fontSize === 'large' ? 35 : fontSize === 'inherit' ? 'inherit' : 24;
+      size ?? (fontSize === 'small' ? 20 : fontSize === 'large' ? 35 : fontSize === 'inherit' ? 'inherit' : 24);
     const semanticColor = color === 'inherit' ? 'inherit' : semanticIconColors[color];
     return (
       <IconBox
@@ -102,6 +110,9 @@ export const AccountBalanceIcon = createAppIcon(Bank);
 export const AddIcon = createAppIcon(Add);
 export const AddHomeIcon = createAppIcon(AddSquare);
 export const ArrowBackIcon = createAppIcon(ArrowLeft);
+export const ArrowDownIcon = createAppIcon(ArrowDown);
+export const ArrowUpIcon = createAppIcon(ArrowUp);
+export const ChevronRightIcon = createAppIcon(ArrowRight2);
 export const BackspaceIcon = createAppIcon(BackSquare);
 export const BarChartIcon = createAppIcon(Chart);
 export const CalendarMonthIcon = createAppIcon(Calendar);
@@ -119,9 +130,11 @@ export const DarkModeIcon = createAppIcon(Moon);
 export const DashboardIcon = createAppIcon(Category);
 export const DeleteIcon = createAppIcon(Trash);
 export const DeleteOutlineIcon = createAppIcon(Trash);
+export const DocumentTextIcon = createAppIcon(DocumentText);
 export const EditIcon = createAppIcon(Edit2);
 export const EventIcon = createAppIcon(Calendar);
 export const ExpandLessIcon = createAppIcon(ArrowUp2);
+export const ExpandMoreIcon = createAppIcon(ArrowDown2);
 export const ExploreIcon = createAppIcon(Discover);
 export const GroupAddIcon = createAppIcon(People);
 export const HistoryIcon = createAppIcon(Backward);
@@ -134,6 +147,8 @@ export const LightModeIcon = createAppIcon(Sun);
 export const LogoutIcon = createAppIcon(Logout);
 export const NotesIcon = createAppIcon(Note);
 export const MessageIcon = createAppIcon(Message2);
+export const MenuIcon = createAppIcon(HambergerMenu);
+export const MoreVerticalIcon = createAppIcon(More2);
 export const NotificationsIcon = createAppIcon(Notification);
 export const NotificationsActiveIcon = createAppIcon(NotificationBing);
 export const PaymentsIcon = createAppIcon(CardPos);
@@ -152,3 +167,4 @@ export const TuneIcon = createAppIcon(Filter);
 export const VisibilityIcon = createAppIcon(Eye);
 export const VisibilityOffIcon = createAppIcon(EyeSlash);
 export const WorkIcon = createAppIcon(Briefcase);
+export const WalletIcon = createAppIcon(Wallet);

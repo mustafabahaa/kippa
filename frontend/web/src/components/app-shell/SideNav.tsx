@@ -1,52 +1,51 @@
 import {
-  IconBuildingBank,
-  IconArrowsLeftRight,
-  IconBell,
-  IconChartBar,
-  IconCalendarStats,
-  IconCategory,
-  IconChevronDown,
-  IconClock,
-  IconCreditCardPay,
-  IconFileText,
-  IconGitCompare,
-  IconHistory,
-  IconHome,
-  IconLayoutDashboard,
-  IconListDetails,
-  IconMessage2,
-  IconPlus,
-  IconReportAnalytics,
-  IconReceipt,
-  IconArrowDownRight,
-  IconArrowUpRight,
-  IconUsers,
-  IconWallet,
-} from '@tabler/icons-react';
+  AccountBalanceIcon,
+  AddIcon,
+  ArrowDownIcon,
+  ArrowUpIcon,
+  BarChartIcon,
+  CalendarMonthIcon,
+  CategoryIcon,
+  DashboardIcon,
+  DocumentTextIcon,
+  ExpandMoreIcon,
+  GroupAddIcon,
+  HistoryIcon,
+  HomeIcon,
+  MessageIcon,
+  NotificationsIcon,
+  PaymentsIcon,
+  ReceiptLongIcon,
+  SwapHorizIcon,
+  SyncAltIcon,
+  TimerIcon,
+  WalletIcon,
+} from '@/components/AppIcon';
+
 import { useState } from 'react';
 import type { MouseEvent } from 'react';
-import { Box, ButtonBase, ListItemIcon, ListItemText, Menu, MenuItem, Tooltip } from '@mui/material';
+import { Box, ButtonBase, IconButton, ListItemIcon, ListItemText, Menu, MenuItem, Paper, Tooltip } from '@mui/material';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTheme } from '@mui/material/styles';
 
-type NavChild = { label: string; path: string; icon: typeof IconLayoutDashboard };
-type NavItem = { label: string; path: string; icon: typeof IconLayoutDashboard; children?: NavChild[] };
+type NavChild = { label: string; path: string; icon: typeof DashboardIcon };
+type NavItem = { label: string; path: string; icon: typeof DashboardIcon; children?: NavChild[] };
 
 const menuGroups: NavItem[][] = [
   [
-    { label: 'Dashboard', path: '/', icon: IconLayoutDashboard },
-    { label: 'Ask Kip', path: '/ai', icon: IconMessage2 },
-    { label: 'Loans', path: '/loans', icon: IconCreditCardPay },
+    { label: 'Dashboard', path: '/', icon: DashboardIcon },
+    { label: 'Ask Kip', path: '/ai', icon: MessageIcon },
+    { label: 'Loans', path: '/loans', icon: PaymentsIcon },
   ],
   [
     {
       label: 'Analytics',
       path: '/cycles',
-      icon: IconChartBar,
+      icon: BarChartIcon,
       children: [
-        { label: 'Budget cycles', path: '/cycles', icon: IconCalendarStats },
-        { label: 'Cycle reports', path: '/cycles/report', icon: IconReportAnalytics },
-        { label: 'Categories', path: '/categories', icon: IconCategory },
+        { label: 'Budget cycles', path: '/cycles', icon: CalendarMonthIcon },
+        { label: 'Cycle reports', path: '/cycles/report', icon: BarChartIcon },
+        { label: 'Categories', path: '/categories', icon: CategoryIcon },
       ],
     },
   ],
@@ -54,13 +53,13 @@ const menuGroups: NavItem[][] = [
     {
       label: 'Transactions',
       path: '/transactions',
-      icon: IconReceipt,
+      icon: ReceiptLongIcon,
       children: [
-        { label: 'All transactions', path: '/transactions', icon: IconListDetails },
-        { label: 'Pending review', path: '/pending', icon: IconClock },
-        { label: 'Expenses', path: '/transactions?type=expense', icon: IconArrowDownRight },
-        { label: 'Income', path: '/transactions?type=income', icon: IconArrowUpRight },
-        { label: 'Transfers', path: '/transactions?type=transfer', icon: IconArrowsLeftRight },
+        { label: 'All transactions', path: '/transactions', icon: ReceiptLongIcon },
+        { label: 'Pending review', path: '/pending', icon: TimerIcon },
+        { label: 'Expenses', path: '/transactions?type=expense', icon: ArrowDownIcon },
+        { label: 'Income', path: '/transactions?type=income', icon: ArrowUpIcon },
+        { label: 'Transfers', path: '/transactions?type=transfer', icon: SwapHorizIcon },
       ],
     },
   ],
@@ -68,21 +67,21 @@ const menuGroups: NavItem[][] = [
     {
       label: 'Accounts & cards',
       path: '/accounts',
-      icon: IconBuildingBank,
+      icon: AccountBalanceIcon,
       children: [
-        { label: 'Account overview', path: '/accounts', icon: IconWallet },
-        { label: 'Statements', path: '/accounts/statements', icon: IconFileText },
-        { label: 'Reconciliation', path: '/reconciliation', icon: IconGitCompare },
+        { label: 'Account overview', path: '/accounts', icon: WalletIcon },
+        { label: 'Statements', path: '/accounts/statements', icon: DocumentTextIcon },
+        { label: 'Reconciliation', path: '/reconciliation', icon: SyncAltIcon },
       ],
     },
     {
       label: 'Household',
       path: '/household',
-      icon: IconHome,
+      icon: HomeIcon,
       children: [
-        { label: 'Members & settings', path: '/household', icon: IconUsers },
-        { label: 'Notifications', path: '/notifications', icon: IconBell },
-        { label: 'Activity history', path: '/activity', icon: IconHistory },
+        { label: 'Members & settings', path: '/household', icon: GroupAddIcon },
+        { label: 'Notifications', path: '/notifications', icon: NotificationsIcon },
+        { label: 'Activity history', path: '/activity', icon: HistoryIcon },
       ],
     },
   ],
@@ -110,8 +109,9 @@ export function SideNav() {
   const closeMenu = () => setMenu(null);
 
   return (
-    <Box
+    <Paper
       component="aside"
+      variant="workspaceSidebar"
       aria-label="Workspace sidebar"
       sx={{
         display: { xs: 'none', md: 'flex' },
@@ -123,16 +123,13 @@ export function SideNav() {
         alignItems: 'center',
         px: 1.25,
         py: 2.25,
-        bgcolor: 'background.sidebar',
-        borderRight: '1px solid',
-        borderColor: 'divider',
       }}
     >
       <Tooltip title="Kippa" placement="right">
         <ButtonBase
           onClick={() => navigate('/')}
           aria-label="Kippa home"
-          sx={{ width: 48, height: 48, mb: 2, borderRadius: 2 }}
+          sx={{ width: 48, height: 48, mb: 2 }}
         >
           <Box component="img" src={logoSrc} alt="" sx={{ width: 36, height: 36, objectFit: 'contain' }} />
         </ButtonBase>
@@ -164,7 +161,7 @@ export function SideNav() {
                     >
                       <Icon size={22} strokeWidth={1.8} />
                       {item.children && (
-                        <IconChevronDown className="kippa-nav-submenu-caret" size={11} strokeWidth={2} />
+                        <ExpandMoreIcon className="kippa-nav-submenu-caret" size={11} strokeWidth={2} />
                       )}
                     </Box>
                   </ButtonBase>
@@ -176,14 +173,14 @@ export function SideNav() {
       </Box>
 
       <Tooltip title="Quick entry" placement="right">
-        <ButtonBase
+        <IconButton
           className="kippa-desktop-quick-entry"
           aria-label="Quick entry"
           onClick={() => navigate('/entry')}
-          sx={{ width: 48, height: 48, flexShrink: 0, borderRadius: '50%', mb: 1 }}
+          sx={{ width: 48, height: 48, flexShrink: 0, mb: 1 }}
         >
-          <IconPlus size={22} strokeWidth={1.8} />
-        </ButtonBase>
+          <AddIcon size={22} strokeWidth={1.8} />
+        </IconButton>
       </Tooltip>
 
       <Menu
@@ -213,6 +210,6 @@ export function SideNav() {
           );
         })}
       </Menu>
-    </Box>
+    </Paper>
   );
 }

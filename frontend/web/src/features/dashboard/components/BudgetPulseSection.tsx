@@ -1,5 +1,16 @@
-import { IconChartBar } from '@tabler/icons-react';
-import { Box, Card, CardContent, Chip, Skeleton, Stack, Typography, useTheme, alpha } from '@mui/material';
+import { BarChartIcon } from '@/components/AppIcon';
+
+import { Box, Card, CardContent, Skeleton, Stack } from '@mui/material';
+import {
+  BudgetPulseCategoryTile,
+  BudgetPulseSkeleton,
+  BudgetPulseStatus,
+  BudgetPulseSummary,
+  BudgetPulseValue,
+  type BudgetPulseCategoryRank,
+  type BudgetPulseCategoryTone,
+  type BudgetPulseStatusTone,
+} from '@kippa/design-system';
 import {
   useAccounts,
   useTransactions,
@@ -19,7 +30,6 @@ import { DashboardSectionHeading } from './DashboardSectionHeading';
 
 export function BudgetPulseSection() {
   const { householdId } = useAppContext();
-  const theme = useTheme();
   const { data: accounts } = useAccounts(householdId);
   const { data: transactions } = useTransactions(householdId);
   const { data: ledgerLines } = useLedgerLines(householdId);
@@ -38,22 +48,15 @@ export function BudgetPulseSection() {
 
   const isLoading = allocationsLoading || !accounts || !transactions || !ledgerLines;
 
-  const getStatusColor = (status: DashboardData['saving']['status']) => {
-    if (status === 'on-track') return theme.palette.success.main;
-    if (status === 'warning') return theme.palette.warning.main;
-    return theme.palette.error.main;
-  };
-
-  const getStatusBgColor = (status: DashboardData['saving']['status']) => {
-    if (status === 'on-track') return alpha(theme.palette.success.main, 0.1);
-    if (status === 'warning') return alpha(theme.palette.warning.main, 0.1);
-    return alpha(theme.palette.error.main, 0.1);
-  };
-
   const getStatusLabel = (status: DashboardData['saving']['status']) => {
     if (status === 'on-track') return 'ON TRACK';
     if (status === 'warning') return 'PACE WARNING';
     return 'OVER BUDGETING';
+  };
+
+  const getStatusTone = (status: DashboardData['saving']['status']): BudgetPulseStatusTone => {
+    if (status === 'on-track') return 'success';
+    return status === 'warning' ? 'warning' : 'error';
   };
 
   if (isLoading) {
@@ -62,9 +65,15 @@ export function BudgetPulseSection() {
         <CardContent sx={{ p: 2 }}>
           <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1.5 }}>
             <Skeleton variant="text" width="35%" height={24} animation="wave" />
-            <Skeleton variant="rectangular" width="25%" height={24} sx={{ borderRadius: '12px' }} animation="wave" />
+          <BudgetPulseSkeleton pulseVariant="status" width="25%" height={24} animation="wave" />
           </Stack>
-          <Skeleton variant="rectangular" width="100%" height={8} sx={{ borderRadius: 4, mb: 1.5 }} animation="wave" />
+        <BudgetPulseSkeleton
+          pulseVariant="progress"
+          width="100%"
+          height={8}
+          sx={{ mb: 1.5 }}
+          animation="wave"
+        />
           <Skeleton variant="text" width="70%" height={18} animation="wave" />
         </CardContent>
       </Card>
@@ -96,94 +105,45 @@ export function BudgetPulseSection() {
     <Card variant="dashboardSection" sx={{ height: 375 }}>
       <CardContent sx={{ height: '100%' }}>
         <DashboardSectionHeading
-          icon={<IconChartBar size={22} strokeWidth={1.8} />}
+          icon={<BarChartIcon size={22} strokeWidth={1.8} />}
           title="Remaining monthly"
           trailing={
-            <Chip
-              label={getStatusLabel(data.saving.status)}
-              color={
-                data.saving.status === 'on-track' ? 'success' : data.saving.status === 'warning' ? 'warning' : 'error'
-              }
-            />
+            <BudgetPulseStatus tone={getStatusTone(data.saving.status)}>{getStatusLabel(data.saving.status)}</BudgetPulseStatus>
           }
         />
 
         <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={2} sx={{ mt: 2.5 }}>
-          <Typography
-            sx={{
-              color: 'text.primary',
-              fontSize: { xs: 36, lg: 40 },
-              fontWeight: 500,
-              lineHeight: 1.05,
-              letterSpacing: '-0.055em',
-              fontVariantNumeric: 'tabular-nums',
-            }}
-          >
-            {remainingPercent}
-            <Box component="span" sx={{ color: 'text.secondary', fontSize: '0.62em', ml: 0.75 }}>
-              %
-            </Box>
-          </Typography>
-          <Typography sx={{ maxWidth: 150, color: 'text.secondary', fontSize: 10.5, lineHeight: 1.45 }}>
+          <BudgetPulseValue value={remainingPercent} />
+          <BudgetPulseSummary sx={{ maxWidth: 150 }}>
             {data.saving.status === 'on-track'
               ? 'You are in good shape—your monthly spending remains within plan.'
               : 'Spending is running ahead of the monthly plan.'}
-          </Typography>
+          </BudgetPulseSummary>
         </Stack>
 
-        <Box
-          sx={{
-            mt: 1.25,
-            px: 1,
-            py: 0.6,
-            width: 'fit-content',
-            borderRadius: '9px',
-            bgcolor: getStatusBgColor(data.saving.status),
-          }}
-        >
-          <Typography sx={{ color: getStatusColor(data.saving.status), fontSize: 9.5, fontWeight: 700 }}>
+        <Box sx={{ mt: 1.25 }}>
+          <BudgetPulseStatus tone={getStatusTone(data.saving.status)}>
             Cycle progress {data.cycleProgress ? Math.round(data.cycleProgress.ratio * 100) : 0}%
-          </Typography>
+          </BudgetPulseStatus>
         </Box>
 
         <Stack direction="row" spacing={1} alignItems="flex-end" sx={{ mt: 2.5, minHeight: 150 }}>
           {featuredCategories.map((category, index) => {
             const used = Math.round(category.ratio * 100);
             const remaining = Math.max(0, category.planned - category.spent);
+            const rank = (['first', 'second', 'third'] as const)[index] as BudgetPulseCategoryRank;
+            const tone = (['primary', 'secondary', 'accent'] as const)[index] as BudgetPulseCategoryTone;
             return (
-              <Box key={category.categoryId} sx={{ flex: 1, minWidth: 0 }}>
-                <Box
-                  sx={{
-                    height: 120 - index * 16,
-                    p: 1.25,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'space-between',
-                    borderRadius: '13px 13px 9px 9px',
-                    bgcolor: index === 0 ? 'primary.dark' : index === 1 ? 'secondary.main' : 'primary.light',
-                    color:
-                      index === 0 ? 'primary.contrastText' : index === 1 ? 'secondary.contrastText' : 'primary.contrastText',
-                  }}
-                >
-                  <Box>
-                    <Typography
-                      sx={{ color: 'inherit', fontSize: used >= 100 ? 19 : 24, fontWeight: 500, lineHeight: 1 }}
-                    >
-                      {used}%
-                    </Typography>
-                    <Typography noWrap sx={{ color: 'inherit', fontSize: 10.5, opacity: 0.82 }}>
-                      {category.categoryName}
-                    </Typography>
-                  </Box>
-                  <Typography
-                    noWrap
-                    title={`${remaining.toLocaleString()} ${baseCurrency} left`}
-                    sx={{ color: 'inherit', fontSize: 8.5, fontWeight: 700 }}
-                  >
-                    <Money amount={remaining} code={baseCurrency} maxDigits={0} />
-                  </Typography>
-                </Box>
-              </Box>
+              <BudgetPulseCategoryTile
+                key={category.categoryId}
+                rank={rank}
+                tone={tone}
+                usedPercent={used}
+                category={category.categoryName}
+                remainingTitle={`${remaining.toLocaleString()} ${baseCurrency} left`}
+              >
+                <Money amount={remaining} code={baseCurrency} maxDigits={0} />
+              </BudgetPulseCategoryTile>
             );
           })}
         </Stack>

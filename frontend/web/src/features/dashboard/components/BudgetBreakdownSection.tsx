@@ -1,4 +1,5 @@
-import { IconChartBar, IconCreditCardPay, IconPigMoney } from '@tabler/icons-react';
+import { BarChartIcon, PaymentsIcon, SavingsIcon } from '@/components/AppIcon';
+
 import {
   Box,
   Card,
@@ -9,8 +10,9 @@ import {
   Typography,
   useTheme,
   LinearProgress,
-  alpha,
+  Paper,
 } from '@mui/material';
+import { BudgetMetricBadge, ChartColorMarker } from '@kippa/design-system';
 import {
   useAccounts,
   useTransactions,
@@ -58,7 +60,7 @@ export function BudgetBreakdownSection() {
     return (
       <Box>
         <Skeleton variant="text" width="40%" height={24} animation="wave" sx={{ mb: 1.5 }} />
-        <Skeleton variant="rectangular" width="100%" height={150} sx={{ borderRadius: '20px' }} animation="wave" />
+        <Skeleton variant="rounded" width="100%" height={150} animation="wave" />
       </Box>
     );
   }
@@ -97,25 +99,25 @@ export function BudgetBreakdownSection() {
                 label: 'Planned budget',
                 value: totalPlanned,
                 valueColor: 'text.primary',
-                accent: theme.palette.secondary.main,
+                tone: 'planned' as const,
                 meta: `${data.categoryStatus.length} category allocations`,
-                Icon: IconCreditCardPay,
+                Icon: PaymentsIcon,
               },
               {
                 label: 'Total spent',
                 value: totalSpent,
                 valueColor: totalSpent > totalPlanned ? 'error.main' : 'text.primary',
-                accent: totalSpent > totalPlanned ? theme.palette.error.main : theme.palette.primary.main,
+                tone: totalSpent > totalPlanned ? ('error' as const) : ('spent' as const),
                 meta: `${spentPercent}% of the cycle plan`,
-                Icon: IconChartBar,
+                Icon: BarChartIcon,
               },
               {
                 label: totalRemaining < 0 ? 'Over budget' : 'Remaining',
                 value: Math.abs(totalRemaining),
                 valueColor: totalRemaining < 0 ? 'error.main' : 'success.main',
-                accent: totalRemaining < 0 ? theme.palette.error.main : theme.palette.success.main,
+                tone: totalRemaining < 0 ? ('error' as const) : ('success' as const),
                 meta: totalRemaining < 0 ? 'Requires budget attention' : 'Available to spend',
-                Icon: IconPigMoney,
+                Icon: SavingsIcon,
               },
             ].map((metric) => (
               <Box
@@ -131,39 +133,23 @@ export function BudgetBreakdownSection() {
               >
                 <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={1.5}>
                   <Box sx={{ minWidth: 0 }}>
-                    <Typography sx={{ color: 'text.secondary', fontSize: 10.5, fontWeight: 650 }}>
+                    <Typography variant="budgetMetricLabel" color="text.secondary">
                       {metric.label}
                     </Typography>
                     <Typography
                       noWrap
-                      sx={{
-                        color: metric.valueColor,
-                        fontSize: 19,
-                        lineHeight: 1.25,
-                        fontWeight: 780,
-                        mt: 0.5,
-                        fontVariantNumeric: 'tabular-nums',
-                      }}
+                      variant="budgetMetricValue"
+                      color={metric.valueColor}
+                      sx={{ mt: 0.5 }}
                     >
                       <Money amount={metric.value} code={baseCurrency} maxDigits={0} />
                     </Typography>
                   </Box>
-                  <Box
-                    sx={{
-                      width: 36,
-                      height: 36,
-                      flexShrink: 0,
-                      borderRadius: '10px',
-                      display: 'grid',
-                      placeItems: 'center',
-                      color: metric.accent,
-                      bgcolor: alpha(metric.accent, 0.1),
-                    }}
-                  >
+                  <BudgetMetricBadge tone={metric.tone}>
                     <metric.Icon size={22} />
-                  </Box>
+                  </BudgetMetricBadge>
                 </Stack>
-                <Typography noWrap sx={{ color: 'text.secondary', fontSize: 9.5, fontWeight: 600, mt: 1.25 }}>
+                <Typography noWrap variant="budgetMetricMeta" color="text.secondary" sx={{ mt: 1.25 }}>
                   {metric.meta}
                 </Typography>
               </Box>
@@ -182,7 +168,7 @@ export function BudgetBreakdownSection() {
                   spacing={1}
                 >
                   <Stack direction="row" alignItems="center" spacing={1}>
-                    <IconCreditCardPay size={22} strokeWidth={1.8} />
+                    <PaymentsIcon size={22} strokeWidth={1.8} />
                     <Box>
                       <Typography variant="body1">{commitment.loanName}</Typography>
                       <Typography variant="body2" color="text.secondary">
@@ -217,11 +203,9 @@ export function BudgetBreakdownSection() {
               {['Category', 'Progress', 'Planned', 'Spent', 'Remaining'].map((label, index) => (
                 <Typography
                   key={label}
+                  variant="budgetColumnHeading"
+                  color="text.secondary"
                   sx={{
-                    fontSize: 10.5,
-                    lineHeight: '16px',
-                    fontWeight: 700,
-                    color: 'text.secondary',
                     textAlign: index > 1 ? 'right' : 'left',
                   }}
                 >
@@ -231,7 +215,7 @@ export function BudgetBreakdownSection() {
             </Box>
 
             {data.categoryStatus.length === 0 ? (
-              <Typography align="center" sx={{ py: 4, color: 'text.secondary', fontSize: 12 }}>
+              <Typography align="center" variant="budgetEmptyMessage" color="text.secondary" sx={{ py: 4 }}>
                 No budget allocations found for this cycle.
               </Typography>
             ) : (
@@ -242,9 +226,10 @@ export function BudgetBreakdownSection() {
                 const catColor = chartColors[idx % chartColors.length];
 
                 return (
-                  <Box
+                  <Paper
                     key={cat.categoryId}
-                    sx={{ px: 1, py: 1, borderRadius: 2, '&:hover': { bgcolor: 'action.hover' } }}
+                    variant="budgetCategoryRow"
+                    sx={{ px: 1, py: 1 }}
                   >
                     <Box
                       sx={{
@@ -258,11 +243,8 @@ export function BudgetBreakdownSection() {
                       }}
                     >
                       <Stack direction="row" alignItems="center" spacing={1} sx={{ minWidth: 0 }}>
-                        <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: catColor, flexShrink: 0 }} />
-                        <Typography
-                          noWrap
-                          sx={{ fontSize: 12, lineHeight: '18px', fontWeight: 700, color: 'text.primary' }}
-                        >
+                        <ChartColorMarker color={catColor} />
+                        <Typography noWrap variant="budgetCategoryName" color="text.primary">
                           {cat.categoryName}
                         </Typography>
                       </Stack>
@@ -274,12 +256,11 @@ export function BudgetBreakdownSection() {
                           sx={{ flex: 1 }}
                         />
                         <Typography
+                          variant="budgetPercent"
+                          color="text.secondary"
                           sx={{
                             minWidth: 34,
                             textAlign: 'right',
-                            fontSize: 10.5,
-                            fontWeight: 700,
-                            color: 'text.secondary',
                           }}
                         >
                           {Math.round(percent)}%
@@ -311,24 +292,19 @@ export function BudgetBreakdownSection() {
                         ].map((item) => (
                           <Box key={item.label} sx={{ minWidth: 0, textAlign: { xs: 'left', md: 'right' } }}>
                             <Typography
+                              variant="budgetCellLabel"
+                              color="text.secondary"
                               sx={{
                                 display: { md: 'none' },
-                                fontSize: 9.5,
-                                lineHeight: '14px',
-                                fontWeight: 600,
-                                color: 'text.secondary',
                               }}
                             >
                               {item.label}
                             </Typography>
                             <Typography
                               noWrap
+                              variant="budgetCellValue"
+                              color={item.color}
                               sx={{
-                                fontSize: 11.5,
-                                lineHeight: '18px',
-                                fontWeight: 700,
-                                color: item.color,
-                                fontVariantNumeric: 'tabular-nums',
                               }}
                             >
                               {item.value}
@@ -337,7 +313,7 @@ export function BudgetBreakdownSection() {
                         ))}
                       </Box>
                     </Box>
-                  </Box>
+                  </Paper>
                 );
               })
             )}

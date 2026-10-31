@@ -1,4 +1,5 @@
-import { IconBuildingBank, IconCreditCard, IconCreditCardPay, IconPigMoney } from '@tabler/icons-react';
+import { AccountBalanceIcon, CreditCardIcon, PaymentsIcon, SavingsIcon } from '@/components/AppIcon';
+
 import { useState } from 'react';
 import { Box, Card, CardContent, Chip, Divider, Paper, Skeleton, Stack, Typography } from '@mui/material';
 import {
@@ -36,15 +37,15 @@ export function MyAccountsSection() {
   const getAccountIcon = (type: string) => {
     switch (type) {
       case 'savings':
-        return <IconPigMoney size={22} strokeWidth={1.8} />;
+        return <SavingsIcon size={22} strokeWidth={1.8} />;
       case 'cash':
       case 'wallet':
-        return <IconCreditCardPay size={22} strokeWidth={1.8} />;
+        return <PaymentsIcon size={22} strokeWidth={1.8} />;
       case 'credit':
-        return <IconCreditCard size={22} strokeWidth={1.8} />;
+        return <CreditCardIcon size={22} strokeWidth={1.8} />;
       case 'running':
       default:
-        return <IconBuildingBank size={22} strokeWidth={1.8} />;
+        return <AccountBalanceIcon size={22} strokeWidth={1.8} />;
     }
   };
 
@@ -90,7 +91,7 @@ export function MyAccountsSection() {
         <CardContent>
           <Stack spacing={2.5}>
             <DashboardSectionHeading
-              icon={<IconBuildingBank size={22} strokeWidth={1.8} />}
+              icon={<AccountBalanceIcon size={22} strokeWidth={1.8} />}
               title="My Accounts"
               subtitle="Cash, banks and linked cards"
               trailing={<Chip label={`${visibleAccounts.length} accounts`} />}
@@ -115,21 +116,10 @@ export function MyAccountsSection() {
                         <Stack direction="row" spacing={1.5} alignItems="center" sx={{ minWidth: 0 }}>
                           <Paper variant="iconBadge">{getAccountIcon(acc.type)}</Paper>
                           <Box sx={{ minWidth: 0 }}>
-                            <Typography
-                              noWrap
-                              sx={{ fontSize: 13, lineHeight: '20px', fontWeight: 800, color: 'text.primary' }}
-                            >
+                            <Typography noWrap variant="accountName" color="text.primary">
                               {acc.name}
                             </Typography>
-                            <Typography
-                              sx={{
-                                fontSize: 11,
-                                lineHeight: '16px',
-                                fontWeight: 600,
-                                color: 'text.secondary',
-                                textTransform: 'capitalize',
-                              }}
-                            >
+                            <Typography variant="accountType" color="text.secondary">
                               {acc.type}
                             </Typography>
                           </Box>
@@ -143,15 +133,9 @@ export function MyAccountsSection() {
                           <Typography
                             noWrap
                             tabIndex={acc.currency === baseCurrency ? undefined : 0}
-                            sx={{
-                              fontSize: 15,
-                              lineHeight: '22px',
-                              fontWeight: 800,
-                              color: bal < 0 ? 'error.main' : 'text.primary',
-                              fontVariantNumeric: 'tabular-nums',
-                              textAlign: 'right',
-                              cursor: acc.currency === baseCurrency ? 'default' : 'help',
-                            }}
+                            variant="accountBalance"
+                            color={bal < 0 ? 'error.main' : 'text.primary'}
+                            sx={{ textAlign: 'right', cursor: acc.currency === baseCurrency ? 'default' : 'help' }}
                           >
                             <Money amount={bal} code={acc.currency} maxDigits={2} />
                           </Typography>

@@ -50,7 +50,6 @@ export function AppShell() {
           zIndex: 1,
           minHeight: '100dvh',
           pb: pathname === '/ai' ? 0 : { xs: 10, md: 0 },
-          bgcolor: 'transparent',
           overflowX: 'clip',
         }}
       >
@@ -58,7 +57,7 @@ export function AppShell() {
         <SideNav />
         <Box
           component="main"
-          sx={{ ml: { md: '72px' }, minHeight: '100dvh', bgcolor: 'background.default', overflowX: 'clip' }}
+          sx={{ ml: { md: '72px' }, minHeight: '100dvh', overflowX: 'clip' }}
         >
           <TopBar
             logoSrc={logoSrc}
