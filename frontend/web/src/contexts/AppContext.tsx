@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { collection, query as fsQuery, where, onSnapshot } from 'firebase/firestore';
 import { authLib } from '@/libs/auth';
 import { ledgerLib } from '@/libs/ledger';
-import { db as firestoreDb } from '@/config/firebase';
+import { subscribePendingHouseholdJoinRequests } from '@/libs/householdSubscriptions';
 import { detectBaseCurrency } from '@/libs/currencyMeta';
 import { UserProfile, Household, JoinStatus, JoinRequest } from '@kippa/domain';
 import { AppContext } from '@/contexts/appContextInstance';
@@ -73,23 +72,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   // Pending join requests (owner view) — live subscription.
   const [pendingRequests, setPendingRequests] = useState<JoinRequest[]>([]);
   useEffect(() => {
-    if (!householdId || !isOwner || !firestoreDb) {
+    if (!householdId || !isOwner) {
       // Clear stale pending list when the user is no longer an owner of an
       // active household. Synchronous clear is intentional here.
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setPendingRequests([]);
       return;
     }
-    const q = fsQuery(
-      collection(firestoreDb, `households/${householdId}/joinRequests`),
-      where('status', '==', 'pending'),
-    );
-    const unsub = onSnapshot(q, (snap) => {
-      const list = snap.docs.map((d) => d.data() as JoinRequest);
-      list.sort((a, b) => b.requestedAt - a.requestedAt);
-      setPendingRequests(list);
-    });
-    return () => unsub();
+    return subscribePendingHouseholdJoinRequests(householdId, setPendingRequests);
   }, [householdId, isOwner]);
 
   // Member list via Callable because rules restrict users/{uid} reads to

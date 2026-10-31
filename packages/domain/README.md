@@ -11,5 +11,6 @@ Rules:
 
 - Put types shared by the app and Functions here.
 - Do not import Firebase, React, browser, or Node APIs here.
-- Keep runtime business rules in the consuming workspace's `src/domain/` until
-  the Functions deployment is changed to bundle workspace runtime packages.
+- Keep runtime business rules in pure modules in the consuming workspace (for
+  example `frontend/web/src/libs/` or `backend/functions/src/domain/`) until the
+  Functions deployment is changed to bundle shared runtime packages.

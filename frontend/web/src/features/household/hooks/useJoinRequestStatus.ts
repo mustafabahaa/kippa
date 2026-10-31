@@ -1,18 +1,17 @@
 import { useEffect, useState } from 'react';
-import { doc, onSnapshot } from 'firebase/firestore';
-import type { JoinRequest, JoinStatus } from '@kippa/domain';
-import { db } from '@/config/firebase';
+import type { JoinStatus } from '@kippa/domain';
+import { subscribeHouseholdJoinRequestStatus } from '@/libs/householdSubscriptions';
 
 export function useJoinRequestStatus(householdId: string, userId?: string) {
   const [snapshot, setSnapshot] = useState<{ key: string; status: JoinStatus | null }>({ key: '', status: null });
   const key = householdId.trim() && userId ? `${householdId.trim()}:${userId}` : '';
   useEffect(() => {
     const id = householdId.trim();
-    if (!id || !userId || !db) return;
-    return onSnapshot(doc(db, `households/${id}/joinRequests/${userId}`), (snapshot) => {
+    if (!id || !userId) return;
+    return subscribeHouseholdJoinRequestStatus(id, userId, (status) => {
       setSnapshot({
         key: `${id}:${userId}`,
-        status: snapshot.exists() ? (snapshot.data() as JoinRequest).status : null,
+        status,
       });
     });
   }, [householdId, userId]);

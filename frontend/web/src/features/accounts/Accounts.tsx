@@ -15,9 +15,7 @@ import {
   useHouseholdBaseCurrency,
 } from '@/hooks/useFinance';
 import { useAppContext } from '@/hooks/useAppContext';
-import { CardTile } from '@/features/cards/CardTile';
-import { AddCardDialog } from '@/features/cards/AddCardDialog';
-import { CardDetail } from '@/features/cards/CardDetail';
+import { CardTile, AddCardDialog, CardDetail } from '@/features/cards';
 import { calculateAccountBalance } from '@/libs/financeCalculations';
 import { computeCardSummary } from '@/libs/cardSelectors';
 import { Money } from '@/components/Money';

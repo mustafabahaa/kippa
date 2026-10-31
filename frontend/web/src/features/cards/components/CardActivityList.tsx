@@ -5,7 +5,6 @@ import type { CardCharge, CardChargeGroup } from '@/libs/cardActivity';
 import type { Card, Category, FinanceTransaction } from '@kippa/domain';
 import { EmptyLayout } from '@/features/shared/components/EmptyLayout';
 import { UserAvatar } from '@/components/UserAvatar';
-import { auth } from '@/config/firebase';
 import { useAppContext } from '@/hooks/useAppContext';
 import { formatShortTime } from '@/libs/dateFormatting';
 import { CardActivityText } from '@kippa/design-system';
@@ -72,7 +71,7 @@ export function CardActivityList({
                   ? {
                       ...householdMember,
                       ...userProfile,
-                      photoURL: auth?.currentUser?.photoURL || userProfile.photoURL || householdMember?.photoURL,
+                      photoURL: userProfile.photoURL || householdMember?.photoURL,
                     }
                   : householdMember;
               const parsedDate = new Date(`${charge.date}T12:00:00`);
@@ -109,7 +108,7 @@ export function CardActivityList({
                         <UserAvatar
                           className="kippa-stepper-node"
                           photoURLs={[
-                            isCurrentUser ? auth?.currentUser?.photoURL : undefined,
+                            isCurrentUser ? userProfile?.photoURL : undefined,
                             creator.photoURL,
                             householdMember?.photoURL,
                           ]}

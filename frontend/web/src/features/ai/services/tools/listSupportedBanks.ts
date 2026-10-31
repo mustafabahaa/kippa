@@ -1,4 +1,4 @@
-import { BANK_LIST } from '@/features/cards/banks/banks';
+import { BANK_LIST } from '@/features/cards';
 import { defineAiTool } from '../toolRegistry';
 import { emptyInput } from './shared';
 

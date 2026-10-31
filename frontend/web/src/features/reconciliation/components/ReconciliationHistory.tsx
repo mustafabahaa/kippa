@@ -7,7 +7,6 @@ import { SectionHeading } from '@/features/shared/components/SectionHeading';
 import { CheckCircleIcon } from '@/components/AppIcon';
 import { UserAvatar } from '@/components/UserAvatar';
 import { useAppContext } from '@/hooks/useAppContext';
-import { auth } from '@/config/firebase';
 import { formatShortTime } from '@/libs/dateFormatting';
 import { RECONCILIATION_HISTORY_PAGE_SIZE } from '@/libs/ledger';
 
@@ -73,7 +72,7 @@ export function ReconciliationHistory({ accounts, pages, hasNextPage, isFetching
                   ? {
                       ...householdMember,
                       ...userProfile,
-                      photoURL: auth?.currentUser?.photoURL || userProfile.photoURL || householdMember?.photoURL,
+                      photoURL: userProfile.photoURL || householdMember?.photoURL,
                     }
                   : householdMember;
 
@@ -98,7 +97,7 @@ export function ReconciliationHistory({ accounts, pages, hasNextPage, isFetching
                         <UserAvatar
                           className="kippa-stepper-node"
                           photoURLs={[
-                            isCurrentUser ? auth?.currentUser?.photoURL : undefined,
+                            isCurrentUser ? userProfile?.photoURL : undefined,
                             creator.photoURL,
                             householdMember?.photoURL,
                           ]}

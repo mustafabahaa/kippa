@@ -9,7 +9,6 @@ import { ProfileMenu } from '@/components/app-shell/ProfileMenu';
 import { QuickNavMenu } from '@/components/app-shell/QuickNavMenu';
 import type { ThemeModePref } from '@/contexts/themeModeContext';
 import type { UserProfile, Household } from '@kippa/domain';
-import { auth } from '@/config/firebase';
 import { UserAvatar } from '@/components/UserAvatar';
 
 interface TopBarProps {
@@ -159,7 +158,7 @@ export function TopBar({
                 sx={{ p: 0.5, width: 40, height: 40 }}
               >
                 <UserAvatar
-                  photoURLs={[auth?.currentUser?.photoURL, userProfile?.photoURL]}
+                  photoURLs={[userProfile?.photoURL]}
                   displayName={userProfile?.displayName}
                   variant="appBar"
                 />

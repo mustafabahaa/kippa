@@ -26,7 +26,6 @@ import {
 import type { ThemeModePref } from '@/contexts/themeModeContext';
 import type { UserProfile, Household } from '@kippa/domain';
 import { usePrivacyMode } from '@/hooks/usePrivacyMode';
-import { auth } from '@/config/firebase';
 import { UserAvatar } from '@/components/UserAvatar';
 
 interface ProfileMenuProps {
@@ -82,7 +81,7 @@ export function ProfileMenu({
       <Box sx={{ px: 2.5, py: 2 }}>
         <Stack direction="row" spacing={2} alignItems="center">
           <UserAvatar
-            photoURLs={[auth?.currentUser?.photoURL, userProfile?.photoURL]}
+            photoURLs={[userProfile?.photoURL]}
             displayName={userProfile?.displayName}
             variant="profileMenu"
           />
@@ -101,11 +100,7 @@ export function ProfileMenu({
 
       {/* Household sharing info */}
       <Box sx={{ py: 0.75 }}>
-        <Typography
-          variant="overline"
-          color="text.secondary"
-          sx={{ px: 2.5, mb: 1, display: 'block' }}
-        >
+        <Typography variant="overline" color="text.secondary" sx={{ px: 2.5, mb: 1, display: 'block' }}>
           Current Household
         </Typography>
 
@@ -146,11 +141,7 @@ export function ProfileMenu({
       {/* Quick Switch Households */}
       {userHouseholds.length > 1 && (
         <>
-          <Typography
-            variant="overline"
-            color="text.secondary"
-            sx={{ px: 2.5, mt: 1.5, mb: 0.5, display: 'block' }}
-          >
+          <Typography variant="overline" color="text.secondary" sx={{ px: 2.5, mt: 1.5, mb: 0.5, display: 'block' }}>
             Switch Household
           </Typography>
           {userHouseholds.map((hh) => {
@@ -180,11 +171,7 @@ export function ProfileMenu({
       <Divider sx={{ my: 1 }} />
 
       {/* Appearance / Theme */}
-      <Typography
-        variant="overline"
-        color="text.secondary"
-        sx={{ px: 2.5, mt: 0.5, mb: 0.5, display: 'block' }}
-      >
+      <Typography variant="overline" color="text.secondary" sx={{ px: 2.5, mt: 0.5, mb: 0.5, display: 'block' }}>
         Appearance
       </Typography>
       {[

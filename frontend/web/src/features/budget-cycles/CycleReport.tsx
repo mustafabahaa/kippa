@@ -42,7 +42,7 @@ import { convertToBaseCurrency, getPostedTransactions } from '@/libs/financeCalc
 import { calculateCycleReport, LOAN_PAYMENTS_CATEGORY_ID } from '@/libs/cycleReport';
 import { PageHeader } from '@/features/shared/components/PageHeader';
 import { SectionHeading } from '@/features/shared/components/SectionHeading';
-import { TransactionIcon } from '@/features/transactions/components/TransactionIcon';
+import { TransactionIcon } from '@/features/transactions';
 import { formatCycleDate } from './cycleUtils';
 import { BudgetCycleAccountRow, BudgetCycleSummaryItem } from '@kippa/design-system';
 

@@ -18,7 +18,6 @@ import { FinanceTransaction, Category, LedgerLine, Account } from '@kippa/domain
 import { useAppContext } from '@/hooks/useAppContext';
 import { useHouseholdBaseCurrency } from '@/hooks/useFinance';
 import { usePrivacyMask } from '@/hooks/usePrivacyMask';
-import { auth } from '@/config/firebase';
 import { UserAvatar } from '@/components/UserAvatar';
 import { formatShortTime } from '@/libs/dateFormatting';
 
@@ -57,7 +56,7 @@ export const TransactionsListItem: React.FC<TransactionsListItemProps> = ({
       ? {
           ...householdMember,
           ...userProfile,
-          photoURL: auth?.currentUser?.photoURL || userProfile.photoURL || householdMember?.photoURL,
+          photoURL: userProfile.photoURL || householdMember?.photoURL,
         }
       : householdMember;
   const parsedTransactionDate = new Date(`${tx.date}T12:00:00`);
@@ -157,7 +156,7 @@ export const TransactionsListItem: React.FC<TransactionsListItemProps> = ({
                 <UserAvatar
                   className="kippa-stepper-node"
                   photoURLs={[
-                    isCurrentUser ? auth?.currentUser?.photoURL : undefined,
+                    isCurrentUser ? userProfile?.photoURL : undefined,
                     creator.photoURL,
                     householdMember?.photoURL,
                   ]}

@@ -2,6 +2,7 @@ import js from '@eslint/js';
 import reactHooks from 'eslint-plugin-react-hooks';
 import reactRefresh from 'eslint-plugin-react-refresh';
 import tseslint from 'typescript-eslint';
+import architectureRules from './eslint-rules/architecture.js';
 import designSystemRules from './eslint-rules/design-system.js';
 
 export default tseslint.config(
@@ -38,20 +39,20 @@ export default tseslint.config(
     plugins: {
       'react-hooks': reactHooks,
       'react-refresh': reactRefresh,
+      'kippa-architecture': { rules: architectureRules },
       'kippa-design': { rules: designSystemRules },
     },
     rules: {
       ...reactHooks.configs.recommended.rules,
       'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
-      '@typescript-eslint/no-unused-vars': [
-        'error',
-        { args: 'all', caughtErrors: 'all' },
-      ],
+      '@typescript-eslint/no-unused-vars': ['error', { args: 'all', caughtErrors: 'all' }],
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-deprecated': 'error',
-      'kippa-design/app-icon-only': 'warn',
-      'kippa-design/no-visual-sx': 'warn',
-      'kippa-design/named-typography-variants': 'warn',
+      'kippa-architecture/no-infrastructure-imports-from-ui': 'error',
+      'kippa-architecture/feature-public-api': 'error',
+      'kippa-design/app-icon-only': 'error',
+      'kippa-design/no-visual-sx': 'error',
+      'kippa-design/named-typography-variants': 'error',
     },
   },
 );

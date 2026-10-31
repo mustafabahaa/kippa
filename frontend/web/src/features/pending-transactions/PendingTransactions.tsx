@@ -20,7 +20,7 @@ import { PendingReviewDialog } from './components/PendingReviewDialog';
 import { MessageConnectionDialog } from './components/MessageConnectionDialog';
 import { EmptyLayout } from '@/features/shared/components/EmptyLayout';
 import { SectionHeading } from '@/features/shared/components/SectionHeading';
-import { TransactionIcon } from '@/features/transactions/components/TransactionIcon';
+import { TransactionIcon } from '@/features/transactions';
 import { Money } from '@/components/Money';
 import { useAppContext } from '@/hooks/useAppContext';
 import {

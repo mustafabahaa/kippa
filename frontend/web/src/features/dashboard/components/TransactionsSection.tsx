@@ -13,9 +13,7 @@ import {
 } from '@/hooks/useFinance';
 import { FinanceTransaction } from '@kippa/domain';
 import { useAppContext } from '@/hooks/useAppContext';
-import { TransactionsListItem } from './TransactionsListItem';
-import { EditTransactionDialog } from '@/features/transactions/components/EditTransactionDialog';
-import { VoidTransactionDialog } from '@/features/transactions/components/VoidTransactionDialog';
+import { TransactionsListItem, EditTransactionDialog, VoidTransactionDialog } from '@/features/transactions';
 import { DashboardSectionHeading } from './DashboardSectionHeading';
 
 const RECENT_TRANSACTION_LIMIT = 12;

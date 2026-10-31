@@ -43,6 +43,11 @@ function requireAuth(): Auth {
 }
 
 export const authLib = {
+  async getCurrentUserIdToken(): Promise<string | null> {
+    const user = auth?.currentUser;
+    return user ? user.getIdToken() : null;
+  },
+
   async signInForLocalPreview(): Promise<void> {
     const isLocalPreview =
       import.meta.env.DEV && new URLSearchParams(window.location.search).get('visual-preview') === '1';

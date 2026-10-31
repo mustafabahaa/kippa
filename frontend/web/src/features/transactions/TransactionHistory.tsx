@@ -19,7 +19,7 @@ import { PageHeader } from '@/features/shared/components/PageHeader';
 import { SectionHeading } from '@/features/shared/components/SectionHeading';
 import { EmptyLayout } from '@/features/shared/components/EmptyLayout';
 import { useTransactionHistoryUi } from './hooks/useTransactionHistoryUi';
-import { TransactionsListItem } from '@/features/dashboard/components/TransactionsListItem';
+import { TransactionsListItem } from './components/TransactionsListItem';
 import { MultiSelectFilter } from '@/features/shared/components/MultiSelectFilter';
 
 const sectionIndent = { xs: 0, md: 2 } as const;

@@ -3,7 +3,7 @@ import { Box, Button, Chip, Divider, Grid, LinearProgress, Skeleton, Stack, Typo
 import type { Loan } from '@kippa/domain';
 import { Money } from '@/components/Money';
 import { PageHeader } from '@/features/shared/components/PageHeader';
-import { DashboardSectionHeading } from '@/features/dashboard/components/DashboardSectionHeading';
+import { SectionHeading } from '@/features/shared/components/SectionHeading';
 import { useAppContext } from '@/hooks/useAppContext';
 import {
   useAccounts,
@@ -86,7 +86,7 @@ export function Loans() {
 
       <Box component="section" sx={{ px: sectionIndent }}>
         <Stack spacing={{ xs: 2, md: 3 }}>
-          <DashboardSectionHeading
+          <SectionHeading
             title="Repayment overview"
             subtitle="Progress, upcoming payments, and payoff timing for your household loans."
           />
@@ -215,16 +215,16 @@ export function Loans() {
                             spacing={1.5}
                           >
                             <Typography variant="body2" color="text.secondary">
-                              {isPaid
-                                ? 'This loan is fully paid.'
-                                : shortfall > 0 ? (
-                                  <>
-                                    Add <Money amount={shortfall} code={loan.currency} maxDigits={2} /> to{' '}
-                                    {account?.name ?? 'the payment account'}.
-                                  </>
-                                ) : (
-                                  `${account?.name ?? 'Payment account'} is ready for the next installment.`
-                                )}
+                              {isPaid ? (
+                                'This loan is fully paid.'
+                              ) : shortfall > 0 ? (
+                                <>
+                                  Add <Money amount={shortfall} code={loan.currency} maxDigits={2} /> to{' '}
+                                  {account?.name ?? 'the payment account'}.
+                                </>
+                              ) : (
+                                `${account?.name ?? 'Payment account'} is ready for the next installment.`
+                              )}
                             </Typography>
                             <Button
                               variant="contained"

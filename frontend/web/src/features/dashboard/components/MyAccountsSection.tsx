@@ -12,8 +12,7 @@ import {
 } from '@/hooks/useFinance';
 import { useAppContext } from '@/hooks/useAppContext';
 import { EmptyLayout } from '@/features/shared/components/EmptyLayout';
-import { CardTile } from '@/features/cards/CardTile';
-import { CardDetail } from '@/features/cards/CardDetail';
+import { CardTile, CardDetail } from '@/features/cards';
 import { computeCardSummary } from '@/libs/cardSelectors';
 import { Money } from '@/components/Money';
 import type { Card as CardType } from '@kippa/domain';

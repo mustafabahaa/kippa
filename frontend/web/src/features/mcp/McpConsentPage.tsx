@@ -13,7 +13,7 @@ import {
 } from '@mui/material';
 import type { SelectChangeEvent } from '@mui/material/Select';
 import { useSearchParams } from 'react-router-dom';
-import { auth } from '@/config/firebase';
+import { authLib } from '@/libs/auth';
 import { useAppContext } from '@/hooks/useAppContext';
 
 type ConsentRequest = {
@@ -95,7 +95,7 @@ export function McpConsentPage() {
   };
 
   const submitDecision = async (decision: 'approve' | 'deny') => {
-    if (!requestId || !selectedHouseholdId || !auth?.currentUser) {
+    if (!requestId || !selectedHouseholdId) {
       setRequestError({ requestId, message: 'Sign in and choose a household before continuing.' });
       return;
     }
@@ -107,7 +107,8 @@ export function McpConsentPage() {
     setIsSubmitting(true);
     setRequestError(null);
     try {
-      const idToken = await auth.currentUser.getIdToken();
+      const idToken = await authLib.getCurrentUserIdToken();
+      if (!idToken) throw new Error('Sign in and choose a household before continuing.');
       const response = await fetch('/mcp-auth/consent', {
         method: 'POST',
         headers: {

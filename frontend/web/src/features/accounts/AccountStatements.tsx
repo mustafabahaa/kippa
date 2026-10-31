@@ -32,7 +32,7 @@ import { buildAccountStatement } from '@/libs/accountStatement';
 import { PageHeader } from '@/features/shared/components/PageHeader';
 import { EmptyLayout } from '@/features/shared/components/EmptyLayout';
 import { SectionHeading } from '@/features/shared/components/SectionHeading';
-import { TransactionIcon } from '@/features/transactions/components/TransactionIcon';
+import { TransactionIcon } from '@/features/transactions';
 import { AccountBalanceIcon, SearchIcon } from '@/components/AppIcon';
 
 const DEFAULT_PAGE_SIZE = 25;

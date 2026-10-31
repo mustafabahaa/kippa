@@ -19,13 +19,13 @@ import {
 import { CycleAnalytics } from '@/features/budget-cycles/CycleAnalytics';
 import { useAppContext } from '@/hooks/useAppContext';
 import { PageHeader } from '@/features/shared/components/PageHeader';
+import { SectionHeading } from '@/features/shared/components/SectionHeading';
 import { CloseCycleDialog, CreateCycleDialog, type NewCycleValues } from './components/CycleDialogs';
 import { ActiveCycleSection, CycleHistoryItem, type CycleHistoryStats } from './components/CycleSections';
 import { getDaysInfo } from './cycleUtils';
 import { BudgetAllocationDialog } from './components/BudgetAllocationDialog';
 import { calculateCycleData } from '@/libs/budgetAnalytics';
 import { useNavigate } from 'react-router-dom';
-import { DashboardSectionHeading } from '@/features/dashboard/components/DashboardSectionHeading';
 
 const sectionIndent = { xs: 0, md: 4 } as const;
 const contentIndent = { xs: 0, md: 4 } as const;
@@ -187,16 +187,21 @@ export function BudgetCycles() {
     <Stack spacing={{ xs: 2, md: 3 }}>
       <PageHeader
         title="Budget Cycles"
-        subtitle={activeCycle ? `Keep your household plan on track · ${activeCycle.name}` : 'Plan your household budget and review past cycles.'}
-        action={<Button variant="contained" onClick={() => setOpenCreateDialog(true)}>New cycle</Button>}
+        subtitle={
+          activeCycle
+            ? `Keep your household plan on track · ${activeCycle.name}`
+            : 'Plan your household budget and review past cycles.'
+        }
+        action={
+          <Button variant="contained" onClick={() => setOpenCreateDialog(true)}>
+            New cycle
+          </Button>
+        }
       />
 
       <Box component="section" sx={{ px: sectionIndent }}>
         <Stack spacing={{ xs: 2, md: 3 }}>
-          <DashboardSectionHeading
-            title="Overview"
-            subtitle="Compare spending across cycles and manage the current plan."
-          />
+          <SectionHeading title="Overview" subtitle="Compare spending across cycles and manage the current plan." />
           <Box sx={{ px: contentIndent }}>
             <Box sx={{ maxWidth: 1180 }}>
               <Grid container columns={{ xs: 12, md: 10 }} spacing={{ xs: 3, md: 5 }} alignItems="flex-start">
@@ -249,7 +254,7 @@ export function BudgetCycles() {
 
       <Box component="section" sx={{ px: sectionIndent }}>
         <Stack spacing={{ xs: 2, md: 3 }}>
-          <DashboardSectionHeading title="Cycle history" subtitle="Review completed and planned budget periods." />
+          <SectionHeading title="Cycle history" subtitle="Review completed and planned budget periods." />
 
           <Box sx={{ px: contentIndent }}>
             <Box sx={{ maxWidth: 1180 }}>
