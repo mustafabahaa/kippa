@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Box, Button, Chip, Divider, IconButton, Paper, Skeleton, Stack, Typography } from '@mui/material';
+import { Box, Button, Chip, Divider, IconButton, Paper, Skeleton, Stack, Typography } from '@monochrome-ui/design-system';
 import type { Account, AccountType, CurrencyCode, Card as CardType } from '@kippa/domain';
 import {
   useAccounts,

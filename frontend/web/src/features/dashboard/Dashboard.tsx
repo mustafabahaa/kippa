@@ -1,4 +1,4 @@
-import { Box, Divider, Grid, Stack } from '@mui/material';
+import { Box, Divider, Grid, Stack } from '@monochrome-ui/design-system';
 import { HeaderSection } from '@/features/dashboard/components/HeaderSection';
 import { TotalBalanceHeroSection } from '@/features/dashboard/components/TotalBalanceHeroSection';
 import { BudgetPulseSection } from '@/features/dashboard/components/BudgetPulseSection';

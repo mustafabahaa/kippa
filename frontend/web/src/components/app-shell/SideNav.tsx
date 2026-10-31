@@ -24,7 +24,7 @@ import {
 
 import { useState } from 'react';
 import type { MouseEvent } from 'react';
-import { Box, ButtonBase, IconButton, ListItemIcon, ListItemText, Menu, MenuItem, Paper, Tooltip } from '@mui/material';
+import { Box, ButtonBase, IconButton, ListItemIcon, ListItemText, Menu, MenuItem, Paper, Tooltip } from '@monochrome-ui/design-system';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTheme } from '@mui/material/styles';
 
@@ -148,7 +148,7 @@ export function SideNav() {
               return (
                 <Tooltip key={item.path} title={item.label} placement="right">
                   <ButtonBase
-                    className="kippa-desktop-nav-item"
+                    className="ds-desktop-nav-item"
                     aria-label={item.label}
                     aria-current={active ? 'page' : undefined}
                     aria-haspopup={item.children ? 'menu' : undefined}
@@ -161,7 +161,7 @@ export function SideNav() {
                     >
                       <Icon size={22} strokeWidth={1.8} />
                       {item.children && (
-                        <ExpandMoreIcon className="kippa-nav-submenu-caret" size={11} strokeWidth={2} />
+                        <ExpandMoreIcon className="ds-nav-submenu-caret" size={11} strokeWidth={2} />
                       )}
                     </Box>
                   </ButtonBase>
@@ -174,7 +174,7 @@ export function SideNav() {
 
       <Tooltip title="Quick entry" placement="right">
         <IconButton
-          className="kippa-desktop-quick-entry"
+          className="ds-desktop-quick-entry"
           aria-label="Quick entry"
           onClick={() => navigate('/entry')}
           sx={{ width: 48, height: 48, flexShrink: 0, mb: 1 }}

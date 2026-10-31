@@ -1,5 +1,5 @@
-import { Box, Chip, Paper, Typography } from '@mui/material';
-import { BankCardArtwork, CardChip, ContactlessIcon } from '@kippa/design-system';
+import { Box, Chip, Paper, Typography } from '@monochrome-ui/design-system';
+import { BankCardArtwork, CardChip, ContactlessIcon } from '@monochrome-ui/design-system';
 import type { ReactNode } from 'react';
 import type { CardKind, CardNetwork } from '@kippa/domain';
 import { getBank, getTier } from './banks/banks';

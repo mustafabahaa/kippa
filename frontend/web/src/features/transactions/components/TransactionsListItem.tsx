@@ -13,7 +13,7 @@ import {
   Stack,
   Tooltip,
   Typography,
-} from '@mui/material';
+} from '@monochrome-ui/design-system';
 import { FinanceTransaction, Category, LedgerLine, Account } from '@kippa/domain';
 import { useAppContext } from '@/hooks/useAppContext';
 import { useHouseholdBaseCurrency } from '@/hooks/useFinance';
@@ -148,13 +148,13 @@ export const TransactionsListItem: React.FC<TransactionsListItemProps> = ({
           {creator ? (
             <Tooltip title={`Added by ${creator.displayName}`}>
               <Badge
-                className="kippa-transaction-avatar-badge"
+                className="ds-transaction-avatar-badge"
                 overlap="circular"
                 anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
-                badgeContent={<Box className="kippa-transaction-type-dot" data-type={tx.type} />}
+                badgeContent={<Box className="ds-transaction-type-dot" data-type={tx.type} />}
               >
                 <UserAvatar
-                  className="kippa-stepper-node"
+                  className="ds-stepper-node"
                   photoURLs={[
                     isCurrentUser ? userProfile?.photoURL : undefined,
                     creator.photoURL,
@@ -166,7 +166,7 @@ export const TransactionsListItem: React.FC<TransactionsListItemProps> = ({
               </Badge>
             </Tooltip>
           ) : (
-            <Box className="kippa-transaction-type-dot" data-type={tx.type} aria-hidden="true" />
+            <Box className="ds-transaction-type-dot" data-type={tx.type} aria-hidden="true" />
           )}
           <Stack spacing={0.25} sx={{ minWidth: 0, flex: 1 }}>
             <Typography variant="transactionAmount" color="text.primary" noWrap>

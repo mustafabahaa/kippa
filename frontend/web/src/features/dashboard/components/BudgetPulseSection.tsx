@@ -1,6 +1,6 @@
 import { BarChartIcon } from '@/components/AppIcon';
 
-import { Box, Card, CardContent, Skeleton, Stack } from '@mui/material';
+import { Box, Card, CardContent, Skeleton, Stack } from '@monochrome-ui/design-system';
 import {
   BudgetPulseCategoryTile,
   BudgetPulseSkeleton,
@@ -10,7 +10,7 @@ import {
   type BudgetPulseCategoryRank,
   type BudgetPulseCategoryTone,
   type BudgetPulseStatusTone,
-} from '@kippa/design-system';
+} from '@monochrome-ui/design-system';
 import {
   useAccounts,
   useTransactions,

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useSnackbar } from 'notistack';
-import { Box, Button, Chip, Divider, Grid, Paper, Skeleton, Stack, Switch, Typography } from '@mui/material';
+import { Box, Button, Chip, Divider, Grid, Paper, Skeleton, Stack, Switch, Typography } from '@monochrome-ui/design-system';
 import { NotificationSettings } from '@kippa/domain';
 import {
   CalendarTodayIcon,

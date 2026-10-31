@@ -9,7 +9,7 @@ import {
   Skeleton,
   Stack,
   Typography,
-} from '@mui/material';
+} from '@monochrome-ui/design-system';
 import { BudgetAllocation, BudgetCycle, Category, CurrencyCode } from '@kippa/domain';
 import { Money } from '@/components/Money';
 import { BudgetAllocationsConfig } from '../BudgetAllocationsConfig';

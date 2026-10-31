@@ -12,7 +12,7 @@ import {
   Stack,
   TextField,
   Typography,
-} from '@mui/material';
+} from '@monochrome-ui/design-system';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';

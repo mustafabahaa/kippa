@@ -1,6 +1,6 @@
 import { CalendarMonthIcon, PaymentsIcon } from '@/components/AppIcon';
 
-import { Box, Button, Card, CardContent, Chip, Divider, LinearProgress, Skeleton, Stack, Typography } from '@mui/material';
+import { Box, Button, Card, CardContent, Chip, Divider, LinearProgress, Skeleton, Stack, Typography } from '@monochrome-ui/design-system';
 import { useNavigate } from 'react-router-dom';
 import { Money } from '@/components/Money';
 import { useAppContext } from '@/hooks/useAppContext';

@@ -1,7 +1,7 @@
 import { AccountBalanceIcon, CreditCardIcon, PaymentsIcon, SavingsIcon } from '@/components/AppIcon';
 
 import { useState } from 'react';
-import { Box, Card, CardContent, Chip, Divider, Paper, Skeleton, Stack, Typography } from '@mui/material';
+import { Box, Card, CardContent, Chip, Divider, Paper, Skeleton, Stack, Typography } from '@monochrome-ui/design-system';
 import {
   useAccounts,
   useTransactions,

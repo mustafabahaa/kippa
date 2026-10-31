@@ -1,6 +1,6 @@
 import { AccountBalanceIcon } from '@/components/AppIcon';
 
-import { Box, Card, CardContent, Chip, Paper, Skeleton, Stack, Typography } from '@mui/material';
+import { Box, Card, CardContent, Chip, Paper, Skeleton, Stack, Typography } from '@monochrome-ui/design-system';
 import {
   useAccounts,
   useTransactions,

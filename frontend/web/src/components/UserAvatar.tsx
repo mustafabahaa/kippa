@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import Avatar, { type AvatarProps } from '@mui/material/Avatar';
+import { Avatar, type AvatarProps } from '@monochrome-ui/design-system';
 
 type UserAvatarProps = Omit<AvatarProps, 'alt' | 'children' | 'src' | 'slotProps'> & {
   displayName?: string | null;

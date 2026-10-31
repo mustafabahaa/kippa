@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { useState } from 'react';
-import { Box, Button, Chip, Stack, Tooltip, Typography } from '@mui/material';
+import { Box, Button, Chip, Stack, Tooltip, Typography } from '@monochrome-ui/design-system';
 import type { Account, Reconciliation } from '@kippa/domain';
 import { EmptyLayout } from '@/features/shared/components/EmptyLayout';
 import { SectionHeading } from '@/features/shared/components/SectionHeading';
@@ -60,7 +60,7 @@ export function ReconciliationHistory({ accounts, pages, hasNextPage, isFetching
         {pages.length === 0 || visibleHistory.length === 0 ? (
           <EmptyLayout title="No reconciliation history" description="Completed balance checks will appear here." />
         ) : (
-          <Stack className="kippa-stepper">
+          <Stack className="ds-stepper">
             {visibleHistory.map((item) => {
               const account = accounts.find((candidate) => candidate.id === item.accountId);
               const matched = Math.abs(item.difference) < 0.001;
@@ -95,7 +95,7 @@ export function ReconciliationHistory({ accounts, pages, hasNextPage, isFetching
                     {creator ? (
                       <Tooltip title={`Reconciled by ${creator.displayName}`}>
                         <UserAvatar
-                          className="kippa-stepper-node"
+                          className="ds-stepper-node"
                           photoURLs={[
                             isCurrentUser ? userProfile?.photoURL : undefined,
                             creator.photoURL,

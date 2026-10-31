@@ -1,5 +1,5 @@
 import { forwardRef, type ComponentType, type ElementType } from 'react';
-import { Box, type SvgIconProps } from '@mui/material';
+import { Box, type SvgIconProps } from '@monochrome-ui/design-system';
 import {
   Add,
   AddSquare,

@@ -1,5 +1,5 @@
 import type { ReactElement } from 'react';
-import { Stack, Tooltip, Typography } from '@mui/material';
+import { Stack, Tooltip, Typography } from '@monochrome-ui/design-system';
 import type { CurrencyCode } from '@kippa/domain';
 import { Money } from '@/components/Money';
 

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useSnackbar } from 'notistack';
-import { Box, Chip, Container, Stack, Typography, Button, ButtonBase, Skeleton, Tooltip, Switch, Paper } from '@mui/material';
+import { Box, Chip, Container, Stack, Typography, Button, ButtonBase, Skeleton, Tooltip, Switch, Paper } from '@monochrome-ui/design-system';
 import type { Category } from '@kippa/domain';
 import { SectionHeading } from '@/features/shared/components/SectionHeading';
 import { PageHeader } from '@/features/shared/components/PageHeader';

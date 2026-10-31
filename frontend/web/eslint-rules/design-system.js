@@ -1,4 +1,5 @@
 const prohibitedIconPackages = new Set(['@tabler/icons-react', '@mui/icons-material', 'iconsax-react']);
+const allowedMuiUtilities = new Set(['@mui/material/styles']);
 
 const visualStyleKeys = new Set([
   'color',
@@ -29,6 +30,26 @@ const visualStyleKeys = new Set([
 ]);
 
 const designSystemRules = {
+  'no-direct-ui-imports': {
+    meta: {
+      type: 'problem',
+      docs: { description: 'Route application UI imports through the shared design-system package.' },
+      schema: [],
+      messages: {
+        directUiImport: 'Import UI components from @monochrome-ui/design-system; direct MUI component imports bypass the shared package.',
+      },
+    },
+    create(context) {
+      return {
+        ImportDeclaration(node) {
+          const source = node.source.value;
+          if (!source.startsWith('@mui/material') || allowedMuiUtilities.has(source)) return;
+          if (node.importKind === 'type' || node.specifiers.every((specifier) => specifier.importKind === 'type')) return;
+          context.report({ node: node.source, messageId: 'directUiImport' });
+        },
+      };
+    },
+  },
   'app-icon-only': {
     meta: {
       type: 'problem',

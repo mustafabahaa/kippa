@@ -14,7 +14,7 @@ import {
   IconButton,
   Grid,
   Stack,
-} from '@mui/material';
+} from '@monochrome-ui/design-system';
 import { ArrowBackIcon } from '@/components/AppIcon';
 import { useAppContext } from '@/hooks/useAppContext';
 import {

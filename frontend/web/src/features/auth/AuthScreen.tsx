@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useSnackbar } from 'notistack';
-import { Box, Button, Container, Stack, TextField, Typography, Alert, useTheme, InputAdornment } from '@mui/material';
+import { Box, Button, Container, Stack, TextField, Typography, Alert, useTheme, InputAdornment } from '@monochrome-ui/design-system';
 import { isFirebaseReady } from '@/libs/auth';
 import { useAppContext } from '@/hooks/useAppContext';
 import { AddHomeIcon, GroupAddIcon, HomeIcon, KeyIcon, LogoutIcon } from '@/components/AppIcon';

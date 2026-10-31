@@ -1,4 +1,4 @@
-import { Box } from '@mui/material';
+import { Box } from '@monochrome-ui/design-system';
 import { TransactionType } from '@kippa/domain';
 import { CreditCardIcon, ReceiptLongIcon, SwapHorizIcon, TuneIcon, WorkIcon } from '@/components/AppIcon';
 
@@ -42,7 +42,7 @@ export const TransactionIcon: React.FC<TransactionIconProps> = ({ type, size = 4
 
   return (
     <Box
-      className={['kippa-transaction-icon', className].filter(Boolean).join(' ')}
+      className={['ds-transaction-icon', className].filter(Boolean).join(' ')}
       sx={{
         width: size,
         height: size,

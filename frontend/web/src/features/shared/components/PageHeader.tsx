@@ -1,4 +1,4 @@
-import { Box, Typography } from '@mui/material';
+import { Box, Typography } from '@monochrome-ui/design-system';
 import { ReactNode } from 'react';
 
 interface PageHeaderProps {

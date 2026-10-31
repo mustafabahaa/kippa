@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Alert, Box, Button, CircularProgress, Paper, Stack, Typography } from '@mui/material';
+import { Alert, Box, Button, CircularProgress, Paper, Stack, Typography } from '@monochrome-ui/design-system';
 import { cancelAiConnection, getAiConnection, startAiConnection, type AiConnectionDevice } from './services/connection';
 import { CheckCircleIcon, CloseIcon, ContentCopyIcon, KeyIcon, MessageIcon } from '@/components/AppIcon';
 

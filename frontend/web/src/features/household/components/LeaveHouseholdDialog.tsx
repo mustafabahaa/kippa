@@ -1,4 +1,4 @@
-import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from '@mui/material';
+import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from '@monochrome-ui/design-system';
 import type { Household } from '@kippa/domain';
 
 export function LeaveHouseholdDialog({

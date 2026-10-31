@@ -23,7 +23,7 @@ import {
   TablePagination,
   TableRow,
   Typography,
-} from '@mui/material';
+} from '@monochrome-ui/design-system';
 import { Money } from '@/components/Money';
 import { useAppContext } from '@/hooks/useAppContext';
 import { usePrivacyMask } from '@/hooks/usePrivacyMask';
@@ -44,7 +44,7 @@ import { PageHeader } from '@/features/shared/components/PageHeader';
 import { SectionHeading } from '@/features/shared/components/SectionHeading';
 import { TransactionIcon } from '@/features/transactions';
 import { formatCycleDate } from './cycleUtils';
-import { BudgetCycleAccountRow, BudgetCycleSummaryItem } from '@kippa/design-system';
+import { BudgetCycleAccountRow, BudgetCycleSummaryItem } from '@monochrome-ui/design-system';
 
 const PAGE_SIZE = 25;
 const sectionIndent = { xs: 0, md: 4 } as const;

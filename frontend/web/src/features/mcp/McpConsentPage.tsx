@@ -10,7 +10,7 @@ import {
   Select,
   Stack,
   Typography,
-} from '@mui/material';
+} from '@monochrome-ui/design-system';
 import type { SelectChangeEvent } from '@mui/material/Select';
 import { useSearchParams } from 'react-router-dom';
 import { authLib } from '@/libs/auth';

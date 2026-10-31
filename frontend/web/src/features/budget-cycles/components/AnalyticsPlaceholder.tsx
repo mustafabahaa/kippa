@@ -1,4 +1,4 @@
-import { Skeleton, Stack, Typography } from '@mui/material';
+import { Skeleton, Stack, Typography } from '@monochrome-ui/design-system';
 
 export function AnalyticsPlaceholder({ loading }: { loading: boolean }) {
   return (

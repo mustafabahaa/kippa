@@ -14,7 +14,7 @@ import {
   Stack,
   TextField,
   Typography,
-} from '@mui/material';
+} from '@monochrome-ui/design-system';
 import type { Account, AccountType, CurrencyCode } from '@kippa/domain';
 import { CurrencySelect } from '@/features/shared/components/CurrencySelect';
 

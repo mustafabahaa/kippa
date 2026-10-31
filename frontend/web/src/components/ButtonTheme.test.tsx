@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { Button, ThemeProvider } from '@mui/material';
-import { createKippaTheme, designTokens, modeTokens } from '@kippa/design-system';
+import { Button, ThemeProvider } from '@monochrome-ui/design-system';
+import { createMonochromeTheme, designTokens, modeTokens } from '@monochrome-ui/design-system';
 
 function rgb(hex: string) {
   const value = hex.replace('#', '');
@@ -29,7 +29,7 @@ function contrast(background: string, foreground: string) {
 describe('contained primary button theme states', () => {
   it.each(['light', 'dark'] as const)('keeps enabled and disabled labels readable in %s mode', (mode) => {
     const { unmount } = render(
-      <ThemeProvider theme={createKippaTheme(mode)}>
+      <ThemeProvider theme={createMonochromeTheme(mode)}>
         <Button variant="contained" color="primary">
           Confirm
         </Button>

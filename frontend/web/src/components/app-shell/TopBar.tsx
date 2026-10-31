@@ -1,7 +1,7 @@
 import { ChevronRightIcon, DarkModeIcon, LightModeIcon, MenuIcon } from '@/components/AppIcon';
 
 import { useState } from 'react';
-import { AppBar, Toolbar, Stack, Typography, IconButton, Tooltip, Breadcrumbs, Link } from '@mui/material';
+import { AppBar, Toolbar, Stack, Typography, IconButton, Tooltip, Breadcrumbs, Link } from '@monochrome-ui/design-system';
 import { useTheme } from '@mui/material/styles';
 import { Link as RouterLink, useLocation, useNavigate } from 'react-router-dom';
 import { ActivityBell } from '@/features/activity/ActivityBell';

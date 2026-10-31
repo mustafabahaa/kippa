@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { Box, Paper, Stack, Typography } from '@mui/material';
+import { Box, Paper, Stack, Typography } from '@monochrome-ui/design-system';
 
 /**
  * Shared content heading using the canonical icon-badge treatment:

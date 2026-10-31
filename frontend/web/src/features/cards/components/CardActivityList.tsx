@@ -1,13 +1,13 @@
 import { CheckCircleIcon } from '@/components/AppIcon';
 
-import { Badge, Box, Button, Divider, Paper, Stack, Typography } from '@mui/material';
+import { Badge, Box, Button, Divider, Paper, Stack, Typography } from '@monochrome-ui/design-system';
 import type { CardCharge, CardChargeGroup } from '@/libs/cardActivity';
 import type { Card, Category, FinanceTransaction } from '@kippa/domain';
 import { EmptyLayout } from '@/features/shared/components/EmptyLayout';
 import { UserAvatar } from '@/components/UserAvatar';
 import { useAppContext } from '@/hooks/useAppContext';
 import { formatShortTime } from '@/libs/dateFormatting';
-import { CardActivityText } from '@kippa/design-system';
+import { CardActivityText } from '@monochrome-ui/design-system';
 
 type Props = {
   card: Card;
@@ -58,7 +58,7 @@ export function CardActivityList({
               {group.charges.length} charge{group.charges.length !== 1 ? 's' : ''}
             </Typography>
           </Stack>
-          <Stack className="kippa-stepper" sx={{ width: '100%', minWidth: 0 }}>
+          <Stack className="ds-stepper" sx={{ width: '100%', minWidth: 0 }}>
             {group.charges.map((charge) => {
               const category = charge.categoryId
                 ? categories.find((candidate) => candidate.id === charge.categoryId)
@@ -100,13 +100,13 @@ export function CardActivityList({
                   <Box display="flex" alignItems="center" gap={1.5} sx={{ minWidth: 0, gridArea: 'timeline' }}>
                     {creator ? (
                       <Badge
-                        className="kippa-transaction-avatar-badge"
+                        className="ds-transaction-avatar-badge"
                         overlap="circular"
                         anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
-                        badgeContent={<Box className="kippa-transaction-type-dot" data-type={charge.txType} />}
+                        badgeContent={<Box className="ds-transaction-type-dot" data-type={charge.txType} />}
                       >
                         <UserAvatar
-                          className="kippa-stepper-node"
+                          className="ds-stepper-node"
                           photoURLs={[
                             isCurrentUser ? userProfile?.photoURL : undefined,
                             creator.photoURL,
@@ -118,7 +118,7 @@ export function CardActivityList({
                       </Badge>
                     ) : (
                       <Box sx={{ width: 28, height: 28, flex: '0 0 28px', display: 'grid', placeItems: 'center' }}>
-                        <Box className="kippa-transaction-type-dot" data-type={charge.txType} aria-hidden="true" />
+                        <Box className="ds-transaction-type-dot" data-type={charge.txType} aria-hidden="true" />
                       </Box>
                     )}
                     <Stack spacing={0.25} sx={{ minWidth: 0, flex: 1 }}>

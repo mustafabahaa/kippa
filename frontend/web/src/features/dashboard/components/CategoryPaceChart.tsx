@@ -1,4 +1,4 @@
-import { Box, Chip, Paper, Stack, Tooltip, Typography } from '@mui/material';
+import { Box, Chip, Paper, Stack, Tooltip, Typography } from '@monochrome-ui/design-system';
 import type { DashboardData } from '@/libs/selectors';
 
 type CategoryPace = DashboardData['categoryStatus'][number];

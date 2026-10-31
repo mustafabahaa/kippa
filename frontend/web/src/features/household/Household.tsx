@@ -17,7 +17,7 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
-} from '@mui/material';
+} from '@monochrome-ui/design-system';
 import { SectionHeading } from '@/features/shared/components/SectionHeading';
 import {
   AddHomeIcon,

@@ -51,6 +51,7 @@ export default tseslint.config(
       'kippa-architecture/no-infrastructure-imports-from-ui': 'error',
       'kippa-architecture/feature-public-api': 'error',
       'kippa-design/app-icon-only': 'error',
+      'kippa-design/no-direct-ui-imports': 'error',
       'kippa-design/no-visual-sx': 'error',
       'kippa-design/named-typography-variants': 'error',
     },

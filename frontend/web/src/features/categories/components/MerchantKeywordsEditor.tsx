@@ -1,7 +1,7 @@
 import { AddIcon, CloseIcon, ShoppingCartIcon } from '@/components/AppIcon';
 
 import { useState } from 'react';
-import { Box, Chip, IconButton, Stack, TextField, Typography } from '@mui/material';
+import { Box, Chip, IconButton, Stack, TextField, Typography } from '@monochrome-ui/design-system';
 import { EmptyLayout } from '@/features/shared/components/EmptyLayout';
 import { dedupeMerchantKeywords } from '@/libs/merchantSuggestions';
 

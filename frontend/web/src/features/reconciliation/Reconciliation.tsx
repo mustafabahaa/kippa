@@ -15,7 +15,7 @@ import {
   Stack,
   TextField,
   Typography,
-} from '@mui/material';
+} from '@monochrome-ui/design-system';
 import type { AccountType, Reconciliation as ReconModel } from '@kippa/domain';
 import {
   useAccounts,

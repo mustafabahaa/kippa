@@ -1,6 +1,6 @@
-import { Alert, AlertTitle, Button, Stack } from '@mui/material';
+import { Alert, AlertTitle, Button, Stack } from '@monochrome-ui/design-system';
 import { IosShareIcon } from '@/components/AppIcon';
-import { Typography } from '@mui/material';
+import { Typography } from '@monochrome-ui/design-system';
 
 interface Props {
   onClose?: () => void;

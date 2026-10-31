@@ -13,7 +13,7 @@ import {
   Tabs,
   TextField,
   Typography,
-} from '@mui/material';
+} from '@monochrome-ui/design-system';
 import { KeyIcon, SearchIcon } from '@/components/AppIcon';
 import { PageHeader } from '@/features/shared/components/PageHeader';
 import { PendingReviewDialog } from './components/PendingReviewDialog';
@@ -378,7 +378,7 @@ export function PendingTransactions() {
                     subtitle="Confirm or discard detected bank activity."
                     trailing={<Chip size="small" label={`${filteredPending.length} results`} />}
                   />
-                  <Stack className="kippa-stepper" sx={{ px: contentIndent }}>
+                  <Stack className="ds-stepper" sx={{ px: contentIndent }}>
                     {filteredPending.map((item) => (
                       <Paper
                         key={item.id}
@@ -401,7 +401,7 @@ export function PendingTransactions() {
                         }}
                       >
                         {(itemStates[item.id] ?? 'idle') === 'idle' ? (
-                          <TransactionIcon className="kippa-stepper-node" type={item.kind} size={36} />
+                          <TransactionIcon className="ds-stepper-node" type={item.kind} size={36} />
                         ) : (
                           <CircularProgress size={32} />
                         )}
@@ -445,7 +445,7 @@ export function PendingTransactions() {
                     subtitle="The latest 100 resolved items."
                     trailing={<Chip size="small" label={`${filteredResolved.length} results`} />}
                   />
-                  <Stack className="kippa-stepper" sx={{ px: contentIndent }}>
+                  <Stack className="ds-stepper" sx={{ px: contentIndent }}>
                     {filteredResolved.map((item) => {
                       const restoring = restoreMutation.isPending && restoreMutation.variables?.pendingId === item.id;
                       return (
@@ -462,7 +462,7 @@ export function PendingTransactions() {
                             gap: 1.5,
                           }}
                         >
-                          <TransactionIcon className="kippa-stepper-node" type={item.snapshot.kind} size={36} />
+                          <TransactionIcon className="ds-stepper-node" type={item.snapshot.kind} size={36} />
                           <Box sx={{ flex: 1, minWidth: 0 }}>
                             <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={1}>
                               <Typography noWrap variant="sectionLabel" sx={{ minWidth: 0 }}>

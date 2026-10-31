@@ -1,4 +1,4 @@
-import { Box, Paper, Typography, useTheme } from '@mui/material';
+import { Box, Paper, Typography, useTheme } from '@monochrome-ui/design-system';
 import { ReactNode } from 'react';
 
 interface EmptyLayoutProps {

@@ -1,12 +1,12 @@
 import { AddIcon, DashboardIcon, HourglassEmptyIcon, MessageIcon, ReceiptLongIcon } from '@/components/AppIcon';
 
-import { Box } from '@mui/material';
+import { Box } from '@monochrome-ui/design-system';
 import {
   MobileBottomNavigationAction,
   MobileBottomNavigationItem,
   MobileBottomNavigationShape,
   MobileBottomNavigationShell,
-} from '@kippa/design-system';
+} from '@monochrome-ui/design-system';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useState, useEffect, useRef } from 'react';
 import type { ReactNode } from 'react';

@@ -1,4 +1,4 @@
-import { Box, Typography, Stack, IconButton, LinearProgress } from '@mui/material';
+import { Box, Typography, Stack, IconButton, LinearProgress } from '@monochrome-ui/design-system';
 import { AcUnitIcon, EditIcon } from '@/components/AppIcon';
 import type { Card } from '@kippa/domain';
 import type { CardSummary } from '@/libs/cardSelectors';

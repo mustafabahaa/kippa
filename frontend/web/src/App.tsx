@@ -1,7 +1,7 @@
 import { useMemo, lazy, Suspense } from 'react';
 import { Routes, Route, BrowserRouter, useLocation } from 'react-router-dom';
-import { ThemeProvider, CssBaseline } from '@mui/material';
-import { createAppTheme } from '@kippa/design-system';
+import { ThemeProvider, CssBaseline } from '@monochrome-ui/design-system';
+import { createMonochromeTheme } from '@monochrome-ui/design-system';
 import { useThemeMode } from '@/hooks/useThemeMode';
 import { useAppContext } from '@/hooks/useAppContext';
 import { AppLoadingScreen } from '@/components/app-shell/AppLoadingScreen';
@@ -70,7 +70,7 @@ function SignedOutRoute() {
 export default function App() {
   const { userProfile, householdId, isAuthLoading } = useAppContext();
   const { resolvedMode } = useThemeMode();
-  const theme = useMemo(() => createAppTheme(resolvedMode), [resolvedMode]);
+  const theme = useMemo(() => createMonochromeTheme(resolvedMode), [resolvedMode]);
 
   // Register FCM push notifications once the user has a household. Side-effect
   // only — this instance handles the logout-unregister and re-register-on-reload

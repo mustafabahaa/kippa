@@ -1,4 +1,4 @@
-import { Avatar, Box, Button, Divider, List, ListItem, ListItemText, Skeleton, Stack, Typography } from '@mui/material';
+import { Avatar, Box, Button, Divider, List, ListItem, ListItemText, Skeleton, Stack, Typography } from '@monochrome-ui/design-system';
 import type { HouseholdMember, JoinRequest } from '@kippa/domain';
 import { GroupAddIcon } from '@/components/AppIcon';
 import { SectionHeading } from '@/features/shared/components/SectionHeading';

@@ -1,4 +1,4 @@
-import { Box, Divider, Grid, Skeleton, Stack } from '@mui/material';
+import { Box, Divider, Grid, Skeleton, Stack } from '@monochrome-ui/design-system';
 import { useNotificationSettings, useUpdateNotificationSettingsMutation } from '@/hooks/useFinance';
 import { NotificationSettings } from '@kippa/domain';
 import { NotificationSettingsForm } from '@/features/notifications/NotificationSettingsForm';

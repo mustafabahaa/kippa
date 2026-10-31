@@ -2,7 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider } from '@mui/material/styles';
-import { createKippaTheme } from '@kippa/design-system';
+import { createMonochromeTheme } from '@monochrome-ui/design-system';
 import { describe, expect, it, vi } from 'vitest';
 
 const { executeAction, savePendingActions, addMessage, clear } = vi.hoisted(() => ({
@@ -107,7 +107,7 @@ describe('AiAssistant confirmations', () => {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     render(
       <QueryClientProvider client={client}>
-        <ThemeProvider theme={createKippaTheme('light')}>
+        <ThemeProvider theme={createMonochromeTheme('light')}>
           <AiAssistant />
         </ThemeProvider>
       </QueryClientProvider>,
@@ -124,7 +124,7 @@ describe('AiAssistant confirmations', () => {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     render(
       <QueryClientProvider client={client}>
-        <ThemeProvider theme={createKippaTheme('light')}>
+        <ThemeProvider theme={createMonochromeTheme('light')}>
           <AiAssistant />
         </ThemeProvider>
       </QueryClientProvider>,

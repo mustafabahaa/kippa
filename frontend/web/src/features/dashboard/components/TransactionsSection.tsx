@@ -3,7 +3,7 @@ import { ReceiptLongIcon } from '@/components/AppIcon';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
-import { Box, Card, CardContent, Chip, Skeleton, Stack, Typography } from '@mui/material';
+import { Box, Card, CardContent, Chip, Skeleton, Stack, Typography } from '@monochrome-ui/design-system';
 import {
   useCategories,
   useTransactions,
@@ -94,7 +94,7 @@ export function TransactionsSection() {
               </Typography>
             ) : (
               <Box sx={{ flex: { md: 1 }, minHeight: { md: 0 }, overflowY: { md: 'auto' } }}>
-                <Stack className="kippa-stepper">
+                <Stack className="ds-stepper">
                   {transactions.slice(0, RECENT_TRANSACTION_LIMIT).map((tx) => (
                     <TransactionsListItem
                       key={tx.id}

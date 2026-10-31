@@ -14,7 +14,7 @@ import {
   Select,
   Stack,
   Typography,
-} from '@mui/material';
+} from '@monochrome-ui/design-system';
 import type { Account, Category, PendingFinancialMessage } from '@kippa/domain';
 import { Money } from '@/components/Money';
 import { calculateCardPayment } from '@/libs/cardPayment';

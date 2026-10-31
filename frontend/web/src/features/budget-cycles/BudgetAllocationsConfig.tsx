@@ -2,7 +2,7 @@ import { ContentCopyIcon } from '@/components/AppIcon';
 
 import { useState, useEffect, useCallback } from 'react';
 import { useSnackbar } from 'notistack';
-import { Box, Button, Divider, Stack, Typography, Chip } from '@mui/material';
+import { Box, Button, Divider, Stack, Typography, Chip } from '@monochrome-ui/design-system';
 import { useSaveAllocationsBatchMutation, useHouseholdBaseCurrency } from '@/hooks/useFinance';
 import { Money } from '@/components/Money';
 import { usePrivacyMask } from '@/hooks/usePrivacyMask';

@@ -10,7 +10,7 @@ import {
   IconButton,
   Stack,
   Typography,
-} from '@mui/material';
+} from '@monochrome-ui/design-system';
 import type { MessageIngestionCredential } from '@kippa/domain';
 import { ContentCopyIcon, KeyIcon } from '@/components/AppIcon';
 

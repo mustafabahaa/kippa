@@ -11,7 +11,7 @@ import {
   Stack,
   IconButton,
   LinearProgress,
-} from '@mui/material';
+} from '@monochrome-ui/design-system';
 import { useAppContext } from '@/hooks/useAppContext';
 import { useTransactions, useLedgerLines, usePayCardMutation, useCategories, useCycles } from '@/hooks/useFinance';
 import type { Card } from '@kippa/domain';

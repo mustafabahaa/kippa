@@ -21,7 +21,7 @@ import {
   TableRow,
   TextField,
   Typography,
-} from '@mui/material';
+} from '@monochrome-ui/design-system';
 import type { TransactionType } from '@kippa/domain';
 import { Money } from '@/components/Money';
 import { useAppContext } from '@/hooks/useAppContext';

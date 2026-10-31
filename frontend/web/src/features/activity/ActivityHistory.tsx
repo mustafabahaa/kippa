@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Avatar, Box, Button, Chip, Grid, Paper, Skeleton, Stack, TextField, Typography } from '@mui/material';
+import { Avatar, Box, Button, Chip, Grid, Paper, Skeleton, Stack, TextField, Typography } from '@monochrome-ui/design-system';
 import type { AuditAction, AuditLogEntry } from '@kippa/domain';
 import { SearchIcon } from '@/components/AppIcon';
 import { PageHeader } from '@/features/shared/components/PageHeader';
@@ -103,7 +103,7 @@ function ActivityHistoryRow({ entry }: { entry: AuditLogEntry }) {
     >
       <Stack direction="row" spacing={1.5} alignItems="center" sx={{ minWidth: 0 }}>
         <Avatar
-          className="kippa-stepper-node"
+          className="ds-stepper-node"
           src={entry.userPhotoURL || undefined}
           sx={{ width: 28, height: 28, flexShrink: 0 }}
         >
@@ -166,7 +166,7 @@ function ActivityHistorySkeleton() {
               <Skeleton variant="text" width={150} height={28} />
               <Skeleton variant="rounded" width={75} height={28} />
             </Stack>
-            <Stack className="kippa-stepper">
+            <Stack className="ds-stepper">
               {[0, 1, 2, 3, 4].map((item) => (
                 <Stack
                   key={item}
@@ -310,7 +310,7 @@ export function ActivityHistory() {
                 />
               ) : (
                 <>
-                  <Stack className="kippa-stepper">
+                  <Stack className="ds-stepper">
                     {filteredEntries.slice(0, visibleCount).map((entry) => (
                       <ActivityHistoryRow key={entry.id} entry={entry} />
                     ))}

@@ -10,13 +10,13 @@ import {
   MenuItem,
   useTheme,
   alpha,
-} from '@mui/material';
+} from '@monochrome-ui/design-system';
 import {
   CycleCashFlowColumn,
   CycleCashFlowGuide,
   CycleChartSwatch,
   CycleTrendLineChart,
-} from '@kippa/design-system';
+} from '@monochrome-ui/design-system';
 import {
   useCycles,
   useTransactions,

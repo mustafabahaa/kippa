@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
-import { Autocomplete, Box, Stack, TextField, Skeleton, Button, Chip } from '@mui/material';
+import { Autocomplete, Box, Stack, TextField, Skeleton, Button, Chip } from '@monochrome-ui/design-system';
 
 import {
   useAccounts,
@@ -293,7 +293,7 @@ export function TransactionHistory() {
                 />
               ) : (
                 <>
-                  <Stack className="kippa-stepper">
+                  <Stack className="ds-stepper">
                     {filteredTxs.slice(0, visibleCount).map((transaction) => (
                       <TransactionsListItem
                         key={transaction.id}

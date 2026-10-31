@@ -1,6 +1,6 @@
 import { InfoOutlinedIcon } from '@/components/AppIcon';
 
-import { Box, Tooltip, Typography } from '@mui/material';
+import { Box, Tooltip, Typography } from '@monochrome-ui/design-system';
 import { ReactNode } from 'react';
 
 interface InfoTooltipProps {

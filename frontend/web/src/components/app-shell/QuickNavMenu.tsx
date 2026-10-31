@@ -10,7 +10,7 @@ import {
   SwapHorizIcon,
 } from '@/components/AppIcon';
 
-import { Menu, MenuItem, Divider, ListItemIcon, ListItemText, Typography } from '@mui/material';
+import { Menu, MenuItem, Divider, ListItemIcon, ListItemText, Typography } from '@monochrome-ui/design-system';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 interface QuickNavMenuProps {

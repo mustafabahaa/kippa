@@ -1,4 +1,4 @@
-import { Box, CssBaseline, ThemeProvider } from '@mui/material';
+import { BrandLoadingScreen, CssBaseline, ThemeProvider } from '@monochrome-ui/design-system';
 import type { Theme } from '@mui/material/styles';
 
 interface AppLoadingScreenProps {
@@ -12,11 +12,7 @@ export function AppLoadingScreen({ theme }: AppLoadingScreenProps) {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <Box role="status" aria-label="Loading Kippa" className="splash-screen">
-        <Box className="splash-content">
-          <Box component="img" src={logoSrc} alt="Kippa" className="splash-logo" />
-        </Box>
-      </Box>
+      <BrandLoadingScreen logoSrc={logoSrc} appName="Kippa" />
     </ThemeProvider>
   );
 }

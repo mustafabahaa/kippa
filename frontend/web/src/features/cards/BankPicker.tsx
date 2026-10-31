@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Box, TextField, Stack, Paper } from '@mui/material';
+import { Box, TextField, Stack, Paper } from '@monochrome-ui/design-system';
 import { BANK_LIST } from './banks/banks';
 import { BankLogo } from './CardDesign';
 

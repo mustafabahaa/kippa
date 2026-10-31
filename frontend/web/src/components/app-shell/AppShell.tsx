@@ -1,5 +1,5 @@
 import { Suspense } from 'react';
-import { Box, Container, useTheme } from '@mui/material';
+import { Box, Container, useTheme } from '@monochrome-ui/design-system';
 import { Outlet, useLocation } from 'react-router-dom';
 import { OfflineBanner } from '@/components/OfflineBanner';
 import { TopBar } from '@/components/app-shell/TopBar';

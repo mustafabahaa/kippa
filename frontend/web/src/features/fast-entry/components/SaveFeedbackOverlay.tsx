@@ -1,5 +1,5 @@
-import { Paper, Portal, Typography } from '@mui/material';
-import { SaveFeedbackMotion } from '@kippa/design-system';
+import { Paper, Portal, Typography } from '@monochrome-ui/design-system';
+import { SaveFeedbackMotion } from '@monochrome-ui/design-system';
 import { CheckCircleIcon, ReceiptLongIcon } from '@/components/AppIcon';
 
 export type SaveFeedbackContent = { account: string; amount: string; category: string; title: string };

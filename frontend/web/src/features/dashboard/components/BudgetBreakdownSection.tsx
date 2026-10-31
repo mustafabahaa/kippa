@@ -11,8 +11,8 @@ import {
   useTheme,
   LinearProgress,
   Paper,
-} from '@mui/material';
-import { BudgetMetricBadge, ChartColorMarker } from '@kippa/design-system';
+} from '@monochrome-ui/design-system';
+import { BudgetMetricBadge, ChartColorMarker } from '@monochrome-ui/design-system';
 import {
   useAccounts,
   useTransactions,

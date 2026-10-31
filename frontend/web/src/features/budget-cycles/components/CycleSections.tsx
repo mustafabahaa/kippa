@@ -1,6 +1,6 @@
 import { BarChartIcon, CheckCircleIcon, EditIcon, EventIcon, ExpandLessIcon, TimerIcon } from '@/components/AppIcon';
 
-import { Box, Button, Chip, Grid, LinearProgress, Stack, Typography } from '@mui/material';
+import { Box, Button, Chip, Grid, LinearProgress, Stack, Typography } from '@monochrome-ui/design-system';
 import type { BudgetCycle, CurrencyCode } from '@kippa/domain';
 import { Money } from '@/components/Money';
 import { SectionHeading } from '@/features/shared/components/SectionHeading';

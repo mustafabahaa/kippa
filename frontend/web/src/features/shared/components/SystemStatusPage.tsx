@@ -1,11 +1,4 @@
-import { Box, Button, Typography, useTheme } from '@mui/material';
-import {
-  SystemStatusAction,
-  SystemStatusCode,
-  SystemStatusContent,
-  SystemStatusLogo,
-  SystemStatusTitle,
-} from '@kippa/design-system';
+import { Button, SystemStatusLayout, useTheme } from '@monochrome-ui/design-system';
 import { Link } from 'react-router-dom';
 
 export type SystemStatus = 'notFound' | 'error';
@@ -41,20 +34,12 @@ export function SystemStatusPage({ status, onRetry }: SystemStatusPageProps) {
   );
 
   return (
-    <Box sx={{ display: 'grid', minHeight: '100dvh', placeItems: 'center', px: 2, py: 4 }}>
-      <SystemStatusContent>
-        <SystemStatusLogo src={logoSrc} alt="Kippa" />
-        <SystemStatusCode variant="systemStatusCode" color="text.secondary">
-          {status === 'notFound' ? '404' : 'ERROR'}
-        </SystemStatusCode>
-        <SystemStatusTitle variant="systemStatusTitle" color="text.primary">
-          {content.title}
-        </SystemStatusTitle>
-        <Typography variant="body2" color="text.secondary">
-          {content.description}
-        </Typography>
-        <SystemStatusAction>{action}</SystemStatusAction>
-      </SystemStatusContent>
-    </Box>
+    <SystemStatusLayout
+      logoSrc={logoSrc}
+      code={status === 'notFound' ? '404' : 'ERROR'}
+      title={content.title}
+      description={content.description}
+      action={action}
+    />
   );
 }

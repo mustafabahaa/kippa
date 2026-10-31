@@ -1,4 +1,4 @@
-import { Autocomplete, InputAdornment, Stack, TextField } from '@mui/material';
+import { Autocomplete, InputAdornment, Stack, TextField } from '@monochrome-ui/design-system';
 import type { CurrencyCode } from '@kippa/domain';
 import { CURRENCIES, countryFlagEmoji } from '@/libs/currencyMeta';
 

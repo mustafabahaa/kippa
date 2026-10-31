@@ -1,4 +1,4 @@
-import { Box, Button, Fab, Paper, Typography } from '@mui/material';
+import { Box, Button, Fab, Paper, Typography } from '@monochrome-ui/design-system';
 import { BackspaceIcon, CheckCircleIcon } from '@/components/AppIcon';
 
 type Props = {

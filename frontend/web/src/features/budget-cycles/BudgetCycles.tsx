@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef } from 'react';
 import { useSnackbar } from 'notistack';
-import { Box, Stack, Typography, Button, Grid, Skeleton, Divider } from '@mui/material';
+import { Box, Stack, Typography, Button, Grid, Skeleton, Divider } from '@monochrome-ui/design-system';
 import {
   useCategories,
   useCycles,

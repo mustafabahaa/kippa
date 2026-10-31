@@ -1,7 +1,7 @@
 import { DeleteIcon } from '@/components/AppIcon';
 
-import { List, ListItemText, Stack, TextField } from '@mui/material';
-import { BudgetAllocationActions, BudgetAllocationRemoveButton, BudgetAllocationRow } from '@kippa/design-system';
+import { List, ListItemText, Stack, TextField } from '@monochrome-ui/design-system';
+import { BudgetAllocationActions, BudgetAllocationRemoveButton, BudgetAllocationRow } from '@monochrome-ui/design-system';
 
 export interface AllocationRow {
   categoryId: string;

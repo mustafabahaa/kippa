@@ -22,7 +22,7 @@ import {
   Stack,
   Tooltip,
   IconButton,
-} from '@mui/material';
+} from '@monochrome-ui/design-system';
 import type { ThemeModePref } from '@/contexts/themeModeContext';
 import type { UserProfile, Household } from '@kippa/domain';
 import { usePrivacyMode } from '@/hooks/usePrivacyMode';

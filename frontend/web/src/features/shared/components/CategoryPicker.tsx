@@ -12,7 +12,7 @@ import {
   Stack,
   TextField,
   Typography,
-} from '@mui/material';
+} from '@monochrome-ui/design-system';
 import type { Category } from '@kippa/domain';
 
 type CategoryChipsProps = {

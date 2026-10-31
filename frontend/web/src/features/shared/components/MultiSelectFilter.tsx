@@ -1,5 +1,5 @@
 import { createContext, forwardRef, useContext } from 'react';
-import { Autocomplete, Button, Checkbox, Chip, Paper, Stack, TextField, type PaperProps } from '@mui/material';
+import { Autocomplete, Button, Checkbox, Chip, Paper, Stack, TextField, type PaperProps } from '@monochrome-ui/design-system';
 
 export type MultiSelectFilterOption = { id: string; label: string };
 

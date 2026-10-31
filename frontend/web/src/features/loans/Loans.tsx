@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Box, Button, Chip, Divider, Grid, LinearProgress, Skeleton, Stack, Typography } from '@mui/material';
+import { Box, Button, Chip, Divider, Grid, LinearProgress, Skeleton, Stack, Typography } from '@monochrome-ui/design-system';
 import type { Loan } from '@kippa/domain';
 import { Money } from '@/components/Money';
 import { PageHeader } from '@/features/shared/components/PageHeader';

@@ -4,7 +4,7 @@ import {
   AiAssistantLoadingBadge,
   AiAssistantPage,
   AiAssistantStreamCursor,
-} from '@kippa/design-system';
+} from '@monochrome-ui/design-system';
 import {
   Alert,
   Box,
@@ -19,7 +19,7 @@ import {
   Paper,
   Stack,
   Typography,
-} from '@mui/material';
+} from '@monochrome-ui/design-system';
 import { useQueryClient } from '@tanstack/react-query';
 import { useNotifications } from '@/notifications/useNotifications';
 import Markdown from 'react-markdown';

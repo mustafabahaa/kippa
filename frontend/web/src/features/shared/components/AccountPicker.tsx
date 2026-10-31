@@ -1,4 +1,4 @@
-import { Box, Card, CardActionArea, Typography } from '@mui/material';
+import { Box, Card, CardActionArea, Typography } from '@monochrome-ui/design-system';
 import type { Account } from '@kippa/domain';
 import { AccountBalanceIcon, CheckCircleIcon, PaymentsIcon, SavingsIcon } from '@/components/AppIcon';
 

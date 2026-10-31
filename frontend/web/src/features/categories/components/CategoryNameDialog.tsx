@@ -11,7 +11,7 @@ import {
   Stack,
   TextField,
   Typography,
-} from '@mui/material';
+} from '@monochrome-ui/design-system';
 import { MerchantKeywordsEditor } from './MerchantKeywordsEditor';
 
 interface CategoryNameDialogProps {

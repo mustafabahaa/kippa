@@ -24,13 +24,13 @@ import {
   ThemeProvider,
   Toolbar,
   Typography,
-} from '@mui/material';
+} from '@monochrome-ui/design-system';
 import { useMemo, useState } from 'react';
-import { createKippaTheme, type KippaThemeMode } from '@kippa/design-system';
+import { createMonochromeTheme, type ThemeMode } from '@monochrome-ui/design-system';
 
 const repositoryUrl = 'https://github.com/mustafabahaa/kippa';
 
-type ThemePreference = KippaThemeMode;
+type ThemePreference = ThemeMode;
 
 function getInitialMode(): ThemePreference {
   const saved = window.localStorage.getItem('kippa-landing-theme');
@@ -352,7 +352,7 @@ function Landing({ mode, onToggleMode }: { mode: ThemePreference; onToggleMode: 
 
 export function App() {
   const [mode, setMode] = useState<ThemePreference>(getInitialMode);
-  const theme = useMemo(() => createKippaTheme(mode), [mode]);
+  const theme = useMemo(() => createMonochromeTheme(mode), [mode]);
   const toggleMode = () => {
     const next = mode === 'dark' ? 'light' : 'dark';
     window.localStorage.setItem('kippa-landing-theme', next);

@@ -1,6 +1,6 @@
 import { NotificationsIcon } from '@/components/AppIcon';
 
-import { IconButton, Badge, Tooltip } from '@mui/material';
+import { IconButton, Badge, Tooltip } from '@monochrome-ui/design-system';
 
 import { useUnreadActivityCount } from '@/hooks/useFinance';
 import { useAppContext } from '@/hooks/useAppContext';
