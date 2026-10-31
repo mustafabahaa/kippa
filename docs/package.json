@@ -13,7 +13,7 @@
     "@docusaurus/core": "3.10.2",
     "@docusaurus/preset-classic": "3.10.2",
     "@fontsource-variable/plus-jakarta-sans": "^5.2.8",
-    "@kippa/design-system": "0.1.0",
+    "@monochrome-ui/design-system": "https://github.com/mustafabahaa/monochrome-ui/archive/refs/tags/v0.1.6.tar.gz",
     "@mdx-js/react": "^3.0.0",
     "clsx": "^2.1.1",
     "prism-react-renderer": "^2.4.1",

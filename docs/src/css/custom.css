@@ -1,5 +1,5 @@
 @import '@fontsource-variable/plus-jakarta-sans';
-@import '@kippa/design-system/tokens.css';
+@import '@monochrome-ui/design-system/tokens.css';
 
 :root {
   --ifm-color-primary: var(--kippa-primary-strong);
