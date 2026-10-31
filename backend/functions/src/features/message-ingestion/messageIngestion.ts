@@ -20,6 +20,7 @@ import { buildMessagePayload } from '../../domain/notifications/payload.js';
 import { getTokensForUsers, sendToMany } from '../../libs/notifications/sendToMany.js';
 import { calculateCreditCardLedgerAmount } from '../../domain/transactions/creditCardFee.js';
 import { getCredentialDeletionStatus } from '../../domain/message-ingestion/deleteCredential.js';
+import { requireAllowedUid } from '../../libs/allowedUsers.js';
 
 type IngestionCredential = {
   id: string;
@@ -198,8 +199,7 @@ export async function resolveLoanSuggestion(
 }
 
 export const createMessageIngestionCredential = onCall(async (request) => {
-  const uid = request.auth?.uid;
-  if (!uid) throw new HttpsError('unauthenticated', 'Sign in required.');
+  const uid = requireAllowedUid(request.auth);
   const householdId = assertString((request.data as { householdId?: unknown })?.householdId, 'householdId');
   const label =
     typeof (request.data as { label?: unknown })?.label === 'string'
@@ -235,8 +235,7 @@ export const createMessageIngestionCredential = onCall(async (request) => {
 });
 
 export const listMessageIngestionCredentials = onCall(async (request) => {
-  const uid = request.auth?.uid;
-  if (!uid) throw new HttpsError('unauthenticated', 'Sign in required.');
+  const uid = requireAllowedUid(request.auth);
   const householdId = assertString((request.data as { householdId?: unknown })?.householdId, 'householdId');
   await requireHouseholdMember(uid, householdId);
   const snapshot = await getFirestore().collection('messageIngestionCredentials').where('ownerUid', '==', uid).get();
@@ -260,8 +259,7 @@ export const listMessageIngestionCredentials = onCall(async (request) => {
 });
 
 export const revokeMessageIngestionCredential = onCall(async (request) => {
-  const uid = request.auth?.uid;
-  if (!uid) throw new HttpsError('unauthenticated', 'Sign in required.');
+  const uid = requireAllowedUid(request.auth);
   const credentialId = assertString((request.data as { credentialId?: unknown })?.credentialId, 'credentialId');
   const ref = getFirestore().doc(`messageIngestionCredentials/${credentialId}`);
   const snapshot = await ref.get();
@@ -272,8 +270,7 @@ export const revokeMessageIngestionCredential = onCall(async (request) => {
 });
 
 export const deleteMessageIngestionCredential = onCall(async (request) => {
-  const uid = request.auth?.uid;
-  if (!uid) throw new HttpsError('unauthenticated', 'Sign in required.');
+  const uid = requireAllowedUid(request.auth);
   const credentialId = assertString((request.data as { credentialId?: unknown })?.credentialId, 'credentialId');
   const db = getFirestore();
   const ref = db.doc(`messageIngestionCredentials/${credentialId}`);
@@ -553,8 +550,7 @@ export const ingestFinancialMessage = onRequest(
 );
 
 export const approvePendingFinancialMessage = onCall(async (request) => {
-  const uid = request.auth?.uid;
-  if (!uid) throw new HttpsError('unauthenticated', 'Sign in required.');
+  const uid = requireAllowedUid(request.auth);
   const data = request.data as {
     householdId?: unknown;
     pendingId?: unknown;
@@ -782,8 +778,7 @@ export const approvePendingFinancialMessage = onCall(async (request) => {
 });
 
 export const discardPendingFinancialMessage = onCall(async (request) => {
-  const uid = request.auth?.uid;
-  if (!uid) throw new HttpsError('unauthenticated', 'Sign in required.');
+  const uid = requireAllowedUid(request.auth);
   const householdId = assertString((request.data as { householdId?: unknown })?.householdId, 'householdId');
   const pendingId = assertString((request.data as { pendingId?: unknown })?.pendingId, 'pendingId');
   const profile = await requireHouseholdMember(uid, householdId);
@@ -825,8 +820,7 @@ export const discardPendingFinancialMessage = onCall(async (request) => {
 });
 
 export const listResolvedPendingFinancialMessages = onCall(async (request) => {
-  const uid = request.auth?.uid;
-  if (!uid) throw new HttpsError('unauthenticated', 'Sign in required.');
+  const uid = requireAllowedUid(request.auth);
   const householdId = assertString((request.data as { householdId?: unknown })?.householdId, 'householdId');
   await requireHouseholdMember(uid, householdId);
 
@@ -859,8 +853,7 @@ export const listResolvedPendingFinancialMessages = onCall(async (request) => {
 });
 
 export const restoreDiscardedPendingFinancialMessage = onCall(async (request) => {
-  const uid = request.auth?.uid;
-  if (!uid) throw new HttpsError('unauthenticated', 'Sign in required.');
+  const uid = requireAllowedUid(request.auth);
   const householdId = assertString((request.data as { householdId?: unknown })?.householdId, 'householdId');
   const pendingId = assertString((request.data as { pendingId?: unknown })?.pendingId, 'pendingId');
   const profile = await requireHouseholdMember(uid, householdId);

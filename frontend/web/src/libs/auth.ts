@@ -16,6 +16,11 @@ import { UserProfile, Household, JoinStatus, HouseholdMember } from '@kippa/doma
 const FIREBASE_REQUIRED_MSG =
   'Firebase is not configured. Copy .env.example to .env and set VITE_FIREBASE_* credentials.';
 
+async function hasPrivateAccess(user: FirebaseUser, forceRefresh = false): Promise<boolean> {
+  const token = await user.getIdTokenResult(forceRefresh);
+  return token.claims.kippaAccess === true;
+}
+
 function requireAuth(): Auth {
   if (!isFirebaseReady || !auth) {
     throw new Error(FIREBASE_REQUIRED_MSG);
@@ -39,9 +44,15 @@ export const authLib = {
       callback(null);
       return () => {};
     }
+    const firebaseAuth = auth;
 
-    return onAuthStateChanged(auth, async (fbUser: FirebaseUser | null) => {
+    return onAuthStateChanged(firebaseAuth, async (fbUser: FirebaseUser | null) => {
       if (fbUser) {
+        if (!(await hasPrivateAccess(fbUser))) {
+          await firebaseSignOut(firebaseAuth);
+          callback(null);
+          return;
+        }
         const profile = (await dbLib.getDoc('system', 'users', fbUser.uid)) as UserProfile | null;
         if (profile) {
           // Sync photoURL only (non-membership field). Membership fields
@@ -83,6 +94,10 @@ export const authLib = {
     const provider = new GoogleAuthProvider();
     const credentials = await signInWithPopup(firebaseAuth, provider);
     const fbUser = credentials.user;
+    if (!(await hasPrivateAccess(fbUser, true))) {
+      await firebaseSignOut(firebaseAuth);
+      throw new Error('This Google account is not authorized to use Kippa.');
+    }
 
     const profile = (await dbLib.getDoc('system', 'users', fbUser.uid)) as UserProfile | null;
     if (profile) {

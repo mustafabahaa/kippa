@@ -3,6 +3,7 @@ import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import type { UserProfile, Household, NotificationSettings, JoinRequest, JoinStatus } from '@kippa/domain';
 import { buildMessagePayload } from '../../domain/notifications/payload.js';
 import { getTokensForUsers, sendToMany } from '../../libs/notifications/sendToMany.js';
+import { requireAllowedUid } from '../../libs/allowedUsers.js';
 
 /**
  * Creates a new household and makes the caller the owner.
@@ -11,10 +12,7 @@ import { getTokensForUsers, sendToMany } from '../../libs/notifications/sendToMa
  */
 export const createHousehold = onCall(async (req) => {
   const db = getFirestore();
-  const uid = req.auth?.uid;
-  if (!uid) {
-    throw new HttpsError('unauthenticated', 'Sign in required.');
-  }
+  const uid = requireAllowedUid(req.auth);
   const data = req.data as { name?: string; baseCurrency?: string };
   const name = data?.name?.trim();
   const baseCurrency = data?.baseCurrency?.trim() || 'USD';
@@ -55,10 +53,7 @@ export const createHousehold = onCall(async (req) => {
  */
 export const requestToJoinHousehold = onCall(async (req) => {
   const db = getFirestore();
-  const uid = req.auth?.uid;
-  if (!uid) {
-    throw new HttpsError('unauthenticated', 'Sign in required.');
-  }
+  const uid = requireAllowedUid(req.auth);
   const householdId = (req.data as { householdId?: string })?.householdId?.trim();
   if (!householdId) {
     throw new HttpsError('invalid-argument', 'householdId is required.');
@@ -101,10 +96,7 @@ export const requestToJoinHousehold = onCall(async (req) => {
  */
 export const decideJoinRequest = onCall(async (req) => {
   const db = getFirestore();
-  const callerUid = req.auth?.uid;
-  if (!callerUid) {
-    throw new HttpsError('unauthenticated', 'Sign in required.');
-  }
+  const callerUid = requireAllowedUid(req.auth);
   const data = req.data as {
     householdId?: string;
     requesterUid?: string;
@@ -180,10 +172,7 @@ export const decideJoinRequest = onCall(async (req) => {
  */
 export const listHouseholdMembers = onCall(async (req) => {
   const db = getFirestore();
-  const callerUid = req.auth?.uid;
-  if (!callerUid) {
-    throw new HttpsError('unauthenticated', 'Sign in required.');
-  }
+  const callerUid = requireAllowedUid(req.auth);
   const householdId = (req.data as { householdId?: string })?.householdId?.trim();
   if (!householdId) {
     throw new HttpsError('invalid-argument', 'householdId is required.');
@@ -217,10 +206,7 @@ export const listHouseholdMembers = onCall(async (req) => {
 });
 export const leaveHousehold = onCall(async (req) => {
   const db = getFirestore();
-  const uid = req.auth?.uid;
-  if (!uid) {
-    throw new HttpsError('unauthenticated', 'Sign in required.');
-  }
+  const uid = requireAllowedUid(req.auth);
   const householdId = (req.data as { householdId?: string })?.householdId?.trim();
   if (!householdId) {
     throw new HttpsError('invalid-argument', 'householdId is required.');

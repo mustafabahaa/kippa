@@ -160,6 +160,7 @@ async function requireEnabledOwner(context: OwnerContext): Promise<void> {
   const household = householdSnapshot.data();
   if (
     authUser.disabled ||
+    authUser.customClaims?.kippaAccess !== true ||
     !user?.householdIds?.includes(context.householdId) ||
     household?.createdBy !== context.userId
   ) {

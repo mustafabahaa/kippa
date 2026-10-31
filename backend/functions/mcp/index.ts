@@ -70,6 +70,7 @@ async function credentialFor(token: string): Promise<McpCredential | null> {
   ]);
   if (
     authUser.disabled ||
+    authUser.customClaims?.kippaAccess !== true ||
     !user.data()?.householdIds?.includes(data.householdId) ||
     household.data()?.createdBy !== data.userId
   )

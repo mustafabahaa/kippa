@@ -2,6 +2,7 @@ import { createHash, randomBytes } from 'node:crypto';
 import { getFirestore } from 'firebase-admin/firestore';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
 import type { Household, UserProfile } from '@kippa/domain';
+import { requireAllowedUid } from '../../libs/allowedUsers.js';
 
 const COLLECTION = 'mcpCredentials';
 const TOKEN_PREFIX = 'kippa_';
@@ -25,9 +26,8 @@ export function createMcpToken() {
   return { token, tokenHash };
 }
 
-function requireUid(request: { auth?: { uid?: string } }) {
-  if (!request.auth?.uid) throw new HttpsError('unauthenticated', 'Sign in is required');
-  return request.auth.uid;
+async function requireUid(request: { auth?: { uid?: string; token?: object } | null }) {
+  return requireAllowedUid(request.auth);
 }
 
 async function requireHouseholdOwner(uid: string, householdId: string) {
@@ -66,7 +66,7 @@ function publicCredential(id: string, credential: Credential) {
 }
 
 export const createMcpCredential = onCall(async (request) => {
-  const uid = requireUid(request);
+  const uid = await requireUid(request);
   const data = (request.data ?? {}) as {
     householdId?: unknown;
     label?: unknown;
@@ -102,7 +102,7 @@ export const createMcpCredential = onCall(async (request) => {
 });
 
 export const listMcpCredentials = onCall(async (request) => {
-  const uid = requireUid(request);
+  const uid = await requireUid(request);
   const householdId = parseHouseholdId((request.data as { householdId?: unknown } | undefined)?.householdId);
   const db = await requireHouseholdOwner(uid, householdId);
   const snapshot = await db.collection(COLLECTION).where('householdId', '==', householdId).get();
@@ -113,7 +113,7 @@ export const listMcpCredentials = onCall(async (request) => {
 });
 
 export const revokeMcpCredential = onCall(async (request) => {
-  const uid = requireUid(request);
+  const uid = await requireUid(request);
   const data = (request.data ?? {}) as { householdId?: unknown; credentialId?: unknown };
   const householdId = parseHouseholdId(data.householdId);
   if (typeof data.credentialId !== 'string' || !/^[0-9a-f]{64}$/.test(data.credentialId.trim())) {

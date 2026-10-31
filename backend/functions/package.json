@@ -11,6 +11,7 @@
     "lint": "eslint src mcp esbuild.mcp.mjs",
     "serve": "npm run build && firebase emulators:start --only functions",
     "deploy": "firebase deploy --only functions",
+    "owner-access": "node scripts/set-kippa-access.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
     "gcp-build": ""

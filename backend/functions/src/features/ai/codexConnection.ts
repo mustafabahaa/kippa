@@ -7,6 +7,7 @@ import { join } from 'node:path';
 import { dirname } from 'node:path';
 import { createRequire } from 'node:module';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
+import { requireAllowedUid } from '../../libs/allowedUsers.js';
 import { getFirestore } from 'firebase-admin/firestore';
 import {
   disconnectProviderCredential,
@@ -21,9 +22,8 @@ const provider = (value: string | undefined): 'codex' => {
   return 'codex';
 };
 
-function userId(request: { auth?: { uid?: string } }) {
-  if (!request.auth?.uid) throw new HttpsError('unauthenticated', 'Sign in is required');
-  return request.auth.uid;
+async function userId(request: { auth?: { uid?: string; token?: object } | null }) {
+  return requireAllowedUid(request.auth);
 }
 
 const require = createRequire(import.meta.url);
@@ -90,7 +90,7 @@ async function readAuth(home: string) {
 }
 
 export const getAiConnection = onCall({ secrets: [kippaAiEncryptionKey] }, async (request) => {
-  const uid = userId(request);
+  const uid = await userId(request);
   const selected = provider((request.data as ProviderRequest | undefined)?.provider);
   return { provider: selected, connected: await hasProviderCredential(uid, selected) };
 });
@@ -98,7 +98,7 @@ export const getAiConnection = onCall({ secrets: [kippaAiEncryptionKey] }, async
 export const startAiConnection = onCall(
   { secrets: [kippaAiEncryptionKey], timeoutSeconds: 600 },
   async (request, response) => {
-    const uid = userId(request);
+    const uid = await userId(request);
     const selected = provider((request.data as ProviderRequest | undefined)?.provider);
     if (!request.acceptsStreaming || !response)
       throw new HttpsError('failed-precondition', 'Streaming is required for device login');
@@ -138,7 +138,7 @@ export const startAiConnection = onCall(
 );
 
 export const cancelAiConnection = onCall(async (request) => {
-  const uid = userId(request);
+  const uid = await userId(request);
   const attemptId = request.data?.attemptId;
   if (typeof attemptId !== 'string' || !/^[0-9a-f-]{36}$/.test(attemptId))
     throw new HttpsError('invalid-argument', 'Invalid connection attempt');
@@ -152,7 +152,7 @@ export const cancelAiConnection = onCall(async (request) => {
 });
 
 export const disconnectAiConnection = onCall({ secrets: [kippaAiEncryptionKey] }, async (request) => {
-  const uid = userId(request);
+  const uid = await userId(request);
   const selected = provider((request.data as ProviderRequest | undefined)?.provider);
   try {
     await disconnectProviderCredential(uid, selected);

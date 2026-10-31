@@ -164,6 +164,8 @@ gcloud services enable \
 
 Kippa authenticates via Google sign-in.
 
+Access is restricted to accounts with the server-managed `kippaAccess` Firebase Auth claim. See [docs/owner-access.md](docs/owner-access.md) to grant or revoke access without storing account emails in source code or security rules.
+
 **Console path (simplest):** Firebase Console → _Build → Authentication → Sign-in method → Google → Enable._
 
 **gcloud path (scriptable):** the Identity Toolkit API handles this; for the standard Google provider you typically enable it in the Console. If you've already done so, no further action is needed.

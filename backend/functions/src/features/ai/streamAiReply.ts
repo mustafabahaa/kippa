@@ -5,6 +5,7 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { getFirestore } from 'firebase-admin/firestore';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
+import { requireAllowedUid } from '../../libs/allowedUsers.js';
 import { kippaAiEncryptionKey, withProviderCredential, type ProviderCredential } from './credentialStore.js';
 
 type ClientTool = { name: string; description: string; schema: object };
@@ -58,7 +59,7 @@ function validate(data: unknown): AiRequest {
 }
 
 export const submitAiToolResult = onCall(async (request) => {
-  if (!request.auth) throw new HttpsError('unauthenticated', 'Sign in required');
+  const uid = requireAllowedUid(request.auth);
   const { id, result, error } = request.data ?? {};
   if (typeof id !== 'string' || !/^[0-9a-f-]{36}$/.test(id) || JSON.stringify(result ?? null).length > 600_000)
     throw new HttpsError('invalid-argument', 'Invalid tool result');
@@ -66,7 +67,7 @@ export const submitAiToolResult = onCall(async (request) => {
   await getFirestore().runTransaction(async (tx) => {
     const snapshot = await tx.get(ref);
     const data = snapshot.data();
-    if (!data || data.uid !== request.auth!.uid || data.state !== 'waiting' || data.expiresAt < Date.now())
+    if (!data || data.uid !== uid || data.state !== 'waiting' || data.expiresAt < Date.now())
       throw new HttpsError('not-found', 'Tool call expired');
     tx.update(ref, { state: 'finished', result: result ?? null, error: error === true });
   });
@@ -76,9 +77,8 @@ export const submitAiToolResult = onCall(async (request) => {
 export const streamAiReply = onCall(
   { secrets: [kippaAiEncryptionKey], timeoutSeconds: 240, memory: '1GiB', concurrency: 1 },
   async (request, response) => {
-    if (!request.auth) throw new HttpsError('unauthenticated', 'Sign in required');
+    const uid = requireAllowedUid(request.auth);
     if (!request.acceptsStreaming || !response) throw new HttpsError('failed-precondition', 'Streaming required');
-    const uid = request.auth.uid;
     const data = validate(request.data);
     const profile = (await getFirestore().collection('users').doc(uid).get()).data();
     const households = profile?.householdIds ?? (profile?.householdId ? [profile.householdId] : []);
