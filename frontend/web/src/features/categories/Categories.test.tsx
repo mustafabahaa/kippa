@@ -41,7 +41,7 @@ describe('Categories edit', () => {
     const user = userEvent.setup();
     render(<Categories />);
 
-    await user.click(screen.getByRole('button', { name: 'Edit Subscriptions' }));
+    await user.click(screen.getByRole('button', { name: 'Edit category Subscriptions' }));
     const input = screen.getByLabelText('Category Name');
     expect(input).toHaveValue('Subscriptions');
     await user.clear(input);
@@ -59,7 +59,7 @@ describe('Categories edit', () => {
     const user = userEvent.setup();
     render(<Categories />);
 
-    await user.click(screen.getByRole('button', { name: 'Edit Subscriptions' }));
+    await user.click(screen.getByRole('button', { name: 'Edit category Subscriptions' }));
     const dialog = screen.getByRole('dialog');
     expect(await within(dialog).findByText('Netflix')).toBeInTheDocument();
 
@@ -81,7 +81,7 @@ describe('Categories edit', () => {
     const user = userEvent.setup();
     render(<Categories />);
 
-    await user.click(screen.getByRole('button', { name: 'Edit Salary' }));
+    await user.click(screen.getByRole('button', { name: 'Edit category Salary' }));
     const input = screen.getByLabelText('Category Name');
     await user.clear(input);
     expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled();
@@ -93,10 +93,12 @@ describe('Categories edit', () => {
     const user = userEvent.setup();
     render(<Categories />);
 
-    await user.type(screen.getByLabelText('Category name'), 'Coffee');
-    await user.type(screen.getByLabelText('Add merchant'), 'BEANOS');
-    await user.click(screen.getByRole('button', { name: 'Add' }));
-    await user.click(screen.getByRole('button', { name: 'Create Category' }));
+    await user.click(screen.getByRole('button', { name: 'Add category' }));
+    const dialog = screen.getByRole('dialog');
+    await user.type(within(dialog).getByLabelText('Category Name'), 'Coffee');
+    await user.type(within(dialog).getByLabelText('Add merchant'), 'BEANOS');
+    await user.click(within(dialog).getByRole('button', { name: 'Add' }));
+    await user.click(within(dialog).getByRole('button', { name: 'Create category' }));
 
     expect(mocks.createAsync).toHaveBeenCalledWith({
       householdId: 'household',

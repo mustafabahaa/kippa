@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { Button, ThemeProvider } from '@monochrome-ui/design-system';
-import { createMonochromeTheme, designTokens, modeTokens } from '@monochrome-ui/design-system';
+import { createMonochromeTheme, modeTokens } from '@monochrome-ui/design-system';
 
 function rgb(hex: string) {
   const value = hex.replace('#', '');
@@ -44,9 +44,11 @@ describe('contained primary button theme states', () => {
     const enabledStyle = getComputedStyle(enabled);
     const disabledStyle = getComputedStyle(disabled);
     const tokens = modeTokens(mode);
+    const palette = createMonochromeTheme(mode).palette;
 
-    expect(enabledStyle.backgroundColor).toBe(rgb(designTokens.color.primaryContainer));
-    expect(enabledStyle.color).toBe(rgb(designTokens.color.onPrimary));
+    // Dark mode inverts the primary: a white surface with a dark label.
+    expect(enabledStyle.backgroundColor).toBe(rgb(palette.primary.main));
+    expect(enabledStyle.color).toBe(rgb(palette.primary.contrastText));
     expect(disabledStyle.backgroundColor).toBe(rgb(tokens.surfaceContainerHigh));
     expect(disabledStyle.color).toBe(rgb(tokens.textSecondary));
     expect(contrast(disabledStyle.backgroundColor, disabledStyle.color)).toBeGreaterThanOrEqual(4.5);
