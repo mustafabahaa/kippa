@@ -1,3 +1,4 @@
+/// <reference types="vitest/config" />
 import { defineConfig, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
@@ -69,8 +70,16 @@ export default defineConfig({
         'icons/maskable.svg',
       ],
       manifest: false,
+      // Registration happens in AppUpdatePrompt via virtual:pwa-register so a
+      // waiting build prompts the user instead of activating mid-session.
+      injectRegister: false,
       workbox: {
         maximumFileSizeToCacheInBytes: 5000000,
+        // skipWaiting must stay off: an immediate activation swaps the
+        // precache under the running app and breaks lazy navigation.
+        // clientsClaim only takes over uncontrolled first loads (safe).
+        skipWaiting: false,
+        clientsClaim: true,
         // OAuth and MCP endpoints must reach the server rather than the offline app shell.
         navigateFallbackDenylist: [
           /^\/(?:authorize|token|register|revoke)(?:[/?]|$)/,

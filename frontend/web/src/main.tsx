@@ -7,6 +7,10 @@ import App from '@/App';
 import { AppProvider } from '@/contexts/AppContext';
 import { ThemeModeProvider } from '@/hooks/ThemeModeProvider';
 import { PrivacyModeProvider } from '@/hooks/PrivacyModeProvider';
+import { installVitePreloadErrorHandler } from '@/libs/chunkRecovery';
+
+// Recover once from stale-chunk preload failures before the app mounts.
+installVitePreloadErrorHandler();
 
 const queryClient = new QueryClient({
   defaultOptions: {

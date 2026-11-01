@@ -1,4 +1,4 @@
-import { useMemo, lazy, Suspense } from 'react';
+import { useMemo, Suspense } from 'react';
 import { Routes, Route, BrowserRouter, useLocation } from 'react-router-dom';
 import { ThemeProvider, CssBaseline } from '@monochrome-ui/design-system';
 import { createMonochromeTheme } from '@monochrome-ui/design-system';
@@ -9,40 +9,42 @@ import { AppShell } from '@/components/app-shell/AppShell';
 import { useNotifications } from '@/notifications/useNotifications';
 import { SystemStatusPage } from '@/features/shared/components/SystemStatusPage';
 import { AppErrorBoundary } from '@/features/shared/components/AppErrorBoundary';
+import { AppUpdatePrompt } from '@/features/shared/updates/AppUpdatePrompt';
+import { lazyWithRetry } from '@/libs/lazyWithRetry';
 
-const AuthScreen = lazy(() => import('@/features/auth/AuthScreen').then((m) => ({ default: m.AuthScreen })));
-const Dashboard = lazy(() => import('@/features/dashboard/Dashboard').then((m) => ({ default: m.Dashboard })));
-const FastEntry = lazy(() => import('@/features/fast-entry/FastEntry').then((m) => ({ default: m.FastEntry })));
-const Reconciliation = lazy(() =>
+const AuthScreen = lazyWithRetry(() => import('@/features/auth/AuthScreen').then((m) => ({ default: m.AuthScreen })));
+const Dashboard = lazyWithRetry(() => import('@/features/dashboard/Dashboard').then((m) => ({ default: m.Dashboard })));
+const FastEntry = lazyWithRetry(() => import('@/features/fast-entry/FastEntry').then((m) => ({ default: m.FastEntry })));
+const Reconciliation = lazyWithRetry(() =>
   import('@/features/reconciliation/Reconciliation').then((m) => ({ default: m.Reconciliation })),
 );
-const BudgetCycles = lazy(() =>
+const BudgetCycles = lazyWithRetry(() =>
   import('@/features/budget-cycles/BudgetCycles').then((m) => ({ default: m.BudgetCycles })),
 );
-const CycleReport = lazy(() =>
+const CycleReport = lazyWithRetry(() =>
   import('@/features/budget-cycles/CycleReport').then((m) => ({ default: m.CycleReport })),
 );
-const Accounts = lazy(() => import('@/features/accounts/Accounts').then((m) => ({ default: m.Accounts })));
-const AccountStatements = lazy(() =>
+const Accounts = lazyWithRetry(() => import('@/features/accounts/Accounts').then((m) => ({ default: m.Accounts })));
+const AccountStatements = lazyWithRetry(() =>
   import('@/features/accounts/AccountStatements').then((m) => ({ default: m.AccountStatements })),
 );
-const Household = lazy(() => import('@/features/household/Household').then((m) => ({ default: m.Household })));
-const Categories = lazy(() => import('@/features/categories/Categories').then((m) => ({ default: m.Categories })));
-const Notifications = lazy(() =>
+const Household = lazyWithRetry(() => import('@/features/household/Household').then((m) => ({ default: m.Household })));
+const Categories = lazyWithRetry(() => import('@/features/categories/Categories').then((m) => ({ default: m.Categories })));
+const Notifications = lazyWithRetry(() =>
   import('@/features/notifications/Notifications').then((m) => ({ default: m.Notifications })),
 );
-const TransactionHistory = lazy(() =>
+const TransactionHistory = lazyWithRetry(() =>
   import('@/features/transactions/TransactionHistory').then((m) => ({ default: m.TransactionHistory })),
 );
-const ActivityHistory = lazy(() =>
+const ActivityHistory = lazyWithRetry(() =>
   import('@/features/activity/ActivityHistory').then((m) => ({ default: m.ActivityHistory })),
 );
-const PendingTransactions = lazy(() =>
+const PendingTransactions = lazyWithRetry(() =>
   import('@/features/pending-transactions/PendingTransactions').then((m) => ({ default: m.PendingTransactions })),
 );
-const AiAssistant = lazy(() => import('@/features/ai/AiAssistant').then((m) => ({ default: m.AiAssistant })));
-const Loans = lazy(() => import('@/features/loans/Loans').then((m) => ({ default: m.Loans })));
-const McpConsentPage = lazy(() => import('@/features/mcp/McpConsentPage').then((m) => ({ default: m.McpConsentPage })));
+const AiAssistant = lazyWithRetry(() => import('@/features/ai/AiAssistant').then((m) => ({ default: m.AiAssistant })));
+const Loans = lazyWithRetry(() => import('@/features/loans/Loans').then((m) => ({ default: m.Loans })));
+const McpConsentPage = lazyWithRetry(() => import('@/features/mcp/McpConsentPage').then((m) => ({ default: m.McpConsentPage })));
 
 const AUTHENTICATED_APP_PATHS = new Set([
   '/',
@@ -83,6 +85,7 @@ export default function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
+      <AppUpdatePrompt />
       <BrowserRouter>
         <Suspense fallback={<AppLoadingScreen theme={theme} />}>
           <AppErrorBoundary>
