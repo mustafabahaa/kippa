@@ -91,7 +91,13 @@ describe('assistant provider errors', () => {
       content,
       createdAt: '',
     }));
-    expect(selectContextMessages(messages, 25).map((message) => message.content)).toEqual([
+    // boundAssistantTextHistory budgets the full serialized payload
+    // (JSON envelope included) and drops oldest messages until it fits,
+    // always keeping at least the newest message.
+    expect(selectContextMessages(messages, 25).map((message) => message.content)).toEqual(['new message']);
+    const fullSize = JSON.stringify(messages).length;
+    expect(selectContextMessages(messages, fullSize).map((message) => message.content)).toEqual([
+      'old message',
       'middle message',
       'new message',
     ]);
