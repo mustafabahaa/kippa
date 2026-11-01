@@ -1,4 +1,5 @@
-import { randomBytes, createCipheriv, createDecipheriv } from 'node:crypto';
+import { randomBytes } from 'node:crypto';
+import { decryptJsonCredential, encryptJsonCredential } from '@monochrome-ai/core';
 import { getFirestore } from 'firebase-admin/firestore';
 import { defineSecret } from 'firebase-functions/params';
 
@@ -29,24 +30,11 @@ function keyBytes(): Buffer {
 }
 
 function encrypt(value: ProviderCredential, uid: string, provider: AiProvider) {
-  const iv = randomBytes(12);
-  const cipher = createCipheriv('aes-256-gcm', keyBytes(), iv);
-  cipher.setAAD(Buffer.from(`${uid}:${provider}`));
-  const ciphertext = Buffer.concat([cipher.update(JSON.stringify(value), 'utf8'), cipher.final()]);
-  return {
-    ciphertext: ciphertext.toString('base64'),
-    iv: iv.toString('base64'),
-    tag: cipher.getAuthTag().toString('base64'),
-  };
+  return encryptJsonCredential(value, keyBytes(), `${uid}:${provider}`);
 }
 
 function decrypt(stored: StoredCredential, uid: string, provider: AiProvider): ProviderCredential {
-  const decipher = createDecipheriv('aes-256-gcm', keyBytes(), Buffer.from(stored.iv, 'base64'));
-  decipher.setAAD(Buffer.from(`${uid}:${provider}`));
-  decipher.setAuthTag(Buffer.from(stored.tag, 'base64'));
-  return JSON.parse(
-    Buffer.concat([decipher.update(Buffer.from(stored.ciphertext, 'base64')), decipher.final()]).toString('utf8'),
-  ) as ProviderCredential;
+  return decryptJsonCredential(stored, keyBytes(), `${uid}:${provider}`);
 }
 
 function ref(uid: string, provider: AiProvider) {

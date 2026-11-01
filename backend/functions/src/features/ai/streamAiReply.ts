@@ -1,12 +1,8 @@
-import { fork } from 'node:child_process';
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { getFirestore } from 'firebase-admin/firestore';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
+import { runCodexHarness } from '@monochrome-ai/core';
 import { requireAllowedUid } from '../../libs/allowedUsers.js';
-import { kippaAiEncryptionKey, withProviderCredential, type ProviderCredential } from './credentialStore.js';
+import { kippaAiEncryptionKey, withProviderCredential } from './credentialStore.js';
 
 type ClientTool = { name: string; description: string; schema: object };
 type ClientMessage = { role: 'user' | 'assistant'; content: string };
@@ -87,97 +83,42 @@ export const streamAiReply = onCall(
 
     return withProviderCredential(uid, 'codex', async ({ credential, save }) => {
       if (!credential) throw new HttpsError('failed-precondition', 'Connect Codex first');
-      const home = await mkdtemp(join(tmpdir(), 'kippa-ai-auth-'));
-      const authPath = join(home, 'auth.json');
-      await writeFile(authPath, JSON.stringify(credential), { mode: 0o600 });
       const pending = new Set<string>();
-      const child = fork(fileURLToPath(new URL('../../../harness-runtime/runner.mjs', import.meta.url)), [], {
-        env: { PATH: process.env.PATH ?? '/usr/bin:/bin', LANG: 'C.UTF-8', HOME: home, CODEX_HOME: home },
-        stdio: ['ignore', 'ignore', 'ignore', 'ipc'],
-      });
-      let queue = Promise.resolve();
-      let completed = false;
-      let failed = false;
-      let failureDetail: { stage?: unknown; name?: unknown; code?: unknown; message?: unknown } | null = null;
-      const abort = () => {
-        child.kill('SIGTERM');
-      };
-      response.signal.addEventListener('abort', abort, { once: true });
-      child.on('message', (message: unknown) => {
-        const payload = message && typeof message === 'object' ? (message as Record<string, unknown>) : {};
-        queue = queue
-          .then(async () => {
-            if (payload.type === 'text' && typeof payload.text === 'string')
-              await response.sendChunk({ type: 'text', text: payload.text });
-            if (payload.type === 'error') {
-              failed = true;
-              failureDetail = payload;
-              console.error(
-                'kippa:ai:runner-error',
-                JSON.stringify({
-                  stage: payload.stage,
-                  name: payload.name,
-                  code: payload.code,
-                  message: payload.message,
-                }),
-              );
-            }
-            if (payload.type === 'done') completed = true;
-            if (
-              payload.type === 'tool-call' &&
-              typeof payload.id === 'string' &&
-              typeof payload.name === 'string' &&
-              data.tools.some((t) => t.name === payload.name)
-            ) {
-              const id = payload.id;
-              pending.add(id);
-              const ref = toolCalls().doc(id);
-              await ref.create({ uid, state: 'waiting', expiresAt: Date.now() + 60_000 });
-              if (!(await response.sendChunk({ type: 'tool-call', id, name: payload.name, input: payload.input })))
-                throw new Error('Stream ended');
-              const answer = await waitForToolResult(ref, response.signal);
-              if (child.connected) child.send({ type: 'tool-result', id, ...answer });
-              pending.delete(id);
-              await ref.delete();
-            }
-          })
-          .catch(() => {
-            failed = true;
-            abort();
-          });
-      });
       try {
-        child.send({
-          type: 'start',
-          model: 'gpt-6-luna',
+        await runCodexHarness({
+          credential: credential as Record<string, unknown>,
+          saveCredential: (value) => save(value as typeof credential),
+          model: process.env.KIPPA_CODEX_MODEL || 'gpt-6-luna',
           system: data.system,
           tools: data.tools,
+          toolPolicy: { inactiveTools: ['bash', 'apply_patch', 'view_image', 'webSearch'] },
           prompt: JSON.stringify(data.messages),
+          signal: response.signal,
+          onText: async (text) => {
+            if (!(await response.sendChunk({ type: 'text', text }))) throw new Error('Stream ended');
+          },
+          onTool: async ({ id, name, input }, signal) => {
+            if (!data.tools.some((tool) => tool.name === name)) throw new Error('Unknown app tool');
+            pending.add(id);
+            const ref = toolCalls().doc(id);
+            try {
+              await ref.create({ uid, state: 'waiting', expiresAt: Date.now() + 60_000 });
+              if (!(await response.sendChunk({ type: 'tool-call', id, name, input }))) throw new Error('Stream ended');
+              return await waitForToolResult(ref, signal);
+            } finally {
+              pending.delete(id);
+              await ref.delete().catch(() => {});
+            }
+          },
         });
-        const exit = await new Promise<number | null>((resolve, reject) => {
-          child.once('error', reject);
-          child.once('exit', resolve);
-        });
-        await queue;
-        if (response.signal.aborted) throw new HttpsError('cancelled', 'Request cancelled');
-        if (failed || !completed || exit !== 0) throw classifyRunnerFailure(failureDetail);
         return { complete: true };
+      } catch (error) {
+        if (response.signal.aborted) throw new HttpsError('cancelled', 'Request cancelled');
+        const detail = error as { stage?: unknown; name?: unknown; code?: unknown; message?: unknown };
+        console.error('kippa:ai:runner-error', JSON.stringify({ stage: detail.stage, name: detail.name, code: detail.code, message: detail.message }));
+        throw classifyRunnerFailure(detail);
       } finally {
-        response.signal.removeEventListener('abort', abort);
-        child.kill('SIGTERM');
-        await Promise.all(
-          [...pending].map((id) =>
-            toolCalls()
-              .doc(id)
-              .delete()
-              .catch(() => {}),
-          ),
-        );
-        try {
-          await save(JSON.parse(await readFile(authPath, 'utf8')) as ProviderCredential);
-        } finally {
-          await rm(home, { recursive: true, force: true });
-        }
+        await Promise.all([...pending].map((id) => toolCalls().doc(id).delete().catch(() => {})));
       }
     });
   },

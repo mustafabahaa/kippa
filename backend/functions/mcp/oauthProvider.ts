@@ -1,4 +1,13 @@
 import { createHash, randomBytes, randomUUID } from 'node:crypto';
+import {
+  createOAuthTokenResponse,
+  createOpaqueToken,
+  isSafeOAuthRedirect,
+  normalizeOAuthScopes,
+  publicOAuthClientMetadata,
+  requireHttpsOrigin,
+  sha256,
+} from '@monochrome-ai/core';
 import { getAuth } from 'firebase-admin/auth';
 import { getFirestore } from 'firebase-admin/firestore';
 import type { Response } from 'express';
@@ -88,17 +97,11 @@ type StoredCredential = {
 type OwnerContext = { userId: string; householdId: string };
 
 export function hash(value: string): string {
-  return createHash('sha256').update(value).digest('hex');
+  return sha256(value);
 }
 
 export function publicUrl(): string {
-  const configured = process.env.KIPPA_PUBLIC_URL;
-  if (!configured) throw new Error('KIPPA_PUBLIC_URL is required');
-  const url = new URL(configured);
-  if (url.protocol !== 'https:' || url.username || url.password || url.pathname !== '/' || url.search || url.hash) {
-    throw new Error('KIPPA_PUBLIC_URL must be an HTTPS origin');
-  }
-  return url.origin;
+  return requireHttpsOrigin(process.env.KIPPA_PUBLIC_URL, 'KIPPA_PUBLIC_URL');
 }
 
 export function resourceUrl(): string {
@@ -106,18 +109,11 @@ export function resourceUrl(): string {
 }
 
 function token(): string {
-  return `kippa_${randomBytes(32).toString('base64url')}`;
+  return createOpaqueToken('kippa_');
 }
 
 function validRedirect(value: string): boolean {
-  try {
-    const url = new URL(value);
-    if (url.username || url.password || url.hash) return false;
-    if (url.protocol === 'https:') return true;
-    return url.protocol === 'http:' && ['localhost', '127.0.0.1', '[::1]'].includes(url.hostname);
-  } catch {
-    return false;
-  }
+  return isSafeOAuthRedirect(value);
 }
 
 function requireResource(resource: URL | undefined): string {
@@ -127,18 +123,15 @@ function requireResource(resource: URL | undefined): string {
 }
 
 function parseScopes(scopes: string[] | undefined): string[] {
-  const values = [...new Set(scopes?.length ? scopes : ['kippa:read'])];
-  if (!values.includes('kippa:read') || values.some((scope) => !ALLOWED_SCOPES.has(scope))) {
+  try {
+    return normalizeOAuthScopes(scopes, 'kippa:read', ALLOWED_SCOPES);
+  } catch {
     throw new InvalidScopeError('Unsupported scope');
   }
-  return values;
 }
 
 function clientMetadata(client: OAuthClientInformationFull): OAuthClientInformationFull {
-  const metadata = Object.fromEntries(
-    Object.entries(client).filter(([key]) => key !== 'client_secret' && key !== 'client_secret_expires_at'),
-  ) as OAuthClientInformationFull;
-  return { ...metadata, token_endpoint_auth_method: 'none' };
+  return publicOAuthClientMetadata(client as unknown as Record<string, unknown>) as unknown as OAuthClientInformationFull;
 }
 
 function clientReference(clientId: string) {
@@ -169,13 +162,7 @@ async function requireEnabledOwner(context: OwnerContext): Promise<void> {
 }
 
 function tokenResponse(accessToken: string, refreshToken: string | undefined, scopes: string[]): OAuthTokens {
-  return {
-    access_token: accessToken,
-    ...(refreshToken ? { refresh_token: refreshToken } : {}),
-    token_type: 'Bearer',
-    expires_in: ACCESS_TTL_MS / 1000,
-    scope: scopes.join(' '),
-  };
+  return createOAuthTokenResponse(accessToken, refreshToken, scopes, ACCESS_TTL_MS);
 }
 
 async function issueTokens(

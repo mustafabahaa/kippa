@@ -20,19 +20,20 @@
     "@ai-sdk/harness": "1.0.166",
     "@ai-sdk/harness-codex": "1.0.168",
     "@modelcontextprotocol/sdk": "^1.32.2",
+    "@monochrome-ai/core": "https://codeload.github.com/mustafabahaa/monochrome-ai/tar.gz/3ecabd9",
     "@openai/codex": "0.160.1",
     "ai": "7.0.48",
+    "express": "5.3.0",
     "firebase-admin": "^13.10.0",
     "firebase-functions": "^7.2.5",
     "ws": "8.21.0",
-    "zod": "4.4.3",
-    "express": "5.3.0"
+    "zod": "4.4.3"
   },
   "devDependencies": {
+    "@types/express": "^5.0.6",
     "esbuild": "^0.28.2",
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.62.0",
-    "vitest": "^4.1.9",
-    "@types/express": "^5.0.6"
+    "vitest": "^4.1.9"
   }
 }

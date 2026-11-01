@@ -20,7 +20,7 @@
     "@date-io/date-fns": "^3.2.1",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
-    "@monochrome-ui/design-system": "https://github.com/mustafabahaa/monochrome-ui/archive/refs/tags/v0.1.6.tar.gz",
+    "@monochrome-ui/design-system": "https://codeload.github.com/mustafabahaa/monochrome-ui/tar.gz/977bd33",
     "@mui/icons-material": "^7.2.0",
     "@mui/material": "^7.2.0",
     "@mui/x-charts": "^9.7.0",
@@ -40,7 +40,8 @@
     "react-router-dom": "^7.18.0",
     "remark-gfm": "4.0.1",
     "three": "^0.185.0",
-    "zod": "4.4.3"
+    "zod": "4.4.3",
+    "@monochrome-ai/core": "https://codeload.github.com/mustafabahaa/monochrome-ai/tar.gz/3ecabd9"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
