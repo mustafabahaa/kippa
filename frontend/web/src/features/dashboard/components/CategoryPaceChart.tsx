@@ -39,15 +39,15 @@ export function CategoryPaceChart({ categories }: { categories: CategoryPace[] }
                 placement="top"
                 title={`${category.categoryName}: ${Math.round(percent)}% used · ${category.spent.toLocaleString()} spent of ${category.planned.toLocaleString()} planned`}
               >
-                <Paper variant="categoryCapacity" sx={{ width: '100%', maxWidth: 46, height: { xs: 72, sm: 88 } }}>
+                <Paper variant="capacityTrack" sx={{ width: '100%', maxWidth: 46, height: { xs: 72, sm: 88 } }}>
                   <Paper
-                    variant={over ? 'categoryCapacityOver' : 'categoryCapacitySpent'}
+                    variant={over ? 'capacityOverflow' : 'capacityFill'}
                     sx={{ height: `${fill}%` }}
                   />
                 </Paper>
               </Tooltip>
               <Typography
-                variant="loanMeta"
+                variant="metricMetadata"
                 color="text.secondary"
                 title={category.categoryName}
                 textAlign="center"

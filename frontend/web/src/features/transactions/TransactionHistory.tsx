@@ -15,15 +15,13 @@ import {
 import { useAppContext } from '@/hooks/useAppContext';
 import { EditTransactionDialog } from './components/EditTransactionDialog';
 import { VoidTransactionDialog } from './components/VoidTransactionDialog';
-import { PageHeader } from '@/features/shared/components/PageHeader';
+import { PageHeader } from '@monochrome-ui/design-system';
 import { SectionHeading } from '@/features/shared/components/SectionHeading';
 import { EmptyLayout } from '@/features/shared/components/EmptyLayout';
 import { useTransactionHistoryUi } from './hooks/useTransactionHistoryUi';
 import { TransactionsListItem } from './components/TransactionsListItem';
 import { MultiSelectFilter } from '@/features/shared/components/MultiSelectFilter';
 
-const sectionIndent = { xs: 0, md: 2 } as const;
-const contentIndent = { xs: 0, md: 2 } as const;
 export function TransactionHistory() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { enqueueSnackbar } = useSnackbar();
@@ -153,8 +151,8 @@ export function TransactionHistory() {
       <Stack spacing={{ xs: 2, md: 2.5 }} sx={{ width: '100%' }}>
         <PageHeader title="Transactions" subtitle="Search and review your household activity." />
         <Stack spacing={2} sx={{ width: '100%', maxWidth: 900, alignSelf: 'center' }}>
-          <Box component="section" sx={{ px: sectionIndent }}>
-            <Stack spacing={1.25} sx={{ px: contentIndent }}>
+          <Box component="section" >
+            <Stack spacing={1.25} >
               <Stack spacing={0.5}>
                 <Skeleton variant="text" width={100} height={26} />
                 <Skeleton variant="text" width={350} height={20} />
@@ -179,13 +177,13 @@ export function TransactionHistory() {
             </Stack>
           </Box>
 
-          <Box component="section" sx={{ px: sectionIndent }}>
+          <Box component="section" >
             <Stack spacing={{ xs: 2, md: 2.5 }}>
-              <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ px: contentIndent }}>
+              <Stack direction="row" alignItems="center" justifyContent="space-between" >
                 <Skeleton variant="text" width={120} height={28} />
                 <Skeleton variant="rounded" width={64} height={28} />
               </Stack>
-              <Stack spacing={2.5} sx={{ px: contentIndent }}>
+              <Stack spacing={2.5} >
                 {[...Array(5).keys()].map((index) => (
                   <Stack key={index} direction="row" spacing={1.5} alignItems="center">
                     <Skeleton variant="circular" width={32} height={32} />
@@ -214,8 +212,8 @@ export function TransactionHistory() {
       <PageHeader title="Transactions" subtitle="Search and review your household activity." />
 
       <Stack spacing={{ xs: 2, md: 2.5 }} sx={{ width: '100%', maxWidth: 900, alignSelf: 'center' }}>
-        <Box component="section" sx={{ px: sectionIndent }}>
-          <Stack spacing={1.25} sx={{ px: contentIndent }}>
+        <Box component="section" >
+          <Stack spacing={1.25} >
             <SectionHeading title="Filters" subtitle="Narrow transactions by cycle, account, category, or type." />
             <Box
               sx={{
@@ -282,10 +280,10 @@ export function TransactionHistory() {
           </Stack>
         </Box>
 
-        <Box component="section" sx={{ px: sectionIndent }}>
+        <Box component="section" >
           <Stack spacing={{ xs: 2, md: 2.5 }}>
             <SectionHeading title="Activity" trailing={<Chip size="small" label={`${filteredTxs.length} results`} />} />
-            <Stack spacing={1.5} sx={{ px: contentIndent }}>
+            <Stack spacing={1.5} >
               {filteredTxs.length === 0 ? (
                 <EmptyLayout
                   title="No matching transactions"

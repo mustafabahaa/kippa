@@ -3,15 +3,13 @@ import { useSnackbar } from 'notistack';
 import { Box, Chip, Container, Stack, Typography, Button, ButtonBase, Skeleton, Tooltip, Switch, Paper } from '@monochrome-ui/design-system';
 import type { Category } from '@kippa/domain';
 import { SectionHeading } from '@/features/shared/components/SectionHeading';
-import { PageHeader } from '@/features/shared/components/PageHeader';
+import { PageHeader } from '@monochrome-ui/design-system';
 import { dedupeMerchantKeywords } from '@/libs/merchantSuggestions';
 import { useCategories, useCreateCategoryMutation, useUpdateCategoryMutation } from '@/hooks/useFinance';
 import { CategoryNameDialog } from './components/CategoryNameDialog';
 
 import { useAppContext } from '@/hooks/useAppContext';
 
-const sectionIndent = { xs: 0, md: 2 } as const;
-const contentIndent = { xs: 0, md: 2 } as const;
 
 export function Categories() {
   const { householdId } = useAppContext();
@@ -87,7 +85,7 @@ export function Categories() {
   const renderCategoryGroup = (type: 'income' | 'expense', title: string) => {
     const items = categories.filter((category) => category.type === type);
     return (
-      <Box component="section" sx={{ px: sectionIndent }}>
+      <Box component="section" >
         <Stack spacing={{ xs: 2, md: 2.5 }}>
           <SectionHeading
             title={title}
@@ -98,7 +96,6 @@ export function Categories() {
           {isLoading ? (
             <Box
               sx={{
-                px: contentIndent,
                 display: 'grid',
                 gridTemplateColumns: { xs: '1fr', md: 'repeat(2, minmax(0, 1fr))', lg: 'repeat(3, minmax(0, 1fr))' },
                 columnGap: { xs: 0, md: 3 },
@@ -109,7 +106,7 @@ export function Categories() {
               ))}
             </Box>
           ) : items.length === 0 ? (
-            <Box sx={{ px: contentIndent, py: 2 }}>
+            <Box sx={{py: 2 }}>
               <Typography variant="body2" color="text.secondary">
                 No {type} categories yet.
               </Typography>
@@ -117,7 +114,6 @@ export function Categories() {
           ) : (
             <Box
               sx={{
-                px: contentIndent,
                 display: 'grid',
                 gridTemplateColumns: { xs: '1fr', md: 'repeat(2, minmax(0, 1fr))', lg: 'repeat(3, minmax(0, 1fr))' },
                 columnGap: { xs: 0, md: 3 },
@@ -127,7 +123,7 @@ export function Categories() {
                 <Paper
                   component={Stack}
                   key={category.id}
-                  variant="categoryListRow"
+                  variant="dividedListRow"
                   direction="row"
                   justifyContent="space-between"
                   alignItems="center"

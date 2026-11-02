@@ -38,7 +38,7 @@ export function LoanProgressSection() {
       : 'Complete';
 
   return (
-    <Card variant="dashboardSection" sx={{ height: 375 }}>
+    <Card variant="sectionSurface" sx={{ height: 375 }}>
       <CardContent sx={{ height: '100%' }}>
         <Stack spacing={2} sx={{ height: '100%' }}>
           <Stack spacing={2.5}>
@@ -50,12 +50,12 @@ export function LoanProgressSection() {
             />
 
             <Stack spacing={0.75}>
-              <LinearProgress color="loan" variant="determinate" value={progress.progressPercent} />
+              <LinearProgress size="large" color="primary" variant="determinate" value={progress.progressPercent} />
               <Stack direction="row" justifyContent="space-between">
-                <Typography variant="loanMeta" color="text.secondary">
+                <Typography variant="metricMetadata" color="text.secondary">
                   {progress.paidInstallments} paid
                 </Typography>
-                <Typography variant="loanMeta" color="text.secondary">
+                <Typography variant="metricMetadata" color="text.secondary">
                   <Money amount={progress.remainingAmount} code={loan.currency} maxDigits={2} /> left
                 </Typography>
               </Stack>
@@ -66,7 +66,7 @@ export function LoanProgressSection() {
                 <Typography component="div" variant="fieldHint" color="text.secondary">
                   NEXT · {shortDate(progress.nextDueDate)}
                 </Typography>
-                <Typography variant="loanMetricCompact" noWrap>
+                <Typography variant="metricValueCompact" noWrap>
                   <Money
                     amount={Math.min(loan.installmentAmount, progress.remainingAmount)}
                     code={loan.currency}
@@ -78,7 +78,7 @@ export function LoanProgressSection() {
                 <Typography component="div" variant="fieldHint" color="text.secondary">
                   PAYOFF · {shortDate(progress.payoffDate)}
                 </Typography>
-                <Typography variant="loanMetricCompact">{progress.remainingInstallments} payments left</Typography>
+                <Typography variant="metricValueCompact">{progress.remainingInstallments} payments left</Typography>
               </Box>
             </Stack>
 

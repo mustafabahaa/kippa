@@ -83,10 +83,10 @@ export function ProfileMenu({
           <UserAvatar
             photoURLs={[userProfile?.photoURL]}
             displayName={userProfile?.displayName}
-            variant="profileMenu"
+            variant="userMenuAvatar"
           />
           <Box sx={{ minWidth: 0 }}>
-            <Typography variant="profileMenuName" color="text.primary" noWrap>
+            <Typography variant="userMenuName" color="text.primary" noWrap>
               {userProfile?.displayName || 'User'}
             </Typography>
             <Typography variant="caption" color="text.secondary" sx={{ wordBreak: 'break-all' }}>
@@ -106,7 +106,7 @@ export function ProfileMenu({
 
         <Paper
           component={Stack}
-          variant="profileHouseholdRow"
+          variant="groupIdentityRow"
           direction="row"
           spacing={1.5}
           alignItems="center"
@@ -114,10 +114,10 @@ export function ProfileMenu({
         >
           <HomeIcon size={22} strokeWidth={1.8} />
           <Box sx={{ flexGrow: 1, minWidth: 0 }}>
-            <Typography variant="profileHouseholdName" color="text.primary" noWrap>
+            <Typography variant="groupTitle" color="text.primary" noWrap>
               {householdName}
             </Typography>
-            <Typography variant="profileHouseholdId" color="text.secondary">
+            <Typography variant="groupIdentifier" color="text.secondary">
               ID: {householdId ? `${householdId.slice(0, 8)}...` : 'None'}
             </Typography>
           </Box>
@@ -226,7 +226,7 @@ export function ProfileMenu({
           handleClose();
           logout();
         }}
-        kippaTone="destructive"
+        variant="destructiveAction"
       >
         <ListItemIcon>
           <LogoutIcon size={22} strokeWidth={1.8} />

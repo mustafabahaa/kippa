@@ -11,7 +11,7 @@ import {
 } from '@/components/AppIcon';
 import { useNotifications } from '@/notifications/useNotifications';
 import { IosInstallBanner } from '@/notifications/IosInstallBanner';
-import { PageHeader } from '@/features/shared/components/PageHeader';
+import { PageHeader } from '@monochrome-ui/design-system';
 import { SectionHeading } from '@/features/shared/components/SectionHeading';
 
 interface NotificationSettingsFormProps {
@@ -142,7 +142,7 @@ export function NotificationSettingsForm({ dbSettings, onSave, isSaving, househo
                   subtitle="Only enable the updates that help you act."
                 />
 
-                <Box sx={{ pl: { xs: 0, md: 4 } }}>
+                <Box >
                   <Stack divider={<Divider />}>
                     {preferences.map(({ key, title, description, Icon }) => (
                       <Stack key={key} direction="row" spacing={1.5} alignItems="center" sx={{ py: 1.75 }}>
@@ -180,7 +180,7 @@ export function NotificationSettingsForm({ dbSettings, onSave, isSaving, househo
                   subtitle="Notification status for this device."
                 />
 
-                <Stack spacing={2} sx={{ pl: { xs: 0, md: 4 } }}>
+                <Stack spacing={2} >
                   {notifStatus === 'checking' ? (
                     <Stack spacing={1.5}>
                       <Skeleton variant="text" width="65%" />

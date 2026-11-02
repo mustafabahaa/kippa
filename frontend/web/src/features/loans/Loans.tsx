@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { Box, Button, Chip, Divider, Grid, LinearProgress, Skeleton, Stack, Typography } from '@monochrome-ui/design-system';
 import type { Loan } from '@kippa/domain';
 import { Money } from '@/components/Money';
-import { PageHeader } from '@/features/shared/components/PageHeader';
+import { PageHeader } from '@monochrome-ui/design-system';
 import { SectionHeading } from '@/features/shared/components/SectionHeading';
 import { useAppContext } from '@/hooks/useAppContext';
 import {
@@ -21,8 +21,6 @@ import type { LoanInput } from '@/libs/loans';
 import { LoanDialog } from './LoanDialog';
 import { LoanPaymentDialog } from './LoanPaymentDialog';
 
-const sectionIndent = { xs: 0, md: 4 } as const;
-const contentIndent = { xs: 0, md: 4 } as const;
 
 export function Loans() {
   const { householdId, userProfile } = useAppContext();
@@ -84,14 +82,14 @@ export function Loans() {
         }
       />
 
-      <Box component="section" sx={{ px: sectionIndent }}>
+      <Box component="section" >
         <Stack spacing={{ xs: 2, md: 3 }}>
           <SectionHeading
             title="Repayment overview"
             subtitle="Progress, upcoming payments, and payoff timing for your household loans."
           />
 
-          <Box sx={{ px: contentIndent }}>
+          <Box >
             <Box sx={{ maxWidth: 1100 }}>
               {loading ? (
                 <Stack spacing={3} divider={<Divider />}>
@@ -135,8 +133,8 @@ export function Loans() {
                             spacing={1.5}
                           >
                             <Box sx={{ minWidth: 0 }}>
-                              <Typography variant="loanTitle">{loan.name}</Typography>
-                              <Typography variant="loanMeta" color="text.secondary">
+                              <Typography variant="metricTitle">{loan.name}</Typography>
+                              <Typography variant="metricMetadata" color="text.secondary">
                                 {progress.paidInstallments} of {loan.totalInstallments} payments
                               </Typography>
                             </Box>
@@ -166,12 +164,12 @@ export function Loans() {
                                 {progress.progressPercent.toFixed(0)}%
                               </Typography>
                             </Stack>
-                            <LinearProgress color="loan" variant="determinate" value={progress.progressPercent} />
+                            <LinearProgress size="large" color="primary" variant="determinate" value={progress.progressPercent} />
                             <Stack direction="row" justifyContent="space-between" spacing={2}>
-                              <Typography variant="loanMeta" color="text.secondary">
+                              <Typography variant="metricMetadata" color="text.secondary">
                                 <Money amount={progress.paidAmount} code={loan.currency} maxDigits={2} /> paid
                               </Typography>
-                              <Typography variant="loanMeta" color="text.secondary" textAlign="right">
+                              <Typography variant="metricMetadata" color="text.secondary" textAlign="right">
                                 <Money amount={progress.remainingAmount} code={loan.currency} maxDigits={2} /> remaining
                               </Typography>
                             </Stack>
@@ -182,7 +180,7 @@ export function Loans() {
                               <Typography variant="fieldHint" color="text.secondary">
                                 REMAINING BALANCE
                               </Typography>
-                              <Typography variant="loanMetric">
+                              <Typography variant="metricValue">
                                 <Money amount={progress.remainingAmount} code={loan.currency} maxDigits={2} />
                               </Typography>
                             </Grid>
@@ -190,7 +188,7 @@ export function Loans() {
                               <Typography variant="fieldHint" color="text.secondary">
                                 NEXT PAYMENT · {shortDate(progress.nextDueDate)}
                               </Typography>
-                              <Typography variant="loanMetricCompact">
+                              <Typography variant="metricValueCompact">
                                 <Money
                                   amount={Math.min(loan.installmentAmount, progress.remainingAmount)}
                                   code={loan.currency}
@@ -202,7 +200,7 @@ export function Loans() {
                               <Typography variant="fieldHint" color="text.secondary">
                                 PAYOFF · {shortDate(progress.payoffDate)}
                               </Typography>
-                              <Typography variant="loanMetricCompact">
+                              <Typography variant="metricValueCompact">
                                 {progress.remainingInstallments} payments left
                               </Typography>
                             </Grid>

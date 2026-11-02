@@ -80,7 +80,7 @@ export function BudgetAllocationDialog({
           </Box>
           <Box sx={{ textAlign: { xs: 'left', sm: 'right' } }}>
             <Typography variant="fieldHint" color="text.secondary">Total budget</Typography>
-            <Typography variant="loanMetric">
+            <Typography variant="metricValue">
               <Money amount={totalBudget} code={currency} />
             </Typography>
           </Box>

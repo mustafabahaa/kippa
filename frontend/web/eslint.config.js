@@ -2,6 +2,7 @@ import js from '@eslint/js';
 import reactHooks from 'eslint-plugin-react-hooks';
 import reactRefresh from 'eslint-plugin-react-refresh';
 import tseslint from 'typescript-eslint';
+import monochromeUi from '@monochrome-ui/design-system/eslint';
 import architectureRules from './eslint-rules/architecture.js';
 import designSystemRules from './eslint-rules/design-system.js';
 
@@ -41,6 +42,7 @@ export default tseslint.config(
       'react-refresh': reactRefresh,
       'kippa-architecture': { rules: architectureRules },
       'kippa-design': { rules: designSystemRules },
+      'monochrome-ui': monochromeUi,
     },
     rules: {
       ...reactHooks.configs.recommended.rules,
@@ -54,6 +56,27 @@ export default tseslint.config(
       'kippa-design/no-direct-ui-imports': 'error',
       'kippa-design/no-visual-sx': 'error',
       'kippa-design/named-typography-variants': 'error',
+      'monochrome-ui/known-variants': 'error',
+      'monochrome-ui/routed-page-scaffold': ['error', {
+        shell: 'src/components/app-shell/AppShell.tsx',
+        pages: [
+          'src/features/dashboard/Dashboard.tsx',
+          'src/features/fast-entry/FastEntry.tsx',
+          'src/features/reconciliation/Reconciliation.tsx',
+          'src/features/budget-cycles/BudgetCycles.tsx',
+          'src/features/budget-cycles/CycleReport.tsx',
+          'src/features/transactions/TransactionHistory.tsx',
+          'src/features/pending-transactions/PendingTransactions.tsx',
+          'src/features/activity/ActivityHistory.tsx',
+          'src/features/accounts/Accounts.tsx',
+          'src/features/accounts/AccountStatements.tsx',
+          'src/features/household/Household.tsx',
+          'src/features/categories/Categories.tsx',
+          'src/features/notifications/NotificationSettingsForm.tsx',
+          'src/features/ai/AiAssistant.tsx',
+          'src/features/loans/Loans.tsx',
+        ],
+      }],
     },
   },
 );

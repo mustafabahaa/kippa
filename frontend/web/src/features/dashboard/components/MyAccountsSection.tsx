@@ -56,7 +56,7 @@ export function MyAccountsSection() {
         <Skeleton variant="text" width="30%" height={24} animation="wave" sx={{ mb: 1.5 }} />
         <Stack spacing={1}>
           {[1, 2].map((i) => (
-            <Card key={i} variant="dashboardSection">
+            <Card key={i} variant="sectionSurface">
               <CardContent sx={{ p: 1.5, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <Stack direction="row" spacing={1.5} alignItems="center" sx={{ width: '60%' }}>
                   <Skeleton variant="circular" width={40} height={40} animation="wave" />
@@ -86,7 +86,7 @@ export function MyAccountsSection() {
 
   return (
     <>
-      <Card variant="dashboardSection">
+      <Card variant="sectionSurface">
         <CardContent>
           <Stack spacing={2.5}>
             <DashboardSectionHeading
@@ -115,10 +115,10 @@ export function MyAccountsSection() {
                         <Stack direction="row" spacing={1.5} alignItems="center" sx={{ minWidth: 0 }}>
                           <Paper variant="iconBadge">{getAccountIcon(acc.type)}</Paper>
                           <Box sx={{ minWidth: 0 }}>
-                            <Typography noWrap variant="accountName" color="text.primary">
+                            <Typography noWrap variant="listItemTitle" color="text.primary">
                               {acc.name}
                             </Typography>
-                            <Typography variant="accountType" color="text.secondary">
+                            <Typography variant="listItemMetadata" color="text.secondary">
                               {acc.type}
                             </Typography>
                           </Box>
@@ -132,7 +132,7 @@ export function MyAccountsSection() {
                           <Typography
                             noWrap
                             tabIndex={acc.currency === baseCurrency ? undefined : 0}
-                            variant="accountBalance"
+                            variant="listItemValue"
                             color={bal < 0 ? 'error.main' : 'text.primary'}
                             sx={{ textAlign: 'right', cursor: acc.currency === baseCurrency ? 'default' : 'help' }}
                           >

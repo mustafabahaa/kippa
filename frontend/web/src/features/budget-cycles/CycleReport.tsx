@@ -40,15 +40,13 @@ import {
 import type { FinanceTransaction } from '@kippa/domain';
 import { convertToBaseCurrency, getPostedTransactions } from '@/libs/financeCalculations';
 import { calculateCycleReport, LOAN_PAYMENTS_CATEGORY_ID } from '@/libs/cycleReport';
-import { PageHeader } from '@/features/shared/components/PageHeader';
+import { PageHeader } from '@monochrome-ui/design-system';
 import { SectionHeading } from '@/features/shared/components/SectionHeading';
 import { TransactionIcon } from '@/features/transactions';
 import { formatCycleDate } from './cycleUtils';
-import { BudgetCycleAccountRow, BudgetCycleSummaryItem } from '@monochrome-ui/design-system';
+import { DividedDetailRow, ResponsiveSummaryItem } from '@monochrome-ui/design-system';
 
 const PAGE_SIZE = 25;
-const sectionIndent = { xs: 0, md: 4 } as const;
-const contentIndent = { xs: 0, md: 4 } as const;
 
 function formatTransactionDate(date: string) {
   return new Date(`${date}T00:00:00`).toLocaleDateString(undefined, {
@@ -210,7 +208,7 @@ export function CycleReport() {
     return (
       <Stack spacing={{ xs: 2, md: 3 }}>
         <PageHeader title="Cycle report" subtitle="Review how a completed budget cycle performed." />
-        <Box component="section" sx={{ px: sectionIndent }}>
+        <Box component="section" >
           <Stack spacing={{ xs: 2, md: 3 }}>
             <SectionHeading
               title="No completed cycles yet"
@@ -286,16 +284,15 @@ export function CycleReport() {
         }
       />
 
-      <Box component="section" sx={{ px: sectionIndent }}>
+      <Box component="section" >
         <Stack spacing={{ xs: 2, md: 3 }}>
           <SectionHeading title="Balances by account" subtitle="How each account changed during this cycle" />
-          <Typography variant="body2" color="text.secondary" sx={{ px: contentIndent }}>
+          <Typography variant="body2" color="text.secondary" >
             Bank and cash accounts: starting balance + added money − removed money = ending balance. Credit cards:
             starting debt + new charges − payments = ending debt.
           </Typography>
           <Box
             sx={{
-              px: contentIndent,
               width: '100%',
               maxWidth: 1280,
               mx: 'auto',
@@ -309,7 +306,7 @@ export function CycleReport() {
               const startingAmount = isCredit ? Math.abs(account.openingBalance) : account.openingBalance;
               const endingAmount = isCredit ? Math.abs(account.closingBalance) : account.closingBalance;
               return (
-                <BudgetCycleAccountRow key={account.accountId}>
+                <DividedDetailRow key={account.accountId}>
                   <Stack spacing={2.5}>
                     <Stack
                       direction="row"
@@ -332,7 +329,7 @@ export function CycleReport() {
                         <Typography variant="fieldHint" color="text.secondary">
                           {isCredit ? 'Debt when cycle started' : 'Balance when cycle started'}
                         </Typography>
-                        <Typography variant="loanMetricCompact">
+                        <Typography variant="metricValueCompact">
                           <Money amount={startingAmount} code={account.currency} maxDigits={2} />
                         </Typography>
                       </Stack>
@@ -340,7 +337,7 @@ export function CycleReport() {
                         <Typography variant="fieldHint" color="text.secondary">
                           {isCredit ? 'Debt when cycle ended' : 'Balance when cycle ended'}
                         </Typography>
-                        <Typography variant="loanMetricCompact">
+                        <Typography variant="metricValueCompact">
                           <Money amount={endingAmount} code={account.currency} maxDigits={2} />
                         </Typography>
                       </Stack>
@@ -371,23 +368,22 @@ export function CycleReport() {
                       View account transactions
                     </Button>
                   </Stack>
-                </BudgetCycleAccountRow>
+                </DividedDetailRow>
               );
             })}
           </Box>
         </Stack>
       </Box>
 
-      <Box component="section" sx={{ px: sectionIndent }}>
+      <Box component="section" >
         <Stack spacing={{ xs: 2, md: 3 }}>
           <SectionHeading title="Household totals" subtitle={`A combined view of every account in ${baseCurrency}`} />
-          <Typography variant="body2" color="text.secondary" sx={{ px: contentIndent }}>
+          <Typography variant="body2" color="text.secondary" >
             This is not another account. USD and other currencies are converted to {baseCurrency}, then credit-card debt
             is subtracted to show one household-wide value.
           </Typography>
           <Box
             sx={{
-              px: contentIndent,
               width: '100%',
               maxWidth: 1280,
               mx: 'auto',
@@ -397,25 +393,25 @@ export function CycleReport() {
             }}
           >
             {summary.map((item) => (
-              <BudgetCycleSummaryItem key={item.label}>
+              <ResponsiveSummaryItem key={item.label}>
                 <Stack spacing={1}>
                   <Typography variant="fieldHint" color="text.secondary">
                     {item.label}
                   </Typography>
-                  <Typography variant="loanMetric" color={item.color}>
+                  <Typography variant="metricValue" color={item.color}>
                     <Money amount={item.value} code={baseCurrency} maxDigits={2} />
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
                     {item.description}
                   </Typography>
                 </Stack>
-              </BudgetCycleSummaryItem>
+              </ResponsiveSummaryItem>
             ))}
           </Box>
         </Stack>
       </Box>
 
-      <Box component="section" sx={{ px: sectionIndent }}>
+      <Box component="section" >
         <Stack spacing={{ xs: 2, md: 3 }}>
           <SectionHeading
             title="Cycle outcome"
@@ -430,14 +426,14 @@ export function CycleReport() {
           <Stack
             direction={{ xs: 'column', sm: 'row' }}
             spacing={{ xs: 3, md: 5 }}
-            sx={{ px: contentIndent, width: '100%', maxWidth: 1280, mx: 'auto' }}
+            sx={{width: '100%', maxWidth: 1280, mx: 'auto' }}
           >
             <Stack spacing={0.75} sx={{ flex: 1 }}>
               <Typography variant="fieldHint" color="text.secondary">
                 Change in total account value
               </Typography>
               <Typography
-                variant="loanMetric"
+                variant="metricValue"
                 color={report.closingBalance - report.openingBalance >= 0 ? 'success.main' : 'error.main'}
               >
                 <Money amount={report.closingBalance - report.openingBalance} code={baseCurrency} maxDigits={2} />
@@ -450,7 +446,7 @@ export function CycleReport() {
               <Typography variant="fieldHint" color="text.secondary">
                 Income left after spending
               </Typography>
-              <Typography variant="loanMetric">
+              <Typography variant="metricValue">
                 <Money amount={report.netCashFlow} code={baseCurrency} maxDigits={2} />
               </Typography>
               <Typography variant="body2" color="text.secondary">
@@ -458,25 +454,25 @@ export function CycleReport() {
               </Typography>
             </Stack>
           </Stack>
-          <Typography variant="body2" color="text.secondary" sx={{ px: contentIndent }}>
+          <Typography variant="body2" color="text.secondary" >
             These two results can differ because account value also reflects reconciliation adjustments and
             currency-conversion effects.
           </Typography>
         </Stack>
       </Box>
 
-      <Box component="section" sx={{ px: sectionIndent }}>
+      <Box component="section" >
         <Stack spacing={{ xs: 2, md: 3 }}>
           <SectionHeading title="Spending by category" subtitle="Budget compared with actual spending" />
           {report.categories.length === 0 ? (
-            <Box sx={{ px: contentIndent, py: 2 }}>
+            <Box sx={{py: 2 }}>
               <Typography variant="sectionTitle">No category spending</Typography>
               <Typography variant="sectionSubtitle" color="text.secondary">
                 This cycle has no posted expense transactions.
               </Typography>
             </Box>
           ) : (
-            <TableContainer sx={{ px: contentIndent, width: '100%', maxWidth: 1280, mx: 'auto' }}>
+            <TableContainer sx={{width: '100%', maxWidth: 1280, mx: 'auto' }}>
               <Table>
                 <TableHead>
                   <TableRow>
@@ -578,10 +574,10 @@ export function CycleReport() {
         </Stack>
       </Box>
 
-      <Box component="section" id="cycle-transactions" sx={{ px: sectionIndent }}>
+      <Box component="section" id="cycle-transactions" >
         <Stack spacing={{ xs: 2, md: 3 }}>
           <SectionHeading title="Cycle transactions" subtitle="Review transactions for all accounts or one account" />
-          <Box sx={{ px: contentIndent, width: '100%', maxWidth: 1280, mx: 'auto' }}>
+          <Box sx={{width: '100%', maxWidth: 1280, mx: 'auto' }}>
             <Box sx={{ width: '100%', maxWidth: { sm: 420 } }}>
               <FormControl fullWidth>
                 <InputLabel id="cycle-report-account-label">Account</InputLabel>
@@ -607,7 +603,7 @@ export function CycleReport() {
           </Box>
 
           {cycleTransactions.length === 0 ? (
-            <Box sx={{ px: contentIndent, py: 2 }}>
+            <Box sx={{py: 2 }}>
               <Typography variant="sectionTitle">No transactions</Typography>
               <Typography variant="sectionSubtitle" color="text.secondary">
                 No posted transactions match this account.
@@ -618,8 +614,7 @@ export function CycleReport() {
               <TableContainer
                 sx={{
                   display: { xs: 'none', md: 'block' },
-                  px: contentIndent,
-                  width: '100%',
+                    width: '100%',
                   maxWidth: 1280,
                   mx: 'auto',
                 }}
@@ -675,8 +670,7 @@ export function CycleReport() {
                 divider={<Divider flexItem />}
                 sx={{
                   display: { xs: 'flex', md: 'none' },
-                  px: contentIndent,
-                  width: '100%',
+                    width: '100%',
                   maxWidth: 1280,
                   mx: 'auto',
                 }}
@@ -725,8 +719,7 @@ export function CycleReport() {
                   setPage(0);
                 }}
                 sx={{
-                  px: contentIndent,
-                  width: '100%',
+                    width: '100%',
                   maxWidth: 1280,
                   mx: 'auto',
                   '& .MuiTablePagination-toolbar': { flexWrap: 'wrap' },

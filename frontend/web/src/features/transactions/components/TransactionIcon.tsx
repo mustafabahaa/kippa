@@ -42,7 +42,7 @@ export const TransactionIcon: React.FC<TransactionIconProps> = ({ type, size = 4
 
   return (
     <Box
-      className={['ds-transaction-icon', className].filter(Boolean).join(' ')}
+      className={['ds-record-icon', className].filter(Boolean).join(' ')}
       sx={{
         width: size,
         height: size,

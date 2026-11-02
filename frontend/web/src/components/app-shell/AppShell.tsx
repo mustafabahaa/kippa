@@ -1,5 +1,5 @@
 import { Suspense } from 'react';
-import { Box, Container, useTheme } from '@monochrome-ui/design-system';
+import { Box, Container, PageScaffold, useTheme } from '@monochrome-ui/design-system';
 import { Outlet, useLocation } from 'react-router-dom';
 import { OfflineBanner } from '@/components/OfflineBanner';
 import { TopBar } from '@/components/app-shell/TopBar';
@@ -82,9 +82,11 @@ export function AppShell() {
               },
             }}
           >
-            <Suspense fallback={<AppLoadingScreen theme={theme} />}>
-              <Outlet />
-            </Suspense>
+            <PageScaffold>
+              <Suspense fallback={<AppLoadingScreen theme={theme} />}>
+                <Outlet />
+              </Suspense>
+            </PageScaffold>
           </Container>
         </Box>
 

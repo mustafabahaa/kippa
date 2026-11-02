@@ -41,7 +41,7 @@ export function TotalBalanceHeroSection() {
 
   if (isLoading || !accounts || !transactions || !ledgerLines) {
     return (
-      <Card variant="dashboardSection">
+      <Card variant="sectionSurface">
         <CardContent>
           <Box>
             <Skeleton variant="text" width="50%" height={24} animation="wave" />
@@ -71,7 +71,7 @@ export function TotalBalanceHeroSection() {
     data.accountBalances.find((item) => item.accountId === accountId)?.balance ?? 0;
 
   return (
-    <Card variant="dashboardSection">
+    <Card variant="sectionSurface">
       <CardContent>
         <Stack>
           <DashboardSectionHeading
@@ -99,7 +99,7 @@ export function TotalBalanceHeroSection() {
               {accounts.map((account) => {
                 const balance = balanceFor(account.id);
                 return (
-                  <Paper key={account.id} variant="dashboardAccountRow" sx={{ minWidth: 0 }}>
+                  <Paper key={account.id} variant="dividedRow" sx={{ minWidth: 0 }}>
                     <Typography noWrap variant="body2" color="text.secondary">
                       {account.name}
                     </Typography>

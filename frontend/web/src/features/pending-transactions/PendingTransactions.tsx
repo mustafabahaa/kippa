@@ -15,7 +15,7 @@ import {
   Typography,
 } from '@monochrome-ui/design-system';
 import { KeyIcon, SearchIcon } from '@/components/AppIcon';
-import { PageHeader } from '@/features/shared/components/PageHeader';
+import { PageHeader } from '@monochrome-ui/design-system';
 import { PendingReviewDialog } from './components/PendingReviewDialog';
 import { MessageConnectionDialog } from './components/MessageConnectionDialog';
 import { EmptyLayout } from '@/features/shared/components/EmptyLayout';
@@ -37,8 +37,6 @@ import { suggestCategoryIds } from '@/libs/merchantSuggestions';
 import { useMessageConnections } from './hooks/useMessageConnections';
 import { usePendingReviewState } from './hooks/usePendingReviewState';
 type PendingItemState = 'idle' | 'approving' | 'discarding' | 'settled';
-const sectionIndent = { xs: 0, md: 2 } as const;
-const contentIndent = { xs: 0, md: 2 } as const;
 
 const PREVIEW_PENDING_ITEMS: PendingFinancialMessage[] = [
   {
@@ -307,7 +305,7 @@ export function PendingTransactions() {
         }
       />
 
-      <Box component="section" sx={{ px: sectionIndent }}>
+      <Box component="section" >
         <Stack spacing={2.5}>
           <SectionHeading
             icon={<KeyIcon fontSize="small" />}
@@ -335,7 +333,7 @@ export function PendingTransactions() {
             <Tab value="history" label="History" />
           </Tabs>
 
-          <Stack spacing={2.5} sx={{ px: contentIndent }}>
+          <Stack spacing={2.5} >
             {!(tab === 'review' ? reviewChecking : historyChecking) && (
               <TextField
                 label={tab === 'review' ? 'Search pending activity' : 'Search review history'}
@@ -378,7 +376,7 @@ export function PendingTransactions() {
                     subtitle="Confirm or discard detected bank activity."
                     trailing={<Chip size="small" label={`${filteredPending.length} results`} />}
                   />
-                  <Stack className="ds-stepper" sx={{ px: contentIndent }}>
+                  <Stack className="ds-stepper" >
                     {filteredPending.map((item) => (
                       <Paper
                         key={item.id}
@@ -413,7 +411,7 @@ export function PendingTransactions() {
                             {item.provider.toUpperCase()} · {item.kind} · {item.date}
                           </Typography>
                         </Box>
-                        <Typography variant="transactionAmount" sx={{ whiteSpace: 'nowrap' }}>
+                        <Typography variant="activityAmount" sx={{ whiteSpace: 'nowrap' }}>
                           <Money amount={item.amount} code={item.currency} maxDigits={2} />
                         </Typography>
                       </Paper>
@@ -445,7 +443,7 @@ export function PendingTransactions() {
                     subtitle="The latest 100 resolved items."
                     trailing={<Chip size="small" label={`${filteredResolved.length} results`} />}
                   />
-                  <Stack className="ds-stepper" sx={{ px: contentIndent }}>
+                  <Stack className="ds-stepper" >
                     {filteredResolved.map((item) => {
                       const restoring = restoreMutation.isPending && restoreMutation.variables?.pendingId === item.id;
                       return (
@@ -468,7 +466,7 @@ export function PendingTransactions() {
                               <Typography noWrap variant="sectionLabel" sx={{ minWidth: 0 }}>
                                 {item.snapshot.description}
                               </Typography>
-                              <Typography variant="transactionAmount" sx={{ whiteSpace: 'nowrap' }}>
+                              <Typography variant="activityAmount" sx={{ whiteSpace: 'nowrap' }}>
                                 <Money amount={item.snapshot.amount} code={item.snapshot.currency} maxDigits={2} />
                               </Typography>
                             </Stack>

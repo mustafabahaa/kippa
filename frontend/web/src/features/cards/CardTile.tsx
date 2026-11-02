@@ -88,7 +88,7 @@ export function CardTile({
                   <LinearProgress
                     variant="determinate"
                     value={Math.min(100, Math.max(0, summary.utilization * 100))}
-                    className="bank-card-utilization"
+                    className="card-surface-utilization"
                   />
                 )}
               </>

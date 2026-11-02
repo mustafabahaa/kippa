@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Avatar, Box, Button, Chip, Grid, Paper, Skeleton, Stack, TextField, Typography } from '@monochrome-ui/design-system';
 import type { AuditAction, AuditLogEntry } from '@kippa/domain';
 import { SearchIcon } from '@/components/AppIcon';
-import { PageHeader } from '@/features/shared/components/PageHeader';
+import { PageHeader } from '@monochrome-ui/design-system';
 import { SectionHeading } from '@/features/shared/components/SectionHeading';
 import { EmptyLayout } from '@/features/shared/components/EmptyLayout';
 import { MultiSelectFilter } from '@/features/shared/components/MultiSelectFilter';
@@ -11,8 +11,6 @@ import { useAppContext } from '@/hooks/useAppContext';
 import { usePrivacyMask } from '@/hooks/usePrivacyMask';
 
 const PAGE_SIZE = 25;
-const sectionIndent = { xs: 0, md: 2 } as const;
-const contentIndent = { xs: 0, md: 2 } as const;
 
 type ActionGroup = { id: string; label: string; actions: AuditAction[] };
 
@@ -121,7 +119,7 @@ function ActivityHistoryRow({ entry }: { entry: AuditLogEntry }) {
 
       <Stack spacing={0.25} alignItems="flex-end" sx={{ minWidth: 0, textAlign: 'right' }}>
         {amount && (
-          <Typography variant="transactionAmount" color="text.primary">
+          <Typography variant="activityAmount" color="text.primary">
             {maskDigits(amount)}
           </Typography>
         )}
@@ -141,8 +139,8 @@ function ActivityHistorySkeleton() {
     <Stack spacing={{ xs: 2, md: 2.5 }} sx={{ width: '100%' }}>
       <PageHeader title="Activity history" subtitle="A chronological record of changes across your household." />
       <Stack spacing={2.5} sx={{ width: '100%', maxWidth: 1000, alignSelf: 'center' }}>
-        <Box component="section" sx={{ px: sectionIndent }}>
-          <Stack spacing={1.25} sx={{ px: contentIndent }}>
+        <Box component="section" >
+          <Stack spacing={1.25} >
             <Box>
               <Skeleton variant="text" width={100} height={28} />
               <Skeleton variant="text" width={360} height={20} />
@@ -160,8 +158,8 @@ function ActivityHistorySkeleton() {
             </Grid>
           </Stack>
         </Box>
-        <Box component="section" sx={{ px: sectionIndent }}>
-          <Stack spacing={1.5} sx={{ width: '100%', maxWidth: 900, mx: 'auto', px: contentIndent }}>
+        <Box component="section" >
+          <Stack spacing={1.5} sx={{ width: '100%', maxWidth: 900, mx: 'auto' }}>
             <Stack direction="row" justifyContent="space-between">
               <Skeleton variant="text" width={150} height={28} />
               <Skeleton variant="rounded" width={75} height={28} />
@@ -246,8 +244,8 @@ export function ActivityHistory() {
       <PageHeader title="Activity history" subtitle="A chronological record of changes across your household." />
 
       <Stack spacing={{ xs: 2, md: 2.5 }} sx={{ width: '100%', maxWidth: 1000, alignSelf: 'center' }}>
-        <Box component="section" sx={{ px: sectionIndent }}>
-          <Stack spacing={1.25} sx={{ px: contentIndent }}>
+        <Box component="section" >
+          <Stack spacing={1.25} >
             <SectionHeading title="Filters" subtitle="Search activity and narrow it by action or household member." />
             <Grid container spacing={1.25}>
               <Grid size={{ xs: 12, sm: 6, md: 6 }}>
@@ -290,14 +288,14 @@ export function ActivityHistory() {
           </Stack>
         </Box>
 
-        <Box component="section" sx={{ px: sectionIndent }}>
+        <Box component="section" >
           <Stack spacing={{ xs: 1.5, md: 2 }} sx={{ width: '100%', maxWidth: 900, mx: 'auto' }}>
             <SectionHeading
               title="Activity history"
               subtitle="Recent household changes, with the person and time for each event."
               trailing={<Chip size="small" label={`${filteredEntries.length} results`} />}
             />
-            <Stack spacing={1.5} sx={{ px: contentIndent }}>
+            <Stack spacing={1.5} >
               {filteredEntries.length === 0 ? (
                 <EmptyLayout
                   icon={<SearchIcon fontSize="small" />}

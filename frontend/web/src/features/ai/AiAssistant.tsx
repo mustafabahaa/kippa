@@ -25,7 +25,7 @@ import { useNotifications } from '@/notifications/useNotifications';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useAppContext } from '@/hooks/useAppContext';
-import { PageHeader } from '@/features/shared/components/PageHeader';
+import { PageHeader } from '@monochrome-ui/design-system';
 import { aiConversations } from './services/conversations';
 import { streamAssistantReply } from './services/assistant';
 import { executePendingAiAction } from './services/readTools';

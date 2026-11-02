@@ -1,5 +1,5 @@
 import { Box, Chip, Paper, Typography } from '@monochrome-ui/design-system';
-import { BankCardArtwork, CardChip, ContactlessIcon } from '@monochrome-ui/design-system';
+import { CardFaceArtwork, CardChip, ContactlessIcon } from '@monochrome-ui/design-system';
 import type { ReactNode } from 'react';
 import type { CardKind, CardNetwork } from '@kippa/domain';
 import { getBank, getTier } from './banks/banks';
@@ -10,14 +10,14 @@ export function CardBackground(props: {
   kind: CardKind;
   tierId?: string;
   children: ReactNode;
-  surface?: 'bankCard' | 'bankCardHeader';
+  surface?: 'cardSurface' | 'cardSurfaceHeader';
   fill?: boolean;
   inactive?: boolean;
   clickable?: boolean;
   onClick?: React.MouseEventHandler<HTMLDivElement>;
   sx?: object;
 }) {
-  const { children, surface = 'bankCard', fill, inactive, clickable, onClick, sx } = props;
+  const { children, surface = 'cardSurface', fill, inactive, clickable, onClick, sx } = props;
   return (
     <Paper
       variant={surface}
@@ -31,7 +31,7 @@ export function CardBackground(props: {
         ...sx,
       }}
     >
-      <BankCardArtwork />
+      <CardFaceArtwork />
       <Box
         sx={{
           position: 'relative',

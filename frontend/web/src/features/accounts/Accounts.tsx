@@ -21,7 +21,7 @@ import { computeCardSummary } from '@/libs/cardSelectors';
 import { Money } from '@/components/Money';
 import { EmptyLayout } from '@/features/shared/components/EmptyLayout';
 import { ForeignBalanceTooltip } from '@/features/shared/components/ForeignBalanceTooltip';
-import { PageHeader } from '@/features/shared/components/PageHeader';
+import { PageHeader } from '@monochrome-ui/design-system';
 import { SectionHeading } from '@/features/shared/components/SectionHeading';
 import {
   AccountBalanceIcon,
@@ -34,8 +34,6 @@ import {
 } from '@/components/AppIcon';
 import { AddAccountDialog, EditAccountDialog } from './components/AccountForms';
 
-const sectionIndent = { xs: 0, md: 4 } as const;
-const contentIndent = { xs: 0, md: 4 } as const;
 
 const accountTypeLabel = (type: AccountType) =>
   type === 'running' ? 'Running bank' : type === 'savings' ? 'Savings bank' : type === 'cash' ? 'Cash' : 'Wallet';
@@ -120,7 +118,7 @@ export function Accounts() {
         }
       />
 
-      <Box component="section" sx={{ px: sectionIndent }}>
+      <Box component="section" >
         <Stack spacing={{ xs: 2, md: 3 }}>
           <SectionHeading
             icon={<AccountBalanceIcon variant="Linear" />}
@@ -138,7 +136,7 @@ export function Accounts() {
             }
           />
 
-          <Box sx={{ px: contentIndent }}>
+          <Box >
             <Box sx={{ width: '100%', maxWidth: 1100, mx: 'auto', minWidth: 0 }}>
               {isLoading ? (
                 <Stack divider={<Divider flexItem />}>
@@ -221,7 +219,7 @@ export function Accounts() {
                                 rate={displayRates[account.currency]}
                               >
                                 <Typography
-                                  variant="loanMetric"
+                                  variant="metricValue"
                                   color={balance < 0 ? 'error.main' : 'text.primary'}
                                   noWrap
                                   tabIndex={account.currency === baseCurrency ? undefined : 0}

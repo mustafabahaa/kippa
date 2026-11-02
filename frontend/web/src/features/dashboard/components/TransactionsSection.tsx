@@ -56,7 +56,7 @@ export function TransactionsSection() {
   return (
     <>
       <Card
-        variant="dashboardSection"
+        variant="sectionSurface"
         sx={{
           position: { xs: 'static', md: 'sticky' },
           top: { md: 88 },

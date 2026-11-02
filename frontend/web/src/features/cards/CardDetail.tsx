@@ -154,7 +154,7 @@ export function CardDetail({ card, onClose }: { card: Card; onClose: () => void 
         fullWidth
         slotProps={{
           paper: {
-            variant: 'cardDetailDialog',
+            variant: 'detailSurface',
           },
         }}
       >
@@ -163,7 +163,7 @@ export function CardDetail({ card, onClose }: { card: Card; onClose: () => void 
           bankId={card.bankId}
           kind={card.kind}
           tierId={card.tierId}
-          surface="bankCardHeader"
+          surface="cardSurfaceHeader"
           inactive={!card.isActive}
           sx={{ flexShrink: 0 }}
         >
@@ -219,7 +219,7 @@ export function CardDetail({ card, onClose }: { card: Card; onClose: () => void 
 
                 {card.expiryMonth && card.expiryYear && (
                   <Stack direction="row" alignItems="center" spacing={0.5}>
-                    <Typography variant="cardMicro" className="bank-card-muted" sx={{ mr: 0.25 }}>
+                    <Typography variant="cardMicro" className="card-surface-muted" sx={{ mr: 0.25 }}>
                       THRU ▶
                     </Typography>
                     <Typography variant="cardExpiry">
@@ -238,11 +238,11 @@ export function CardDetail({ card, onClose }: { card: Card; onClose: () => void 
                         <Typography variant="cardDetailAmount">
                           <Money amount={reconciledDebt} code={card.currency} maxDigits={2} />
                         </Typography>
-                        <Typography variant="cardDetailLabel" className="bank-card-muted" sx={{ mt: 0.5 }}>
+                        <Typography variant="cardDetailLabel" className="card-surface-muted" sx={{ mt: 0.5 }}>
                           Outstanding Balance
                         </Typography>
                         {hasUnappliedCredit && (
-                          <Typography variant="fieldHint" className="bank-card-muted" sx={{ mt: 0.5 }}>
+                          <Typography variant="fieldHint" className="card-surface-muted" sx={{ mt: 0.5 }}>
                             {maskDigits(`${card.currency} ${unallocatedCredit.toFixed(2)}`)} of past payments/credits
                             applies to no charge
                           </Typography>
@@ -252,14 +252,14 @@ export function CardDetail({ card, onClose }: { card: Card; onClose: () => void 
                             <LinearProgress
                               variant="determinate"
                               value={utilizationPct}
-                              className={`bank-card-utilization-detail bank-card-utilization-detail--${utilizationPct > 95 ? 'error' : utilizationPct > 80 ? 'warning' : 'success'}`}
+                              className={`card-surface-utilization-detail card-surface-utilization-detail--${utilizationPct > 95 ? 'error' : utilizationPct > 80 ? 'warning' : 'success'}`}
                             />
                             <Stack direction="row" justifyContent="space-between" sx={{ mt: 0.5 }}>
-                              <Typography variant="cardMicro" className="bank-card-muted">
+                              <Typography variant="cardMicro" className="card-surface-muted">
                                 {utilizationPct}% utilized
                               </Typography>
                               {card.creditLimit != null && (
-                                <Typography variant="cardMicro" className="bank-card-muted">
+                                <Typography variant="cardMicro" className="card-surface-muted">
                                   Limit: {maskDigits(`${card.currency} ${card.creditLimit.toLocaleString()}`)}
                                 </Typography>
                               )}
@@ -270,7 +270,7 @@ export function CardDetail({ card, onClose }: { card: Card; onClose: () => void 
                           variant="contained"
                           disabled={totalDebt <= 0}
                           onClick={openPayAll}
-                          className="bank-card-pay-action"
+                          className="card-surface-pay-action"
                           sx={{ mt: 2 }}
                         >
                           Pay all
@@ -279,7 +279,7 @@ export function CardDetail({ card, onClose }: { card: Card; onClose: () => void 
                     ) : (
                       <>
                         <Typography variant="cardDetailAmount">{formattedBalance}</Typography>
-                        <Typography variant="cardDetailLabel" className="bank-card-muted" sx={{ mt: 0.5 }}>
+                        <Typography variant="cardDetailLabel" className="card-surface-muted" sx={{ mt: 0.5 }}>
                           Available Balance
                         </Typography>
                       </>

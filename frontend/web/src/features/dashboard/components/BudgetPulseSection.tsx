@@ -2,14 +2,14 @@ import { BarChartIcon } from '@/components/AppIcon';
 
 import { Box, Card, CardContent, Skeleton, Stack } from '@monochrome-ui/design-system';
 import {
-  BudgetPulseCategoryTile,
-  BudgetPulseSkeleton,
-  BudgetPulseStatus,
-  BudgetPulseSummary,
-  BudgetPulseValue,
-  type BudgetPulseCategoryRank,
-  type BudgetPulseCategoryTone,
-  type BudgetPulseStatusTone,
+  RankedMetricTile,
+  PulseSkeleton,
+  StatusBadge,
+  SupportingSummary,
+  PercentageValue,
+  type MetricTileRank,
+  type MetricTileTone,
+  type StatusBadgeTone,
 } from '@monochrome-ui/design-system';
 import {
   useAccounts,
@@ -54,21 +54,21 @@ export function BudgetPulseSection() {
     return 'OVER BUDGETING';
   };
 
-  const getStatusTone = (status: DashboardData['saving']['status']): BudgetPulseStatusTone => {
+  const getStatusTone = (status: DashboardData['saving']['status']): StatusBadgeTone => {
     if (status === 'on-track') return 'success';
     return status === 'warning' ? 'warning' : 'error';
   };
 
   if (isLoading) {
     return (
-      <Card variant="dashboardSection">
+      <Card variant="sectionSurface">
         <CardContent sx={{ p: 2 }}>
           <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1.5 }}>
             <Skeleton variant="text" width="35%" height={24} animation="wave" />
-          <BudgetPulseSkeleton pulseVariant="status" width="25%" height={24} animation="wave" />
+          <PulseSkeleton shape="status" width="25%" height={24} animation="wave" />
           </Stack>
-        <BudgetPulseSkeleton
-          pulseVariant="progress"
+        <PulseSkeleton
+          shape="progress"
           width="100%"
           height={8}
           sx={{ mb: 1.5 }}
@@ -102,48 +102,48 @@ export function BudgetPulseSection() {
     .slice(0, 3);
 
   return (
-    <Card variant="dashboardSection" sx={{ height: 375 }}>
+    <Card variant="sectionSurface" sx={{ height: 375 }}>
       <CardContent sx={{ height: '100%' }}>
         <DashboardSectionHeading
           icon={<BarChartIcon size={22} strokeWidth={1.8} />}
           title="Remaining monthly"
           trailing={
-            <BudgetPulseStatus tone={getStatusTone(data.saving.status)}>{getStatusLabel(data.saving.status)}</BudgetPulseStatus>
+            <StatusBadge tone={getStatusTone(data.saving.status)}>{getStatusLabel(data.saving.status)}</StatusBadge>
           }
         />
 
         <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={2} sx={{ mt: 2.5 }}>
-          <BudgetPulseValue value={remainingPercent} />
-          <BudgetPulseSummary sx={{ maxWidth: 150 }}>
+          <PercentageValue value={remainingPercent} />
+          <SupportingSummary sx={{ maxWidth: 150 }}>
             {data.saving.status === 'on-track'
               ? 'You are in good shape—your monthly spending remains within plan.'
               : 'Spending is running ahead of the monthly plan.'}
-          </BudgetPulseSummary>
+          </SupportingSummary>
         </Stack>
 
         <Box sx={{ mt: 1.25 }}>
-          <BudgetPulseStatus tone={getStatusTone(data.saving.status)}>
+          <StatusBadge tone={getStatusTone(data.saving.status)}>
             Cycle progress {data.cycleProgress ? Math.round(data.cycleProgress.ratio * 100) : 0}%
-          </BudgetPulseStatus>
+          </StatusBadge>
         </Box>
 
         <Stack direction="row" spacing={1} alignItems="flex-end" sx={{ mt: 2.5, minHeight: 150 }}>
           {featuredCategories.map((category, index) => {
             const used = Math.round(category.ratio * 100);
             const remaining = Math.max(0, category.planned - category.spent);
-            const rank = (['first', 'second', 'third'] as const)[index] as BudgetPulseCategoryRank;
-            const tone = (['primary', 'secondary', 'accent'] as const)[index] as BudgetPulseCategoryTone;
+            const rank = (['first', 'second', 'third'] as const)[index] as MetricTileRank;
+            const tone = (['primary', 'secondary', 'accent'] as const)[index] as MetricTileTone;
             return (
-              <BudgetPulseCategoryTile
+              <RankedMetricTile
                 key={category.categoryId}
                 rank={rank}
                 tone={tone}
-                usedPercent={used}
-                category={category.categoryName}
-                remainingTitle={`${remaining.toLocaleString()} ${baseCurrency} left`}
+                percent={used}
+                label={category.categoryName}
+                valueTitle={`${remaining.toLocaleString()} ${baseCurrency} left`}
               >
                 <Money amount={remaining} code={baseCurrency} maxDigits={0} />
-              </BudgetPulseCategoryTile>
+              </RankedMetricTile>
             );
           })}
         </Stack>

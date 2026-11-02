@@ -28,7 +28,7 @@ import {
   useHouseholdBaseCurrency,
 } from '@/hooks/useFinance';
 import { useAppContext } from '@/hooks/useAppContext';
-import { PageHeader } from '@/features/shared/components/PageHeader';
+import { PageHeader } from '@monochrome-ui/design-system';
 import { SectionHeading } from '@/features/shared/components/SectionHeading';
 import { usePrivacyMask } from '@/hooks/usePrivacyMask';
 import { calculateAccountBalances } from '@/libs/financeCalculations';
@@ -38,8 +38,6 @@ import { AccountBalanceIcon, CheckCircleIcon, PaymentsIcon, SavingsIcon } from '
 type AdjustmentReason =
   'forgotten expense' | 'bank fee' | 'exchange difference' | 'cash counting correction' | 'unknown difference';
 
-const sectionIndent = { xs: 0, md: 4 } as const;
-const contentIndent = { xs: 0, md: 2 } as const;
 
 const adjustmentReasons: AdjustmentReason[] = [
   'forgotten expense',
@@ -180,7 +178,7 @@ export function Reconciliation() {
     return (
       <Stack spacing={{ xs: 2, md: 3 }}>
         <PageHeader title="Reconciliation" subtitle="Compare recorded balances with your bank or cash totals." />
-        <Box component="section" sx={{ px: sectionIndent }}>
+        <Box component="section" >
           <Box sx={{ maxWidth: 1180, mx: 'auto' }}>
             <Grid container spacing={{ xs: 3, lg: 4 }}>
               <Grid size={{ xs: 12, lg: 5 }}>
@@ -192,7 +190,7 @@ export function Reconciliation() {
                       <Skeleton variant="text" width={290} height={18} />
                     </Box>
                   </Stack>
-                  <Box sx={{ px: contentIndent }}>
+                  <Box >
                     <Stack spacing={2.5}>
                       <Skeleton variant="rounded" width="100%" height={48} />
                       <Stack direction="row" spacing={3}>
@@ -232,7 +230,7 @@ export function Reconciliation() {
     <Stack spacing={{ xs: 2, md: 3 }}>
       <PageHeader title="Reconciliation" subtitle="Compare recorded balances with your bank or cash totals." />
 
-      <Box component="section" sx={{ px: sectionIndent }}>
+      <Box component="section" >
         <Box sx={{ maxWidth: 1180, mx: 'auto' }}>
           <Grid container spacing={{ xs: 3, lg: 4 }} alignItems="start">
             <Grid size={{ xs: 12, lg: 5 }} sx={{ minWidth: 0 }}>
@@ -243,7 +241,7 @@ export function Reconciliation() {
                   subtitle="Confirm the balance on your statement or in your wallet."
                 />
 
-                <Box sx={{ px: contentIndent }}>
+                <Box >
                   {accounts.length === 0 ? (
                     <Stack spacing={1} alignItems="flex-start">
                       <Typography variant="body2" color="text.secondary">
@@ -289,7 +287,7 @@ export function Reconciliation() {
                           <Typography variant="fieldHint" color="text.secondary">
                             Calculated
                           </Typography>
-                          <Typography variant="loanMetric">
+                          <Typography variant="metricValue">
                             {maskDigits(calculatedBalance.toLocaleString(undefined, { minimumFractionDigits: 2 }))}
                           </Typography>
                           <Typography variant="sectionSubtitle" color="text.secondary">
@@ -323,7 +321,7 @@ export function Reconciliation() {
                             Difference
                           </Typography>
                           <Typography
-                            variant="loanMetric"
+                            variant="metricValue"
                             color={
                               !hasActualBalance || Math.abs(difference) < 0.01
                                 ? 'text.primary'

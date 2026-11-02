@@ -119,7 +119,7 @@ export function ReconciliationHistory({ accounts, pages, hasNextPage, isFetching
                       </Box>
                     )}
                     <Stack spacing={0.25} sx={{ minWidth: 0, flex: 1 }}>
-                      <Typography variant="transactionAmount" color={differenceColor} noWrap>
+                      <Typography variant="activityAmount" color={differenceColor} noWrap>
                         {matched
                           ? 'Matched'
                           : `${item.difference > 0 ? '+' : ''}${mask(`${item.difference.toFixed(2)} ${item.currency}`)}`}

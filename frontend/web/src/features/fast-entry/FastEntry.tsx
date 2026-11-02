@@ -15,7 +15,7 @@ import {
 } from '@/hooks/useFinance';
 import { useAppContext } from '@/hooks/useAppContext';
 import { CalendarTodayIcon, CheckCircleIcon } from '@/components/AppIcon';
-import { PageHeader } from '@/features/shared/components/PageHeader';
+import { PageHeader } from '@monochrome-ui/design-system';
 import { EmptyLayout } from '@/features/shared/components/EmptyLayout';
 import { AccountPicker } from '@/features/shared/components/AccountPicker';
 import { CategoryChips } from '@/features/shared/components/CategoryPicker';

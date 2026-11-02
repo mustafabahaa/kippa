@@ -29,15 +29,13 @@ import { usePrivacyMask } from '@/hooks/usePrivacyMask';
 import { useAccounts, useCategories, useLedgerLines, useTransactions } from '@/hooks/useFinance';
 import { calculateAccountBalance } from '@/libs/financeCalculations';
 import { buildAccountStatement } from '@/libs/accountStatement';
-import { PageHeader } from '@/features/shared/components/PageHeader';
+import { PageHeader } from '@monochrome-ui/design-system';
 import { EmptyLayout } from '@/features/shared/components/EmptyLayout';
 import { SectionHeading } from '@/features/shared/components/SectionHeading';
 import { TransactionIcon } from '@/features/transactions';
 import { AccountBalanceIcon, SearchIcon } from '@/components/AppIcon';
 
 const DEFAULT_PAGE_SIZE = 25;
-const sectionIndent = { xs: 0, md: 4 } as const;
-const contentIndent = { xs: 0, md: 4 } as const;
 
 function formatStatementDate(date: string) {
   return new Date(`${date}T00:00:00`).toLocaleDateString(undefined, {
@@ -136,7 +134,7 @@ export function AccountStatements() {
           subtitle="Follow each account movement and its running balance."
           action={<Skeleton variant="rounded" width={300} height={40} />}
         />
-        <Box component="section" sx={{ px: sectionIndent }}>
+        <Box component="section" >
           <Stack spacing={{ xs: 2, md: 3 }}>
             <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={2}>
               <Stack direction="row" spacing={1.5} alignItems="center" sx={{ minWidth: 0 }}>
@@ -148,7 +146,7 @@ export function AccountStatements() {
               </Stack>
               <Skeleton variant="text" width={190} height={34} />
             </Stack>
-            <Box sx={{ px: contentIndent }}>
+            <Box >
               <Box sx={{ maxWidth: 1100, mx: 'auto' }}>
                 <Stack spacing={2}>
                   <Skeleton variant="rounded" width={380} height={44} />
@@ -182,7 +180,7 @@ export function AccountStatements() {
         action={accountSelector}
       />
 
-      <Box component="section" sx={{ px: sectionIndent }}>
+      <Box component="section" >
         <Stack spacing={{ xs: 2, md: 3 }}>
           {selectedAccount && (
             <SectionHeading
@@ -194,7 +192,7 @@ export function AccountStatements() {
                   <Typography variant="fieldHint" color="text.secondary">
                     Current balance
                   </Typography>
-                  <Typography variant="loanMetric">
+                  <Typography variant="metricValue">
                     <Money amount={currentBalance} code={selectedAccount.currency} maxDigits={2} />
                   </Typography>
                 </Stack>
@@ -202,7 +200,7 @@ export function AccountStatements() {
             />
           )}
 
-          <Box sx={{ px: contentIndent }}>
+          <Box >
             <Box sx={{ width: '100%', maxWidth: 1100, mx: 'auto', minWidth: 0 }}>
               {selectedAccount ? (
                 <Stack spacing={2}>
@@ -331,7 +329,7 @@ export function AccountStatements() {
                                 </Typography>
                               </Box>
                               <Typography
-                                variant="loanMetricCompact"
+                                variant="metricValueCompact"
                                 color={entry.amount >= 0 ? 'success.main' : 'text.primary'}
                                 sx={{ whiteSpace: 'nowrap' }}
                               >

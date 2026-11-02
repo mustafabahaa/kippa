@@ -148,10 +148,10 @@ export const TransactionsListItem: React.FC<TransactionsListItemProps> = ({
           {creator ? (
             <Tooltip title={`Added by ${creator.displayName}`}>
               <Badge
-                className="ds-transaction-avatar-badge"
+                className="ds-record-avatar-badge"
                 overlap="circular"
                 anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
-                badgeContent={<Box className="ds-transaction-type-dot" data-type={tx.type} />}
+                badgeContent={<Box className="ds-record-type-dot" data-type={tx.type} />}
               >
                 <UserAvatar
                   className="ds-stepper-node"
@@ -166,10 +166,10 @@ export const TransactionsListItem: React.FC<TransactionsListItemProps> = ({
               </Badge>
             </Tooltip>
           ) : (
-            <Box className="ds-transaction-type-dot" data-type={tx.type} aria-hidden="true" />
+            <Box className="ds-record-type-dot" data-type={tx.type} aria-hidden="true" />
           )}
           <Stack spacing={0.25} sx={{ minWidth: 0, flex: 1 }}>
-            <Typography variant="transactionAmount" color="text.primary" noWrap>
+            <Typography variant="activityAmount" color="text.primary" noWrap>
               {maskDigits(`${amount.toLocaleString()} ${currency}`)}
             </Typography>
             {creator && (

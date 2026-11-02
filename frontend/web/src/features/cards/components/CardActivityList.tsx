@@ -7,7 +7,7 @@ import { EmptyLayout } from '@/features/shared/components/EmptyLayout';
 import { UserAvatar } from '@/components/UserAvatar';
 import { useAppContext } from '@/hooks/useAppContext';
 import { formatShortTime } from '@/libs/dateFormatting';
-import { CardActivityText } from '@monochrome-ui/design-system';
+import { ActivityStateText } from '@monochrome-ui/design-system';
 
 type Props = {
   card: Card;
@@ -100,10 +100,10 @@ export function CardActivityList({
                   <Box display="flex" alignItems="center" gap={1.5} sx={{ minWidth: 0, gridArea: 'timeline' }}>
                     {creator ? (
                       <Badge
-                        className="ds-transaction-avatar-badge"
+                        className="ds-record-avatar-badge"
                         overlap="circular"
                         anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
-                        badgeContent={<Box className="ds-transaction-type-dot" data-type={charge.txType} />}
+                        badgeContent={<Box className="ds-record-type-dot" data-type={charge.txType} />}
                       >
                         <UserAvatar
                           className="ds-stepper-node"
@@ -118,15 +118,15 @@ export function CardActivityList({
                       </Badge>
                     ) : (
                       <Box sx={{ width: 28, height: 28, flex: '0 0 28px', display: 'grid', placeItems: 'center' }}>
-                        <Box className="ds-transaction-type-dot" data-type={charge.txType} aria-hidden="true" />
+                        <Box className="ds-record-type-dot" data-type={charge.txType} aria-hidden="true" />
                       </Box>
                     )}
                     <Stack spacing={0.25} sx={{ minWidth: 0, flex: 1 }}>
-                      <CardActivityText paid={charge.paid} variant="transactionAmount" noWrap>
+                      <ActivityStateText inactive={charge.paid} variant="activityAmount" noWrap>
                         {mask(
                           `−${card.currency} ${charge.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}`,
                         )}
-                      </CardActivityText>
+                      </ActivityStateText>
                       {creator && (
                         <Typography variant="body2" color="text.primary" noWrap>
                           {creator.displayName}
@@ -138,9 +138,9 @@ export function CardActivityList({
                     </Stack>
                   </Box>
                   <Box sx={{ minWidth: 0, gridArea: 'details' }}>
-                    <CardActivityText paid={charge.paid} variant="sectionLabel">
+                    <ActivityStateText inactive={charge.paid} variant="sectionLabel">
                       {category?.name ?? charge.txType}
-                    </CardActivityText>
+                    </ActivityStateText>
                     {charge.description && (
                       <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25, overflowWrap: 'anywhere' }}>
                         {charge.description}

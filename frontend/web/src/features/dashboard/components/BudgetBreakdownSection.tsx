@@ -12,7 +12,7 @@ import {
   LinearProgress,
   Paper,
 } from '@monochrome-ui/design-system';
-import { BudgetMetricBadge, ChartColorMarker } from '@monochrome-ui/design-system';
+import { MetricBadge, ChartColorMarker } from '@monochrome-ui/design-system';
 import {
   useAccounts,
   useTransactions,
@@ -84,7 +84,7 @@ export function BudgetBreakdownSection() {
   const spentPercent = totalPlanned > 0 ? Math.round((totalSpent / totalPlanned) * 100) : 0;
 
   return (
-    <Card variant="dashboardSection">
+    <Card variant="sectionSurface">
       <CardContent>
         <Stack spacing={3}>
           <DashboardSectionHeading
@@ -99,7 +99,7 @@ export function BudgetBreakdownSection() {
                 label: 'Planned budget',
                 value: totalPlanned,
                 valueColor: 'text.primary',
-                tone: 'planned' as const,
+                tone: 'primary' as const,
                 meta: `${data.categoryStatus.length} category allocations`,
                 Icon: PaymentsIcon,
               },
@@ -107,7 +107,7 @@ export function BudgetBreakdownSection() {
                 label: 'Total spent',
                 value: totalSpent,
                 valueColor: totalSpent > totalPlanned ? 'error.main' : 'text.primary',
-                tone: totalSpent > totalPlanned ? ('error' as const) : ('spent' as const),
+                tone: totalSpent > totalPlanned ? ('error' as const) : ('secondary' as const),
                 meta: `${spentPercent}% of the cycle plan`,
                 Icon: BarChartIcon,
               },
@@ -133,23 +133,23 @@ export function BudgetBreakdownSection() {
               >
                 <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={1.5}>
                   <Box sx={{ minWidth: 0 }}>
-                    <Typography variant="budgetMetricLabel" color="text.secondary">
+                    <Typography variant="metricLabelCompact" color="text.secondary">
                       {metric.label}
                     </Typography>
                     <Typography
                       noWrap
-                      variant="budgetMetricValue"
+                      variant="summaryValue"
                       color={metric.valueColor}
                       sx={{ mt: 0.5 }}
                     >
                       <Money amount={metric.value} code={baseCurrency} maxDigits={0} />
                     </Typography>
                   </Box>
-                  <BudgetMetricBadge tone={metric.tone}>
+                  <MetricBadge tone={metric.tone}>
                     <metric.Icon size={22} />
-                  </BudgetMetricBadge>
+                  </MetricBadge>
                 </Stack>
-                <Typography noWrap variant="budgetMetricMeta" color="text.secondary" sx={{ mt: 1.25 }}>
+                <Typography noWrap variant="metricMetadataCompact" color="text.secondary" sx={{ mt: 1.25 }}>
                   {metric.meta}
                 </Typography>
               </Box>
@@ -203,7 +203,7 @@ export function BudgetBreakdownSection() {
               {['Category', 'Progress', 'Planned', 'Spent', 'Remaining'].map((label, index) => (
                 <Typography
                   key={label}
-                  variant="budgetColumnHeading"
+                  variant="tableColumnHeading"
                   color="text.secondary"
                   sx={{
                     textAlign: index > 1 ? 'right' : 'left',
@@ -215,7 +215,7 @@ export function BudgetBreakdownSection() {
             </Box>
 
             {data.categoryStatus.length === 0 ? (
-              <Typography align="center" variant="budgetEmptyMessage" color="text.secondary" sx={{ py: 4 }}>
+              <Typography align="center" variant="tableEmptyMessage" color="text.secondary" sx={{ py: 4 }}>
                 No budget allocations found for this cycle.
               </Typography>
             ) : (
@@ -228,7 +228,7 @@ export function BudgetBreakdownSection() {
                 return (
                   <Paper
                     key={cat.categoryId}
-                    variant="budgetCategoryRow"
+                    variant="detailRow"
                     sx={{ px: 1, py: 1 }}
                   >
                     <Box
@@ -244,7 +244,7 @@ export function BudgetBreakdownSection() {
                     >
                       <Stack direction="row" alignItems="center" spacing={1} sx={{ minWidth: 0 }}>
                         <ChartColorMarker color={catColor} />
-                        <Typography noWrap variant="budgetCategoryName" color="text.primary">
+                        <Typography noWrap variant="listItemTitle" color="text.primary">
                           {cat.categoryName}
                         </Typography>
                       </Stack>
@@ -256,7 +256,7 @@ export function BudgetBreakdownSection() {
                           sx={{ flex: 1 }}
                         />
                         <Typography
-                          variant="budgetPercent"
+                          variant="metricPercent"
                           color="text.secondary"
                           sx={{
                             minWidth: 34,
@@ -292,7 +292,7 @@ export function BudgetBreakdownSection() {
                         ].map((item) => (
                           <Box key={item.label} sx={{ minWidth: 0, textAlign: { xs: 'left', md: 'right' } }}>
                             <Typography
-                              variant="budgetCellLabel"
+                              variant="tableCellLabel"
                               color="text.secondary"
                               sx={{
                                 display: { md: 'none' },
@@ -302,7 +302,7 @@ export function BudgetBreakdownSection() {
                             </Typography>
                             <Typography
                               noWrap
-                              variant="budgetCellValue"
+                              variant="tableCellValue"
                               color={item.color}
                               sx={{
                               }}

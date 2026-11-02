@@ -8,7 +8,6 @@ import { TransactionsSection } from '@/features/dashboard/components/Transaction
 import { LoanProgressSection } from '@/features/dashboard/components/LoanProgressSection';
 import { DashboardSectionHeading } from './components/DashboardSectionHeading';
 
-const dashboardSectionIndent = { xs: 0, md: 4 } as const;
 
 export function Dashboard() {
   return (
@@ -16,7 +15,7 @@ export function Dashboard() {
       {/* Header Section */}
       <HeaderSection />
 
-      <Box component="section" sx={{ pl: dashboardSectionIndent }}>
+      <Box component="section" >
         <Stack spacing={{ xs: 2, md: 3 }}>
           <Box>
             <DashboardSectionHeading
@@ -25,7 +24,7 @@ export function Dashboard() {
             />
           </Box>
 
-          <Box sx={{ pl: { xs: 0, md: 4 } }}>
+          <Box >
             <Grid container spacing={{ xs: 3, md: 5 }} alignItems="stretch">
               <Grid size={{ xs: 12, md: 6, lg: 4 }}>
                 <TotalBalanceHeroSection />
@@ -41,7 +40,7 @@ export function Dashboard() {
         </Stack>
       </Box>
 
-      <Box component="section" sx={{ pl: dashboardSectionIndent }}>
+      <Box component="section" >
         <Stack spacing={{ xs: 2, md: 3 }}>
           <Box>
             <DashboardSectionHeading
@@ -50,7 +49,7 @@ export function Dashboard() {
             />
           </Box>
 
-          <Box sx={{ pl: { xs: 0, md: 4 } }}>
+          <Box >
             <Grid container columns={{ xs: 12, md: 10 }} spacing={{ xs: 2, md: 3 }} alignItems="stretch">
               <Grid size={{ xs: 12, md: 6 }} sx={{ minWidth: 0 }}>
                 <Stack spacing={{ xs: 2, md: 3 }} divider={<Divider />} sx={{ minWidth: 0 }}>

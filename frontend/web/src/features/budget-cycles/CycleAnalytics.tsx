@@ -12,10 +12,10 @@ import {
   alpha,
 } from '@monochrome-ui/design-system';
 import {
-  CycleCashFlowColumn,
-  CycleCashFlowGuide,
-  CycleChartSwatch,
-  CycleTrendLineChart,
+  ComparisonColumn,
+  ChartGuide,
+  ChartSwatch,
+  TrendAreaChart,
 } from '@monochrome-ui/design-system';
 import {
   useCycles,
@@ -167,7 +167,7 @@ export function CycleAnalytics() {
               },
             ].map((item) => (
               <Stack key={item.label} direction="row" spacing={0.75} alignItems="center">
-                <CycleChartSwatch swatchColor={item.color} />
+                <ChartSwatch swatchColor={item.color} />
                 <Typography variant="chartLegendLabel" color="text.secondary">
                   {item.label}
                 </Typography>
@@ -196,7 +196,7 @@ export function CycleAnalytics() {
                 pb: 4,
               }}
             >
-              <CycleCashFlowGuide />
+              <ChartGuide />
 
               {cycleData.map((cycle, index) => {
                 const capacity =
@@ -218,15 +218,17 @@ export function CycleAnalytics() {
                 );
 
                 return (
-                  <CycleCashFlowColumn
+                  <ComparisonColumn
                     key={cycle.id}
-                    cycleName={cycle.name}
-                    income={cycle.actualIncome}
-                    spent={cycle.actualExpense}
-                    currency={baseCurrency}
-                    capacityHeight={capacityHeight}
-                    incomeHeight={incomeHeight}
-                    spendHeight={spendHeight}
+                    label={cycle.name}
+                    primaryValue={cycle.actualIncome}
+                    secondaryValue={cycle.actualExpense}
+                    primaryLabel="Income"
+                    secondaryLabel="Spent"
+                    unit={baseCurrency}
+                    trackHeight={capacityHeight}
+                    primaryHeight={incomeHeight}
+                    secondaryHeight={spendHeight}
                   />
                 );
               })}
@@ -259,7 +261,7 @@ export function CycleAnalytics() {
 
           <Box sx={{ height: { xs: 300, sm: 380 }, width: '100%' }}>
             {categoryTrends.length > 0 && (
-              <CycleTrendLineChart
+              <TrendAreaChart
                 xAxis={[
                   {
                     scaleType: 'point',

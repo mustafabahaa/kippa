@@ -18,7 +18,7 @@ import {
 } from '@/hooks/useFinance';
 import { CycleAnalytics } from '@/features/budget-cycles/CycleAnalytics';
 import { useAppContext } from '@/hooks/useAppContext';
-import { PageHeader } from '@/features/shared/components/PageHeader';
+import { PageHeader } from '@monochrome-ui/design-system';
 import { SectionHeading } from '@/features/shared/components/SectionHeading';
 import { CloseCycleDialog, CreateCycleDialog, type NewCycleValues } from './components/CycleDialogs';
 import { ActiveCycleSection, CycleHistoryItem, type CycleHistoryStats } from './components/CycleSections';
@@ -27,8 +27,6 @@ import { BudgetAllocationDialog } from './components/BudgetAllocationDialog';
 import { calculateCycleData } from '@/libs/budgetAnalytics';
 import { useNavigate } from 'react-router-dom';
 
-const sectionIndent = { xs: 0, md: 4 } as const;
-const contentIndent = { xs: 0, md: 4 } as const;
 
 // ── Main Component ───────────────────────────────────────────────────────
 
@@ -199,10 +197,10 @@ export function BudgetCycles() {
         }
       />
 
-      <Box component="section" sx={{ px: sectionIndent }}>
+      <Box component="section" >
         <Stack spacing={{ xs: 2, md: 3 }}>
           <SectionHeading title="Overview" subtitle="Compare spending across cycles and manage the current plan." />
-          <Box sx={{ px: contentIndent }}>
+          <Box >
             <Box sx={{ maxWidth: 1180 }}>
               <Grid container columns={{ xs: 12, md: 10 }} spacing={{ xs: 3, md: 5 }} alignItems="flex-start">
                 <Grid size={{ xs: 12, md: 6 }} sx={{ minWidth: 0 }}>
@@ -252,11 +250,11 @@ export function BudgetCycles() {
         onTotalChange={setTotalBudget}
       />
 
-      <Box component="section" sx={{ px: sectionIndent }}>
+      <Box component="section" >
         <Stack spacing={{ xs: 2, md: 3 }}>
           <SectionHeading title="Cycle history" subtitle="Review completed and planned budget periods." />
 
-          <Box sx={{ px: contentIndent }}>
+          <Box >
             <Box sx={{ maxWidth: 1180 }}>
               {sortedHistory.length > 0 ? (
                 <Stack spacing={{ xs: 2.5, md: 3 }} divider={<Divider />}>

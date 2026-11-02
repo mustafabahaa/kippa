@@ -9,3 +9,6 @@
 - Feature components must not recreate visual appearance through `sx`. Use `sx` only for layout and positioning concerns such as grid placement, flex alignment, sizing constraints, spacing between regions, responsive placement, and sticky/fixed coordinates.
 - Typography appearance must use named theme variants. Do not set font size, weight, line height, letter spacing, or text transformation ad hoc in feature components.
 - Icons must use the shared `AppIcon` Iconsax adapters; do not import icon libraries directly into features.
+- Import shared components such as `PageHeader` directly from `@monochrome-ui/design-system`; do not add feature-level re-export adapters or duplicate shared components.
+- `npm run lint --workspace kippa-app` runs `monochrome-ui/known-variants` against the installed shared package and checks that every routed page listed in `frontend/web/eslint.config.js` inherits `PageScaffold` from the app shell. Keep that route list synchronized with `frontend/web/src/App.tsx`.
+- The app shell owns the shared `PageScaffold`. It keeps each page header on the shell baseline and applies the same responsive inset to page content, so page modules should not add another page-level indent.

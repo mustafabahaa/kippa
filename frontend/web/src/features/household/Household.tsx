@@ -32,14 +32,12 @@ import type { Household, CurrencyCode } from '@kippa/domain';
 import { useAppContext } from '@/hooks/useAppContext';
 import { CurrencySelect } from '@/features/shared/components/CurrencySelect';
 import { ledgerLib } from '@/libs/ledger';
-import { PageHeader } from '@/features/shared/components/PageHeader';
+import { PageHeader } from '@monochrome-ui/design-system';
 import { HouseholdMembersSection } from './components/HouseholdMembersSection';
 import { LeaveHouseholdDialog } from './components/LeaveHouseholdDialog';
 import { useJoinRequestStatus } from './hooks/useJoinRequestStatus';
 import { useHouseholdUi } from './hooks/useHouseholdUi';
 
-const contentIndent = { xs: 0, md: 4 } as const;
-const sectionIndent = { xs: 0, md: 2 } as const;
 
 export function Household() {
   const { enqueueSnackbar } = useSnackbar();
@@ -192,7 +190,7 @@ export function Household() {
 
       <Box sx={{ width: '100%', maxWidth: 1250, alignSelf: 'center' }}>
         <Stack spacing={{ xs: 3, md: 4 }}>
-          <Box component="section" sx={{ pl: sectionIndent }}>
+          <Box component="section" >
             <Stack spacing={{ xs: 2, md: 2.5 }}>
               <SectionHeading
                 icon={<HomeIcon />}
@@ -211,7 +209,7 @@ export function Household() {
               />
 
               {householdsLoading ? (
-                <Typography variant="fieldHint" color="text.secondary" sx={{ pl: contentIndent }}>
+                <Typography variant="fieldHint" color="text.secondary" >
                   Loading households…
                 </Typography>
               ) : householdsList.length > 0 ? (
@@ -224,20 +222,20 @@ export function Household() {
                   variant="scrollable"
                   scrollButtons="auto"
                   allowScrollButtonsMobile
-                  sx={{ pl: contentIndent }}
+
                 >
                   {householdsList.map((household) => (
                     <Tab key={household.id} value={household.id} label={household.name} disabled={actionLoading} />
                   ))}
                 </Tabs>
               ) : (
-                <Typography variant="sectionSubtitle" color="text.secondary" sx={{ pl: contentIndent }}>
+                <Typography variant="sectionSubtitle" color="text.secondary" >
                   No households yet. Create one or request to join an existing household.
                 </Typography>
               )}
 
               {activeHh && (
-                <Grid container columns={12} spacing={{ xs: 3, md: 4 }} sx={{ pl: contentIndent }}>
+                <Grid container columns={12} spacing={{ xs: 3, md: 4 }} >
                   <Grid size={{ xs: 12, md: isOwner ? 4 : 12 }}>
                     <Stack spacing={{ xs: 2.5, md: 3 }}>
                       <SectionHeading
@@ -261,7 +259,7 @@ export function Household() {
                         }
                       />
 
-                      <Stack spacing={{ xs: 2.5, md: 3 }} sx={{ pl: contentIndent }}>
+                      <Stack spacing={{ xs: 2.5, md: 3 }} >
                         <Stack spacing={1.25} alignItems="flex-start">
                           <Box>
                             <Typography variant="sectionLabel">Base currency</Typography>

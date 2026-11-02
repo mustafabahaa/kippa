@@ -26,7 +26,7 @@ export function BankPicker({ onPick }: { onPick: (bankId: string) => void }) {
         {filtered.map((b) => (
           <Paper
             key={b.id}
-            variant="bankCard"
+            variant="cardSurface"
             data-clickable="true"
             onClick={() => onPick(b.id)}
             sx={{

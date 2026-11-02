@@ -1,7 +1,7 @@
 import { DeleteIcon } from '@/components/AppIcon';
 
 import { List, ListItemText, Stack, TextField } from '@monochrome-ui/design-system';
-import { BudgetAllocationActions, BudgetAllocationRemoveButton, BudgetAllocationRow } from '@monochrome-ui/design-system';
+import { RowActionGroup, CompactIconButton, EditableListRow } from '@monochrome-ui/design-system';
 
 export interface AllocationRow {
   categoryId: string;
@@ -30,7 +30,7 @@ export function AllocationRows({
       {rows.map((row) => {
         const categoryName = getCategoryName(row.categoryId);
         return (
-          <BudgetAllocationRow
+          <EditableListRow
             key={row.categoryId}
             secondaryAction={
               <Stack direction="row" alignItems="center" spacing={0.75}>
@@ -45,21 +45,21 @@ export function AllocationRows({
                     htmlInput: { min: 0, style: { textAlign: 'right', fontWeight: 700, padding: '10px 12px' } },
                   }}
                 />
-                <BudgetAllocationActions className="allocation-actions" direction="row" spacing={0.25}>
-                  <BudgetAllocationRemoveButton
+                <RowActionGroup className="allocation-actions" direction="row" spacing={0.25}>
+                  <CompactIconButton
                     aria-label={`Remove ${categoryName}`}
                     size="small"
                     onClick={() => onRemove(row.categoryId)}
                     color="error"
                   >
                     <DeleteIcon size={22} strokeWidth={1.8} />
-                  </BudgetAllocationRemoveButton>
-                </BudgetAllocationActions>
+                  </CompactIconButton>
+                </RowActionGroup>
               </Stack>
             }
           >
             <ListItemText primary={categoryName} slotProps={{ primary: { variant: 'body2', fontWeight: 600 } }} />
-          </BudgetAllocationRow>
+          </EditableListRow>
         );
       })}
     </List>

@@ -59,7 +59,7 @@ export function ActiveCycleSection({
             <Typography variant="fieldHint" color="text.secondary">
               Planned
             </Typography>
-            <Typography variant="loanMetricCompact">
+            <Typography variant="metricValueCompact">
               <Money amount={stats.plannedBudget} code={stats.baseCurrency} />
             </Typography>
           </Grid>
@@ -67,7 +67,7 @@ export function ActiveCycleSection({
             <Typography variant="fieldHint" color="text.secondary">
               Spent
             </Typography>
-            <Typography variant="loanMetricCompact">
+            <Typography variant="metricValueCompact">
               <Money amount={stats.actualExpense ?? 0} code={stats.baseCurrency} />
             </Typography>
           </Grid>
@@ -76,7 +76,7 @@ export function ActiveCycleSection({
               Remaining
             </Typography>
             <Typography
-              variant="loanMetricCompact"
+              variant="metricValueCompact"
               color={stats.plannedBudget - (stats.actualExpense ?? 0) < 0 ? 'error.main' : 'text.primary'}
             >
               <Money amount={stats.plannedBudget - (stats.actualExpense ?? 0)} code={stats.baseCurrency} />
@@ -134,8 +134,8 @@ export function CycleHistoryItem({ cycle, isEditing, onToggleBudget, onViewRepor
           spacing={1.5}
         >
           <Box sx={{ minWidth: 0 }}>
-            <Typography variant="loanTitle">{cycle.name}</Typography>
-            <Typography variant="loanMeta" color="text.secondary">
+            <Typography variant="metricTitle">{cycle.name}</Typography>
+            <Typography variant="metricMetadata" color="text.secondary">
               {formatCycleDate(cycle.startDate)}
               {cycle.endDate ? ` — ${formatCycleDate(cycle.endDate)}` : ''}
             </Typography>
@@ -170,7 +170,7 @@ export function CycleHistoryItem({ cycle, isEditing, onToggleBudget, onViewRepor
                 <Typography variant="fieldHint" color="text.secondary">
                   Planned
                 </Typography>
-                <Typography variant="loanMetricCompact">
+                <Typography variant="metricValueCompact">
                   {stats.plannedBudget != null ? <Money amount={stats.plannedBudget} code={stats.baseCurrency} /> : '—'}
                 </Typography>
               </Box>
@@ -178,7 +178,7 @@ export function CycleHistoryItem({ cycle, isEditing, onToggleBudget, onViewRepor
                 <Typography variant="fieldHint" color="text.secondary">
                   Spent
                 </Typography>
-                <Typography variant="loanMetricCompact" color={overBudget ? 'error.main' : 'text.primary'}>
+                <Typography variant="metricValueCompact" color={overBudget ? 'error.main' : 'text.primary'}>
                   {stats.actualExpense != null ? <Money amount={stats.actualExpense} code={stats.baseCurrency} /> : '—'}
                 </Typography>
               </Box>
@@ -187,7 +187,7 @@ export function CycleHistoryItem({ cycle, isEditing, onToggleBudget, onViewRepor
                   <Typography variant="fieldHint" color="text.secondary">
                     Budget used
                   </Typography>
-                  <Typography variant="loanMetricCompact" color={overBudget ? 'error.main' : 'text.primary'}>
+                  <Typography variant="metricValueCompact" color={overBudget ? 'error.main' : 'text.primary'}>
                     {utilization}%
                   </Typography>
                 </Box>
