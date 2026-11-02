@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { closeSnackbar, useSnackbar } from 'notistack';
-import { Button } from '@monochrome-ui/design-system';
+import { Alert, Button, Stack } from '@monochrome-ui/design-system';
 import { registerSW } from 'virtual:pwa-register';
 
 /**
@@ -40,30 +40,45 @@ export function AppUpdatePrompt() {
         key: 'app-update-available',
         variant: 'default',
         persist: true,
-        action: (snackbarId) => (
-          <>
-            <Button
-              size="small"
-              variant="text"
-              color="inherit"
-              onClick={() => {
-                closeSnackbar(snackbarId);
-                dismissedForSession = true;
-              }}
-            >
-              Later
-            </Button>
-            <Button
-              size="small"
-              variant="contained"
-              onClick={() => {
-                closeSnackbar(snackbarId);
-                void updateServiceWorker(true);
-              }}
-            >
-              Update
-            </Button>
-          </>
+        content: (snackbarId) => (
+          <Alert
+            key={snackbarId}
+            severity="info"
+            variant="standard"
+            icon={false}
+            action={
+              <Stack direction="row" spacing={0.5} sx={{ flexShrink: 0 }}>
+                <Button
+                  size="small"
+                  variant="text"
+                  onClick={() => {
+                    closeSnackbar(snackbarId);
+                    dismissedForSession = true;
+                  }}
+                >
+                  Later
+                </Button>
+                <Button
+                  size="small"
+                  variant="contained"
+                  onClick={() => {
+                    closeSnackbar(snackbarId);
+                    void updateServiceWorker(true);
+                  }}
+                >
+                  Update
+                </Button>
+              </Stack>
+            }
+            sx={{
+              width: 'calc(100vw - 32px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px))',
+              maxWidth: 600,
+              boxSizing: 'border-box',
+              alignItems: { xs: 'flex-start', sm: 'center' },
+            }}
+          >
+            A new version of Kippa is available.
+          </Alert>
         ),
       });
     };
