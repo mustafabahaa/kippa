@@ -94,7 +94,20 @@ function permitted(name: string, allowWrites: boolean) {
 }
 
 function buildServer(context: { uid: string; householdId: string; allowWrites: boolean }) {
-  const server = new McpServer({ name: 'kippa', version: '1.0.0' });
+  const server = new McpServer({
+    name: 'kippa',
+    title: 'Kippa',
+    version: '1.0.0',
+    websiteUrl: publicUrl(),
+    icons: [
+      {
+        src: `${publicUrl()}/icons/icon-512.png`,
+        mimeType: 'image/png',
+        sizes: ['512x512'],
+        theme: 'dark',
+      },
+    ],
+  });
   for (const [name, definition] of Object.entries(aiToolDefinitions)) {
     if (!permitted(name, context.allowWrites)) continue;
     server.registerTool(
