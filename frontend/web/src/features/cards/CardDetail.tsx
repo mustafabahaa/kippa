@@ -365,8 +365,8 @@ export function CardDetail({ card, onClose }: { card: Card; onClose: () => void 
           <Button disabled={payCard.isPending} onClick={() => setPayOpen(false)}>
             Cancel
           </Button>
-          <Button variant="primaryAction" disabled={payCard.isPending || !payment.valid} onClick={handlePay}>
-            {payCard.isPending ? 'Saving…' : 'Confirm'}
+          <Button variant="primaryAction" disabled={!payment.valid} onClick={handlePay} loading={payCard.isPending}>
+            Confirm
           </Button>
         </DialogActions>
       </Dialog>

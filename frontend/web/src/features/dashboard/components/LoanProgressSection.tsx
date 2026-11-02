@@ -17,8 +17,48 @@ export function LoanProgressSection() {
   const { data: transactions = [], isLoading: transactionsLoading } = useTransactions(householdId);
   const { data: lines = [], isLoading: linesLoading } = useLedgerLines(householdId);
 
-  if (loansLoading || accountsLoading || transactionsLoading || linesLoading)
-    return <Skeleton variant="rounded" height={375} />;
+  if (loansLoading || accountsLoading || transactionsLoading || linesLoading) {
+    return (
+      <Card variant="sectionSurface" sx={{ height: { xs: 'auto', md: 375 } }}>
+        <CardContent sx={{ height: { xs: 'auto', md: '100%' } }}>
+          <Stack spacing={2} sx={{ height: { xs: 'auto', md: '100%' } }}>
+            <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={1.5}>
+              <Stack direction="row" spacing={1.5} alignItems="center" sx={{ minWidth: 0, flex: 1 }}>
+                <Skeleton variant="circular" width={40} height={40} animation="wave" />
+                <Box sx={{ minWidth: 0, flex: 1 }}>
+                  <Skeleton variant="text" width="58%" height={22} animation="wave" />
+                  <Skeleton variant="text" width="76%" height={18} animation="wave" />
+                </Box>
+              </Stack>
+              <Skeleton variant="rounded" width={88} height={32} animation="wave" />
+            </Stack>
+            <Stack spacing={0.75}>
+              <Skeleton variant="rounded" height={24} animation="wave" />
+              <Stack direction="row" justifyContent="space-between" spacing={1}>
+                <Skeleton variant="text" width="18%" height={18} animation="wave" />
+                <Skeleton variant="text" width="24%" height={18} animation="wave" />
+              </Stack>
+            </Stack>
+            <Stack direction="row" spacing={2}>
+              <Box sx={{ flex: 1, minWidth: 0 }}>
+                <Skeleton variant="text" width="72%" height={18} animation="wave" />
+                <Skeleton variant="text" width="58%" height={24} animation="wave" />
+              </Box>
+              <Box sx={{ flex: 1, minWidth: 0 }}>
+                <Skeleton variant="text" width="72%" height={18} animation="wave" />
+                <Skeleton variant="text" width="88%" height={24} animation="wave" />
+              </Box>
+            </Stack>
+            <Stack direction="row" spacing={1} alignItems="center">
+              <Skeleton variant="circular" width={22} height={22} animation="wave" />
+              <Skeleton variant="text" width="64%" height={20} animation="wave" />
+            </Stack>
+            <Skeleton variant="rounded" width={112} height={40} animation="wave" />
+          </Stack>
+        </CardContent>
+      </Card>
+    );
+  }
 
   const candidates = loans
     .filter((loan) => loan.status === 'active')
@@ -38,9 +78,9 @@ export function LoanProgressSection() {
       : 'Complete';
 
   return (
-    <Card variant="sectionSurface" sx={{ height: 375 }}>
-      <CardContent sx={{ height: '100%' }}>
-        <Stack spacing={2} sx={{ height: '100%' }}>
+    <Card variant="sectionSurface" sx={{ height: { xs: 'auto', md: 375 } }}>
+      <CardContent sx={{ height: { xs: 'auto', md: '100%' } }}>
+        <Stack spacing={2} sx={{ height: { xs: 'auto', md: '100%' } }}>
           <Stack spacing={2.5}>
             <DashboardSectionHeading
               icon={<PaymentsIcon size={22} strokeWidth={1.8} />}

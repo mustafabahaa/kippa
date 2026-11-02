@@ -37,9 +37,11 @@ export function NotificationSettingsForm({ dbSettings, onSave, isSaving, househo
     setPermissionActionLoading(true);
     try {
       // MUST be a user gesture (button click) — iOS Safari requires this.
-      await requestPermission();
-      if (Notification.permission === 'granted') {
+      const enabled = await requestPermission();
+      if (enabled) {
         enqueueSnackbar('Notifications enabled!', { variant: 'success' });
+      } else {
+        enqueueSnackbar('Kippa could not finish enabling push on this device. Please try again.', { variant: 'error' });
       }
     } finally {
       setPermissionActionLoading(false);
@@ -86,7 +88,7 @@ export function NotificationSettingsForm({ dbSettings, onSave, isSaving, househo
   const statusContent = {
     enabled: {
       title: 'Notifications are enabled',
-      description: 'Kippa can send reminders and household updates to this device.',
+      description: 'Push is active on this device. The alert preferences above control which notifications it receives.',
       label: 'Enabled',
       color: 'success' as const,
     },
@@ -104,7 +106,7 @@ export function NotificationSettingsForm({ dbSettings, onSave, isSaving, househo
     },
     pending: {
       title: 'Notifications are not enabled',
-      description: 'Enable push delivery to receive reminders outside the app.',
+      description: 'Enable push delivery to receive the alerts selected above on this device.',
       label: 'Not enabled',
       color: 'default' as const,
     },

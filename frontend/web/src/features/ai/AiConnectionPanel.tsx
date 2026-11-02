@@ -13,6 +13,8 @@ export function AiConnectionPanel({ onStatusChange }: Props) {
   const [status, setStatus] = useState<AiConnectionStatus>('checking');
   const [device, setDevice] = useState<AiConnectionDevice | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
+  const [isCancelling, setIsCancelling] = useState(false);
+  const [isCopyingCode, setIsCopyingCode] = useState(false);
   const [error, setError] = useState('');
   const abortRef = useRef<AbortController | null>(null);
 
@@ -66,11 +68,28 @@ export function AiConnectionPanel({ onStatusChange }: Props) {
   };
 
   const cancel = async () => {
-    if (device) await cancelAiConnection(device.attemptId).catch(() => {});
-    abortRef.current?.abort();
-    abortRef.current = null;
-    setIsConnecting(false);
-    setDevice(null);
+    setIsCancelling(true);
+    try {
+      if (device) await cancelAiConnection(device.attemptId).catch(() => {});
+    } finally {
+      abortRef.current?.abort();
+      abortRef.current = null;
+      setIsConnecting(false);
+      setDevice(null);
+      setIsCancelling(false);
+    }
+  };
+
+  const copyDeviceCode = async () => {
+    if (!device) return;
+    setIsCopyingCode(true);
+    try {
+      await navigator.clipboard.writeText(device.code);
+    } catch {
+      setError('The sign-in code could not be copied. Please copy it manually.');
+    } finally {
+      setIsCopyingCode(false);
+    }
   };
 
   if (status === 'checking')
@@ -119,7 +138,8 @@ export function AiConnectionPanel({ onStatusChange }: Props) {
               <Button
                 variant="segmented"
                 startIcon={<ContentCopyIcon />}
-                onClick={() => void navigator.clipboard.writeText(device.code)}
+                onClick={() => void copyDeviceCode()}
+                loading={isCopyingCode}
               >
                 Copy
               </Button>
@@ -134,25 +154,24 @@ export function AiConnectionPanel({ onStatusChange }: Props) {
               >
                 Open ChatGPT sign-in
               </Button>
-              <Button variant="segmented" startIcon={<CloseIcon />} onClick={() => void cancel()}>
+              <Button variant="segmented" startIcon={<CloseIcon />} onClick={() => void cancel()} loading={isCancelling}>
                 Cancel
               </Button>
             </Stack>
           </Stack>
         </Paper>
       )}
-      {!device && !isConnecting && (
-        <Button variant="primaryAction" onClick={() => void connect()} startIcon={<CheckCircleIcon />}>
+      {!device && (
+        <Button variant="primaryAction" onClick={() => void connect()} startIcon={<CheckCircleIcon />} loading={isConnecting}>
           Connect ChatGPT
         </Button>
       )}
       {isConnecting && !device && (
         <Stack alignItems="center" spacing={1}>
-          <CircularProgress size={20} />
           <Typography variant="fieldHint" color="text.secondary">
             Waiting for sign-in…
           </Typography>
-          <Button variant="segmented" onClick={() => void cancel()}>
+          <Button variant="segmented" onClick={() => void cancel()} loading={isCancelling}>
             Cancel
           </Button>
         </Stack>

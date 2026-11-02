@@ -2,7 +2,6 @@ import {
   Box,
   Button,
   Chip,
-  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
@@ -226,19 +225,21 @@ export function PendingReviewDialog(props: Props) {
       <DialogActions>
         <Button
           color="inherit"
-          startIcon={state === 'discarding' ? <CircularProgress size={18} /> : <DeleteIcon />}
+          loading={state === 'discarding'}
+          startIcon={<DeleteIcon />}
           onClick={onDiscard}
           disabled={busy}
         >
-          {state === 'discarding' ? 'Discarding…' : 'Discard'}
+          Discard
         </Button>
         <Button
           variant="contained"
-          startIcon={state === 'approving' ? <CircularProgress color="inherit" size={18} /> : <CheckCircleIcon />}
+          loading={state === 'approving'}
+          startIcon={<CheckCircleIcon />}
           onClick={onApprove}
           disabled={!canApprove || busy}
         >
-          {state === 'approving' ? 'Approving…' : 'Approve'}
+          Approve
         </Button>
       </DialogActions>
     </Dialog>

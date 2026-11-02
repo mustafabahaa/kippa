@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
-import { auth, vapidKey } from '@/config/firebase';
+import { onMessage } from 'firebase/messaging';
+import { auth, getMessagingAsync, vapidKey } from '@/config/firebase';
 import {
   registerFcmToken,
   unregisterFcmToken,
@@ -15,6 +16,51 @@ export type NotificationStatus =
   | 'enabled' // token registered successfully
   | 'pending' // not yet requested (user gesture needed)
   | 'checking'; // checking permission/token state on mount
+
+let foregroundMessageSetup: Promise<void> | null = null;
+
+/**
+ * FCM displays notification payloads automatically while the app is in the
+ * background. While the app is open, the page must display them itself.
+ * Use the service worker so foreground pushes appear as system notifications
+ * on iOS Home Screen apps as well as desktop browsers.
+ */
+function ensureForegroundMessageHandler(): Promise<void> {
+  if (foregroundMessageSetup) return foregroundMessageSetup;
+
+  foregroundMessageSetup = (async () => {
+    const messaging = await getMessagingAsync();
+    if (!messaging) {
+      foregroundMessageSetup = null;
+      return;
+    }
+
+    onMessage(messaging, (payload) => {
+      if (typeof Notification === 'undefined' || Notification.permission !== 'granted') return;
+
+      const data = payload.data ?? {};
+      const title = payload.notification?.title ?? data.title ?? 'Kippa';
+      const body = payload.notification?.body ?? data.body ?? '';
+      const deepLink = data.deepLink ?? '/';
+
+      void navigator.serviceWorker.ready
+        .then((registration) =>
+          registration.showNotification(title, {
+            body,
+            icon: '/icons/icon-192.png',
+            badge: '/icons/icon-192.png',
+            data: { deepLink, type: data.type ?? '' },
+          }),
+        )
+        .catch((error) => console.warn('[notifications] Could not show foreground notification:', error));
+    });
+  })().catch((error) => {
+    foregroundMessageSetup = null;
+    console.warn('[notifications] Could not initialize foreground messages:', error);
+  });
+
+  return foregroundMessageSetup;
+}
 
 function isIosSafari(): boolean {
   const ua = navigator.userAgent;
@@ -96,12 +142,18 @@ export function useNotifications(householdId: string | null | undefined) {
       // If permission is 'default', wait for the user to click the button.
       if (Notification.permission === 'granted') {
         setStatus('checking');
-        const token = await registerFcmToken(householdId, user.uid, vapidKey);
-        if (cancelled) return;
-        if (token) {
-          currentTokenRef.current = token;
-          setStatus('enabled');
-        } else {
+        try {
+          const token = await registerFcmToken(householdId, user.uid, vapidKey);
+          if (cancelled) return;
+          if (token) {
+            currentTokenRef.current = token;
+            setStatus('enabled');
+          } else {
+            setStatus('pending');
+          }
+        } catch (error) {
+          if (cancelled) return;
+          console.warn('[notifications] Could not restore push registration:', error);
           setStatus('pending');
         }
       } else if (Notification.permission === 'default') {
@@ -122,20 +174,25 @@ export function useNotifications(householdId: string | null | undefined) {
    * MUST be called from a user gesture (button onClick) — iOS Safari requires
    * this or the permission prompt fails silently.
    */
-  const requestPermission = useCallback(async () => {
-    if (!householdId || !auth) return;
+  const requestPermission = useCallback(async (): Promise<boolean> => {
+    if (!householdId || !auth) return false;
     const user = auth.currentUser;
-    if (!user) return;
+    if (!user) return false;
 
     setStatus('pending');
-    const token = await registerFcmToken(householdId, user.uid, vapidKey);
-    if (token) {
-      currentTokenRef.current = token;
-      setStatus('enabled');
-    } else if (Notification.permission === 'denied') {
-      setStatus('permission-denied');
-    } else {
+    try {
+      const token = await registerFcmToken(householdId, user.uid, vapidKey);
+      if (token) {
+        currentTokenRef.current = token;
+        setStatus('enabled');
+        return true;
+      }
+      if (Notification.permission === 'denied') setStatus('permission-denied');
+      return false;
+    } catch (error) {
+      console.warn('[notifications] Could not enable push on this device:', error);
       setStatus('pending');
+      return false;
     }
   }, [householdId]);
 
@@ -144,6 +201,12 @@ export function useNotifications(householdId: string | null | undefined) {
     if (status !== 'enabled' || !currentTokenRef.current || !householdId) return;
     touchFcmToken(householdId, currentTokenRef.current).catch(() => {});
   }, [status, householdId]);
+
+  // Install one page-wide FCM handler once this device has push permission.
+  // The hook is mounted both at the app shell and on the settings page.
+  useEffect(() => {
+    if (status === 'enabled') void ensureForegroundMessageHandler();
+  }, [status]);
 
   /**
    * Disable notifications for this device. Revokes the FCM token and removes

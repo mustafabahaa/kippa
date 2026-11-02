@@ -1,5 +1,6 @@
 import { useMemo, Suspense } from 'react';
 import { Routes, Route, BrowserRouter, useLocation } from 'react-router-dom';
+import { SnackbarProvider } from 'notistack';
 import { ThemeProvider, CssBaseline } from '@monochrome-ui/design-system';
 import { createMonochromeTheme } from '@monochrome-ui/design-system';
 import { useThemeMode } from '@/hooks/useThemeMode';
@@ -85,11 +86,19 @@ export default function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <AppUpdatePrompt />
-      <BrowserRouter>
-        <Suspense fallback={<AppLoadingScreen theme={theme} />}>
-          <AppErrorBoundary>
-            <Routes>
+      <SnackbarProvider
+        maxSnack={3}
+        preventDuplicate
+        hideIconVariant
+        disableWindowBlurListener
+        autoHideDuration={4500}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      >
+        <AppUpdatePrompt />
+        <BrowserRouter>
+          <Suspense fallback={<AppLoadingScreen theme={theme} />}>
+            <AppErrorBoundary>
+              <Routes>
               <Route
                 path="/mcp/authorize"
                 element={userProfile && householdId ? <McpConsentPage /> : <AuthScreen />}
@@ -116,10 +125,11 @@ export default function App() {
                 <Route path="*" element={<SignedOutRoute />} />
               )}
               {userProfile && householdId && <Route path="*" element={<SystemStatusPage status="notFound" />} />}
-            </Routes>
-          </AppErrorBoundary>
-        </Suspense>
-      </BrowserRouter>
+              </Routes>
+            </AppErrorBoundary>
+          </Suspense>
+        </BrowserRouter>
+      </SnackbarProvider>
     </ThemeProvider>
   );
 }

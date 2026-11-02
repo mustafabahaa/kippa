@@ -58,6 +58,7 @@ export function BudgetAllocationsConfig({
 
     return initial;
   });
+  const [isCopyingPrevious, setIsCopyingPrevious] = useState(false);
 
   // Mutations
   const saveAllocationsBatchMutation = useSaveAllocationsBatchMutation();
@@ -102,19 +103,27 @@ export function BudgetAllocationsConfig({
       enqueueSnackbar('No previous cycle allocations found to copy.', { variant: 'warning' });
       return;
     }
+    setIsCopyingPrevious(true);
+    try {
+      const prevAllocations = await cyclesLib.getBudgetAllocations(householdId, closedCycle.id);
+      if (prevAllocations.length === 0) {
+        enqueueSnackbar('Previous cycle had no allocations configured.', { variant: 'warning' });
+        return;
+      }
 
-    const prevAllocations = await cyclesLib.getBudgetAllocations(householdId, closedCycle.id);
-    if (prevAllocations.length === 0) {
-      enqueueSnackbar('Previous cycle had no allocations configured.', { variant: 'warning' });
-      return;
+      const newRows: AllocationRow[] = prevAllocations.map((alloc) => ({
+        categoryId: alloc.categoryId,
+        plannedAmount: alloc.plannedAmount.toString(),
+      }));
+
+      setRows(newRows);
+    } catch (error) {
+      enqueueSnackbar(error instanceof Error ? error.message : 'Previous cycle allocations could not be loaded.', {
+        variant: 'error',
+      });
+    } finally {
+      setIsCopyingPrevious(false);
     }
-
-    const newRows: AllocationRow[] = prevAllocations.map((alloc) => ({
-      categoryId: alloc.categoryId,
-      plannedAmount: alloc.plannedAmount.toString(),
-    }));
-
-    setRows(newRows);
   };
 
   const getCategoryName = (catId: string) => {
@@ -155,6 +164,7 @@ export function BudgetAllocationsConfig({
           variant="text"
           startIcon={<ContentCopyIcon size={22} strokeWidth={1.8} />}
           onClick={handleCopyPreviousAllocations}
+          loading={isCopyingPrevious}
         >
           Copy previous
         </Button>

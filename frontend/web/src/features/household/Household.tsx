@@ -355,7 +355,7 @@ export function Household() {
               <Button variant="outlined" onClick={() => setCreateDialogOpen(false)} disabled={actionLoading}>
                 Cancel
               </Button>
-              <Button variant="contained" onClick={handleCreateHousehold} disabled={actionLoading}>
+              <Button variant="contained" onClick={handleCreateHousehold} disabled={actionLoading} loading={actionLoading}>
                 Create household
               </Button>
             </DialogActions>
@@ -406,11 +406,12 @@ export function Household() {
                   variant="contained"
                   onClick={() => handleSwitchHousehold(householdIdToJoin.trim(), () => setJoinDialogOpen(false))}
                   disabled={householdIdToJoin.trim() === householdId || actionLoading}
+                  loading={actionLoading}
                 >
                   Switch household
                 </Button>
               ) : outgoingStatus !== 'pending' ? (
-                <Button variant="contained" onClick={handleJoinHousehold} disabled={actionLoading}>
+                <Button variant="contained" onClick={handleJoinHousehold} disabled={actionLoading} loading={actionLoading}>
                   {outgoingStatus === 'rejected' ? 'Request again' : 'Request to join'}
                 </Button>
               ) : null}

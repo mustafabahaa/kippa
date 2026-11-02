@@ -91,6 +91,17 @@ async function requireHouseholdMember(uid: string, householdId: string): Promise
   return profile;
 }
 
+async function getHouseholdMemberPushTokens(householdId: string, requiredUid: string): Promise<string[]> {
+  const db = getFirestore();
+  const [legacyMembers, multiHouseholdMembers] = await Promise.all([
+    db.collection('users').where('householdId', '==', householdId).get(),
+    db.collection('users').where('householdIds', 'array-contains', householdId).get(),
+  ]);
+  const memberUids = new Set([requiredUid]);
+  for (const member of [...legacyMembers.docs, ...multiHouseholdMembers.docs]) memberUids.add(member.id);
+  return getTokensForUsers(householdId, [...memberUids]);
+}
+
 function credentialMatches(credential: IngestionCredential, suppliedSecret: string): boolean {
   const expected = Buffer.from(credential.secretHash, 'hex');
   const supplied = Buffer.from(sha256(suppliedSecret), 'hex');
@@ -360,7 +371,7 @@ export const ingestFinancialMessage = onRequest(
         updatedAt: now,
       };
       await Promise.all([receiptRef.set(receipt), credentialRef.update({ lastUsedAt: now })]);
-      const tokens = await getTokensForUsers(credential.householdId, [credential.ownerUid]);
+      const tokens = await getHouseholdMemberPushTokens(credential.householdId, credential.ownerUid);
       await sendToMany(
         credential.householdId,
         tokens,
@@ -469,7 +480,7 @@ export const ingestFinancialMessage = onRequest(
         batch.update(credentialRef, { lastUsedAt: now });
         await batch.commit();
 
-        const tokens = await getTokensForUsers(credential.householdId, [credential.ownerUid]);
+        const tokens = await getHouseholdMemberPushTokens(credential.householdId, credential.ownerUid);
         await sendToMany(
           credential.householdId,
           tokens,
@@ -530,7 +541,7 @@ export const ingestFinancialMessage = onRequest(
     batch.create(db.doc(`households/${credential.householdId}/pendingFinancialMessages/${receiptId}`), pending);
     batch.update(credentialRef, { lastUsedAt: now });
     await batch.commit();
-    const tokens = await getTokensForUsers(credential.householdId, [credential.ownerUid]);
+    const tokens = await getHouseholdMemberPushTokens(credential.householdId, credential.ownerUid);
     const notifBody = pending.transferLeg
       ? `${pending.amount} ${pending.currency} · ${pending.description} (waiting for the other leg)`
       : `${pending.amount} ${pending.currency} · ${pending.description}`;

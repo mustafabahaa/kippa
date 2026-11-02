@@ -20,45 +20,47 @@ export function CategoryPaceChart({ categories }: { categories: CategoryPace[] }
         </Box>
         <Chip label={`${visible.length} categories`} />
       </Stack>
-      <Box
-        sx={{
-          display: 'grid',
-          gridTemplateColumns: `repeat(${visible.length}, minmax(0, 1fr))`,
-          columnGap: { xs: 0.25, sm: 0.75, lg: 1.25 },
-          alignItems: 'end',
-        }}
-      >
-        {visible.map((category) => {
-          const percent = category.planned > 0 ? (category.spent / category.planned) * 100 : 100;
-          const fill = Math.max(category.spent > 0 ? 5 : 0, Math.min(100, percent));
-          const over = percent > 100;
-          return (
-            <Stack key={category.categoryId} spacing={0.5} alignItems="center" sx={{ minWidth: 0 }}>
-              <Tooltip
-                arrow
-                placement="top"
-                title={`${category.categoryName}: ${Math.round(percent)}% used · ${category.spent.toLocaleString()} spent of ${category.planned.toLocaleString()} planned`}
-              >
-                <Paper variant="capacityTrack" sx={{ width: '100%', maxWidth: 46, height: { xs: 72, sm: 88 } }}>
-                  <Paper
-                    variant={over ? 'capacityOverflow' : 'capacityFill'}
-                    sx={{ height: `${fill}%` }}
-                  />
-                </Paper>
-              </Tooltip>
-              <Typography
-                variant="metricMetadata"
-                color="text.secondary"
-                title={category.categoryName}
-                textAlign="center"
-                noWrap
-                sx={{ width: '100%', minWidth: 0 }}
-              >
-                {category.categoryName}
-              </Typography>
-            </Stack>
-          );
-        })}
+      <Box sx={{ minWidth: 0, overflowX: 'auto', overflowY: 'hidden' }}>
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: `repeat(${visible.length}, minmax(0, 1fr))`,
+            minWidth: `${Math.max(320, visible.length * 88)}px`,
+            columnGap: 1,
+            alignItems: 'end',
+          }}
+        >
+          {visible.map((category) => {
+            const percent = category.planned > 0 ? (category.spent / category.planned) * 100 : 100;
+            const fill = Math.max(category.spent > 0 ? 5 : 0, Math.min(100, percent));
+            const over = percent > 100;
+            return (
+              <Stack key={category.categoryId} spacing={0.5} alignItems="center" sx={{ minWidth: 0 }}>
+                <Tooltip
+                  arrow
+                  placement="top"
+                  title={`${category.categoryName}: ${Math.round(percent)}% used · ${category.spent.toLocaleString()} spent of ${category.planned.toLocaleString()} planned`}
+                >
+                  <Paper variant="capacityTrack" sx={{ width: '100%', maxWidth: 46, height: { xs: 72, sm: 88 } }}>
+                    <Paper
+                      variant={over ? 'capacityOverflow' : 'capacityFill'}
+                      sx={{ height: `${fill}%` }}
+                    />
+                  </Paper>
+                </Tooltip>
+                <Typography
+                  variant="metricMetadata"
+                  color="text.secondary"
+                  title={category.categoryName}
+                  textAlign="center"
+                  sx={{ width: '100%', minWidth: 0 }}
+                >
+                  {category.categoryName}
+                </Typography>
+              </Stack>
+            );
+          })}
+        </Box>
       </Box>
     </Stack>
   );

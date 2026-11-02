@@ -128,6 +128,7 @@ export function AiAssistant() {
     aiProvider.usesAccountConnection ? 'checking' : 'connected',
   );
   const [isClearOpen, setIsClearOpen] = useState(false);
+  const [isClearingChat, setIsClearingChat] = useState(false);
   const [isLoadingOlder, setIsLoadingOlder] = useState(false);
   const [olderCursor, setOlderCursor] = useState<string | null>(null);
   const [cooldownUntil, setCooldownUntil] = useState(() => Number(localStorage.getItem(COOLDOWN_STORAGE_KEY)) || 0);
@@ -382,7 +383,8 @@ export function AiAssistant() {
   };
 
   const clearChat = async () => {
-    if (!conversation || isSending) return;
+    if (!conversation || isSending || isClearingChat) return;
+    setIsClearingChat(true);
     try {
       await aiConversations.clear(householdId, conversation.id);
       setConversation(null);
@@ -396,6 +398,8 @@ export function AiAssistant() {
       setIsClearOpen(false);
     } catch {
       setError('Kippa could not clear this chat. Please try again.');
+    } finally {
+      setIsClearingChat(false);
     }
   };
 
@@ -542,6 +546,7 @@ export function AiAssistant() {
                     variant={starter.featured ? 'assistantPromptFeatured' : 'assistantPrompt'}
                     onClick={() => void send(starter.prompt)}
                     disabled={cooldownRemainingMs > 0}
+                    loading={isSending}
                     sx={{ gridColumn: { xs: starter.featured ? '1 / -1' : 'auto', sm: 'auto' } }}
                   >
                     <Stack
@@ -708,6 +713,7 @@ export function AiAssistant() {
                         variant={cooldownRemainingMs > 0 ? 'segmented' : 'segmentedSelected'}
                         onClick={() => void retryLastTurn()}
                         disabled={cooldownRemainingMs > 0 || isSending}
+                        loading={isSending}
                       >
                         {cooldownRemainingMs > 0 ? 'Available soon' : 'Retry now'}
                       </Button>
@@ -745,6 +751,7 @@ export function AiAssistant() {
                         variant={cooldownRemainingMs > 0 ? 'segmented' : 'segmentedSelected'}
                         onClick={() => void retryLastTurn()}
                         disabled={cooldownRemainingMs > 0 || isSending}
+                        loading={isSending}
                       >
                         {cooldownRemainingMs > 0 ? 'Available soon' : 'Retry now'}
                       </Button>
@@ -755,7 +762,7 @@ export function AiAssistant() {
                 <Alert
                   severity="warning"
                   action={
-                    <Button color="inherit" size="small" onClick={() => void retryLastTurn()} disabled={isSending}>
+                    <Button color="inherit" size="small" onClick={() => void retryLastTurn()} disabled={isSending} loading={isSending}>
                       Retry
                     </Button>
                   }
@@ -802,6 +809,7 @@ export function AiAssistant() {
                 aria-label="Send message"
                 onClick={() => void send()}
                 disabled={!draft.trim() || isSending || cooldownRemainingMs > 0}
+                loading={isSending}
                 sx={{ mb: 0.25 }}
               >
                 <ExpandLessIcon />
@@ -827,7 +835,7 @@ export function AiAssistant() {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setIsClearOpen(false)}>Cancel</Button>
-          <Button variant="contained" onClick={() => void clearChat()}>
+          <Button variant="contained" onClick={() => void clearChat()} loading={isClearingChat} disabled={isSending}>
             Clear chat
           </Button>
         </DialogActions>

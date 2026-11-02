@@ -14,6 +14,20 @@ import { getMessagingAsync } from '@/config/firebase';
 
 export type DeviceType = 'ios' | 'android' | 'web';
 
+const REGISTRATION_TIMEOUT_MS = 20_000;
+
+function withRegistrationTimeout<T>(operation: Promise<T>): Promise<T> {
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<T>((_, reject) => {
+    // The timeout promise only rejects; successful completion comes from `operation`.
+    void _;
+    timeoutId = setTimeout(() => reject(new Error('Push registration timed out.')), REGISTRATION_TIMEOUT_MS);
+  });
+  return Promise.race([operation, timeout]).finally(() => {
+    if (timeoutId !== undefined) clearTimeout(timeoutId);
+  });
+}
+
 function detectDeviceType(): DeviceType {
   const ua = navigator.userAgent.toLowerCase();
   if (/iphone|ipad|ipod/.test(ua)) return 'ios';
@@ -29,6 +43,15 @@ function detectDeviceType(): DeviceType {
  * is unavailable.
  */
 export async function registerFcmToken(householdId: string, uid: string, vapidKey: string): Promise<string | null> {
+  try {
+    return await withRegistrationTimeout(registerFcmTokenInternal(householdId, uid, vapidKey));
+  } catch (e) {
+    console.warn('[notifications] Push registration failed:', e);
+    return null;
+  }
+}
+
+async function registerFcmTokenInternal(householdId: string, uid: string, vapidKey: string): Promise<string | null> {
   // 1. Request permission FIRST to preserve the user gesture on iOS/Safari.
   // Any async operation (like getMessagingAsync()) prior to requestPermission()
   // breaks the user gesture trust chain, causing Safari to silently ignore the prompt and hang.

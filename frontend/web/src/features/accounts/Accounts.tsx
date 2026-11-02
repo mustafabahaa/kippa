@@ -142,20 +142,52 @@ export function Accounts() {
                 <Stack divider={<Divider flexItem />}>
                   {[1, 2].map((item) => (
                     <Stack key={item} spacing={2} sx={{ py: 2.5 }}>
-                      <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={2}>
-                        <Stack direction="row" spacing={1.5} alignItems="center" sx={{ width: '55%' }}>
+                      <Stack
+                        direction={{ xs: 'column', sm: 'row' }}
+                        alignItems={{ xs: 'stretch', sm: 'center' }}
+                        justifyContent="space-between"
+                        spacing={{ xs: 1.5, sm: 2 }}
+                      >
+                        <Stack
+                          direction="row"
+                          spacing={1.5}
+                          alignItems="center"
+                          sx={{ width: { xs: '100%', sm: '55%' }, minWidth: 0 }}
+                        >
                           <Skeleton variant="rounded" width={44} height={44} />
                           <Box sx={{ flex: 1 }}>
                             <Skeleton variant="text" width="45%" height={24} />
                             <Skeleton variant="text" width="32%" height={18} />
                           </Box>
                         </Stack>
-                        <Skeleton variant="text" width={150} height={30} />
+                        <Stack
+                          direction="row"
+                          alignItems="center"
+                          justifyContent={{ xs: 'space-between', sm: 'flex-end' }}
+                          spacing={{ xs: 1, sm: 2 }}
+                          sx={{ pl: { xs: 7, sm: 0 }, minWidth: 0 }}
+                        >
+                          <Skeleton variant="text" width="45%" height={30} />
+                          <Stack direction="row" alignItems="center" spacing={0.5}>
+                            <Skeleton variant="rounded" width={76} height={32} />
+                            <Skeleton variant="circular" width={36} height={36} />
+                          </Stack>
+                        </Stack>
                       </Stack>
-                      <Stack direction="row" spacing={2}>
-                        <Skeleton variant="rounded" width={300} height={200} />
-                        <Skeleton variant="rounded" width={300} height={200} />
-                      </Stack>
+                      <Box
+                        sx={{
+                          display: 'grid',
+                          gridTemplateColumns: {
+                            xs: 'minmax(0, 1fr)',
+                            md: 'repeat(2, minmax(0, 1fr))',
+                          },
+                          gap: 2,
+                          minWidth: 0,
+                        }}
+                      >
+                        <Skeleton variant="rounded" width="100%" height={200} />
+                        <Skeleton variant="rounded" width="100%" height={200} />
+                      </Box>
                     </Stack>
                   ))}
                 </Stack>

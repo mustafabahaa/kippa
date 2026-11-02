@@ -259,7 +259,7 @@ export function CycleAnalytics() {
             </FormControl>
           </Stack>
 
-          <Box sx={{ height: { xs: 300, sm: 380 }, width: '100%' }}>
+          <Box sx={{ height: { xs: 370, sm: 380 }, width: '100%' }}>
             {categoryTrends.length > 0 && (
               <TrendAreaChart
                 xAxis={[

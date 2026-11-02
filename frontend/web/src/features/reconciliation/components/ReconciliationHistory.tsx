@@ -173,8 +173,8 @@ export function ReconciliationHistory({ accounts, pages, hasNextPage, isFetching
               <Button size="small" disabled={!hasPreviousPage} onClick={() => setPage(currentPage - 1)}>
                 Previous
               </Button>
-              <Button size="small" disabled={!canGoNext || isFetchingNextPage} onClick={handleNextPage}>
-                {isFetchingNextPage ? 'Loading…' : 'Next'}
+              <Button size="small" disabled={!canGoNext} onClick={handleNextPage} loading={isFetchingNextPage}>
+                Next
               </Button>
             </Stack>
           </Stack>

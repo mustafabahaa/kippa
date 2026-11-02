@@ -7,6 +7,7 @@ import type {
   NotificationSettings,
   NotificationState,
   UserProfile,
+  FcmToken,
 } from '@kippa/domain';
 import {
   checkPercentageThresholds,
@@ -254,28 +255,32 @@ export async function checkCategoryWarning(
   });
   if (!notification) return;
 
-  // Find members with categoryWarningEnabled
-  const settingsSnap = await db
-    .collection(`households/${householdId}/notificationSettings`)
-    .where('categoryWarningEnabled', '==', true)
-    .get();
-  const settingsUids = settingsSnap.docs.map((d) => (d.data() as NotificationSettings).userId);
+  // Missing preference documents use the same enabled defaults as the app.
+  const [settingsSnap, tokensSnap] = await Promise.all([
+    db.collection(`households/${householdId}/notificationSettings`).get(),
+    db.collection(`households/${householdId}/fcmTokens`).get(),
+  ]);
+  const settingsByUserId = new Map<string, NotificationSettings>();
+  for (const settingsDoc of settingsSnap.docs) {
+    settingsByUserId.set(settingsDoc.id, settingsDoc.data() as NotificationSettings);
+  }
+  const tokens = tokensSnap.docs
+    .map((tokenDoc) => tokenDoc.data() as FcmToken)
+    .filter((token) => settingsByUserId.get(token.uid)?.categoryWarningEnabled ?? true)
+    .map((token) => token.token);
 
-  if (settingsUids.length > 0) {
-    const tokens = await getTokensForUsers(householdId, settingsUids);
-    if (tokens.length > 0) {
-      await sendToMany(
+  if (tokens.length > 0) {
+    await sendToMany(
+      householdId,
+      tokens,
+      buildMessagePayload({
+        type: 'category_warning',
+        title: notification.title,
+        body: notification.body,
         householdId,
-        tokens,
-        buildMessagePayload({
-          type: 'category_warning',
-          title: notification.title,
-          body: notification.body,
-          householdId,
-          deepLink: '/budget',
-        }),
-      );
-    }
+        deepLink: '/budget',
+      }),
+    );
   }
 
   // Mark fired keys

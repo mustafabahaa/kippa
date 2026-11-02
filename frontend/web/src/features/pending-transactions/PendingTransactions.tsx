@@ -253,13 +253,15 @@ export function PendingTransactions() {
           <Button
             color="inherit"
             size="small"
+            loading={restoreMutation.isPending}
             onClick={async () => {
-              closeSnackbar(snackbarKey);
               try {
                 await restoreMutation.mutateAsync({ householdId, pendingId: discardedItem.id });
                 setItemStates((current) => ({ ...current, [discardedItem.id]: 'idle' }));
+                closeSnackbar(snackbarKey);
                 enqueueSnackbar('Pending item restored', { variant: 'success' });
               } catch (error) {
+                closeSnackbar(snackbarKey);
                 enqueueSnackbar(error instanceof Error ? error.message : 'Could not restore this item', {
                   variant: 'error',
                 });
@@ -488,8 +490,9 @@ export function PendingTransactions() {
                               variant="segmented"
                               disabled={restoring}
                               onClick={() => restoreDiscarded(item.id)}
+                              loading={restoring}
                             >
-                              {restoring ? 'Restoring…' : 'Restore'}
+                              Restore
                             </Button>
                           )}
                         </Paper>

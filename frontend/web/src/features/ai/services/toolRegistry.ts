@@ -14,7 +14,7 @@ export type AiToolContext = {
     requestToJoinHousehold: (householdId: string) => Promise<unknown>;
     decideJoinRequest: (householdId: string, requesterUid: string, decision: 'approve' | 'reject') => Promise<void>;
     leaveHousehold: (householdId: string) => Promise<void>;
-    enableNotifications: () => Promise<void>;
+    enableNotifications: () => Promise<boolean>;
     disableNotifications: () => Promise<void>;
   };
 };

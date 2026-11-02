@@ -1,7 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { SnackbarProvider } from 'notistack';
 import App from '@/App';
 
 import { AppProvider } from '@/contexts/AppContext';
@@ -28,16 +27,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
       <AppProvider>
         <ThemeModeProvider>
           <PrivacyModeProvider>
-            <SnackbarProvider
-              maxSnack={3}
-              preventDuplicate
-              hideIconVariant
-              disableWindowBlurListener
-              autoHideDuration={4500}
-              anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-            >
-              <App />
-            </SnackbarProvider>
+            <App />
           </PrivacyModeProvider>
         </ThemeModeProvider>
       </AppProvider>

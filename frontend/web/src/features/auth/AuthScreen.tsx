@@ -63,7 +63,12 @@ export function AuthScreen() {
   };
 
   const handleLogout = async () => {
-    await logout();
+    setLoading(true);
+    try {
+      await logout();
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (!isFirebaseReady) {
@@ -185,7 +190,7 @@ export function AuthScreen() {
               <Alert severity="info" icon={false}>
                 You can find your household invite ID in the profile menu after signing in.
               </Alert>
-              <Button variant="segmented" onClick={handleLogout} startIcon={<LogoutIcon fontSize="small" />}>
+              <Button variant="segmented" onClick={handleLogout} startIcon={<LogoutIcon fontSize="small" />} loading={loading}>
                 Sign out
               </Button>
             </Stack>

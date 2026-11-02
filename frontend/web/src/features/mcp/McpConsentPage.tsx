@@ -39,6 +39,7 @@ export function McpConsentPage() {
   const [selectedHouseholdId, setSelectedHouseholdId] = useState(householdId);
   const [loadedRequestId, setLoadedRequestId] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submittingDecision, setSubmittingDecision] = useState<'approve' | 'deny' | null>(null);
   const [requestError, setRequestError] = useState<{ requestId: string; message: string } | null>(null);
   const isLoadingRequest = !!requestId && loadedRequestId !== requestId;
   const error = !requestId
@@ -105,6 +106,7 @@ export function McpConsentPage() {
     }
 
     setIsSubmitting(true);
+    setSubmittingDecision(decision);
     setRequestError(null);
     try {
       const idToken = await authLib.getCurrentUserIdToken();
@@ -130,6 +132,7 @@ export function McpConsentPage() {
         message: caught instanceof Error ? caught.message : 'Could not complete the authorization request.',
       });
       setIsSubmitting(false);
+      setSubmittingDecision(null);
     }
   };
 
@@ -232,6 +235,7 @@ export function McpConsentPage() {
                     color="inherit"
                     disabled={isSubmitting || !selectedHouseholdId || isLoadingHouseholds}
                     onClick={() => void submitDecision('deny')}
+                    loading={submittingDecision === 'deny'}
                   >
                     Deny
                   </Button>
@@ -246,7 +250,7 @@ export function McpConsentPage() {
                       isLoadingHouseholds
                     }
                     onClick={() => void submitDecision('approve')}
-                    startIcon={isSubmitting ? <CircularProgress size={18} color="inherit" /> : undefined}
+                    loading={isSubmitting}
                   >
                     {requestsWriteAccess ? 'Approve read and write access' : 'Approve read-only access'}
                   </Button>

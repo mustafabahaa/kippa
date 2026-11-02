@@ -61,20 +61,34 @@ export function BudgetPulseSection() {
 
   if (isLoading) {
     return (
-      <Card variant="sectionSurface">
-        <CardContent sx={{ p: 2 }}>
-          <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1.5 }}>
-            <Skeleton variant="text" width="35%" height={24} animation="wave" />
-          <PulseSkeleton shape="status" width="25%" height={24} animation="wave" />
+      <Card variant="sectionSurface" sx={{ height: { xs: 'auto', md: 375 } }}>
+        <CardContent sx={{ height: { xs: 'auto', md: '100%' } }}>
+          <Stack sx={{ height: { xs: 'auto', md: '100%' } }}>
+            <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={1.5}>
+              <Stack direction="row" spacing={1.5} alignItems="center" sx={{ minWidth: 0, flex: 1 }}>
+                <Skeleton variant="circular" width={40} height={40} animation="wave" />
+                <Skeleton variant="text" width="48%" height={24} animation="wave" />
+              </Stack>
+              <PulseSkeleton shape="status" width={112} height={28} animation="wave" />
+            </Stack>
+            <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={2} sx={{ mt: 2.5 }}>
+              <Skeleton variant="text" width={72} height={48} animation="wave" />
+              <Box sx={{ width: { xs: 144, sm: 160 }, maxWidth: '48%' }}>
+                <Skeleton variant="text" width="100%" height={18} animation="wave" />
+                <Skeleton variant="text" width="86%" height={18} animation="wave" />
+              </Box>
+            </Stack>
+            <Box sx={{ mt: 1.25 }}>
+              <PulseSkeleton shape="status" width={144} height={24} animation="wave" />
+            </Box>
+            <Stack direction="row" spacing={1} alignItems="flex-end" sx={{ mt: 2.5, minHeight: 150 }}>
+              {[1, 2, 3].map((index) => (
+                <Box key={index} sx={{ flex: 1, minWidth: 0 }}>
+                  <Skeleton variant="rounded" width="100%" height={150} animation="wave" />
+                </Box>
+              ))}
+            </Stack>
           </Stack>
-        <PulseSkeleton
-          shape="progress"
-          width="100%"
-          height={8}
-          sx={{ mb: 1.5 }}
-          animation="wave"
-        />
-          <Skeleton variant="text" width="70%" height={18} animation="wave" />
         </CardContent>
       </Card>
     );
@@ -102,8 +116,8 @@ export function BudgetPulseSection() {
     .slice(0, 3);
 
   return (
-    <Card variant="sectionSurface" sx={{ height: 375 }}>
-      <CardContent sx={{ height: '100%' }}>
+      <Card variant="sectionSurface" sx={{ height: { xs: 'auto', md: 375 } }}>
+      <CardContent sx={{ height: { xs: 'auto', md: '100%' } }}>
         <DashboardSectionHeading
           icon={<BarChartIcon size={22} strokeWidth={1.8} />}
           title="Remaining monthly"

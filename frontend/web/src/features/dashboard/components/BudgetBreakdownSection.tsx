@@ -93,7 +93,7 @@ export function BudgetBreakdownSection() {
             trailing={activeCycle ? <Chip label={activeCycle.name} /> : undefined}
           />
 
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
+          <Stack direction={{ xs: 'column', lg: 'row' }} spacing={1}>
             {[
               {
                 label: 'Planned budget',
@@ -194,7 +194,7 @@ export function BudgetBreakdownSection() {
           <Stack spacing={1.5} aria-label="Budget breakdown details">
             <Box
               sx={{
-                display: { xs: 'none', md: 'grid' },
+                display: { xs: 'none', lg: 'grid' },
                 gridTemplateColumns: 'minmax(140px, 1.4fr) minmax(150px, 1fr) repeat(3, minmax(84px, .7fr))',
                 gap: 2,
                 px: 1,
@@ -236,9 +236,9 @@ export function BudgetBreakdownSection() {
                         display: 'grid',
                         gridTemplateColumns: {
                           xs: '1fr',
-                          md: 'minmax(140px, 1.4fr) minmax(150px, 1fr) repeat(3, minmax(84px, .7fr))',
+                          lg: 'minmax(140px, 1.4fr) minmax(150px, 1fr) repeat(3, minmax(84px, .7fr))',
                         },
-                        gap: { xs: 1.5, md: 2 },
+                        gap: { xs: 1.5, lg: 2 },
                         alignItems: 'center',
                       }}
                     >
@@ -268,7 +268,7 @@ export function BudgetBreakdownSection() {
                       </Stack>
                       <Box
                         sx={{
-                          display: { xs: 'grid', md: 'contents' },
+                          display: { xs: 'grid', lg: 'contents' },
                           gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
                           gap: 1.5,
                         }}
@@ -290,12 +290,12 @@ export function BudgetBreakdownSection() {
                             color: isOver ? 'error.main' : remaining > 0 ? 'success.main' : 'text.secondary',
                           },
                         ].map((item) => (
-                          <Box key={item.label} sx={{ minWidth: 0, textAlign: { xs: 'left', md: 'right' } }}>
+                          <Box key={item.label} sx={{ minWidth: 0, textAlign: { xs: 'left', lg: 'right' } }}>
                             <Typography
                               variant="tableCellLabel"
                               color="text.secondary"
                               sx={{
-                                display: { md: 'none' },
+                                display: { xs: 'block', lg: 'none' },
                               }}
                             >
                               {item.label}
@@ -305,6 +305,7 @@ export function BudgetBreakdownSection() {
                               variant="tableCellValue"
                               color={item.color}
                               sx={{
+                                display: 'block',
                               }}
                             >
                               {item.value}

@@ -373,6 +373,7 @@ function AddCardDialogInner({
             variant="primaryAction"
             onClick={handleSave}
             disabled={!name.trim() || (kind === 'debit' ? !parentAccountId : !paymentAccountId)}
+            loading={createDebit.isPending || createCredit.isPending}
           >
             Save card
           </Button>

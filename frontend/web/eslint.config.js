@@ -56,6 +56,7 @@ export default tseslint.config(
       'kippa-design/no-direct-ui-imports': 'error',
       'kippa-design/no-visual-sx': 'error',
       'kippa-design/named-typography-variants': 'error',
+      'kippa-design/button-loading-prop': 'error',
       'monochrome-ui/known-variants': 'error',
       'monochrome-ui/routed-page-scaffold': ['error', {
         shell: 'src/components/app-shell/AppShell.tsx',
