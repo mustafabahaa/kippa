@@ -84,8 +84,7 @@ export const cardsLib = {
     const newCard: Card = { ...card, id, householdId, createdAt: new Date().toISOString() };
     await dbLib.setDoc(householdId, 'cards', id, newCard);
     if (auditUser) {
-      auditLogLib.logAction(
-        householdId,
+      await auditLogLib.logAction(        householdId,
         auditUser,
         'account_created',
         `${auditUser.displayName} added debit card: ${newCard.name}`,
@@ -136,8 +135,7 @@ export const cardsLib = {
     ]);
 
     if (auditUser) {
-      auditLogLib.logAction(
-        householdId,
+      await auditLogLib.logAction(        householdId,
         auditUser,
         'account_created',
         `${auditUser.displayName} added credit card: ${newCard.name}`,
@@ -160,8 +158,7 @@ export const cardsLib = {
     validateCardInput(merged, accounts);
     await dbLib.setDoc(householdId, 'cards', cardId, merged);
     if (auditUser) {
-      auditLogLib.logAction(
-        householdId,
+      await auditLogLib.logAction(        householdId,
         auditUser,
         'account_updated',
         `${auditUser.displayName} updated card: ${merged.name}`,
@@ -352,8 +349,7 @@ export const cardsLib = {
         })),
       ]);
       if (auditUser) {
-        auditLogLib.logAction(
-          householdId,
+        await auditLogLib.logAction(          householdId,
           auditUser,
           'transaction_created',
           `${auditUser.displayName} logged transfer: ${amount} ${card.currency} — ${description}`,
@@ -463,15 +459,13 @@ export const cardsLib = {
     ]);
 
     if (auditUser) {
-      auditLogLib.logAction(
-        householdId,
+      await auditLogLib.logAction(        householdId,
         auditUser,
         'transaction_created',
         `${auditUser.displayName} logged expense: ${fee.amount} ${card.currency} — ${feeDescription}`,
         { transactionId: feeTransactionId, type: 'expense', amount: fee.amount, currency: card.currency },
       );
-      auditLogLib.logAction(
-        householdId,
+      await auditLogLib.logAction(        householdId,
         auditUser,
         'transaction_created',
         `${auditUser.displayName} logged transfer: ${amount} ${card.currency} — ${description}`,

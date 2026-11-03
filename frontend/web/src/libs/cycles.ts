@@ -29,10 +29,9 @@ export const cyclesLib = {
     };
     await dbLib.setDoc(householdId, 'budgetCycles', id, newCycle);
 
-    // Audit log (fire-and-forget)
+    // Audit log — awaited so server-side (MCP) writes land; logAction never throws.
     if (auditUser) {
-      auditLogLib.logAction(
-        householdId,
+      await auditLogLib.logAction(        householdId,
         auditUser,
         'cycle_created',
         `${auditUser.displayName} created cycle: ${newCycle.name}`,
@@ -59,11 +58,10 @@ export const cyclesLib = {
     };
     await dbLib.setDoc(householdId, 'budgetCycles', cycleId, updated);
 
-    // Audit log (fire-and-forget)
+    // Audit log — awaited so server-side (MCP) writes land; logAction never throws.
     if (auditUser) {
       const verb = status === 'open' ? 'opened' : status === 'closed' ? 'closed' : 'set to planned';
-      auditLogLib.logAction(
-        householdId,
+      await auditLogLib.logAction(        householdId,
         auditUser,
         'cycle_status_changed',
         `${auditUser.displayName} ${verb} cycle: ${updated.name}`,
@@ -97,10 +95,9 @@ export const cyclesLib = {
     };
     await dbLib.setDoc(householdId, 'budgetAllocations', id, newAlloc);
 
-    // Audit log (fire-and-forget)
+    // Audit log — awaited so server-side (MCP) writes land; logAction never throws.
     if (auditUser) {
-      auditLogLib.logAction(
-        householdId,
+      await auditLogLib.logAction(        householdId,
         auditUser,
         'allocation_saved',
         `${auditUser.displayName} saved a budget allocation of ${newAlloc.plannedAmount} ${newAlloc.currency}`,
@@ -138,11 +135,10 @@ export const cyclesLib = {
     });
     await dbLib.executeBatch(householdId, ops);
 
-    // Audit log (fire-and-forget)
+    // Audit log — awaited so server-side (MCP) writes land; logAction never throws.
     if (auditUser && allocations.length > 0) {
       const cycleId = allocations[0].budgetCycleId;
-      auditLogLib.logAction(
-        householdId,
+      await auditLogLib.logAction(        householdId,
         auditUser,
         'allocations_batch_saved',
         `${auditUser.displayName} saved ${allocations.length} budget allocation${allocations.length === 1 ? '' : 's'}`,
@@ -170,10 +166,9 @@ export const cyclesLib = {
     };
     await dbLib.setDoc(householdId, 'expectedIncome', id, newInc);
 
-    // Audit log (fire-and-forget)
+    // Audit log — awaited so server-side (MCP) writes land; logAction never throws.
     if (auditUser) {
-      auditLogLib.logAction(
-        householdId,
+      await auditLogLib.logAction(        householdId,
         auditUser,
         'expected_income_saved',
         `${auditUser.displayName} added expected income: ${newInc.label} (${newInc.amount} ${newInc.currency})`,

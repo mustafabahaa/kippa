@@ -66,8 +66,7 @@ export const loansLib = {
     };
     await dbLib.setDoc(householdId, 'loans', id, loan);
     if (auditUser)
-      void auditLogLib.logAction(
-        householdId,
+      await auditLogLib.logAction(        householdId,
         auditUser,
         'loan_created',
         `${auditUser.displayName} created loan: ${loan.name}`,
@@ -90,8 +89,7 @@ export const loansLib = {
     delete updated.categoryId;
     await dbLib.setDoc(householdId, 'loans', loanId, updated);
     if (auditUser)
-      void auditLogLib.logAction(
-        householdId,
+      await auditLogLib.logAction(        householdId,
         auditUser,
         'loan_updated',
         `${auditUser.displayName} updated loan: ${input.name}`,
@@ -155,8 +153,7 @@ export const loansLib = {
         updatedAt: new Date().toISOString(),
       });
     if (auditUser)
-      void auditLogLib.logAction(
-        householdId,
+      await auditLogLib.logAction(        householdId,
         auditUser,
         'loan_payment_recorded',
         `${auditUser.displayName} recorded installment ${installmentNumber} for ${loan.name}`,

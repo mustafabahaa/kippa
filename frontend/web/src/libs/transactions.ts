@@ -83,13 +83,14 @@ export const transactionsLib = {
 
     await dbLib.executeBatch(householdId, operations);
 
-    // Audit log (fire-and-forget)
+    // Audit log — awaited so server-side (MCP) writes land before the
+    // function response completes; logAction never throws.
     if (auditUser) {
       const amountRaw = Math.abs(newLines[0]?.signedAmount || 0);
       const amount = Number(amountRaw.toFixed(2));
       const currency = newLines[0]?.currency || '';
       const desc = transaction.description || transaction.type;
-      auditLogLib.logAction(
+      await auditLogLib.logAction(
         householdId,
         auditUser,
         'transaction_created',
@@ -115,10 +116,10 @@ export const transactionsLib = {
     // When querying balances or cycle spend, selectors must check the transaction status
     await dbLib.setDoc(householdId, 'transactions', transactionId, updatedTransaction);
 
-    // Audit log (fire-and-forget)
+    // Audit log — awaited so server-side (MCP) writes land; logAction never throws.
     if (auditUser) {
       const desc = transaction.description || transaction.type;
-      auditLogLib.logAction(
+      await auditLogLib.logAction(
         householdId,
         auditUser,
         'transaction_voided',
@@ -152,6 +153,10 @@ export const transactionsLib = {
     // Get current ledger lines for this transaction
     const allLines = (await dbLib.getDocs(householdId, 'ledgerLines')) as LedgerLine[];
     const txLines = allLines.filter((l) => l.transactionId === transactionId);
+    // A single-line update would silently desync the untouched sibling line of
+    // a multi-line transaction (e.g. a transfer or split expense).
+    if (txLines.length > 1)
+      throw new Error('Multi-line transactions cannot be edited in place; void and re-create instead.');
 
     const operations: { type: 'set' | 'delete'; collectionName: string; docId: string; data?: any }[] = [
       {
@@ -183,10 +188,10 @@ export const transactionsLib = {
 
     await dbLib.executeBatch(householdId, operations);
 
-    // Audit log (fire-and-forget)
+    // Audit log — awaited so server-side (MCP) writes land; logAction never throws.
     if (auditUser) {
       const desc = updatedTransaction.description || updatedTransaction.type;
-      auditLogLib.logAction(
+      await auditLogLib.logAction(
         householdId,
         auditUser,
         'transaction_updated',

@@ -38,10 +38,9 @@ export const ledgerLib = {
     };
     await dbLib.setDoc(householdId, 'accounts', id, newAccount);
 
-    // Audit log (fire-and-forget)
+    // Audit log — awaited so server-side (MCP) writes land; logAction never throws.
     if (auditUser) {
-      auditLogLib.logAction(
-        householdId,
+      await auditLogLib.logAction(        householdId,
         auditUser,
         'account_created',
         `${auditUser.displayName} added account: ${newAccount.name} (${newAccount.currency})`,
@@ -84,10 +83,9 @@ export const ledgerLib = {
     };
     await dbLib.setDoc(householdId, 'categories', id, newCategory);
 
-    // Audit log (fire-and-forget)
+    // Audit log — awaited so server-side (MCP) writes land; logAction never throws.
     if (auditUser) {
-      auditLogLib.logAction(
-        householdId,
+      await auditLogLib.logAction(        householdId,
         auditUser,
         'category_created',
         `${auditUser.displayName} created category: ${newCategory.name} (${newCategory.type})`,
@@ -109,11 +107,10 @@ export const ledgerLib = {
     const updated = { ...existing, ...updates };
     await dbLib.setDoc(householdId, 'categories', categoryId, updated);
 
-    // Audit log (fire-and-forget)
+    // Audit log — awaited so server-side (MCP) writes land; logAction never throws.
     if (auditUser) {
       const action = updates.isActive === false ? 'deactivated' : 'updated';
-      auditLogLib.logAction(
-        householdId,
+      await auditLogLib.logAction(        householdId,
         auditUser,
         'category_updated',
         `${auditUser.displayName} ${action} category: ${updated.name}`,
@@ -226,10 +223,9 @@ export const ledgerLib = {
   async updateAccount(householdId: string, accountId: string, updated: Account, auditUser?: AuditUser): Promise<void> {
     await dbLib.setDoc(householdId, 'accounts', accountId, updated);
 
-    // Audit log (fire-and-forget)
+    // Audit log — awaited so server-side (MCP) writes land; logAction never throws.
     if (auditUser) {
-      auditLogLib.logAction(
-        householdId,
+      await auditLogLib.logAction(        householdId,
         auditUser,
         'account_updated',
         `${auditUser.displayName} updated account: ${updated.name}`,
@@ -260,7 +256,7 @@ export const ledgerLib = {
   ): Promise<void> {
     await dbLib.setDoc(householdId, 'reconciliations', reconId, reconLog);
 
-    // Audit log (fire-and-forget)
+    // Audit log — awaited so server-side (MCP) writes land; logAction never throws.
     if (auditUser) {
       const diff = Number(Math.abs(reconLog.difference).toFixed(2));
       const cleanDifference = Number(reconLog.difference.toFixed(2));
@@ -268,8 +264,7 @@ export const ledgerLib = {
         cleanDifference === 0
           ? 'matched'
           : `had a ${cleanDifference > 0 ? 'surplus' : 'shortfall'} of ${diff} ${reconLog.currency}`;
-      auditLogLib.logAction(
-        householdId,
+      await auditLogLib.logAction(        householdId,
         auditUser,
         'reconciliation_created',
         `${auditUser.displayName} reconciled an account (${verdict})`,
@@ -297,10 +292,9 @@ export const ledgerLib = {
   ): Promise<void> {
     await dbLib.setDoc(householdId, 'notificationSettings', userId, settings);
 
-    // Audit log (fire-and-forget)
+    // Audit log — awaited so server-side (MCP) writes land; logAction never throws.
     if (auditUser) {
-      auditLogLib.logAction(
-        householdId,
+      await auditLogLib.logAction(        householdId,
         auditUser,
         'notification_settings_updated',
         `${auditUser.displayName} updated reminder & alert settings`,

@@ -94,20 +94,32 @@ function permitted(name: string, allowWrites: boolean) {
 }
 
 function buildServer(context: { uid: string; householdId: string; allowWrites: boolean }) {
-  const server = new McpServer({
-    name: 'kippa',
-    title: 'Kippa',
-    version: '1.0.0',
-    websiteUrl: publicUrl(),
-    icons: [
-      {
-        src: `${publicUrl()}/icons/icon-512.png`,
-        mimeType: 'image/png',
-        sizes: ['512x512'],
-        theme: 'dark',
-      },
-    ],
-  });
+  const server = new McpServer(
+    {
+      name: 'kippa',
+      title: 'Kippa',
+      version: '1.0.0',
+      websiteUrl: publicUrl(),
+      icons: [
+        {
+          src: `${publicUrl()}/icons/icon-512.png`,
+          mimeType: 'image/png',
+          sizes: ['512x512'],
+          theme: 'dark',
+        },
+      ],
+    },
+    {
+      // The in-app assistant carries these conventions in its system prompt;
+      // remote MCP clients only see what the server tells them.
+      instructions: [
+        'Kippa is a double-entry household ledger.',
+        'Ledger lines are signed: expenses use negative signedAmounts, income uses positive amounts.',
+        'Transactions are attributed to budget cycles by explicit budgetCycleId; createTransaction falls back to the currently open cycle when it is omitted.',
+        `Today is ${new Date().toISOString().slice(0, 10)} (UTC).`,
+      ].join(' '),
+    },
+  );
   for (const [name, definition] of Object.entries(aiToolDefinitions)) {
     if (!permitted(name, context.allowWrites)) continue;
     server.registerTool(
@@ -137,7 +149,11 @@ function buildServer(context: { uid: string; householdId: string; allowWrites: b
           });
           return { content: [{ type: 'text', text: JSON.stringify(result ?? { ok: true }) }], isError: false };
         } catch (error) {
-          const message = error instanceof Error ? error.message : 'The tool could not complete.';
+          // Tool errors are deliberate user-facing messages; anything else
+          // (provider internals, stack traces) stays generic and bounded.
+          const raw = error instanceof Error ? error.message.trim() : '';
+          const firstLine = raw.split('\n')[0] ?? '';
+          const message = firstLine ? firstLine.slice(0, 500) : 'The tool could not complete.';
           return { content: [{ type: 'text', text: message }], isError: true };
         }
       },
