@@ -132,34 +132,71 @@ export function AccountStatements() {
         <PageHeader
           title="Statements"
           subtitle="Follow each account movement and its running balance."
-          action={<Skeleton variant="rounded" width={300} height={40} />}
+          action={
+            <Box sx={{ width: { xs: '100%', sm: 300 }, maxWidth: 300 }}>
+              <Skeleton variant="rounded" width="100%" height={40} />
+            </Box>
+          }
         />
         <Box component="section" >
           <Stack spacing={{ xs: 2, md: 3 }}>
-            <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={2}>
+            <Stack
+              direction={{ xs: 'column', sm: 'row' }}
+              justifyContent="space-between"
+              alignItems={{ xs: 'stretch', sm: 'center' }}
+              spacing={{ xs: 1.5, sm: 2 }}
+            >
               <Stack direction="row" spacing={1.5} alignItems="center" sx={{ minWidth: 0 }}>
                 <Skeleton variant="rounded" width={44} height={44} />
-                <Box sx={{ minWidth: 180 }}>
+                <Box sx={{ minWidth: 0 }}>
                   <Skeleton variant="text" width={150} height={24} />
                   <Skeleton variant="text" width={115} height={18} />
                 </Box>
               </Stack>
-              <Skeleton variant="text" width={190} height={34} />
+              <Stack
+                spacing={0.25}
+                alignItems={{ xs: 'flex-start', sm: 'flex-end' }}
+                sx={{ width: { xs: '100%', sm: 190 }, maxWidth: '100%' }}
+              >
+                <Skeleton variant="text" width={100} height={18} />
+                <Skeleton variant="text" width="100%" height={30} />
+              </Stack>
             </Stack>
             <Box >
               <Box sx={{ maxWidth: 1100, mx: 'auto' }}>
                 <Stack spacing={2}>
-                  <Skeleton variant="rounded" width={380} height={44} />
+                  <Skeleton variant="rounded" width="100%" height={44} sx={{ maxWidth: 440 }} />
                   <Divider />
-                  <Stack spacing={0.5}>
-                    <Skeleton variant="text" width="100%" height={48} />
+                  <Box sx={{ display: { xs: 'none', md: 'block' } }}>
+                    <Stack spacing={0.5}>
+                      <Skeleton variant="text" width="100%" height={48} />
+                      {[1, 2, 3, 4, 5].map((item) => (
+                        <Stack key={item} direction="row" spacing={2} sx={{ py: 1.5 }}>
+                          <Skeleton variant="text" width="14%" height={24} />
+                          <Skeleton variant="text" width="38%" height={24} />
+                          <Skeleton variant="text" width="16%" height={24} />
+                          <Skeleton variant="text" width="15%" height={24} />
+                          <Skeleton variant="text" width="17%" height={24} />
+                        </Stack>
+                      ))}
+                    </Stack>
+                  </Box>
+                  <Stack divider={<Divider flexItem />} sx={{ display: { xs: 'flex', md: 'none' } }}>
                     {[1, 2, 3, 4, 5].map((item) => (
-                      <Stack key={item} direction="row" spacing={2} sx={{ py: 1.5 }}>
-                        <Skeleton variant="text" width="14%" height={24} />
-                        <Skeleton variant="text" width="38%" height={24} />
-                        <Skeleton variant="text" width="16%" height={24} />
-                        <Skeleton variant="text" width="15%" height={24} />
-                        <Skeleton variant="text" width="17%" height={24} />
+                      <Stack
+                        key={item}
+                        direction="row"
+                        alignItems="center"
+                        spacing={1.5}
+                        sx={{ py: 2, minWidth: 0 }}
+                      >
+                        <Skeleton variant="rounded" width={40} height={40} />
+                        <Stack spacing={0.5} sx={{ flex: 1, minWidth: 0 }}>
+                          <Skeleton variant="text" width="82%" height={22} />
+                          <Skeleton variant="text" width="62%" height={18} />
+                          <Skeleton variant="text" width="72%" height={18} />
+                        </Stack>
+                        <Skeleton variant="text" width={70} height={24} />
                       </Stack>
                     ))}
                   </Stack>

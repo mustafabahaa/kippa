@@ -155,7 +155,7 @@ export function TransactionHistory() {
             <Stack spacing={1.25} >
               <Stack spacing={0.5}>
                 <Skeleton variant="text" width={100} height={26} />
-                <Skeleton variant="text" width={350} height={20} />
+                <Skeleton variant="text" width="100%" height={20} sx={{ maxWidth: 350 }} />
               </Stack>
               <Box
                 sx={{

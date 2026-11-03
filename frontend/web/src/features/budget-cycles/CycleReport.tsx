@@ -169,6 +169,46 @@ export function CycleReport() {
         0,
       );
 
+  const renderCategoryTransactions = (categoryName: string, categoryId: string | null, categoryTransactions: FinanceTransaction[]) => {
+    const key = categoryId ?? 'uncategorized';
+    return (
+      <Collapse in={expandedCategories.has(key)} timeout="auto" unmountOnExit>
+        <Stack divider={<Divider flexItem />} sx={{ py: 1 }}>
+          {categoryTransactions.map((transaction) => {
+            const lines = ledgerLines.filter((line) => line.transactionId === transaction.id);
+            const accountNames = Array.from(
+              new Set(lines.map((line) => accountById.get(line.accountId)?.name).filter(Boolean)),
+            ).join(' → ');
+            const title = transaction.description || (transaction.loanId ? 'Loan payment' : categoryName);
+            return (
+              <Stack
+                key={transaction.id}
+                direction={{ xs: 'column', sm: 'row' }}
+                alignItems={{ xs: 'flex-start', sm: 'center' }}
+                justifyContent="space-between"
+                spacing={1.5}
+                sx={{ py: 1.5, px: 1 }}
+              >
+                <Stack direction="row" spacing={1.5} alignItems="center">
+                  <TransactionIcon type={transaction.type} size={36} />
+                  <Box>
+                    <Typography variant="body1">{maskText(title)}</Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {formatTransactionDate(transaction.date)} · {accountNames || 'Account'}
+                    </Typography>
+                  </Box>
+                </Stack>
+                <Typography variant="sectionLabel">
+                  <Money amount={categoryTransactionAmount(transaction)} code={baseCurrency} maxDigits={2} />
+                </Typography>
+              </Stack>
+            );
+          })}
+        </Stack>
+      </Collapse>
+    );
+  };
+
   const transactionDisplay = (transaction: FinanceTransaction) => {
     const lines = ledgerLines.filter((line) => line.transactionId === transaction.id);
     const names = Array.from(new Set(lines.map((line) => accountById.get(line.accountId)?.name).filter(Boolean))).join(
@@ -472,7 +512,8 @@ export function CycleReport() {
               </Typography>
             </Box>
           ) : (
-            <TableContainer sx={{width: '100%', maxWidth: 1280, mx: 'auto' }}>
+            <>
+              <TableContainer sx={{ display: { xs: 'none', md: 'block' }, width: '100%', maxWidth: 1280, mx: 'auto' }}>
               <Table>
                 <TableHead>
                   <TableRow>
@@ -522,46 +563,7 @@ export function CycleReport() {
                         </TableRow>
                         <TableRow>
                           <TableCell colSpan={6} sx={{ py: 0 }}>
-                            <Collapse in={expanded} timeout="auto" unmountOnExit>
-                              <Stack divider={<Divider flexItem />} sx={{ py: 1 }}>
-                                {categoryTransactions.map((transaction) => {
-                                  const lines = ledgerLines.filter((line) => line.transactionId === transaction.id);
-                                  const accountNames = Array.from(
-                                    new Set(lines.map((line) => accountById.get(line.accountId)?.name).filter(Boolean)),
-                                  ).join(' → ');
-                                  const title =
-                                    transaction.description ||
-                                    (transaction.loanId ? 'Loan payment' : category.categoryName);
-                                  return (
-                                    <Stack
-                                      key={transaction.id}
-                                      direction={{ xs: 'column', sm: 'row' }}
-                                      alignItems={{ xs: 'flex-start', sm: 'center' }}
-                                      justifyContent="space-between"
-                                      spacing={1.5}
-                                      sx={{ py: 1.5, px: 1 }}
-                                    >
-                                      <Stack direction="row" spacing={1.5} alignItems="center">
-                                        <TransactionIcon type={transaction.type} size={36} />
-                                        <Box>
-                                          <Typography variant="body1">{maskText(title)}</Typography>
-                                          <Typography variant="body2" color="text.secondary">
-                                            {formatTransactionDate(transaction.date)} · {accountNames || 'Account'}
-                                          </Typography>
-                                        </Box>
-                                      </Stack>
-                                      <Typography variant="sectionLabel">
-                                        <Money
-                                          amount={categoryTransactionAmount(transaction)}
-                                          code={baseCurrency}
-                                          maxDigits={2}
-                                        />
-                                      </Typography>
-                                    </Stack>
-                                  );
-                                })}
-                              </Stack>
-                            </Collapse>
+                            {renderCategoryTransactions(category.categoryName, category.categoryId, categoryTransactions)}
                           </TableCell>
                         </TableRow>
                       </Fragment>
@@ -570,6 +572,56 @@ export function CycleReport() {
                 </TableBody>
               </Table>
             </TableContainer>
+            <Stack spacing={2} sx={{ display: { xs: 'flex', md: 'none' }, width: '100%', maxWidth: 1280, mx: 'auto' }}>
+              {report.categories.map((category) => {
+                const key = category.categoryId ?? 'uncategorized';
+                const categoryTransactions = transactionsForCategory(category.categoryId);
+                const expanded = expandedCategories.has(key);
+                return (
+                  <DividedDetailRow key={key}>
+                    <Stack spacing={2}>
+                      <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={2}>
+                        <Stack direction="row" spacing={1} alignItems="center" useFlexGap flexWrap="wrap">
+                          <Typography variant="sectionTitle">{category.categoryName}</Typography>
+                          <Chip label={`${categoryTransactions.length}`} size="small" />
+                        </Stack>
+                      </Stack>
+                      <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 2 }}>
+                        <Stack spacing={0.5}>
+                          <Typography variant="fieldHint" color="text.secondary">Budgeted</Typography>
+                          <Typography variant="body1"><Money amount={category.planned} code={baseCurrency} maxDigits={2} /></Typography>
+                        </Stack>
+                        <Stack spacing={0.5}>
+                          <Typography variant="fieldHint" color="text.secondary">Spent</Typography>
+                          <Typography variant="body1"><Money amount={category.spent} code={baseCurrency} maxDigits={2} /></Typography>
+                        </Stack>
+                        <Stack spacing={0.5}>
+                          <Typography variant="fieldHint" color="text.secondary">Difference</Typography>
+                          <Typography variant="body1" color={category.variance >= 0 ? 'success.main' : 'error.main'}>
+                            <Money amount={category.variance} code={baseCurrency} maxDigits={2} />
+                          </Typography>
+                        </Stack>
+                        <Stack spacing={0.5}>
+                          <Typography variant="fieldHint" color="text.secondary">Share</Typography>
+                          <Typography variant="body1">{(category.share * 100).toFixed(1)}%</Typography>
+                        </Stack>
+                      </Box>
+                      <Button
+                        variant="segmented"
+                        disabled={categoryTransactions.length === 0}
+                        aria-expanded={expanded}
+                        onClick={() => toggleCategory(category.categoryId)}
+                        sx={{ alignSelf: 'flex-start' }}
+                      >
+                        {expanded ? 'Hide transactions' : `View ${categoryTransactions.length} transactions`}
+                      </Button>
+                      {renderCategoryTransactions(category.categoryName, category.categoryId, categoryTransactions)}
+                    </Stack>
+                  </DividedDetailRow>
+                );
+              })}
+              </Stack>
+            </>
           )}
         </Stack>
       </Box>

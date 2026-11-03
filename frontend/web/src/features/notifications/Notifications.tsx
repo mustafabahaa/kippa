@@ -25,7 +25,7 @@ export function Notifications() {
         <Stack spacing={{ xs: 3, md: 4 }}>
           <Box>
             <Skeleton variant="text" width={220} height={40} />
-            <Skeleton variant="text" width={390} height={24} />
+            <Skeleton variant="text" width="100%" height={24} sx={{ maxWidth: 390 }} />
           </Box>
           <Box sx={{ width: '100%', maxWidth: 1250, alignSelf: 'center', pl: { xs: 0, md: 2 } }}>
             <Grid container columns={12} spacing={{ xs: 4, md: 5 }}>
