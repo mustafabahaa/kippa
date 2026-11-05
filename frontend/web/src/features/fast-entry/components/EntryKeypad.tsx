@@ -107,11 +107,26 @@ export function EntryKeypad(props: Props) {
             disableRipple
             fullWidth
             variant={key === 'back' ? 'keypadBack' : 'keypad'}
+          sx={{ height: { xs: 52, sm: 60 }, minHeight: { xs: 48, sm: 56 } }}
           >
             {key === 'back' ? <BackspaceIcon fontSize="small" /> : key}
           </Button>
         ))}
       </Box>
+      <Paper
+        variant="mobileDock"
+        sx={{
+          display: { xs: 'block', md: 'none' },
+          bottom: 'calc(76px + env(safe-area-inset-bottom, 0px))',
+          zIndex: (theme) => theme.zIndex.appBar + 1,
+          p: 1.5,
+          pb: 1.5,
+        }}
+      >
+        <Button variant="primaryAction" fullWidth loading={saving} startIcon={<CheckCircleIcon fontSize="small" />} onClick={onSave}>
+          {saveLabel}
+        </Button>
+      </Paper>
       <Fab
         variant="extended"
         color="primary"
@@ -119,10 +134,10 @@ export function EntryKeypad(props: Props) {
         onClick={onSave}
         disabled={saving}
         sx={{
-          display: { xs: 'flex', lg: 'none' },
+          display: { xs: 'none', md: 'flex', lg: 'none' },
           position: 'fixed',
           right: 18,
-          bottom: 'calc(76px + env(safe-area-inset-bottom))',
+          bottom: 24,
           zIndex: (theme) => theme.zIndex.appBar + 1,
           minWidth: 112,
           gap: 1,

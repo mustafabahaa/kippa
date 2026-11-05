@@ -238,9 +238,9 @@ export function Accounts() {
                             </Stack>
 
                             <Stack
-                              direction="row"
-                              alignItems="center"
-                              justifyContent={{ xs: 'space-between', sm: 'flex-end' }}
+                              direction={{ xs: 'column', sm: 'row' }}
+                              alignItems={{ xs: 'stretch', sm: 'center' }}
+                              justifyContent={{ xs: 'flex-start', sm: 'flex-end' }}
                               spacing={{ xs: 1, sm: 2 }}
                               sx={{ pl: { xs: 7, sm: 0 }, minWidth: 0 }}
                             >
@@ -260,7 +260,13 @@ export function Accounts() {
                                   <Money amount={balance} code={account.currency} maxDigits={2} />
                                 </Typography>
                               </ForeignBalanceTooltip>
-                              <Stack direction="row" alignItems="center" spacing={0.5}>
+                              <Stack
+                                direction="row"
+                                alignItems="center"
+                                justifyContent={{ xs: 'space-between', sm: 'flex-start' }}
+                                spacing={0.5}
+                                sx={{ width: { xs: '100%', sm: 'auto' } }}
+                              >
                                 <Button
                                   size="small"
                                   startIcon={<ReceiptLongIcon variant="Linear" fontSize="small" />}
