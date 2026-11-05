@@ -90,10 +90,10 @@ export function CardActivityList({
                     px: 2,
                     py: 1.5,
                     display: 'grid',
-                    gridTemplateColumns: { xs: 'minmax(0, 1fr) auto', sm: 'minmax(0, 1fr) minmax(0, 1.15fr) auto' },
-                    gridTemplateAreas: { xs: '"timeline actions" "details details"', sm: '"timeline details actions"' },
-                    columnGap: 2,
-                    rowGap: { xs: 1, sm: 0 },
+                    gridTemplateColumns: { xs: 'minmax(0, 1fr) auto', lg: 'minmax(160px, 1fr) minmax(0, 1.15fr) auto' },
+                    gridTemplateAreas: { xs: '"timeline actions" "details details"', lg: '"timeline details actions"' },
+                    columnGap: { xs: 1.5, lg: 2 },
+                    rowGap: { xs: 1, lg: 0 },
                     alignItems: 'center',
                   }}
                 >

@@ -93,7 +93,13 @@ export function BudgetBreakdownSection() {
             trailing={activeCycle ? <Chip label={activeCycle.name} /> : undefined}
           />
 
-          <Stack direction={{ xs: 'column', lg: 'row' }} spacing={1}>
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: { xs: 'minmax(0, 1fr)', sm: 'repeat(2, minmax(0, 1fr))', lg: 'repeat(3, minmax(0, 1fr))' },
+              gap: { xs: 1, sm: 1.5, lg: 2 },
+            }}
+          >
             {[
               {
                 label: 'Planned budget',
@@ -123,7 +129,6 @@ export function BudgetBreakdownSection() {
               <Box
                 key={metric.label}
                 sx={{
-                  flex: 1,
                   minWidth: 0,
                   position: 'relative',
                   overflow: 'hidden',
@@ -132,19 +137,18 @@ export function BudgetBreakdownSection() {
                 }}
               >
                 <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={1.5}>
-                  <Box sx={{ minWidth: 0 }}>
+                  <Stack spacing={0.5} sx={{ minWidth: 0 }}>
                     <Typography variant="metricLabelCompact" color="text.secondary">
                       {metric.label}
                     </Typography>
                     <Typography
-                      noWrap
                       variant="summaryValue"
                       color={metric.valueColor}
-                      sx={{ mt: 0.5 }}
+                      sx={{ overflowWrap: 'anywhere' }}
                     >
                       <Money amount={metric.value} code={baseCurrency} maxDigits={0} />
                     </Typography>
-                  </Box>
+                  </Stack>
                   <MetricBadge tone={metric.tone}>
                     <metric.Icon size={22} />
                   </MetricBadge>
@@ -154,7 +158,7 @@ export function BudgetBreakdownSection() {
                 </Typography>
               </Box>
             ))}
-          </Stack>
+          </Box>
 
           {data.loanCommitments.length > 0 && (
             <Stack spacing={1.5}>
