@@ -105,7 +105,12 @@ export const TransactionsListItem: React.FC<TransactionsListItemProps> = ({
 
     return (
       <Stack spacing={0.5} alignItems="flex-end" sx={{ minWidth: 0, width: '100%', textAlign: 'right' }}>
-        <Typography variant="h6" noWrap color="text.primary" sx={{ minWidth: 0, textAlign: 'right' }}>
+        <Typography
+          variant="h6"
+          noWrap
+          color="text.primary"
+          sx={{ width: '100%', maxWidth: '100%', minWidth: 0, textAlign: 'right' }}
+        >
           {title}
         </Typography>
         {description && (
