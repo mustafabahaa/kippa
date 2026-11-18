@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
 import { Autocomplete, Box, Stack, TextField, Skeleton, Button, Chip } from '@monochrome-ui/design-system';
@@ -18,9 +19,15 @@ import { VoidTransactionDialog } from './components/VoidTransactionDialog';
 import { PageHeader } from '@monochrome-ui/design-system';
 import { SectionHeading } from '@/features/shared/components/SectionHeading';
 import { EmptyLayout } from '@/features/shared/components/EmptyLayout';
-import { useTransactionHistoryUi } from './hooks/useTransactionHistoryUi';
+import { TRANSACTION_PAGE_SIZE, useTransactionHistoryUi } from './hooks/useTransactionHistoryUi';
 import { TransactionsListItem } from './components/TransactionsListItem';
 import { MultiSelectFilter } from '@/features/shared/components/MultiSelectFilter';
+
+import { financeQueryKeys } from '@/hooks/financeQueryKeys';
+import { ledgerLib } from '@/libs/ledger';
+import type { LedgerLine } from '@kippa/domain';
+
+const EMPTY_LINES: LedgerLine[] = [];
 
 export function TransactionHistory() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -70,8 +77,8 @@ export function TransactionHistory() {
   // Queries & Mutations
   const { data: accounts = [], isLoading: accountsLoading } = useAccounts(householdId);
   const { data: categories = [], isLoading: categoriesLoading } = useCategories(householdId);
-  const { data: cycles = [] } = useCycles(householdId);
-  const { data: activeCycle } = useActiveCycle(householdId);
+  const { data: cycles = [], isLoading: cyclesLoading } = useCycles(householdId);
+  const { data: activeCycle, isLoading: activeCycleLoading } = useActiveCycle(householdId);
 
   const queryCycleId = useMemo(() => {
     if (selectedCycleId === 'all') return undefined;
@@ -79,8 +86,30 @@ export function TransactionHistory() {
     return selectedCycleId;
   }, [selectedCycleId, activeCycle, cycles]);
 
-  const { data: transactions = [], isLoading: txsLoading } = useTransactions(householdId, queryCycleId);
-  const { data: ledgerLines = [], isLoading: linesLoading } = useLedgerLines(householdId, queryCycleId);
+  const cycleReady = selectedCycleId !== 'active' || !!queryCycleId || (!cyclesLoading && !activeCycleLoading);
+  const hasFilters = Boolean(searchTerm) || selectedAccountIds !== null ||
+    selectedCategoryIds !== null || selectedType !== 'all';
+  const canMatchFilters = selectedAccountIds?.length !== 0 && selectedCategoryIds?.length !== 0;
+  const history = useInfiniteQuery({
+    queryKey: [...financeQueryKeys.transactions(householdId), 'history', queryCycleId],
+    queryFn: ({ pageParam }) =>
+      ledgerLib.getTransactionHistoryPage(householdId, queryCycleId, TRANSACTION_PAGE_SIZE, pageParam),
+    initialPageParam: undefined as import('firebase/firestore').QueryDocumentSnapshot | undefined,
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+    enabled: !!householdId && cycleReady && !hasFilters,
+  });
+  // Description substring and ledger account filters must cover the whole selected cycle.
+  const matchingCycle = useTransactions(householdId, queryCycleId, {
+    enabled: cycleReady && hasFilters && canMatchFilters,
+  });
+  const accountLines = useQuery({
+    queryKey: [...financeQueryKeys.ledgerLines(householdId), 'accounts', selectedAccountIds],
+    queryFn: () => ledgerLib.getLedgerLinesBy(householdId, 'accountId', selectedAccountIds ?? []),
+    enabled: !!householdId && canMatchFilters && selectedAccountIds !== null,
+  });
+  const transactions = hasFilters
+    ? (canMatchFilters ? matchingCycle.data ?? [] : [])
+    : history.data?.pages.flatMap((page) => page.transactions) ?? [];
 
   const accountOptions = accounts.map((account) => ({
     id: account.id,
@@ -117,7 +146,7 @@ export function TransactionHistory() {
     }
   };
 
-  // Filtering Logic
+  const accountTransactionIds = new Set(accountLines.data?.map((line) => line.transactionId));
   const filteredTxs = transactions.filter((tx) => {
     // 1. Text Search
     const searchMatch = (tx.description || '').toLowerCase().includes(searchTerm.toLowerCase());
@@ -131,8 +160,7 @@ export function TransactionHistory() {
     // 3. Account Filter
     let accMatch = true;
     if (selectedAccountIds !== null) {
-      const txLines = ledgerLines.filter((l) => l.transactionId === tx.id);
-      accMatch = txLines.some((l) => selectedAccountIds.includes(l.accountId));
+      accMatch = accountTransactionIds.has(tx.id);
     }
 
     // 4. Type Filter
@@ -144,15 +172,49 @@ export function TransactionHistory() {
     return searchMatch && catMatch && accMatch && typeMatch;
   });
 
-  const isLoading = accountsLoading || categoriesLoading || txsLoading || linesLoading;
+  const visibleTransactions = hasFilters ? filteredTxs.slice(0, visibleCount) : filteredTxs;
+  const visibleIds = visibleTransactions.map((tx) => tx.id);
+  const filteredLines = useQuery({
+    queryKey: [...financeQueryKeys.ledgerLines(householdId), 'transactionRows', visibleIds],
+    queryFn: () => ledgerLib.getLedgerLinesBy(householdId, 'transactionId', visibleIds),
+    enabled: !!householdId && hasFilters && visibleIds.length > 0,
+  });
+  const pageLines = useMemo(() => history.data?.pages.flatMap((page) => page.lines) ?? EMPTY_LINES, [history.data]);
+  const rawLines = hasFilters ? filteredLines.data ?? EMPTY_LINES : pageLines;
+  const creditAccountIds = new Set(accounts.filter((account) => account.type === 'credit' && account.currency === 'EGP')
+    .map((account) => account.id));
+  const expenseIds = new Set(visibleTransactions.filter((tx) =>
+    tx.type === 'expense' && tx.status === 'posted' && !tx.loanId && !tx.description?.startsWith('Card fee ('),
+  ).map((tx) => tx.id));
+  // Legacy purchases without a recorded fee need settlement history to tell whether they are paid.
+  const needsFeeHistory = rawLines.some((line) => line.currency === 'EGP' && line.signedAmount < 0 &&
+    !line.cardFee && creditAccountIds.has(line.accountId) && expenseIds.has(line.transactionId));
+  const feeHistory = useLedgerLines(householdId, undefined, { enabled: needsFeeHistory });
+  const ledgerLines = needsFeeHistory ? feeHistory.data ?? rawLines : rawLines;
+  const isLoading = accountsLoading || categoriesLoading || !cycleReady ||
+    (hasFilters ? canMatchFilters && (matchingCycle.isLoading || accountLines.isLoading) : history.isLoading);
+  const activityError = (needsFeeHistory && feeHistory.isError) || (hasFilters
+    ? canMatchFilters && (matchingCycle.isError || (selectedAccountIds !== null && accountLines.isError) ||
+      (visibleIds.length > 0 && filteredLines.isError))
+    : history.isError);
+  const hasMore = hasFilters ? visibleCount < filteredTxs.length : history.hasNextPage;
+  const loadNext = () => {
+    if (hasFilters) loadMore();
+    else void history.fetchNextPage();
+  };
+  const rowsLoading = (hasFilters && filteredLines.isLoading) || (needsFeeHistory && feeHistory.isLoading);
+  const editingLines = useMemo(
+    () => editingTx ? ledgerLines.filter((line) => line.transactionId === editingTx.id) : undefined,
+    [editingTx, ledgerLines],
+  );
 
   if (isLoading) {
     return (
-      <Stack spacing={{ xs: 2, md: 2.5 }} sx={{ width: '100%' }}>
+      <Stack spacing={{ xs: 3, md: 4 }} sx={{ width: '100%' }}>
         <PageHeader title="Transactions" subtitle="Search and review your household activity." />
         <Stack spacing={2} sx={{ width: '100%', maxWidth: 900, alignSelf: 'center' }}>
           <Box component="section" >
-            <Stack spacing={1.25} >
+            <Stack spacing={2} >
               <Stack spacing={0.5}>
                 <Skeleton variant="text" width={100} height={26} />
                 <Skeleton variant="text" width="100%" height={20} sx={{ maxWidth: 350 }} />
@@ -165,7 +227,8 @@ export function TransactionHistory() {
                     sm: 'repeat(2, minmax(0, 1fr))',
                     lg: 'repeat(4, minmax(0, 1fr))',
                   },
-                  gap: 1.25,
+                  rowGap: { xs: 2, sm: 2.5 },
+                  columnGap: 2,
                 }}
               >
                 <Skeleton variant="rounded" height={56} sx={{ gridColumn: { xs: 'auto', sm: 'span 2' } }} />
@@ -178,7 +241,7 @@ export function TransactionHistory() {
           </Box>
 
           <Box component="section" >
-            <Stack spacing={{ xs: 2, md: 2.5 }}>
+            <Stack spacing={{ xs: 3, md: 4 }}>
               <Stack direction="row" alignItems="center" justifyContent="space-between" >
                 <Skeleton variant="text" width={120} height={28} />
                 <Skeleton variant="rounded" width={64} height={28} />
@@ -208,18 +271,19 @@ export function TransactionHistory() {
   }
 
   return (
-    <Stack spacing={{ xs: 2, md: 2.5 }} sx={{ width: '100%' }}>
+    <Stack spacing={{ xs: 3, md: 4 }} sx={{ width: '100%' }}>
       <PageHeader title="Transactions" subtitle="Search and review your household activity." />
 
-      <Stack spacing={{ xs: 2, md: 2.5 }} sx={{ width: '100%', maxWidth: 900, alignSelf: 'center' }}>
+      <Stack spacing={{ xs: 3, md: 4 }} sx={{ width: '100%', maxWidth: 900, alignSelf: 'center' }}>
         <Box component="section" >
-          <Stack spacing={1.25} >
+          <Stack spacing={2} >
             <SectionHeading title="Filters" subtitle="Narrow transactions by cycle, account, category, or type." />
             <Box
               sx={{
                 display: 'grid',
                 gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))', lg: 'repeat(4, minmax(0, 1fr))' },
-                gap: 1.25,
+                rowGap: { xs: 2, sm: 2.5 },
+                columnGap: 2,
               }}
             >
               <TextField
@@ -281,18 +345,33 @@ export function TransactionHistory() {
         </Box>
 
         <Box component="section" >
-          <Stack spacing={{ xs: 2, md: 2.5 }}>
-            <SectionHeading title="Activity" trailing={<Chip size="small" label={`${filteredTxs.length} results`} />} />
+          <Stack spacing={{ xs: 3, md: 4 }}>
+            <SectionHeading title="Activity" trailing={<Chip size="small" label={`${filteredTxs.length} ${hasFilters || !hasMore ? 'results' : 'loaded'}`} />} />
             <Stack spacing={1.5} >
-              {filteredTxs.length === 0 ? (
+              {activityError && <EmptyLayout
+                title="Could not load transactions"
+                description="Try loading the activity again."
+                action={<Button onClick={() => {
+                  if (needsFeeHistory && feeHistory.isError) void feeHistory.refetch();
+                  else if (!hasFilters) {
+                    if (history.isFetchNextPageError) void history.fetchNextPage();
+                    else void history.refetch();
+                  } else {
+                    if (matchingCycle.isError) void matchingCycle.refetch();
+                    if (accountLines.isError) void accountLines.refetch();
+                    if (filteredLines.isError) void filteredLines.refetch();
+                  }
+                }}>Try again</Button>}
+              />}
+              {!activityError && !rowsLoading && filteredTxs.length === 0 ? (
                 <EmptyLayout
                   title="No matching transactions"
                   description="Try changing your search or filters to find what you’re looking for."
                 />
               ) : (
                 <>
-                  <Stack className="ds-stepper">
-                    {filteredTxs.slice(0, visibleCount).map((transaction) => (
+                  <Stack className="ds-stepper" spacing={{ xs: 1.25, sm: 1.5 }}>
+                    {(!rowsLoading && (!needsFeeHistory || feeHistory.data) && (!hasFilters || !!filteredLines.data) ? visibleTransactions : []).map((transaction) => (
                       <TransactionsListItem
                         key={transaction.id}
                         tx={transaction}
@@ -304,9 +383,10 @@ export function TransactionHistory() {
                       />
                     ))}
                   </Stack>
-                  {visibleCount < filteredTxs.length && (
-                    <Button variant="segmented" onClick={loadMore} sx={{ alignSelf: 'center' }}>
-                      Load more · {filteredTxs.length - visibleCount} remaining
+                  {rowsLoading && <Skeleton variant="rounded" height={56} />}
+                  {hasMore && !activityError && (
+                    <Button variant="segmented" onClick={loadNext} loading={history.isFetchingNextPage || rowsLoading} sx={{ alignSelf: 'center' }}>
+                      {hasFilters ? `Load more · ${filteredTxs.length - visibleCount} remaining` : 'Load more'}
                     </Button>
                   )}
                 </>
@@ -317,7 +397,7 @@ export function TransactionHistory() {
       </Stack>
 
       {/* Shared Edit Dialog */}
-      {editingTx && <EditTransactionDialog open transaction={editingTx} onClose={() => setEditingTx(null)} />}
+      {editingTx && <EditTransactionDialog open transaction={editingTx} initialLedgerLines={editingLines} onClose={() => setEditingTx(null)} />}
       <VoidTransactionDialog
         open={Boolean(voidingTxId)}
         loading={voidTxMutation.isPending}

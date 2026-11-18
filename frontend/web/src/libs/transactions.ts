@@ -151,8 +151,9 @@ export const transactionsLib = {
     };
 
     // Get current ledger lines for this transaction
-    const allLines = (await dbLib.getDocs(householdId, 'ledgerLines')) as LedgerLine[];
-    const txLines = allLines.filter((l) => l.transactionId === transactionId);
+    const txLines = (await dbLib.getDocs(householdId, 'ledgerLines', [
+      { field: 'transactionId', op: '==', value: transactionId },
+    ])) as LedgerLine[];
     // A single-line update would silently desync the untouched sibling line of
     // a multi-line transaction (e.g. a transfer or split expense).
     if (txLines.length > 1)

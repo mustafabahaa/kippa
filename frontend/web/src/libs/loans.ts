@@ -1,6 +1,7 @@
 import { z } from 'zod';
-import type { FinanceTransaction, LedgerLine, Loan } from '@kippa/domain';
+import type { FinanceTransaction, Loan } from '@kippa/domain';
 import { dbLib } from '@/libs/db';
+import { ledgerLib } from '@/libs/ledger';
 import { transactionsLib } from '@/libs/transactions';
 import { auditLogLib } from '@/libs/auditLog';
 import { getLoanProgress, loanInstallmentDate } from '@/libs/loanCalculations';
@@ -103,10 +104,11 @@ export const loansLib = {
     userId: string,
     auditUser?: AuditUser,
   ): Promise<string> {
-    const [loan, transactions, lines] = await Promise.all([
+    const [loan, transactions] = await Promise.all([
       dbLib.getDoc(householdId, 'loans', loanId) as Promise<Loan | null>,
-      dbLib.getDocs(householdId, 'transactions') as Promise<FinanceTransaction[]>,
-      dbLib.getDocs(householdId, 'ledgerLines') as Promise<LedgerLine[]>,
+      dbLib.getDocs(householdId, 'transactions', [
+        { field: 'loanId', op: '==', value: loanId },
+      ]) as Promise<FinanceTransaction[]>,
     ]);
     if (!loan || loan.status !== 'active') throw new Error('Active loan not found.');
     const amount = z
@@ -115,6 +117,11 @@ export const loansLib = {
       .max(loan.installmentAmount * 10)
       .parse(input.amount);
     const date = z.iso.date().parse(input.date);
+    const lines = await ledgerLib.getLedgerLinesBy(
+      householdId,
+      'transactionId',
+      transactions.filter((tx) => tx.status === 'posted').map((tx) => tx.id),
+    );
     const progress = getLoanProgress(loan, transactions, lines);
     if (progress.remainingAmount <= 0) throw new Error('This loan is already fully paid.');
     const installmentNumber = progress.nextInstallmentNumber;

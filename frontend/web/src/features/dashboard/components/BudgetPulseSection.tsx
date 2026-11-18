@@ -61,9 +61,9 @@ export function BudgetPulseSection() {
 
   if (isLoading) {
     return (
-      <Card variant="sectionSurface" sx={{ height: { xs: 'auto', md: 375 } }}>
-        <CardContent sx={{ height: { xs: 'auto', md: '100%' } }}>
-          <Stack sx={{ height: { xs: 'auto', md: '100%' } }}>
+      <Card variant="sectionSurface">
+        <CardContent>
+          <Stack>
             <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={1.5}>
               <Stack direction="row" spacing={1.5} alignItems="center" sx={{ minWidth: 0, flex: 1 }}>
                 <Skeleton variant="circular" width={40} height={40} animation="wave" />
@@ -116,8 +116,8 @@ export function BudgetPulseSection() {
     .slice(0, 3);
 
   return (
-      <Card variant="sectionSurface" sx={{ height: { xs: 'auto', md: 375 } }}>
-      <CardContent sx={{ height: { xs: 'auto', md: '100%' } }}>
+      <Card variant="sectionSurface">
+      <CardContent>
         <DashboardSectionHeading
           icon={<BarChartIcon size={22} strokeWidth={1.8} />}
           title="Remaining monthly"

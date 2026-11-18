@@ -4,24 +4,24 @@ import { Box, Button, Card, CardContent, Chip, Divider, LinearProgress, Skeleton
 import { useNavigate } from 'react-router-dom';
 import { Money } from '@/components/Money';
 import { useAppContext } from '@/hooks/useAppContext';
-import { useAccounts, useLedgerLines, useLoans, useTransactions } from '@/hooks/useFinance';
+import { useAccounts, useLedgerLines, useTransactions } from '@/hooks/useFinance';
 import { calculateAccountBalance } from '@/libs/financeCalculations';
 import { getLoanProgress } from '@/libs/loanCalculations';
+import type { Loan } from '@kippa/domain';
 import { DashboardSectionHeading } from './DashboardSectionHeading';
 
-export function LoanProgressSection() {
+export function LoanProgressSection({ loans, loansLoading }: { loans: Loan[]; loansLoading: boolean }) {
   const navigate = useNavigate();
   const { householdId } = useAppContext();
-  const { data: loans = [], isLoading: loansLoading } = useLoans(householdId);
   const { data: accounts = [], isLoading: accountsLoading } = useAccounts(householdId);
   const { data: transactions = [], isLoading: transactionsLoading } = useTransactions(householdId);
   const { data: lines = [], isLoading: linesLoading } = useLedgerLines(householdId);
 
   if (loansLoading || accountsLoading || transactionsLoading || linesLoading) {
     return (
-      <Card variant="sectionSurface" sx={{ height: { xs: 'auto', md: 375 } }}>
-        <CardContent sx={{ height: { xs: 'auto', md: '100%' } }}>
-          <Stack spacing={2} sx={{ height: { xs: 'auto', md: '100%' } }}>
+      <Card variant="sectionSurface">
+        <CardContent>
+          <Stack spacing={2}>
             <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={1.5}>
               <Stack direction="row" spacing={1.5} alignItems="center" sx={{ minWidth: 0, flex: 1 }}>
                 <Skeleton variant="circular" width={40} height={40} animation="wave" />
@@ -61,7 +61,6 @@ export function LoanProgressSection() {
   }
 
   const candidates = loans
-    .filter((loan) => loan.status === 'active')
     .map((loan) => ({ loan, progress: getLoanProgress(loan, transactions, lines) }))
     .sort((a, b) => (a.progress.nextDueDate ?? '').localeCompare(b.progress.nextDueDate ?? ''));
   const selected = candidates[0];
@@ -78,9 +77,9 @@ export function LoanProgressSection() {
       : 'Complete';
 
   return (
-    <Card variant="sectionSurface" sx={{ height: { xs: 'auto', md: 375 } }}>
-      <CardContent sx={{ height: { xs: 'auto', md: '100%' } }}>
-        <Stack spacing={2} sx={{ height: { xs: 'auto', md: '100%' } }}>
+    <Card variant="sectionSurface">
+      <CardContent>
+        <Stack spacing={2}>
           <Stack spacing={2.5}>
             <DashboardSectionHeading
               icon={<PaymentsIcon size={22} strokeWidth={1.8} />}

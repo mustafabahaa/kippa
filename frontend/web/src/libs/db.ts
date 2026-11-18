@@ -61,11 +61,16 @@ export const dbLib = {
     collectionName: string,
     pageSize: number,
     cursor?: QueryDocumentSnapshot,
+    options: { sortByDate?: boolean; budgetCycleId?: string } = {},
   ): Promise<{ items: any[]; nextCursor: QueryDocumentSnapshot | null }> {
     const firestore = requireFirestore();
     const path = householdId === 'system' ? collectionName : `households/${householdId}/${collectionName}`;
     const colRef = collection(firestore, path);
-    let pageQuery = query(colRef, orderBy('createdAt', 'desc'));
+    let pageQuery = options.budgetCycleId
+      ? query(colRef, where('budgetCycleId', '==', options.budgetCycleId))
+      : query(colRef);
+    if (options.sortByDate) pageQuery = query(pageQuery, orderBy('date', 'desc'));
+    pageQuery = query(pageQuery, orderBy('createdAt', 'desc'));
     if (cursor) pageQuery = query(pageQuery, startAfter(cursor));
     pageQuery = query(pageQuery, limit(pageSize));
 

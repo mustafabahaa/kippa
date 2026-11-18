@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Account, FinanceTransaction, LedgerLine } from '@kippa/domain';
 
-const mocks = vi.hoisted(() => ({ getDocs: vi.fn() }));
+const mocks = vi.hoisted(() => ({ getDocs: vi.fn(), getDocsPage: vi.fn() }));
 
-vi.mock('@/libs/db', () => ({ dbLib: { getDocs: mocks.getDocs } }));
+vi.mock('@/libs/db', () => ({ dbLib: { getDocs: mocks.getDocs, getDocsPage: mocks.getDocsPage } }));
 vi.mock('@/libs/auditLog', () => ({ auditLogLib: { logAction: vi.fn() } }));
 vi.mock('@/libs/currencyMeta', () => ({ detectBaseCurrency: () => 'EGP', currencySymbol: () => 'ج.م' }));
 
@@ -22,5 +22,32 @@ describe('ledger read cost', () => {
     expect(mocks.getDocs).toHaveBeenCalledTimes(1);
     expect(mocks.getDocs).toHaveBeenCalledWith('h1', 'ledgerLines');
     expect(result[0]).toMatchObject({ signedAmount: -103, cardFee: { baseAmount: 100, rate: 3 } });
+  });
+
+  it('reads ledger entries only for the transactions on the requested history page', async () => {
+    const cursor = {} as import('firebase/firestore').QueryDocumentSnapshot;
+    mocks.getDocsPage.mockResolvedValue({ items: [transaction], nextCursor: cursor });
+
+    const result = await ledgerLib.getTransactionHistoryPage('h1', 'cycle-a', 1, cursor);
+
+    expect(mocks.getDocsPage).toHaveBeenCalledWith('h1', 'transactions', 1, cursor, {
+      sortByDate: true,
+      budgetCycleId: 'cycle-a',
+    });
+    expect(mocks.getDocs).toHaveBeenCalledExactlyOnceWith('h1', 'ledgerLines', [
+      { field: 'transactionId', op: 'in', value: [transaction.id] },
+    ]);
+    expect(result).toEqual({ transactions: [transaction], lines: [line], nextCursor: cursor });
+  });
+
+  it('does not query ledger entries for an empty page', async () => {
+    mocks.getDocsPage.mockResolvedValue({ items: [], nextCursor: null });
+
+    expect(await ledgerLib.getTransactionHistoryPage('h1', undefined, 25)).toEqual({
+      transactions: [],
+      lines: [],
+      nextCursor: null,
+    });
+    expect(mocks.getDocs).not.toHaveBeenCalled();
   });
 });

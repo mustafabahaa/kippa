@@ -76,6 +76,7 @@ export function AppShell() {
               px: pathname === '/ai' ? 0 : { xs: 2, sm: 3 },
               maxWidth: pathname === '/ai' ? 'none' : 1440,
               mx: 'auto',
+              '& [data-page-heading] > *, & [data-page-heading] > * > *': { minWidth: 0, maxWidth: '100%' },
               '& > .MuiContainer-root': {
                 maxWidth: 'none !important',
                 p: '0 !important',

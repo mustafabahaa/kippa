@@ -163,6 +163,35 @@ export const ledgerLib = {
     );
   },
 
+  async getTransactionHistoryPage(
+    householdId: string,
+    cycleId: string | undefined,
+    pageSize: number,
+    cursor?: import('firebase/firestore').QueryDocumentSnapshot,
+  ) {
+    const page = await dbLib.getDocsPage(householdId, 'transactions', pageSize, cursor, {
+      sortByDate: true,
+      budgetCycleId: cycleId,
+    });
+    const transactions = page.items as FinanceTransaction[];
+    return {
+      transactions,
+      lines: await this.getLedgerLinesBy(householdId, 'transactionId', transactions.map((tx) => tx.id)),
+      nextCursor: transactions.length === pageSize ? page.nextCursor : null,
+    };
+  },
+
+  async getLedgerLinesBy(householdId: string, field: 'transactionId' | 'accountId', ids: string[]) {
+    const uniqueIds = [...new Set(ids)];
+    const queries = [];
+    for (let offset = 0; offset < uniqueIds.length; offset += 30) {
+      queries.push(dbLib.getDocs(householdId, 'ledgerLines', [
+        { field, op: 'in', value: uniqueIds.slice(offset, offset + 30) },
+      ]));
+    }
+    return (await Promise.all(queries)).flat() as LedgerLine[];
+  },
+
   async getTransactions(householdId: string, cycleId?: string): Promise<FinanceTransaction[]> {
     const filters = cycleId ? [{ field: 'budgetCycleId', op: '==' as const, value: cycleId }] : undefined;
     const list = await dbLib.getDocs(householdId, 'transactions', filters);

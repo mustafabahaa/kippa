@@ -6,10 +6,18 @@ import { BudgetBreakdownSection } from '@/features/dashboard/components/BudgetBr
 import { MyAccountsSection } from '@/features/dashboard/components/MyAccountsSection';
 import { TransactionsSection } from '@/features/dashboard/components/TransactionsSection';
 import { LoanProgressSection } from '@/features/dashboard/components/LoanProgressSection';
+import { useAppContext } from '@/hooks/useAppContext';
+import { useLoans } from '@/hooks/useFinance';
 import { DashboardSectionHeading } from './components/DashboardSectionHeading';
 
 
 export function Dashboard() {
+  const { householdId } = useAppContext();
+  const { data: loans = [], isLoading: loansLoading } = useLoans(householdId);
+  const activeLoans = loans.filter((loan) => loan.status === 'active');
+  const showLoan = loansLoading || activeLoans.length > 0;
+  const overviewCardSize = { xs: 12, md: 6, lg: showLoan ? 4 : 6 };
+
   return (
     <Stack spacing={{ xs: 2, md: 3 }}>
       {/* Header Section */}
@@ -20,19 +28,21 @@ export function Dashboard() {
           <Box>
             <DashboardSectionHeading
               title="Overview"
-              subtitle="Balances, loan progress, and monthly spending"
+              subtitle={showLoan ? 'Balances, loan progress, and monthly spending' : 'Balances and monthly spending'}
             />
           </Box>
 
           <Box >
             <Grid container spacing={{ xs: 3, md: 5 }} alignItems="stretch">
-              <Grid size={{ xs: 12, md: 6, lg: 4 }}>
+              <Grid size={overviewCardSize} sx={{ minWidth: 0 }}>
                 <TotalBalanceHeroSection />
               </Grid>
-              <Grid size={{ xs: 12, md: 6, lg: 4 }}>
-                <LoanProgressSection />
-              </Grid>
-              <Grid size={{ xs: 12, md: 6, lg: 4 }}>
+              {showLoan && (
+                <Grid size={overviewCardSize} sx={{ minWidth: 0 }}>
+                  <LoanProgressSection loans={activeLoans} loansLoading={loansLoading} />
+                </Grid>
+              )}
+              <Grid size={{ ...overviewCardSize, md: showLoan ? 12 : 6 }} sx={{ minWidth: 0 }}>
                 <BudgetPulseSection />
               </Grid>
             </Grid>

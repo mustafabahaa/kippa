@@ -28,23 +28,29 @@ import {
   useHouseholdBaseCurrency,
 } from '@/hooks/useFinance';
 import { useAppContext } from '@/hooks/useAppContext';
-import { FinanceTransaction } from '@kippa/domain';
+import { FinanceTransaction, LedgerLine } from '@kippa/domain';
 import { useTransactionEditFields } from '../hooks/useTransactionEditFields';
 import { findPrimaryLedgerLine, resolveEditedCurrency, resolveEditedSignedAmount } from '@/libs/transactionEdit';
+
+const EMPTY_LINES: LedgerLine[] = [];
 
 interface EditTransactionDialogProps {
   open: boolean;
   transaction: FinanceTransaction | null;
+  initialLedgerLines?: LedgerLine[];
   onClose: () => void;
 }
 
-export const EditTransactionDialog: React.FC<EditTransactionDialogProps> = ({ open, transaction, onClose }) => {
+export const EditTransactionDialog: React.FC<EditTransactionDialogProps> = ({ open, transaction, initialLedgerLines, onClose }) => {
   const { enqueueSnackbar } = useSnackbar();
   const { householdId } = useAppContext();
   const baseCurrency = useHouseholdBaseCurrency();
   const { data: accounts = [] } = useAccounts(householdId);
   const { data: categories = [] } = useCategories(householdId);
-  const { data: ledgerLines = [] } = useLedgerLines(householdId);
+  const { data: historyLines = EMPTY_LINES } = useLedgerLines(householdId, undefined, {
+    enabled: open && !!transaction && !initialLedgerLines,
+  });
+  const ledgerLines = initialLedgerLines ?? historyLines;
   const updateMutation = useUpdateTransactionMutation();
 
   const { fields, setField } = useTransactionEditFields(transaction, ledgerLines);

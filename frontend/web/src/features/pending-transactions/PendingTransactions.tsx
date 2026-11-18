@@ -4,7 +4,6 @@ import {
   Box,
   Button,
   Chip,
-  CircularProgress,
   InputAdornment,
   Paper,
   Skeleton,
@@ -382,10 +381,10 @@ export function PendingTransactions() {
                     {filteredPending.map((item) => (
                       <Paper
                         key={item.id}
-                        component="button"
+                        component={Button}
                         type="button"
                         onClick={() => openReview(item)}
-                        disabled={(itemStates[item.id] ?? 'idle') !== 'idle'}
+                        loading={(itemStates[item.id] ?? 'idle') !== 'idle'}
                         data-processing={(itemStates[item.id] ?? 'idle') !== 'idle' || undefined}
                         variant="timelineRow"
                         sx={{
@@ -400,11 +399,7 @@ export function PendingTransactions() {
                           cursor: 'pointer',
                         }}
                       >
-                        {(itemStates[item.id] ?? 'idle') === 'idle' ? (
-                          <TransactionIcon className="ds-stepper-node" type={item.kind} size={36} />
-                        ) : (
-                          <CircularProgress size={32} />
-                        )}
+                        <TransactionIcon className="ds-stepper-node" type={item.kind} size={36} />
                         <Box sx={{ flex: 1, minWidth: 0 }}>
                           <Typography noWrap variant="sectionLabel">
                             {item.description}

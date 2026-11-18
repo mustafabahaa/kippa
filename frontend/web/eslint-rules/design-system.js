@@ -35,6 +35,7 @@ const buttonLoadingPropRule = {
     docs: { description: 'Require shared button loading state for async actions and forbid inline spinner controls.' },
     schema: [],
     messages: {
+      loadingPosition: 'Use centered loading so the action label is hidden while the spinner is visible.',
       inlineButtonSpinner: 'Use the shared Button or IconButton `loading` prop instead of rendering CircularProgress inside the control.',
       asyncActionMissingLoading: 'Async Button and IconButton actions must expose their pending state through the shared `loading` prop.',
     },
@@ -42,6 +43,7 @@ const buttonLoadingPropRule = {
   create(context) {
     const buttonNames = new Set();
     const progressNames = new Set();
+    const designSystemNamespaces = new Set();
     const sourceCode = context.sourceCode;
 
     const resolveDefinition = (node) => {
@@ -95,26 +97,42 @@ const buttonLoadingPropRule = {
       });
     };
 
+    const isDesignSystemComponent = (node, names, exports) => {
+      if (node?.type === 'JSXIdentifier' || node?.type === 'Identifier') return names.has(node.name);
+      if (node?.type === 'JSXMemberExpression' || (node?.type === 'MemberExpression' && !node.computed)) {
+        return designSystemNamespaces.has(node.object.name) && exports.has(node.property.name);
+      }
+      return false;
+    };
+
+    const buttonExports = new Set(['Button', 'IconButton']);
+    const progressExports = new Set(['CircularProgress']);
+
     const containsProgress = (node, seen = new Set()) => {
       if (!node || seen.has(node)) return false;
       seen.add(node);
 
-      if (node.type === 'Identifier') {
-        let scope = sourceCode.getScope(node);
-        let variable;
-        while (scope && !variable) {
-          variable = scope.set.get(node.name);
-          scope = scope.upper;
-        }
-        const initializer = variable?.defs.find((definition) => definition.type === 'Variable')?.node.init;
-        return initializer ? containsProgress(initializer, seen) : false;
-      }
+      if (node.type === 'Identifier') return containsProgress(resolveDefinition(node), seen);
       if (node.type === 'JSXElement') {
-        const name = node.openingElement.name;
-        if (name.type === 'JSXIdentifier' && progressNames.has(name.name)) return true;
-        return node.openingElement.attributes.some((attribute) =>
-          attribute.type === 'JSXAttribute' && containsProgress(attribute.value, seen),
-        ) || node.children.some((child) => containsProgress(child, seen));
+        return isDesignSystemComponent(node.openingElement.name, progressNames, progressExports) ||
+          node.openingElement.attributes.some((attribute) => containsProgress(attribute, seen)) ||
+          node.children.some((child) => containsProgress(child, seen));
+      }
+      if (node.type === 'JSXAttribute') return containsProgress(node.value, seen);
+      if (node.type === 'JSXSpreadAttribute' || node.type === 'SpreadElement') {
+        return containsProgress(node.argument, seen);
+      }
+      if (node.type === 'CallExpression') {
+        const render = resolveDefinition(node.callee);
+        return containsProgress(render, seen);
+      }
+      if (['FunctionDeclaration', 'FunctionExpression', 'ArrowFunctionExpression'].includes(node.type)) {
+        return containsProgress(node.body, seen);
+      }
+      if (node.type === 'BlockStatement') return node.body.some((statement) => containsProgress(statement, seen));
+      if (node.type === 'ReturnStatement') return containsProgress(node.argument, seen);
+      if (node.type === 'IfStatement') {
+        return containsProgress(node.consequent, seen) || containsProgress(node.alternate, seen);
       }
       if (node.type === 'JSXFragment') return node.children.some((child) => containsProgress(child, seen));
       if (node.type === 'JSXExpressionContainer') return containsProgress(node.expression, seen);
@@ -126,7 +144,9 @@ const buttonLoadingPropRule = {
       }
       if (node.type === 'ArrayExpression') return node.elements.some((element) => containsProgress(element, seen));
       if (node.type === 'ObjectExpression') {
-        return node.properties.some((property) => property.type === 'Property' && containsProgress(property.value, seen));
+        return node.properties.some((property) =>
+          containsProgress(property.type === 'Property' ? property.value : property, seen),
+        );
       }
       if (node.type === 'TSAsExpression' || node.type === 'TSSatisfiesExpression' || node.type === 'ParenthesizedExpression') {
         return containsProgress(node.expression, seen);
@@ -138,6 +158,9 @@ const buttonLoadingPropRule = {
       ImportDeclaration(node) {
         if (node.source.value !== '@monochrome-ui/design-system') return;
         for (const specifier of node.specifiers) {
+          if (specifier.type === 'ImportNamespaceSpecifier') {
+            designSystemNamespaces.add(specifier.local.name);
+          }
           if (specifier.type !== 'ImportSpecifier') continue;
           const importedName = specifier.imported.name ?? specifier.imported.value;
           if (importedName === 'Button' || importedName === 'IconButton') buttonNames.add(specifier.local.name);
@@ -146,8 +169,26 @@ const buttonLoadingPropRule = {
       },
       JSXElement(node) {
         const name = node.openingElement.name;
-        if (name.type !== 'JSXIdentifier' || !buttonNames.has(name.name)) return;
         const attributes = node.openingElement.attributes;
+        const componentAttribute = attributes.find((attribute) =>
+          attribute.type === 'JSXAttribute' && ['as', 'component'].includes(attribute.name.name),
+        );
+        const component = componentAttribute?.value?.type === 'JSXExpressionContainer'
+          ? componentAttribute.value.expression
+          : componentAttribute?.value;
+        const isSharedButton = isDesignSystemComponent(name, buttonNames, buttonExports) ||
+          isDesignSystemComponent(component, buttonNames, buttonExports);
+        const isNativeButton = name.name === 'button' || component?.value === 'button';
+        if (!isSharedButton && !isNativeButton) return;
+        const loadingPosition = attributes.find((attribute) =>
+          attribute.type === 'JSXAttribute' && attribute.name.name === 'loadingPosition',
+        );
+        const positionValue = loadingPosition?.value?.type === 'JSXExpressionContainer'
+          ? loadingPosition.value.expression.value
+          : loadingPosition?.value?.value;
+        if (isSharedButton && loadingPosition && positionValue !== 'center') {
+          context.report({ node: loadingPosition, messageId: 'loadingPosition' });
+        }
         const hasLoadingProp = attributes.some((attribute) =>
           attribute.type === 'JSXAttribute' && attribute.name.type === 'JSXIdentifier' && attribute.name.name === 'loading',
         );
@@ -191,11 +232,15 @@ const buttonLoadingPropRule = {
             }
           }
         }
-        if (!hasLoadingProp && clickHandler && isAsyncAction(clickHandler)) {
+        if (isSharedButton && !hasLoadingProp && clickHandler && isAsyncAction(clickHandler)) {
           context.report({ node: actionNode, messageId: 'asyncActionMissingLoading' });
         }
-        const hasInlineProgress = node.openingElement.attributes.some((attribute) =>
-          attribute.type === 'JSXAttribute' && containsProgress(attribute.value),
+        const hasInlineProgress = attributes.some((attribute) =>
+          attribute.type === 'JSXSpreadAttribute' ||
+          (attribute.type === 'JSXAttribute' && !['component', 'as'].includes(attribute.name.name) &&
+            !attribute.name.name?.startsWith('on'))
+            ? containsProgress(attribute)
+            : false,
         ) || node.children.some((child) => containsProgress(child));
         if (hasInlineProgress) {
           context.report({ node: node.openingElement, messageId: 'inlineButtonSpinner' });

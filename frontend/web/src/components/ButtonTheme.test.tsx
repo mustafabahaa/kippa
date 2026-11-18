@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { Button, ThemeProvider } from '@monochrome-ui/design-system';
+import { Button, CssBaseline, IconButton, ThemeProvider, Typography } from '@monochrome-ui/design-system';
 import { createMonochromeTheme, modeTokens } from '@monochrome-ui/design-system';
+import { createKippaTheme } from '@/config/theme';
 
 function rgb(hex: string) {
   const value = hex.replace('#', '');
@@ -54,5 +55,28 @@ describe('contained primary button theme states', () => {
     expect(contrast(disabledStyle.backgroundColor, disabledStyle.color)).toBeGreaterThanOrEqual(4.5);
 
     unmount();
+  });
+});
+
+describe('loading buttons', () => {
+  it.each(['light', 'dark'] as const)('hide action content and preserve its accessible name in %s mode', (mode) => {
+    render(
+      <ThemeProvider theme={createKippaTheme(mode)}>
+        <CssBaseline />
+        <Button variant="contained" loading>
+          Save <Typography component="span" color="text.secondary">changes</Typography>
+        </Button>
+        <IconButton loading aria-label="Refresh"><span>Refresh icon</span></IconButton>
+      </ThemeProvider>,
+    );
+
+    const save = screen.getByRole('button', { name: 'Save changes' });
+    const refresh = screen.getByRole('button', { name: 'Refresh' });
+    expect(save).toBeDisabled();
+    expect(refresh).toBeDisabled();
+    expect(getComputedStyle(save).color).toBe('rgba(0, 0, 0, 0)');
+    expect(getComputedStyle(screen.getByText('changes')).opacity).toBe('0');
+    expect(getComputedStyle(screen.getByText('Refresh icon')).opacity).toBe('0');
+    expect(screen.getAllByRole('progressbar')).toHaveLength(2);
   });
 });

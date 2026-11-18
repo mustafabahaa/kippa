@@ -104,12 +104,12 @@ export const TransactionsListItem: React.FC<TransactionsListItemProps> = ({
     }
 
     return (
-      <Stack spacing={0.5} alignItems="flex-end" sx={{ minWidth: 0, width: '100%', textAlign: 'right' }}>
+      <Stack spacing={0.5} alignItems={{ xs: 'flex-start', sm: 'flex-end' }} sx={{ minWidth: 0, width: '100%' }}>
         <Typography
           variant="h6"
           noWrap
           color="text.primary"
-          sx={{ width: '100%', maxWidth: '100%', minWidth: 0, textAlign: 'right' }}
+          sx={{ width: '100%', maxWidth: '100%', minWidth: 0, textAlign: { xs: 'left', sm: 'right' } }}
         >
           {title}
         </Typography>
@@ -117,7 +117,7 @@ export const TransactionsListItem: React.FC<TransactionsListItemProps> = ({
           <Typography
             variant="sectionSubtitle"
             color="text.secondary"
-            sx={{ width: '100%', maxWidth: '100%', textAlign: 'right', whiteSpace: 'normal', overflowWrap: 'anywhere' }}
+            sx={{ width: '100%', maxWidth: '100%', textAlign: { xs: 'left', sm: 'right' }, whiteSpace: 'normal', overflowWrap: 'anywhere' }}
           >
             {description}
           </Typography>
@@ -133,18 +133,18 @@ export const TransactionsListItem: React.FC<TransactionsListItemProps> = ({
         sx={{
           minHeight: 84,
           px: 2,
-          py: 1.5,
+          py: { xs: 2, sm: 1.75 },
           display: 'grid',
           gridTemplateColumns: {
             xs: 'minmax(0, 1fr) auto',
-            lg: 'minmax(160px, 1fr) minmax(0, 1.2fr) auto',
+            sm: 'minmax(0, 1fr) minmax(0, 1.2fr) auto',
           },
           gridTemplateAreas: {
             xs: '"timeline actions" "details details"',
-            lg: '"timeline details actions"',
+            sm: '"timeline details actions"',
           },
           columnGap: { xs: 1.5, sm: 2.5 },
-          rowGap: { xs: 1, lg: 0 },
+          rowGap: { xs: 1.5, sm: 0 },
           alignItems: 'center',
         }}
         data-voided={tx.status === 'voided' ? 'true' : undefined}
@@ -187,7 +187,7 @@ export const TransactionsListItem: React.FC<TransactionsListItemProps> = ({
             </Typography>
           </Stack>
         </Box>
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end', width: '100%', minWidth: 0, gridArea: 'details' }}>
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end', width: '100%', minWidth: 0, gridArea: 'details', pl: { xs: 5, sm: 0 } }}>
           {renderItemDetails()}
         </Box>
         <IconButton
@@ -196,7 +196,7 @@ export const TransactionsListItem: React.FC<TransactionsListItemProps> = ({
           aria-haspopup="menu"
           aria-expanded={Boolean(actionsAnchor)}
           onClick={(event) => setActionsAnchor(event.currentTarget)}
-          sx={{ gridArea: 'actions', justifySelf: { xs: 'start', sm: 'auto' }, width: 36, height: 36 }}
+          sx={{ gridArea: 'actions', justifySelf: { xs: 'start', sm: 'auto' }, width: { xs: 44, sm: 36 }, height: { xs: 44, sm: 36 } }}
         >
           <MoreVerticalIcon size={20} strokeWidth={1.8} />
         </IconButton>

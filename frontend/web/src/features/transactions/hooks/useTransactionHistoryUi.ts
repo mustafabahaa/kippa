@@ -9,7 +9,7 @@ type State = {
   visibleCount: number;
 };
 type Action = { [Key in keyof State]-?: { key: Key; value: SetStateAction<State[Key]> } }[keyof State];
-const PAGE_SIZE = 25;
+export const TRANSACTION_PAGE_SIZE = 25;
 export function useTransactionHistoryUi() {
   const [state, dispatch] = useReducer(
     (current: State, action: Action) => ({
@@ -25,7 +25,7 @@ export function useTransactionHistoryUi() {
       selectedAccountIds: null,
       selectedCategoryIds: null,
       selectedCycleId: 'active',
-      visibleCount: PAGE_SIZE,
+      visibleCount: TRANSACTION_PAGE_SIZE,
     },
   );
   const setter =
@@ -34,8 +34,8 @@ export function useTransactionHistoryUi() {
       dispatch({ key, value } as Action);
   return {
     ...state,
-    loadMore: () => dispatch({ key: 'visibleCount', value: (previous: number) => previous + PAGE_SIZE }),
-    resetPage: () => dispatch({ key: 'visibleCount', value: PAGE_SIZE }),
+    loadMore: () => dispatch({ key: 'visibleCount', value: (previous: number) => previous + TRANSACTION_PAGE_SIZE }),
+    resetPage: () => dispatch({ key: 'visibleCount', value: TRANSACTION_PAGE_SIZE }),
     setEditingTx: setter('editingTx'),
     setSearchTerm: setter('searchTerm'),
     setSelectedAccountIds: setter('selectedAccountIds'),
