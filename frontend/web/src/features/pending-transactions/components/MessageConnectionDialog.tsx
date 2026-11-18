@@ -7,12 +7,22 @@ import {
   DialogContent,
   DialogTitle,
   Divider,
+  FormControl,
   IconButton,
+  InputLabel,
+  MenuItem,
+  Select,
   Stack,
   Typography,
 } from '@monochrome-ui/design-system';
-import type { MessageIngestionCredential } from '@kippa/domain';
+import { useState } from 'react';
+import type { MessageIngestionBank, MessageIngestionCredential } from '@kippa/domain';
 import { ContentCopyIcon, KeyIcon } from '@/components/AppIcon';
+
+const bankLabels = {
+  hsbc: 'HSBC',
+  nbe: 'National Bank of Egypt',
+} satisfies Record<MessageIngestionBank, string>;
 
 type Connection = { endpoint: string; token: string };
 type Props = {
@@ -21,7 +31,7 @@ type Props = {
   generated: Connection | null;
   onClose: () => void;
   onCopy: (value: string, label: string) => void;
-  onCreate: () => void;
+  onCreate: (bank: MessageIngestionBank) => void;
   onRevoke: (id: string) => void;
   onDelete: (id: string) => void;
   open: boolean;
@@ -38,6 +48,7 @@ export function MessageConnectionDialog({
   onDelete,
   open,
 }: Props) {
+  const [bank, setBank] = useState<MessageIngestionBank>('hsbc');
   return (
     <Dialog open={open} onClose={() => !busy && onClose()} fullWidth maxWidth="xs">
       <DialogTitle>
@@ -63,6 +74,7 @@ export function MessageConnectionDialog({
                         {credential.label === 'iPhone Shortcut' ? 'Secure message connection' : credential.label}
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
+                        {bankLabels[credential.bank ?? 'hsbc']} ·{' '}
                         {credential.lastUsedAt
                           ? `Used ${new Date(credential.lastUsedAt).toLocaleDateString()}`
                           : 'Never used'}
@@ -117,9 +129,25 @@ export function MessageConnectionDialog({
                 ))}
               </Stack>
             ) : (
-              <Button variant="contained" onClick={onCreate} disabled={busy}>
-                {busy ? 'Creating…' : 'Create secure connection'}
-              </Button>
+              <Stack spacing={1.5}>
+                <FormControl fullWidth>
+                  <InputLabel id="message-connection-bank-label">Bank</InputLabel>
+                  <Select
+                    labelId="message-connection-bank-label"
+                    value={bank}
+                    label="Bank"
+                    onChange={(event) => setBank(event.target.value as MessageIngestionBank)}
+                    disabled={busy}
+                  >
+                    {Object.entries(bankLabels).map(([id, label]) => (
+                      <MenuItem key={id} value={id}>{label}</MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+                <Button variant="contained" onClick={() => onCreate(bank)} loading={busy}>
+                  Create secure connection
+                </Button>
+              </Stack>
             )}
           </Box>
           <Box>

@@ -348,12 +348,16 @@ export type ResolvedPendingFinancialMessage = {
   resolvedByDisplayName: string;
 };
 
+export type MessageIngestionBank = 'hsbc' | 'nbe';
+
 export type MessageIngestionCredential = {
   id: string;
   label: string;
   enabled: boolean;
   createdAt: string;
   lastUsedAt?: string | null;
+  /** Missing on older credentials, which are treated as HSBC. */
+  bank?: MessageIngestionBank;
 };
 
 export type FcmToken = {

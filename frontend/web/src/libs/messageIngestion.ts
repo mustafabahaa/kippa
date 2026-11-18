@@ -3,6 +3,7 @@ import { functions } from '@/config/firebase';
 import { dbLib } from '@/libs/db';
 import type {
   MessageIngestionCredential,
+  MessageIngestionBank,
   PendingFinancialMessage,
   ResolvedPendingFinancialMessage,
 } from '@kippa/domain';
@@ -64,12 +65,15 @@ export const messageIngestionLib = {
     await callable({ credentialId });
   },
 
-  async createCredential(householdId: string): Promise<{ credentialId: string; token: string; endpoint: string }> {
+  async createCredential(
+    householdId: string,
+    bank: MessageIngestionBank = 'hsbc',
+  ): Promise<{ credentialId: string; token: string; endpoint: string }> {
     const callable = httpsCallable<
-      { householdId: string; label: string },
+      { householdId: string; label: string; bank: MessageIngestionBank },
       { credentialId: string; token: string; endpoint: string }
     >(requireFunctions(), 'createMessageIngestionCredential');
-    return (await callable({ householdId, label: 'Secure message connection' })).data;
+    return (await callable({ householdId, label: 'Secure message connection', bank })).data;
   },
 
   async listCredentials(householdId: string): Promise<MessageIngestionCredential[]> {

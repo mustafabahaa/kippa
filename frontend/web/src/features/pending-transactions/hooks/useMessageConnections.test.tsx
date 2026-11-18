@@ -79,4 +79,17 @@ describe('useMessageConnections', () => {
     });
     expect(result.current.generated).toBeNull();
   });
+
+  it('creates HSBC credentials by default and supports an explicit bank', async () => {
+    mocks.createCredential.mockResolvedValue({ credentialId: 'credential-1', token: 'secret', endpoint: '/messages' });
+    const { result } = renderHook(() => useMessageConnections('household'));
+    await act(async () => {
+      await result.current.create();
+    });
+    expect(mocks.createCredential).toHaveBeenCalledWith('household', 'hsbc');
+    await act(async () => {
+      await result.current.create('nbe');
+    });
+    expect(mocks.createCredential).toHaveBeenLastCalledWith('household', 'nbe');
+  });
 });

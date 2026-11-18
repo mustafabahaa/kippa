@@ -8,11 +8,14 @@ import type {
   Category,
   FinanceTransaction,
   Loan,
+  MessageIngestionBank,
   PendingFinancialMessage,
   UserProfile,
 } from '@kippa/domain';
 import {
   buildMessagePreview,
+  isMessageBank,
+  DEFAULT_MESSAGE_BANK,
   parseFinancialMessage,
   type ParsedFinancialMessage,
 } from '../../domain/message-ingestion/parser.js';
@@ -28,6 +31,7 @@ type IngestionCredential = {
   householdId: string;
   label: string;
   secretHash: string;
+  bank?: MessageIngestionBank;
   enabled: boolean;
   createdAt: string;
   lastUsedAt?: string | null;
@@ -211,11 +215,13 @@ export async function resolveLoanSuggestion(
 
 export const createMessageIngestionCredential = onCall(async (request) => {
   const uid = requireAllowedUid(request.auth);
-  const householdId = assertString((request.data as { householdId?: unknown })?.householdId, 'householdId');
-  const label =
-    typeof (request.data as { label?: unknown })?.label === 'string'
-      ? (request.data as { label: string }).label.trim().slice(0, 80) || 'Secure message connection'
-      : 'Secure message connection';
+  const input = (request.data ?? {}) as { householdId?: unknown; label?: unknown; bank?: unknown };
+  const householdId = assertString(input.householdId, 'householdId');
+  const label = typeof input.label === 'string'
+    ? input.label.trim().slice(0, 80) || 'Secure message connection'
+    : 'Secure message connection';
+  const bank = input.bank === undefined ? DEFAULT_MESSAGE_BANK : input.bank;
+  if (!isMessageBank(bank)) throw new HttpsError('invalid-argument', 'Unsupported bank.');
   await requireHouseholdMember(uid, householdId);
 
   const runtimeProjectId = projectID.value();
@@ -232,6 +238,7 @@ export const createMessageIngestionCredential = onCall(async (request) => {
     householdId,
     label,
     secretHash: sha256(secret),
+    bank,
     enabled: true,
     createdAt: now,
     lastUsedAt: null,
@@ -261,6 +268,7 @@ export const listMessageIngestionCredentials = onCall(async (request) => {
         return {
           id: credential.id,
           label: credential.label === 'iPhone Shortcut' ? 'Secure message connection' : credential.label,
+          bank: credential.bank ?? DEFAULT_MESSAGE_BANK,
           enabled: credential.enabled,
           createdAt: credential.createdAt,
           lastUsedAt: credential.lastUsedAt ?? null,
@@ -339,7 +347,8 @@ export const ingestFinancialMessage = onRequest(
       return;
     }
     const source = cleanSource(body.source);
-    const parsedResult = parseFinancialMessage(body.message, source);
+    const bank = credential.bank ?? DEFAULT_MESSAGE_BANK;
+    const parsedResult = parseFinancialMessage(body.message, source, bank);
     const dedupeMaterial =
       typeof body.idempotencyKey === 'string' && body.idempotencyKey.trim()
         ? body.idempotencyKey.trim().slice(0, 256)
@@ -462,7 +471,7 @@ export const ingestFinancialMessage = onRequest(
           suggestedDestinationAccountId: destAccount?.id ?? null,
           transferLeg: null, // fully merged — no longer a half-pending
           mergeKey: null,
-          messagePreview: `${buildMessagePreview(body.message)} · ${half.messagePreview}`,
+          messagePreview: `${buildMessagePreview(body.message, bank)} · ${half.messagePreview}`,
         };
 
         const batch = db.batch();
@@ -512,7 +521,7 @@ export const ingestFinancialMessage = onRequest(
         ? `${loanSuggestion.loanName} — installment ${loanSuggestion.installmentNumber}`
         : parsed.description,
       counterparty: parsed.counterparty ?? null,
-      messagePreview: buildMessagePreview(body.message),
+      messagePreview: buildMessagePreview(body.message, bank),
       accountHintLast4: parsed.accountHintLast4 ?? null,
       destinationHintLast4: parsed.destinationHintLast4 ?? null,
       suggestedAccountId: suggestions.accountId ?? null,

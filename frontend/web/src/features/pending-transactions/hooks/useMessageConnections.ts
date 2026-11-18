@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useSnackbar } from 'notistack';
-import type { MessageIngestionCredential } from '@kippa/domain';
+import type { MessageIngestionBank, MessageIngestionCredential } from '@kippa/domain';
 import { messageIngestionLib } from '@/libs/messageIngestion';
 
 export function useMessageConnections(householdId: string) {
@@ -15,11 +15,11 @@ export function useMessageConnections(householdId: string) {
       .then(setCredentials)
       .catch(() => setCredentials([]));
   }, [householdId]);
-  const create = async () => {
+  const create = async (bank: MessageIngestionBank = 'hsbc') => {
     if (busy) return;
     setBusy(true);
     try {
-      const result = await messageIngestionLib.createCredential(householdId);
+      const result = await messageIngestionLib.createCredential(householdId, bank);
       setGenerated({ credentialId: result.credentialId, token: result.token, endpoint: result.endpoint });
       await refresh();
     } catch (error) {

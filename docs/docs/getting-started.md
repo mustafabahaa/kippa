@@ -341,6 +341,8 @@ firebase deploy --only firestore:indexes   # indexes only
 
 ---
 
+For optional iPhone bank-message ingestion, follow [Bank SMS automation](./bank-message-automation.md).
+
 ## 11. Post-deploy checklist
 
 After your first deploy, confirm:

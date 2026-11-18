@@ -34,6 +34,7 @@ describe('MessageConnectionDialog', () => {
     );
 
     expect(screen.getByText('Secure message connection')).toBeInTheDocument();
+    expect(screen.getByText('HSBC')).toBeInTheDocument();
     expect(screen.queryByText('iPhone Shortcut')).toBeNull();
     await user.click(screen.getByRole('button', { name: 'Delete' }));
     expect(onDelete).toHaveBeenCalledWith('credential-1');
@@ -57,6 +58,18 @@ describe('MessageConnectionDialog', () => {
     );
     expect(screen.getByRole('button', { name: 'Disable' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Close' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'Creating…' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Create secure connection' })).toBeDisabled();
+  });
+
+  it('creates a connection for the selected bank and defaults to HSBC', async () => {
+    const user = userEvent.setup();
+    const onCreate = vi.fn();
+    render(<MessageConnectionDialog {...props({ credentials: [], onCreate })} />);
+
+    expect(screen.getByRole('combobox', { name: 'Bank' })).toHaveTextContent('HSBC');
+    await user.click(screen.getByRole('combobox', { name: 'Bank' }));
+    await user.click(await screen.findByRole('option', { name: 'National Bank of Egypt' }));
+    await user.click(screen.getByRole('button', { name: 'Create secure connection' }));
+    expect(onCreate).toHaveBeenCalledWith('nbe');
   });
 });

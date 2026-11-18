@@ -7,7 +7,7 @@ const sidebars: SidebarsConfig = {
     {
       type: 'category',
       label: 'Product',
-      items: ['product-spec', 'ux-flows', 'dashboard-calculations', 'notifications'],
+      items: ['product-spec', 'ux-flows', 'dashboard-calculations', 'notifications', 'bank-message-automation'],
     },
     {
       type: 'category',
