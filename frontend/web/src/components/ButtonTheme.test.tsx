@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { Button, CssBaseline, IconButton, ThemeProvider, Typography } from '@monochrome-ui/design-system';
 import { createMonochromeTheme, modeTokens } from '@monochrome-ui/design-system';
-import { createKippaTheme } from '@/config/theme';
 
 function rgb(hex: string) {
   const value = hex.replace('#', '');
@@ -61,11 +60,13 @@ describe('contained primary button theme states', () => {
 describe('loading buttons', () => {
   it.each(['light', 'dark'] as const)('hide action content and preserve its accessible name in %s mode', (mode) => {
     render(
-      <ThemeProvider theme={createKippaTheme(mode)}>
+      <ThemeProvider theme={createMonochromeTheme(mode)}>
         <CssBaseline />
         <Button variant="contained" loading>
           Save <Typography component="span" color="text.secondary">changes</Typography>
         </Button>
+        <Button variant="primaryAction" loading>Continue</Button>
+        <Button variant="assistantSend" loading>Send</Button>
         <IconButton loading aria-label="Refresh"><span>Refresh icon</span></IconButton>
       </ThemeProvider>,
     );
@@ -74,9 +75,12 @@ describe('loading buttons', () => {
     const refresh = screen.getByRole('button', { name: 'Refresh' });
     expect(save).toBeDisabled();
     expect(refresh).toBeDisabled();
+    expect(getComputedStyle(refresh).color).toBe('rgba(0, 0, 0, 0)');
     expect(getComputedStyle(save).color).toBe('rgba(0, 0, 0, 0)');
+    expect(getComputedStyle(screen.getByRole('button', { name: 'Continue' })).color).toBe('rgba(0, 0, 0, 0)');
+    expect(getComputedStyle(screen.getByRole('button', { name: 'Send' })).color).toBe('rgba(0, 0, 0, 0)');
     expect(getComputedStyle(screen.getByText('changes')).opacity).toBe('0');
     expect(getComputedStyle(screen.getByText('Refresh icon')).opacity).toBe('0');
-    expect(screen.getAllByRole('progressbar')).toHaveLength(2);
+    expect(screen.getAllByRole('progressbar')).toHaveLength(4);
   });
 });

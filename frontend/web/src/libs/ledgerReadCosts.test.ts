@@ -1,3 +1,4 @@
+import { orderBy, where } from 'firebase/firestore';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Account, FinanceTransaction, LedgerLine } from '@kippa/domain';
 
@@ -30,10 +31,11 @@ describe('ledger read cost', () => {
 
     const result = await ledgerLib.getTransactionHistoryPage('h1', 'cycle-a', 1, cursor);
 
-    expect(mocks.getDocsPage).toHaveBeenCalledWith('h1', 'transactions', 1, cursor, {
-      sortByDate: true,
-      budgetCycleId: 'cycle-a',
-    });
+    expect(mocks.getDocsPage).toHaveBeenCalledWith('h1', 'transactions', 1, cursor, [
+      where('budgetCycleId', '==', 'cycle-a'),
+      orderBy('date', 'desc'),
+      orderBy('createdAt', 'desc'),
+    ]);
     expect(mocks.getDocs).toHaveBeenCalledExactlyOnceWith('h1', 'ledgerLines', [
       { field: 'transactionId', op: 'in', value: [transaction.id] },
     ]);
@@ -48,6 +50,20 @@ describe('ledger read cost', () => {
       lines: [],
       nextCursor: null,
     });
+    expect(mocks.getDocsPage).toHaveBeenCalledWith('h1', 'transactions', 25, undefined, [
+      orderBy('date', 'desc'),
+      orderBy('createdAt', 'desc'),
+    ]);
     expect(mocks.getDocs).not.toHaveBeenCalled();
+  });
+
+  it('keeps reconciliation history ordered by creation date', async () => {
+    const page = { items: [], nextCursor: null };
+    mocks.getDocsPage.mockResolvedValue(page);
+
+    expect(await ledgerLib.getReconciliationsPage('h1', 7)).toBe(page);
+    expect(mocks.getDocsPage).toHaveBeenCalledWith('h1', 'reconciliations', 7, undefined, [
+      orderBy('createdAt', 'desc'),
+    ]);
   });
 });

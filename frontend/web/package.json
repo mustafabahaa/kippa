@@ -21,7 +21,7 @@
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
     "@monochrome-ai/core": "https://codeload.github.com/mustafabahaa/monochrome-ai/tar.gz/3ecabd9",
-    "@monochrome-ui/design-system": "https://codeload.github.com/mustafabahaa/monochrome-ui/tar.gz/3ab41e7",
+    "@monochrome-ui/design-system": "https://codeload.github.com/mustafabahaa/monochrome-ui/tar.gz/896e29f",
     "@mui/icons-material": "^7.2.0",
     "@mui/material": "^7.2.0",
     "@mui/x-charts": "^9.7.0",

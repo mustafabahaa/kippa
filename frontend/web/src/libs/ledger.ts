@@ -1,3 +1,4 @@
+import { orderBy, where, type QueryConstraint, type QueryDocumentSnapshot } from 'firebase/firestore';
 import { includeUnrecordedCardFees } from './creditCardFees';
 import { dbLib } from '@/libs/db';
 import { auditLogLib } from '@/libs/auditLog';
@@ -167,12 +168,11 @@ export const ledgerLib = {
     householdId: string,
     cycleId: string | undefined,
     pageSize: number,
-    cursor?: import('firebase/firestore').QueryDocumentSnapshot,
+    cursor?: QueryDocumentSnapshot,
   ) {
-    const page = await dbLib.getDocsPage(householdId, 'transactions', pageSize, cursor, {
-      sortByDate: true,
-      budgetCycleId: cycleId,
-    });
+    const constraints: QueryConstraint[] = [orderBy('date', 'desc'), orderBy('createdAt', 'desc')];
+    if (cycleId) constraints.unshift(where('budgetCycleId', '==', cycleId));
+    const page = await dbLib.getDocsPage(householdId, 'transactions', pageSize, cursor, constraints);
     const transactions = page.items as FinanceTransaction[];
     return {
       transactions,
@@ -272,9 +272,9 @@ export const ledgerLib = {
   async getReconciliationsPage(
     householdId: string,
     pageSize: number,
-    cursor?: import('firebase/firestore').QueryDocumentSnapshot,
+    cursor?: QueryDocumentSnapshot,
   ) {
-    return dbLib.getDocsPage(householdId, 'reconciliations', pageSize, cursor);
+    return dbLib.getDocsPage(householdId, 'reconciliations', pageSize, cursor, [orderBy('createdAt', 'desc')]);
   },
 
   async createReconciliation(
