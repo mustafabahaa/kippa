@@ -5,6 +5,7 @@ import { auditLogLib } from '@/libs/auditLog';
 import { detectBaseCurrency, currencySymbol } from '@/libs/currencyMeta';
 import {
   Account,
+  BudgetAllocation,
   Category,
   FinanceTransaction,
   Household,
@@ -13,6 +14,7 @@ import {
   CurrencyCode,
   LedgerLine,
 } from '@kippa/domain';
+import { allocationDocId, dedupeAllocations } from './allocations';
 
 type AuditUser = { uid: string; displayName: string; photoURL?: string };
 
@@ -116,6 +118,119 @@ export const ledgerLib = {
         'category_updated',
         `${auditUser.displayName} ${action} category: ${updated.name}`,
         { categoryId, name: updated.name, ...updates },
+      );
+    }
+  },
+
+  async isCategoryUsed(householdId: string, categoryId: string): Promise<boolean> {
+    const [transactions, allocations] = await Promise.all([
+      dbLib.getDocs(householdId, 'transactions', [{ field: 'categoryId', op: '==', value: categoryId }]),
+      dbLib.getDocs(householdId, 'budgetAllocations', [{ field: 'categoryId', op: '==', value: categoryId }]),
+    ]);
+    return transactions.length > 0 || allocations.length > 0;
+  },
+
+  async deleteCategoryAndReassign(
+    householdId: string,
+    categoryId: string,
+    replacementCategoryId?: string,
+    auditUser?: AuditUser,
+  ): Promise<void> {
+    if (categoryId === replacementCategoryId) throw new Error('Choose a different replacement category.');
+
+    const [categories, transactions, allocations] = await Promise.all([
+      dbLib.getDocs(householdId, 'categories') as Promise<Category[]>,
+      dbLib.getDocs(householdId, 'transactions', [
+        { field: 'categoryId', op: '==', value: categoryId },
+      ]) as Promise<FinanceTransaction[]>,
+      dbLib.getDocs(householdId, 'budgetAllocations', replacementCategoryId
+        ? [{ field: 'categoryId', op: 'in', value: [categoryId, replacementCategoryId] }]
+        : [{ field: 'categoryId', op: '==', value: categoryId }]) as Promise<BudgetAllocation[]>,
+    ]);
+    const source = categories.find((category) => category.id === categoryId);
+    if (!source) throw new Error('Category not found.');
+    if (!replacementCategoryId) {
+      if (transactions.length || allocations.length) {
+        throw new Error('This category is in use. Choose a replacement category first.');
+      }
+      await dbLib.executeBatch(householdId, [{ type: 'delete', collectionName: 'categories', docId: categoryId }]);
+      if (auditUser) {
+        await auditLogLib.logAction(
+          householdId,
+          auditUser,
+          'category_deleted',
+          `${auditUser.displayName} deleted unused category: ${source.name}`,
+          { categoryId, name: source.name },
+        );
+      }
+      return;
+    }
+
+    const replacement = categories.find((category) => category.id === replacementCategoryId && category.isActive);
+    if (!replacement || replacement.type !== source.type) {
+      throw new Error('Choose an active replacement category of the same type.');
+    }
+
+    // Move transaction references in bounded batches. The source category is
+    // deleted last, so a failed migration can be safely retried.
+    const transactionRefs = transactions.filter((transaction) => transaction.categoryId === categoryId);
+    for (let offset = 0; offset < transactionRefs.length; offset += 450) {
+      await dbLib.executeBatch(
+        householdId,
+        transactionRefs.slice(offset, offset + 450).map((transaction) => ({
+          type: 'set' as const,
+          collectionName: 'transactions',
+          docId: transaction.id,
+          data: { ...transaction, categoryId: replacementCategoryId },
+        })),
+      );
+    }
+
+    const sourceAllocations = allocations.filter((allocation) => allocation.categoryId === categoryId);
+    const cycles = [...new Set(sourceAllocations.map((allocation) => allocation.budgetCycleId))];
+    for (const budgetCycleId of cycles) {
+      const inCycle = allocations.filter((allocation) => allocation.budgetCycleId === budgetCycleId);
+      const sourceAllocation = dedupeAllocations(inCycle.filter((allocation) => allocation.categoryId === categoryId))[0];
+      if (!sourceAllocation) continue;
+      const targetAllocation = dedupeAllocations(inCycle.filter((allocation) => allocation.categoryId === replacementCategoryId))[0];
+      const id = allocationDocId(budgetCycleId, replacementCategoryId);
+      const merged: BudgetAllocation = {
+        ...(targetAllocation ?? sourceAllocation),
+        id,
+        categoryId: replacementCategoryId,
+        plannedAmount: (sourceAllocation.plannedAmount ?? 0) + (targetAllocation?.plannedAmount ?? 0),
+        carryLeftover: Boolean(sourceAllocation.carryLeftover || targetAllocation?.carryLeftover),
+        ...(targetAllocation?.notes || sourceAllocation.notes
+          ? { notes: [targetAllocation?.notes, sourceAllocation.notes].filter(Boolean).join('\n') }
+          : {}),
+      };
+      const operations = [
+        { type: 'set' as const, collectionName: 'budgetAllocations', docId: id, data: merged },
+        ...inCycle
+          .filter(
+            (allocation) =>
+              (allocation.categoryId === categoryId || allocation.categoryId === replacementCategoryId) &&
+              allocation.id !== id,
+          )
+          .map((allocation) => ({
+            type: 'delete' as const,
+            collectionName: 'budgetAllocations',
+            docId: allocation.id,
+          })),
+      ];
+      await dbLib.executeBatch(householdId, operations);
+    }
+
+    await dbLib.executeBatch(householdId, [
+      { type: 'delete', collectionName: 'categories', docId: categoryId },
+    ]);
+    if (auditUser) {
+      await auditLogLib.logAction(
+        householdId,
+        auditUser,
+        'category_deleted',
+        `${auditUser.displayName} deleted category: ${source.name} and reassigned its records to ${replacement.name}`,
+        { categoryId, name: source.name, replacementCategoryId, replacementCategoryName: replacement.name },
       );
     }
   },

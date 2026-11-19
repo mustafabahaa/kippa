@@ -5,6 +5,7 @@
  * data access goes through the Admin-backed dbLib shim.
  */
 export const isFirebaseConfigured = true;
+export const isFirebaseEmulatorMode = false;
 export const isFirebaseReady = true;
 export const db = { __kippaServerShim: true };
 export const functions = { __kippaServerShim: true };

@@ -12,5 +12,6 @@ const browserOnly =
 export const signOut = browserOnly('signOut');
 export const onAuthStateChanged = browserOnly('onAuthStateChanged');
 export const signInWithPopup = browserOnly('signInWithPopup');
+export const signInWithEmailAndPassword = browserOnly('signInWithEmailAndPassword');
 export const signInWithCustomToken = browserOnly('signInWithCustomToken');
 export const GoogleAuthProvider = class GoogleAuthProvider {};

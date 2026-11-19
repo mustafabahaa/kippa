@@ -106,7 +106,7 @@ export function MessageConnectionDialog({
             </Typography>
             <Divider sx={{ my: 1.5 }} />
             {generated ? (
-              <Stack spacing={1.5}>
+              <Stack spacing={2}>
                 {(
                   [
                     ['Endpoint', generated.endpoint],
@@ -129,7 +129,7 @@ export function MessageConnectionDialog({
                 ))}
               </Stack>
             ) : (
-              <Stack spacing={1.5}>
+              <Stack spacing={2}>
                 <FormControl fullWidth>
                   <InputLabel id="message-connection-bank-label">Bank</InputLabel>
                   <Select

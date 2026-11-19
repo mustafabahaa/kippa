@@ -24,7 +24,7 @@ export function ActiveCycleSection({
   onToggleBudget,
 }: ActiveCycleSectionProps) {
   return (
-    <Stack spacing={2.5}>
+    <Stack spacing={3.5}>
       <SectionHeading
         icon={<EventIcon size={22} strokeWidth={1.8} />}
         title={cycle.name}
@@ -85,7 +85,7 @@ export function ActiveCycleSection({
         </Grid>
       )}
 
-      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} alignItems={{ sm: 'center' }}>
+      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems={{ sm: 'center' }}>
         <Button
           variant="contained"
           startIcon={
@@ -131,7 +131,7 @@ export function CycleHistoryItem({ cycle, isEditing, onToggleBudget, onViewRepor
           direction={{ xs: 'column', sm: 'row' }}
           justifyContent="space-between"
           alignItems={{ xs: 'flex-start', sm: 'center' }}
-          spacing={1.5}
+          spacing={2}
         >
           <Box sx={{ minWidth: 0 }}>
             <Typography variant="metricTitle">{cycle.name}</Typography>

@@ -14,7 +14,7 @@ import {
   Tooltip,
   Typography,
 } from '@monochrome-ui/design-system';
-import { FinanceTransaction, Category, LedgerLine, Account } from '@kippa/domain';
+import { FinanceTransaction, Category, LedgerLine, Account, Card } from '@kippa/domain';
 import { useAppContext } from '@/hooks/useAppContext';
 import { useHouseholdBaseCurrency } from '@/hooks/useFinance';
 import { usePrivacyMask } from '@/hooks/usePrivacyMask';
@@ -26,6 +26,8 @@ interface TransactionsListItemProps {
   categories: Category[];
   ledgerLines: LedgerLine[];
   accounts?: Account[];
+  cards?: Card[];
+  compact?: boolean;
   onEdit: (tx: FinanceTransaction) => void;
   onVoid: (txId: string) => void;
 }
@@ -35,6 +37,8 @@ export const TransactionsListItem: React.FC<TransactionsListItemProps> = ({
   categories,
   ledgerLines,
   accounts = [],
+  cards = [],
+  compact = false,
   onEdit,
   onVoid,
 }) => {
@@ -48,6 +52,18 @@ export const TransactionsListItem: React.FC<TransactionsListItemProps> = ({
   const firstLine = txLines.find((l) => l.signedAmount !== 0) || txLines[0];
   const amount = firstLine ? Number(Math.abs(firstLine.signedAmount).toFixed(2)) : 0;
   const currency = firstLine ? firstLine.currency : baseCurrency;
+  const paymentLine = txLines.find((line) => line.signedAmount < 0) ?? firstLine;
+  const paymentAccount = accounts.find((account) => account.id === paymentLine?.accountId);
+  const linkedCards = cards.filter(
+    (card) => card.isActive && card.parentAccountId === paymentAccount?.id,
+  );
+  const paymentSource = paymentAccount
+    ? paymentAccount.type === 'cash'
+      ? 'Cash'
+      : linkedCards.length === 1
+        ? `${linkedCards[0].network && linkedCards[0].network !== 'other' ? `${linkedCards[0].network.toUpperCase()} ` : ''}${linkedCards[0].last4 ? `•••• ${linkedCards[0].last4} · ` : ''}${paymentAccount.name}`
+        : paymentAccount.name
+    : null;
   const { maskDigits } = usePrivacyMask();
   const householdMember = householdMembers.find((member) => member.uid === tx.createdBy);
   const isCurrentUser = tx.createdBy === userProfile?.uid;
@@ -67,6 +83,7 @@ export const TransactionsListItem: React.FC<TransactionsListItemProps> = ({
   const renderItemDetails = () => {
     let title: string;
     let description: string | null | undefined;
+    let source: string | null = null;
 
     switch (tx.type) {
       case 'transfer': {
@@ -90,26 +107,36 @@ export const TransactionsListItem: React.FC<TransactionsListItemProps> = ({
       case 'adjustment':
         title = 'Reconciliation';
         description = tx.description;
+        source = paymentAccount ? `Account: ${paymentAccount.name}` : null;
         break;
       case 'income':
         title = cat?.name || 'Income';
         description = tx.description;
+        source = paymentAccount ? `Received in ${paymentAccount.name}` : null;
         break;
       case 'expense':
       default: {
         title = cat?.name || 'Expense';
         description = tx.description;
+        source = paymentSource ? `Paid from ${paymentSource}` : null;
         break;
       }
     }
 
     return (
-      <Stack spacing={0.5} alignItems={{ xs: 'flex-start', sm: 'flex-end' }} sx={{ minWidth: 0, width: '100%' }}>
+      <Stack
+        spacing={0.5}
+        alignItems={compact ? { xs: 'flex-start', lg: 'flex-end' } : { xs: 'flex-start', sm: 'flex-end' }}
+        sx={{ minWidth: 0, width: '100%' }}
+      >
         <Typography
           variant="h6"
           noWrap
           color="text.primary"
-          sx={{ width: '100%', maxWidth: '100%', minWidth: 0, textAlign: { xs: 'left', sm: 'right' } }}
+          sx={{
+            width: '100%', maxWidth: '100%', minWidth: 0,
+            textAlign: compact ? { xs: 'left', lg: 'right' } : { xs: 'left', sm: 'right' },
+          }}
         >
           {title}
         </Typography>
@@ -117,9 +144,28 @@ export const TransactionsListItem: React.FC<TransactionsListItemProps> = ({
           <Typography
             variant="sectionSubtitle"
             color="text.secondary"
-            sx={{ width: '100%', maxWidth: '100%', textAlign: { xs: 'left', sm: 'right' }, whiteSpace: 'normal', overflowWrap: 'anywhere' }}
+            sx={{
+              width: '100%', maxWidth: '100%',
+              textAlign: compact ? { xs: 'left', lg: 'right' } : { xs: 'left', sm: 'right' },
+              whiteSpace: 'normal', overflowWrap: 'anywhere',
+            }}
           >
             {description}
+          </Typography>
+        )}
+        {source && (
+          <Typography
+            variant="metricMetadata"
+            color="text.secondary"
+            sx={{
+              width: '100%',
+              maxWidth: '100%',
+              textAlign: compact ? { xs: 'left', lg: 'right' } : { xs: 'left', sm: 'right' },
+              whiteSpace: 'normal',
+              overflowWrap: 'anywhere',
+            }}
+          >
+            {source}
           </Typography>
         )}
       </Stack>
@@ -134,17 +180,16 @@ export const TransactionsListItem: React.FC<TransactionsListItemProps> = ({
           minHeight: 84,
           px: 2,
           py: { xs: 2, sm: 1.75 },
+          '--ds-stepper-node-y': compact ? { xs: '51px', lg: '50%' } : { xs: '51px', sm: '50%' },
           display: 'grid',
-          gridTemplateColumns: {
-            xs: 'minmax(0, 1fr) auto',
-            sm: 'minmax(0, 1fr) minmax(0, 1.2fr) auto',
-          },
-          gridTemplateAreas: {
-            xs: '"timeline actions" "details details"',
-            sm: '"timeline details actions"',
-          },
+          gridTemplateColumns: compact
+            ? { xs: 'minmax(0, 1fr) auto', lg: 'minmax(0, 1fr) minmax(0, 1.2fr) auto' }
+            : { xs: 'minmax(0, 1fr) auto', sm: 'minmax(0, 1fr) minmax(0, 1.2fr) auto' },
+          gridTemplateAreas: compact
+            ? { xs: '"timeline actions" "details details"', lg: '"timeline details actions"' }
+            : { xs: '"timeline actions" "details details"', sm: '"timeline details actions"' },
           columnGap: { xs: 1.5, sm: 2.5 },
-          rowGap: { xs: 1.5, sm: 0 },
+          rowGap: compact ? { xs: 1.5, lg: 0 } : { xs: 1.5, sm: 0 },
           alignItems: 'center',
         }}
         data-voided={tx.status === 'voided' ? 'true' : undefined}
@@ -187,7 +232,14 @@ export const TransactionsListItem: React.FC<TransactionsListItemProps> = ({
             </Typography>
           </Stack>
         </Box>
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end', width: '100%', minWidth: 0, gridArea: 'details', pl: { xs: 5, sm: 0 } }}>
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: compact ? { xs: 'flex-start', lg: 'flex-end' } : 'flex-end',
+            width: '100%', minWidth: 0, gridArea: 'details',
+            pl: compact ? { xs: 5, lg: 0 } : { xs: 5, sm: 0 },
+          }}
+        >
           {renderItemDetails()}
         </Box>
         <IconButton

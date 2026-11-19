@@ -1,9 +1,21 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Avatar, Box, Button, Chip, Grid, Paper, Skeleton, Stack, TextField, Typography } from '@monochrome-ui/design-system';
+import {
+  Avatar,
+  Box,
+  Button,
+  Chip,
+  Grid,
+  InputAdornment,
+  Paper,
+  Skeleton,
+  SectionHeader as SectionHeading,
+  Stack,
+  TextField,
+  Typography,
+} from '@monochrome-ui/design-system';
 import type { AuditAction, AuditLogEntry } from '@kippa/domain';
 import { SearchIcon } from '@/components/AppIcon';
 import { PageHeader } from '@monochrome-ui/design-system';
-import { SectionHeading } from '@/features/shared/components/SectionHeading';
 import { EmptyLayout } from '@/features/shared/components/EmptyLayout';
 import { MultiSelectFilter } from '@/features/shared/components/MultiSelectFilter';
 import { useAuditLog, useUnreadActivityCount } from '@/hooks/useFinance';
@@ -21,7 +33,7 @@ const ACTION_GROUPS: ActionGroup[] = [
     actions: ['transaction_created', 'transaction_updated', 'transaction_voided'],
   },
   { id: 'accounts', label: 'Accounts', actions: ['account_created', 'account_updated'] },
-  { id: 'categories', label: 'Categories', actions: ['category_created', 'category_updated'] },
+  { id: 'categories', label: 'Categories', actions: ['category_created', 'category_updated', 'category_deleted'] },
   { id: 'cycles', label: 'Budget cycles', actions: ['cycle_created', 'cycle_status_changed'] },
   {
     id: 'allocations',
@@ -140,12 +152,12 @@ function ActivityHistorySkeleton() {
       <PageHeader title="Activity history" subtitle="A chronological record of changes across your household." />
       <Stack spacing={2.5} sx={{ width: '100%', maxWidth: 1000, alignSelf: 'center' }}>
         <Box component="section" >
-          <Stack spacing={1.25} >
+          <Stack spacing={3.5}>
             <Box>
               <Skeleton variant="text" width={100} height={28} />
               <Skeleton variant="text" width="100%" height={20} sx={{ maxWidth: 360 }} />
             </Box>
-            <Grid container spacing={1.25}>
+            <Grid container spacing={2}>
               <Grid size={{ xs: 12, sm: 6, md: 6 }}>
                 <Skeleton variant="rounded" height={56} />
               </Grid>
@@ -245,9 +257,9 @@ export function ActivityHistory() {
 
       <Stack spacing={{ xs: 2, md: 2.5 }} sx={{ width: '100%', maxWidth: 1000, alignSelf: 'center' }}>
         <Box component="section" >
-          <Stack spacing={1.25} >
+          <Stack spacing={3.5}>
             <SectionHeading title="Filters" subtitle="Search activity and narrow it by action or household member." />
-            <Grid container spacing={1.25}>
+            <Grid container spacing={2}>
               <Grid size={{ xs: 12, sm: 6, md: 6 }}>
                 <TextField
                   fullWidth
@@ -255,7 +267,15 @@ export function ActivityHistory() {
                   placeholder="Search activity"
                   value={searchTerm}
                   onChange={(event) => handleSearch(event.target.value)}
-                  slotProps={{ input: { startAdornment: <SearchIcon fontSize="small" /> } }}
+                  slotProps={{
+                    input: {
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <SearchIcon fontSize="small" />
+                        </InputAdornment>
+                      ),
+                    },
+                  }}
                 />
               </Grid>
               <Grid size={{ xs: 12, sm: 6, md: 3 }}>
@@ -289,7 +309,7 @@ export function ActivityHistory() {
         </Box>
 
         <Box component="section" >
-          <Stack spacing={{ xs: 1.5, md: 2 }} sx={{ width: '100%', maxWidth: 900, mx: 'auto' }}>
+          <Stack spacing={{ xs: 2, md: 2 }} sx={{ width: '100%', maxWidth: 900, mx: 'auto' }}>
             <SectionHeading
               title="Activity history"
               subtitle="Recent household changes, with the person and time for each event."

@@ -89,6 +89,20 @@ npm run typecheck    # TypeScript, no emit
 npm run deploy       # build + firebase deploy (hosting + firestore + functions)
 ```
 
+### Isolated local finance demo
+
+Use the Firebase Emulators and deterministic demo records when previewing authenticated pages or destructive flows. These commands use the `demo-kippa-local` project ID and emulator-only configuration, so the app refuses to connect to a live Firebase project.
+
+Run these commands in separate terminals:
+
+```bash
+npm run emulators:local
+npm run seed:local
+npm run dev:local
+```
+
+Then open `http://localhost:5173/categories?visual-preview=1`. The seeded household has a used expense category with a transaction and budget allocation, a destination category, and an unused category. Emulator data is disposable and resets when the emulators stop.
+
 ## 📂 Project structure
 
 ```

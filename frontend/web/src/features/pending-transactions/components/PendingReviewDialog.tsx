@@ -226,20 +226,20 @@ export function PendingReviewDialog(props: Props) {
         <Button
           color="inherit"
           loading={state === 'discarding'}
-          startIcon={<DeleteIcon />}
+          startIcon={state === 'discarding' ? undefined : <DeleteIcon />}
           onClick={onDiscard}
           disabled={busy}
         >
-          Discard
+          {state === 'discarding' ? null : 'Discard'}
         </Button>
         <Button
           variant="contained"
           loading={state === 'approving'}
-          startIcon={<CheckCircleIcon />}
+          startIcon={state === 'approving' ? undefined : <CheckCircleIcon />}
           onClick={onApprove}
           disabled={!canApprove || busy}
         >
-          Approve
+          {state === 'approving' ? null : 'Approve'}
         </Button>
       </DialogActions>
     </Dialog>

@@ -82,7 +82,7 @@ export function CreateCycleDialog({ busy, onClose, onCreate, open }: CreateCycle
               error={nameError}
               helperText={nameError ? 'A cycle name is required.' : undefined}
             />
-            <Grid container spacing={1.5}>
+            <Grid container spacing={2}>
               <Grid size={{ xs: 12, sm: 6 }}>
                 <LocalizationProvider dateAdapter={AdapterDateFns}>
                   <DatePicker

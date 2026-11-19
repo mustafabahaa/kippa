@@ -162,11 +162,11 @@ export function BudgetAllocationsConfig({
         </Typography>
         <Button
           variant="text"
-          startIcon={<ContentCopyIcon size={22} strokeWidth={1.8} />}
+          startIcon={isCopyingPrevious ? undefined : <ContentCopyIcon size={22} strokeWidth={1.8} />}
           onClick={handleCopyPreviousAllocations}
           loading={isCopyingPrevious}
         >
-          Copy previous
+          {isCopyingPrevious ? null : 'Copy previous'}
         </Button>
       </Box>
 

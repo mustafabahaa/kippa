@@ -217,12 +217,12 @@ export function Accounts() {
 
                     return (
                       <Box key={account.id} sx={{ py: { xs: 2, sm: 2.5 }, minWidth: 0 }}>
-                        <Stack spacing={{ xs: 1.5, sm: 2 }}>
+                        <Stack spacing={2}>
                           <Stack
                             direction={{ xs: 'column', sm: 'row' }}
                             alignItems={{ xs: 'stretch', sm: 'center' }}
                             justifyContent="space-between"
-                            spacing={{ xs: 1.5, sm: 2 }}
+                            spacing={{ xs: 2, sm: 2 }}
                           >
                             <Stack direction="row" spacing={1.5} alignItems="center" sx={{ minWidth: 0 }}>
                               <Paper variant="iconBadge">{getAccountIcon(account.type)}</Paper>
@@ -241,7 +241,7 @@ export function Accounts() {
                               direction={{ xs: 'column', sm: 'row' }}
                               alignItems={{ xs: 'stretch', sm: 'center' }}
                               justifyContent={{ xs: 'flex-start', sm: 'flex-end' }}
-                              spacing={{ xs: 1, sm: 2 }}
+                              spacing={{ xs: 2, sm: 2 }}
                               sx={{ pl: { xs: 7, sm: 0 }, minWidth: 0 }}
                             >
                               <ForeignBalanceTooltip

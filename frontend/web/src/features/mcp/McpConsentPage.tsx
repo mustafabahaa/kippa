@@ -226,7 +226,7 @@ export function McpConsentPage() {
                 )}
                 <Stack
                   direction={{ xs: 'column-reverse', sm: 'row' }}
-                  spacing={1.5}
+                  spacing={2}
                   justifyContent="flex-end"
                   alignItems={{ xs: 'stretch', sm: 'center' }}
                 >

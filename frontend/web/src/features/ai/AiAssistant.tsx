@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   AiAssistantFooter,
   AiAssistantLoadingBadge,
@@ -40,6 +40,7 @@ import {
 } from './types';
 import { AiConnectionPanel, type AiConnectionStatus } from './AiConnectionPanel';
 import { disconnectAiConnection } from './services/connection';
+import { useAiConnection } from './useAiConnection';
 import { aiProvider } from './services/aiProvider';
 import { mergeConversationMessages } from './conversationUtils';
 import {
@@ -126,6 +127,14 @@ export function AiAssistant() {
   const [connectionResult, setConnectionResult] = useState<{ endpoint: string; token: string } | null>(null);
   const [aiConnectionStatus, setAiConnectionStatus] = useState<AiConnectionStatus>(
     aiProvider.usesAccountConnection ? 'checking' : 'connected',
+  );
+  const { setStatus: setShellAiConnectionStatus } = useAiConnection();
+  const updateAiConnectionStatus = useCallback(
+    (status: AiConnectionStatus) => {
+      setAiConnectionStatus(status);
+      setShellAiConnectionStatus(status);
+    },
+    [setShellAiConnectionStatus],
   );
   const [isClearOpen, setIsClearOpen] = useState(false);
   const [isClearingChat, setIsClearingChat] = useState(false);
@@ -414,24 +423,22 @@ export function AiAssistant() {
     return (
       <Box key={message.id} sx={{ width: '100%', display: 'flex', justifyContent: isUser ? 'flex-end' : 'flex-start' }}>
         {isUser ? (
-          <Paper variant="assistantUserMessage" sx={{ maxWidth: { xs: '88%', sm: '72%' } }}>
-            <Typography variant="assistantMessage" sx={{ whiteSpace: 'pre-wrap' }}>
+          <Paper variant="outgoingMessage" sx={{ maxWidth: { xs: '88%', sm: '72%' } }}>
+            <Typography variant="messageBody" sx={{ whiteSpace: 'pre-wrap' }}>
               {message.content}
             </Typography>
           </Paper>
         ) : (
           <>
-            <Paper variant="assistantMessageAvatar" sx={{ mt: 0.25, mr: 1.5 }}>
+            <Paper variant="messageAvatar" sx={{ mt: 0.25, mr: 1.5 }}>
               <MessageIcon />
             </Paper>
             <Stack spacing={1.5} sx={{ width: 'calc(100% - 44px)', maxWidth: 620 }}>
-              <Paper variant="assistantReply">
-                <Typography component="div" variant="assistantMessage">
+              <Paper variant="richTextMessage">
+                <Typography component="div" variant="messageBody">
                   <Markdown remarkPlugins={[remarkGfm]}>{message.content}</Markdown>
                 </Typography>
-                {streaming && (
-                  <AiAssistantStreamCursor />
-                )}
+                {streaming && <AiAssistantStreamCursor />}
               </Paper>
               {message.charts?.map((chart, index) => (
                 <AiChart key={`${message.id}-chart-${index}`} chart={chart} />
@@ -481,7 +488,7 @@ export function AiAssistant() {
                   disabled={isSending}
                   onClick={() =>
                     void disconnectAiConnection()
-                      .then(() => setAiConnectionStatus('disconnected'))
+                      .then(() => updateAiConnectionStatus('disconnected'))
                       .catch(() => setError('Could not disconnect. Please try again.'))
                   }
                 >
@@ -510,7 +517,7 @@ export function AiAssistant() {
           }}
         >
           {aiConnectionStatus !== 'connected' ? (
-            <AiConnectionPanel onStatusChange={setAiConnectionStatus} />
+            <AiConnectionPanel onStatusChange={updateAiConnectionStatus} />
           ) : isHistoryLoading ? (
             <Stack alignItems="center" justifyContent="center" sx={{ flex: 1 }}>
               <CircularProgress size={28} />
@@ -522,7 +529,7 @@ export function AiAssistant() {
               justifyContent="center"
               sx={{ flex: 1, textAlign: 'center', py: { xs: 2, sm: 4 } }}
             >
-              <Paper variant="assistantAvatar">
+              <Paper variant="inverseIconBadge">
                 <MessageIcon />
               </Paper>
               <Box>
@@ -543,7 +550,7 @@ export function AiAssistant() {
                 {STARTERS.map(({ Icon, ...starter }) => (
                   <Button
                     key={starter.prompt}
-                    variant={starter.featured ? 'assistantPromptFeatured' : 'assistantPrompt'}
+                    variant={starter.featured ? 'featuredSuggestionAction' : 'suggestionAction'}
                     onClick={() => void send(starter.prompt)}
                     disabled={cooldownRemainingMs > 0}
                     loading={isSending}
@@ -556,12 +563,12 @@ export function AiAssistant() {
                       sx={{ width: '100%', height: '100%' }}
                     >
                       <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={1}>
-                        <Typography variant="assistantPromptLabel" color="inherit">
+                        <Typography variant="suggestionLabel" color="inherit">
                           {starter.label}
                         </Typography>
                         <Icon fontSize="small" />
                       </Stack>
-                      <Typography variant="assistantPromptTitle" color="inherit">
+                      <Typography variant="suggestionTitle" color="inherit">
                         {starter.prompt}
                       </Typography>
                     </Stack>
@@ -602,12 +609,14 @@ export function AiAssistant() {
                   <AiAssistantLoadingBadge>
                     <CircularProgress size={14} color="inherit" />
                   </AiAssistantLoadingBadge>
-                  <Typography variant="fieldHint" color="text.secondary">Kip is checking your data…</Typography>
+                  <Typography variant="fieldHint" color="text.secondary">
+                    Kip is checking your data…
+                  </Typography>
                 </Box>
               )}
               {pendingActions.map((action) => (
-                <Paper key={action.id} variant="assistantAction">
-                  <Stack spacing={1.5}>
+                <Paper key={action.id} variant="actionPanel">
+                  <Stack spacing={2}>
                     <Box>
                       <Typography variant="sectionLabel">Confirm change</Typography>
                       <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
@@ -625,19 +634,19 @@ export function AiAssistant() {
                       </Button>
                       <Button
                         variant="segmentedSelected"
-                        startIcon={<CheckCircleIcon />}
+                        startIcon={executingActionId === action.id ? undefined : <CheckCircleIcon />}
                         onClick={() => void confirmAction(action)}
                         loading={executingActionId === action.id}
                       >
-                        Confirm
+                        {executingActionId === action.id ? null : 'Confirm'}
                       </Button>
                     </Stack>
                   </Stack>
                 </Paper>
               ))}
               {connectionResult && (
-                <Paper variant="assistantAction">
-                  <Stack spacing={1.5}>
+                <Paper variant="actionPanel">
+                  <Stack spacing={2}>
                     <Box>
                       <Typography variant="sectionLabel">Connection created</Typography>
                       <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
@@ -680,8 +689,8 @@ export function AiAssistant() {
                 </Paper>
               )}
               {turnFailure?.kind === 'quota' ? (
-                <Paper variant="assistantCooldown">
-                  <Stack spacing={1.5}>
+                <Paper variant="statusNotice">
+                  <Stack spacing={2}>
                     <Stack direction="row" alignItems="flex-start" justifyContent="space-between" spacing={2}>
                       <Box>
                         <Typography variant="sectionLabel">AI usage limit reached for today</Typography>
@@ -721,8 +730,8 @@ export function AiAssistant() {
                   </Stack>
                 </Paper>
               ) : turnFailure?.kind === 'rate-limit' ? (
-                <Paper variant="assistantCooldown">
-                  <Stack spacing={1.5}>
+                <Paper variant="statusNotice">
+                  <Stack spacing={2}>
                     <Stack direction="row" alignItems="flex-start" justifyContent="space-between" spacing={2}>
                       <Box>
                         <Typography variant="sectionLabel">Kip is cooling down</Typography>
@@ -762,7 +771,13 @@ export function AiAssistant() {
                 <Alert
                   severity="warning"
                   action={
-                    <Button color="inherit" size="small" onClick={() => void retryLastTurn()} disabled={isSending} loading={isSending}>
+                    <Button
+                      color="inherit"
+                      size="small"
+                      onClick={() => void retryLastTurn()}
+                      disabled={isSending}
+                      loading={isSending}
+                    >
                       Retry
                     </Button>
                   }
@@ -780,13 +795,13 @@ export function AiAssistant() {
 
       {aiConnectionStatus === 'connected' && (
         <AiAssistantFooter sx={{ px: { xs: 2, sm: 3 }, pt: 1.5, pb: { xs: 1.5, md: 2 } }}>
-          <Stack spacing={1} sx={{ width: '100%', maxWidth: 760, mx: 'auto' }}>
+          <Stack spacing={2} sx={{ width: '100%', maxWidth: 760, mx: 'auto' }}>
             {error && (
               <Alert severity="warning" onClose={() => setError('')}>
                 {error}
               </Alert>
             )}
-            <Paper variant="assistantComposer">
+            <Paper variant="messageComposer">
               <InputBase
                 fullWidth
                 multiline
@@ -805,7 +820,7 @@ export function AiAssistant() {
                 sx={{ py: 1 }}
               />
               <Button
-                variant="assistantSend"
+                variant="sendAction"
                 aria-label="Send message"
                 onClick={() => void send()}
                 disabled={!draft.trim() || isSending || cooldownRemainingMs > 0}

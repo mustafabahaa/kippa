@@ -1,8 +1,17 @@
 import { initializeApp, getApp, getApps, FirebaseApp } from 'firebase/app';
-import { getAuth, Auth } from 'firebase/auth';
-import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, Firestore } from 'firebase/firestore';
+import { connectAuthEmulator, getAuth, Auth } from 'firebase/auth';
+import {
+  connectFirestoreEmulator,
+  initializeFirestore,
+  persistentLocalCache,
+  persistentMultipleTabManager,
+  Firestore,
+} from 'firebase/firestore';
 import { getMessaging, Messaging, isSupported } from 'firebase/messaging';
-import { getFunctions, Functions } from 'firebase/functions';
+import { connectFunctionsEmulator, getFunctions, Functions } from 'firebase/functions';
+
+const useFirebaseEmulators = import.meta.env.VITE_FIREBASE_EMULATORS === 'true';
+export const isFirebaseEmulatorMode = useFirebaseEmulators;
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -20,13 +29,14 @@ export const isFirebaseConfigured = !!(
   firebaseConfig.projectId &&
   firebaseConfig.projectId.trim() !== ''
 );
+const isSafeEmulatorProject = !useFirebaseEmulators || firebaseConfig.projectId?.startsWith('demo-') === true;
 
 let firebaseApp: FirebaseApp | undefined;
 let auth: Auth | undefined;
 let db: Firestore | undefined;
 let functions: Functions | undefined;
 
-if (isFirebaseConfigured) {
+if (isFirebaseConfigured && isSafeEmulatorProject) {
   try {
     firebaseApp = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
     auth = getAuth(firebaseApp);
@@ -40,14 +50,23 @@ if (isFirebaseConfigured) {
       ignoreUndefinedProperties: true,
     });
     functions = getFunctions(firebaseApp);
+    if (useFirebaseEmulators) {
+      connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true });
+      connectFirestoreEmulator(db, '127.0.0.1', 8080);
+      connectFunctionsEmulator(functions, '127.0.0.1', 5001);
+    }
   } catch (error) {
     console.error('Firebase initialization failed:', error);
   }
 } else {
-  console.error('Firebase credentials missing. Copy .env.example to .env and set VITE_FIREBASE_* values.');
+  console.error(
+    isFirebaseConfigured
+      ? 'Firebase emulators require a demo-* project ID. Refusing to connect to a live project.'
+      : 'Firebase credentials missing. Copy .env.example to .env and set VITE_FIREBASE_* values.',
+  );
 }
 
-export const isFirebaseReady = isFirebaseConfigured && !!auth && !!db;
+export const isFirebaseReady = isFirebaseConfigured && isSafeEmulatorProject && !!auth && !!db;
 
 // FCM messaging — lazy-initialized on first request. Null/undefined until
 // getMessagingAsync() is awaited. Use the getter in hooks; don't read the

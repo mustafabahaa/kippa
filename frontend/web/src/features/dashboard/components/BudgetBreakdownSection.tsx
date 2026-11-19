@@ -169,7 +169,7 @@ export function BudgetBreakdownSection() {
                   direction={{ xs: 'column', sm: 'row' }}
                   alignItems={{ sm: 'center' }}
                   justifyContent="space-between"
-                  spacing={1}
+                  spacing={2}
                 >
                   <Stack direction="row" alignItems="center" spacing={1}>
                     <PaymentsIcon size={22} strokeWidth={1.8} />

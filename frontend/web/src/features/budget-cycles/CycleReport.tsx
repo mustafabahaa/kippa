@@ -42,6 +42,7 @@ import { convertToBaseCurrency, getPostedTransactions } from '@/libs/financeCalc
 import { calculateCycleReport, LOAN_PAYMENTS_CATEGORY_ID } from '@/libs/cycleReport';
 import { PageHeader } from '@monochrome-ui/design-system';
 import { SectionHeading } from '@/features/shared/components/SectionHeading';
+import { EmptyLayout } from '@/features/shared/components/EmptyLayout';
 import { TransactionIcon } from '@/features/transactions';
 import { formatCycleDate } from './cycleUtils';
 import { DividedDetailRow, ResponsiveSummaryItem } from '@monochrome-ui/design-system';
@@ -233,7 +234,7 @@ export function CycleReport() {
 
   if (isLoading) {
     return (
-      <Stack spacing={{ xs: 2, md: 3 }}>
+      <Stack spacing={{ xs: 2, md: 3 }} sx={{ width: '100%' }}>
         <PageHeader title="Cycle report" subtitle="Review account balances and spending for a completed cycle." />
         <Stack spacing={3}>
           <Skeleton variant="text" width="45%" height={32} />
@@ -246,16 +247,12 @@ export function CycleReport() {
 
   if (!selectedCycle || !report) {
     return (
-      <Stack spacing={{ xs: 2, md: 3 }}>
+      <Stack spacing={{ xs: 2, md: 3 }} sx={{ width: '100%' }}>
         <PageHeader title="Cycle report" subtitle="Review how a completed budget cycle performed." />
-        <Box component="section" >
-          <Stack spacing={{ xs: 2, md: 3 }}>
-            <SectionHeading
-              title="No completed cycles yet"
-              subtitle="Close a cycle to create its performance report."
-            />
-          </Stack>
-        </Box>
+        <EmptyLayout
+          title="No completed cycles yet"
+          description="Close a cycle to create its performance report."
+        />
       </Stack>
     );
   }
@@ -325,7 +322,7 @@ export function CycleReport() {
       />
 
       <Box component="section" >
-        <Stack spacing={{ xs: 2, md: 3 }}>
+        <Stack spacing={3.5}>
           <SectionHeading title="Balances by account" subtitle="How each account changed during this cycle" />
           <Typography variant="body2" color="text.secondary" >
             Bank and cash accounts: starting balance + added money − removed money = ending balance. Credit cards:
@@ -627,7 +624,7 @@ export function CycleReport() {
       </Box>
 
       <Box component="section" id="cycle-transactions" >
-        <Stack spacing={{ xs: 2, md: 3 }}>
+        <Stack spacing={{ xs: 3.5, md: 3.5 }}>
           <SectionHeading title="Cycle transactions" subtitle="Review transactions for all accounts or one account" />
           <Box sx={{width: '100%', maxWidth: 1280, mx: 'auto' }}>
             <Box sx={{ width: '100%', maxWidth: { sm: 420 } }}>

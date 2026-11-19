@@ -9,6 +9,7 @@ import {
   useTransactions,
   useLedgerLines,
   useAccounts,
+  useCards,
   useVoidTransactionMutation,
 } from '@/hooks/useFinance';
 import { FinanceTransaction } from '@kippa/domain';
@@ -26,6 +27,7 @@ export function TransactionsSection() {
   const { data: transactions, isLoading: txsLoading } = useTransactions(householdId);
   const { data: ledgerLines, isLoading: linesLoading } = useLedgerLines(householdId);
   const { data: accounts = [] } = useAccounts(householdId);
+  const { data: cards = [] } = useCards(householdId);
 
   const voidMutation = useVoidTransactionMutation();
   const [editingTx, setEditingTx] = useState<FinanceTransaction | null>(null);
@@ -102,6 +104,8 @@ export function TransactionsSection() {
                       categories={categories}
                       ledgerLines={ledgerLines}
                       accounts={accounts}
+                      cards={cards}
+                      compact
                       onEdit={setEditingTx}
                       onVoid={setVoidingTxId}
                     />

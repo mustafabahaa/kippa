@@ -371,7 +371,7 @@ export function PendingTransactions() {
                   }
                 />
               ) : (
-                <Stack spacing={1.5} component="section">
+                <Stack spacing={2} component="section">
                   <SectionHeading
                     title="Needs review"
                     subtitle="Confirm or discard detected bank activity."
@@ -392,6 +392,7 @@ export function PendingTransactions() {
                           minHeight: 80,
                           px: { xs: 1, sm: 2 },
                           py: 1.5,
+                          '--ds-stepper-center-x': { xs: '26px', sm: '34px' },
                           display: 'flex',
                           alignItems: 'center',
                           gap: 1.5,
@@ -434,7 +435,7 @@ export function PendingTransactions() {
                   }
                 />
               ) : (
-                <Stack spacing={1.5} component="section">
+                <Stack spacing={2} component="section">
                   <SectionHeading
                     title="Review history"
                     subtitle="The latest 100 resolved items."

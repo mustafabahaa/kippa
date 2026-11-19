@@ -4,7 +4,7 @@ import { authLib } from '@/libs/auth';
 import { ledgerLib } from '@/libs/ledger';
 import { subscribePendingHouseholdJoinRequests } from '@/libs/householdSubscriptions';
 import { detectBaseCurrency } from '@/libs/currencyMeta';
-import { UserProfile, Household, JoinStatus, JoinRequest } from '@kippa/domain';
+import { UserProfile, Household, HouseholdMember, JoinStatus, JoinRequest } from '@kippa/domain';
 import { AppContext } from '@/contexts/appContextInstance';
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
@@ -84,10 +84,24 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   // Member list via Callable because rules restrict users/{uid} reads to
   // the doc owner. Any household member may request these shared profile fields.
+  const isLocalVisualDemo =
+    import.meta.env.DEV &&
+    import.meta.env.VITE_FIREBASE_EMULATORS === 'true' &&
+    new URLSearchParams(window.location.search).get('visual-preview') === '1';
   const { data: householdMembers = [], isLoading: isMembersLoading } = useQuery({
     queryKey: ['householdMembers', householdId],
     queryFn: async () => {
       if (!householdId || !userProfile) return [];
+      if (isLocalVisualDemo) {
+        const demoMember: HouseholdMember = {
+          uid: userProfile.uid,
+          displayName: userProfile.displayName,
+          email: userProfile.email,
+          photoURL: userProfile.photoURL,
+          isOwner: true,
+        };
+        return [demoMember];
+      }
       return authLib.listHouseholdMembers(householdId);
     },
     enabled: !!householdId && !!userProfile,

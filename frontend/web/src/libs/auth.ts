@@ -4,11 +4,12 @@ import {
   User as FirebaseUser,
   GoogleAuthProvider,
   signInWithPopup,
+  signInWithEmailAndPassword,
   signInWithCustomToken,
   Auth,
 } from 'firebase/auth';
 import { httpsCallable } from 'firebase/functions';
-import { auth, functions, isFirebaseConfigured, isFirebaseReady } from '@/config/firebase';
+import { auth, functions, isFirebaseConfigured, isFirebaseEmulatorMode, isFirebaseReady } from '@/config/firebase';
 import { dbLib } from '@/libs/db';
 import { detectBaseCurrency } from '@/libs/currencyMeta';
 import { UserProfile, Household, JoinStatus, HouseholdMember } from '@kippa/domain';
@@ -52,6 +53,10 @@ export const authLib = {
     const isLocalPreview =
       import.meta.env.DEV && new URLSearchParams(window.location.search).get('visual-preview') === '1';
     if (!isLocalPreview || !auth || auth.currentUser) return;
+    if (isFirebaseEmulatorMode) {
+      await signInWithEmailAndPassword(auth, 'demo@kippa.local', 'local-demo-only-password');
+      return;
+    }
     const response = await fetch('/__visual-preview-token', { cache: 'no-store' });
     if (!response.ok) throw new Error('Could not authenticate the local preview');
     const { token } = (await response.json()) as { token: string };

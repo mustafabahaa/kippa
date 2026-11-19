@@ -35,7 +35,7 @@ export function CategoryPaceChart({ categories }: { categories: CategoryPace[] }
             const fill = Math.max(category.spent > 0 ? 5 : 0, Math.min(100, percent));
             const over = percent > 100;
             return (
-              <Stack key={category.categoryId} spacing={0.5} alignItems="center" sx={{ minWidth: 0 }}>
+              <Stack key={category.categoryId} spacing={2} alignItems="center" sx={{ minWidth: 0 }}>
                 <Tooltip
                   arrow
                   placement="top"
@@ -48,15 +48,26 @@ export function CategoryPaceChart({ categories }: { categories: CategoryPace[] }
                     />
                   </Paper>
                 </Tooltip>
-                <Typography
-                  variant="metricMetadata"
-                  color="text.secondary"
-                  title={category.categoryName}
-                  textAlign="center"
-                  sx={{ width: '100%', minWidth: 0 }}
+                <Box
+                  sx={{
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'flex-start',
+                    width: '100%',
+                    minWidth: 0,
+                    minHeight: '2.5em',
+                  }}
                 >
-                  {category.categoryName}
-                </Typography>
+                  <Typography
+                    variant="metricMetadata"
+                    color="text.secondary"
+                    title={category.categoryName}
+                    textAlign="center"
+                    sx={{ width: '100%', minWidth: 0 }}
+                  >
+                    {category.categoryName}
+                  </Typography>
+                </Box>
               </Stack>
             );
           })}

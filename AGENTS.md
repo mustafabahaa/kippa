@@ -10,6 +10,6 @@
 - Typography appearance must use named theme variants. Do not set font size, weight, line height, letter spacing, or text transformation ad hoc in feature components.
 - Icons must use the shared `AppIcon` Iconsax adapters; do not import icon libraries directly into features.
 - Import shared components such as `PageHeader` directly from `@monochrome-ui/design-system`; do not add feature-level re-export adapters or duplicate shared components.
-- `npm run lint --workspace kippa-app` runs `monochrome-ui/known-variants` against the installed shared package and checks that every routed page listed in `frontend/web/eslint.config.js` inherits `PageScaffold` from the app shell. Keep that route list synchronized with `frontend/web/src/App.tsx`.
+- `npm run lint --workspace kippa-app` runs shared design-system rules, including `monochrome-ui/metric-caption-stacking` for percentage labels, and checks that every routed page listed in `frontend/web/eslint.config.js` inherits `PageScaffold` from the app shell. Keep that route list synchronized with `frontend/web/src/App.tsx`.
 - The app shell owns the shared `PageScaffold`. It keeps each page header on the shell baseline and applies the same responsive inset to page content, so page modules should not add another page-level indent.
 - Async Button and IconButton actions use the shared `loading` prop. Do not render `CircularProgress` inside a button or replace its stable action label with a spinner; `kippa-design/button-loading-prop` enforces this.

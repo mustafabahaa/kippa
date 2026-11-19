@@ -15,7 +15,7 @@ export function AiChart({ chart }: { chart: AiChartSpec }) {
   const common = { height: 260, margin: { top: 24, right: 16, bottom: 42, left: 52 } } as const;
 
   return (
-    <Paper variant="assistantChart" sx={{ width: '100%', overflow: 'hidden' }}>
+    <Paper variant="chartPanel" sx={{ width: '100%', overflow: 'hidden' }}>
       <Typography variant="sectionLabel">{chart.title}</Typography>
       <Box sx={{ width: '100%', height: 260, mt: 1 }}>
         {chart.type === 'bar' && (

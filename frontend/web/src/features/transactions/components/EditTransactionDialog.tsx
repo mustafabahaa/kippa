@@ -165,7 +165,7 @@ export const EditTransactionDialog: React.FC<EditTransactionDialogProps> = ({ op
               )}
 
               {isRegularTx && (
-                <Grid container spacing={1.5}>
+                <Grid container spacing={2}>
                   <Grid size={{ xs: 12, sm: 6 }}>
                     <TextField
                       type="number"
@@ -201,7 +201,7 @@ export const EditTransactionDialog: React.FC<EditTransactionDialogProps> = ({ op
                 </Grid>
               )}
 
-              <Grid container spacing={1.5}>
+              <Grid container spacing={2}>
                 <Grid size={{ xs: 12, sm: isRegularTx ? 6 : 12 }}>
                   <LocalizationProvider dateAdapter={AdapterDateFns}>
                     <DatePicker

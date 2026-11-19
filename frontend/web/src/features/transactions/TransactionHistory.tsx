@@ -6,6 +6,7 @@ import { Autocomplete, Box, Stack, TextField, Skeleton, Button, Chip } from '@mo
 
 import {
   useAccounts,
+  useCards,
   useCategories,
   useTransactions,
   useLedgerLines,
@@ -33,6 +34,7 @@ export function TransactionHistory() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { enqueueSnackbar } = useSnackbar();
   const { householdId } = useAppContext();
+  const { data: cards = [] } = useCards(householdId);
   const [voidingTxId, setVoidingTxId] = useState<string | null>(null);
 
   // Filter States
@@ -276,7 +278,7 @@ export function TransactionHistory() {
 
       <Stack spacing={{ xs: 3, md: 4 }} sx={{ width: '100%', maxWidth: 900, alignSelf: 'center' }}>
         <Box component="section" >
-          <Stack spacing={2} >
+          <Stack spacing={3.5}>
             <SectionHeading title="Filters" subtitle="Narrow transactions by cycle, account, category, or type." />
             <Box
               sx={{
@@ -370,7 +372,11 @@ export function TransactionHistory() {
                 />
               ) : (
                 <>
-                  <Stack className="ds-stepper" spacing={{ xs: 1.25, sm: 1.5 }}>
+                  <Stack
+                    className="ds-stepper"
+                    spacing={{ xs: 1.25, sm: 1.5 }}
+                    sx={{ '--ds-stepper-gap-half': { xs: '5px', sm: '6px' } }}
+                  >
                     {(!rowsLoading && (!needsFeeHistory || feeHistory.data) && (!hasFilters || !!filteredLines.data) ? visibleTransactions : []).map((transaction) => (
                       <TransactionsListItem
                         key={transaction.id}
@@ -378,6 +384,7 @@ export function TransactionHistory() {
                         categories={categories}
                         ledgerLines={ledgerLines}
                         accounts={accounts}
+                        cards={cards}
                         onEdit={setEditingTx}
                         onVoid={setVoidingTxId}
                       />

@@ -1,4 +1,4 @@
-import { AddIcon, DashboardIcon, HourglassEmptyIcon, MessageIcon, ReceiptLongIcon } from '@/components/AppIcon';
+import { AddIcon, DashboardIcon, HourglassEmptyIcon, PaymentsIcon, ReceiptLongIcon } from '@/components/AppIcon';
 
 import { Box } from '@monochrome-ui/design-system';
 import {
@@ -21,7 +21,7 @@ interface NavItem {
 
 const LEFT_ITEMS: NavItem[] = [
   { label: 'Dashboard', path: '/', icon: <DashboardIcon size={22} strokeWidth={1.8} /> },
-  { label: 'Kip', path: '/ai', icon: <MessageIcon size={22} strokeWidth={1.8} /> },
+  { label: 'Loans', path: '/loans', icon: <PaymentsIcon size={22} strokeWidth={1.8} /> },
 ];
 
 const RIGHT_ITEMS: NavItem[] = [
@@ -105,12 +105,8 @@ export function BottomNav() {
   };
 
   return (
-    <MobileBottomNavigationShell
-      ref={containerRef}
-    >
-      {size.width > 0 && (
-        <MobileBottomNavigationShape width={size.width} height={size.height} path={getPathData()} />
-      )}
+    <MobileBottomNavigationShell ref={containerRef}>
+      {size.width > 0 && <MobileBottomNavigationShape width={size.width} height={size.height} path={getPathData()} />}
 
       <Box
         sx={{

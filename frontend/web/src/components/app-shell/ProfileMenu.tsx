@@ -8,6 +8,7 @@ import {
   TuneIcon,
   VisibilityIcon,
   VisibilityOffIcon,
+  MessageIcon,
 } from '@/components/AppIcon';
 
 import {
@@ -27,6 +28,8 @@ import type { ThemeModePref } from '@/contexts/themeModeContext';
 import type { UserProfile, Household } from '@kippa/domain';
 import { usePrivacyMode } from '@/hooks/usePrivacyMode';
 import { UserAvatar } from '@/components/UserAvatar';
+import { useNavigate } from 'react-router-dom';
+import { useAiConnection } from '@/features/ai/useAiConnection';
 
 interface ProfileMenuProps {
   anchorEl: HTMLElement | null;
@@ -56,6 +59,8 @@ export function ProfileMenu({
   logout,
 }: ProfileMenuProps) {
   const { privacyMode, setPrivacyMode } = usePrivacyMode();
+  const navigate = useNavigate();
+  const { status: aiConnectionStatus } = useAiConnection();
 
   const handleClose = () => {
     onClose();
@@ -161,7 +166,11 @@ export function ProfileMenu({
                 <ListItemIcon>
                   <HomeIcon size={22} strokeWidth={1.8} />
                 </ListItemIcon>
-                <ListItemText primary={hh.name} secondary={`ID: ${hh.id.slice(0, 8)}...`} />
+                <ListItemText
+                  primary={hh.name}
+                  secondary={`ID: ${hh.id.slice(0, 8)}...`}
+                  slotProps={{ primary: { variant: 'body2' } }}
+                />
               </MenuItem>
             );
           })}
@@ -170,9 +179,31 @@ export function ProfileMenu({
 
       <Divider sx={{ my: 1 }} />
 
-      {/* Appearance / Theme */}
       <Typography variant="overline" color="text.secondary" sx={{ px: 2.5, mt: 0.5, mb: 0.5, display: 'block' }}>
-        Appearance
+        Assistant
+      </Typography>
+      <MenuItem
+        onClick={() => {
+          handleClose();
+          navigate('/ai');
+        }}
+        sx={{ py: 0.75 }}
+      >
+        <ListItemIcon>
+          <MessageIcon size={22} strokeWidth={1.8} />
+        </ListItemIcon>
+        <ListItemText
+          primary={aiConnectionStatus === 'connected' ? 'Open Kip' : 'Connect Kip to ChatGPT'}
+          secondary={aiConnectionStatus === 'connected' ? 'Your financial companion' : 'Set up your AI connection'}
+          slotProps={{ primary: { variant: 'body2' } }}
+        />
+      </MenuItem>
+
+      <Divider sx={{ my: 1 }} />
+
+      {/* Preferences */}
+      <Typography variant="overline" color="text.secondary" sx={{ px: 2.5, mt: 0.5, mb: 0.5, display: 'block' }}>
+        Preferences
       </Typography>
       {[
         { value: 'light' as ThemeModePref, label: 'Light', Icon: LightModeIcon },
@@ -192,13 +223,11 @@ export function ProfileMenu({
             <ListItemIcon>
               <Icon size={22} strokeWidth={1.8} />
             </ListItemIcon>
-            <ListItemText primary={label} />
+            <ListItemText primary={label} slotProps={{ primary: { variant: 'body2' } }} />
             {selected && <CheckIcon size={22} strokeWidth={1.8} />}
           </MenuItem>
         );
       })}
-
-      <Divider sx={{ my: 1 }} />
 
       {/* Privacy mode — mask monetary values for screen sharing / demos */}
       <MenuItem
@@ -215,7 +244,11 @@ export function ProfileMenu({
             <VisibilityIcon size={22} strokeWidth={1.8} />
           )}
         </ListItemIcon>
-        <ListItemText primary={privacyMode ? 'Privacy Mode On' : 'Privacy Mode'} secondary="Hide balances" />
+        <ListItemText
+          primary={privacyMode ? 'Privacy Mode On' : 'Privacy Mode'}
+          secondary="Hide balances"
+          slotProps={{ primary: { variant: 'body2' } }}
+        />
         {privacyMode && <CheckIcon size={22} strokeWidth={1.8} />}
       </MenuItem>
 
@@ -231,7 +264,7 @@ export function ProfileMenu({
         <ListItemIcon>
           <LogoutIcon size={22} strokeWidth={1.8} />
         </ListItemIcon>
-        <ListItemText primary="Sign Out" />
+        <ListItemText primary="Sign Out" slotProps={{ primary: { variant: 'body2' } }} />
       </MenuItem>
     </Menu>
   );

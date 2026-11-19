@@ -1,9 +1,11 @@
+import type { ReactNode } from 'react';
 import {
   Button,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
+  Divider,
   FormControl,
   InputLabel,
   MenuItem,
@@ -27,6 +29,9 @@ interface CategoryNameDialogProps {
   /** Present only when editing an existing category: merchant keywords that
    *  auto-suggest this category for imported bank messages. */
   merchants?: string[];
+  dangerZone?: ReactNode;
+  /** Replace the standard actions while a destructive change is being confirmed. */
+  actions?: ReactNode;
   onChange: (value: string) => void;
   onMerchantsChange?: (merchants: string[]) => void;
   onClose: () => void;
@@ -44,6 +49,8 @@ export function CategoryNameDialog({
   categoryType,
   onCategoryTypeChange,
   merchants,
+  dangerZone,
+  actions,
   onChange,
   onMerchantsChange,
   onClose,
@@ -86,15 +93,28 @@ export function CategoryNameDialog({
           {editingMerchants && (
             <MerchantKeywordsEditor keywords={merchants} onChange={onMerchantsChange} disabled={loading} emptyState />
           )}
+          {dangerZone && (
+            <>
+              <Divider />
+              <Stack spacing={2.5}>
+                <Typography variant="sectionTitle">Danger zone</Typography>
+                {dangerZone}
+              </Stack>
+            </>
+          )}
         </Stack>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose} color="inherit">
-          Cancel
-        </Button>
-        <Button onClick={onConfirm} variant="contained" disabled={!value.trim()} loading={loading}>
-          {confirmLabel}
-        </Button>
+        {actions ?? (
+          <>
+            <Button onClick={onClose} color="inherit">
+              Cancel
+            </Button>
+            <Button onClick={onConfirm} variant="contained" disabled={!value.trim()} loading={loading}>
+              {confirmLabel}
+            </Button>
+          </>
+        )}
       </DialogActions>
     </Dialog>
   );

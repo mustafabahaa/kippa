@@ -245,7 +245,7 @@ export function AccountStatements() {
                     direction={{ xs: 'column', sm: 'row' }}
                     alignItems={{ xs: 'stretch', sm: 'center' }}
                     justifyContent="space-between"
-                    spacing={1.5}
+                    spacing={2}
                   >
                     <Box sx={{ width: '100%', maxWidth: 440 }}>
                       <TextField
@@ -378,7 +378,7 @@ export function AccountStatements() {
                         })}
                       </Stack>
 
-                      <Divider />
+                      {visibleEntries.length > 1 && <Divider />}
                       <TablePagination
                         component="div"
                         count={entries.length}

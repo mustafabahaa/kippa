@@ -777,6 +777,27 @@ export function useUpdateCategoryMutation() {
   });
 }
 
+export function useDeleteCategoryMutation() {
+  const queryClient = useQueryClient();
+  const auditUser = useAuditUser();
+  const notifyOfflineSuccess = useOfflineSuccessNotifier();
+  return useMutation({
+    mutationFn: (data: { householdId: string; categoryId: string; replacementCategoryId?: string }) =>
+      ledgerLib.deleteCategoryAndReassign(
+        data.householdId,
+        data.categoryId,
+        data.replacementCategoryId,
+        auditUser,
+      ),
+    onSuccess: (...[, variables]) => {
+      notifyOfflineSuccess();
+      queryClient.invalidateQueries({ queryKey: keys.categories(variables.householdId) });
+      queryClient.invalidateQueries({ queryKey: keys.transactions(variables.householdId) });
+      queryClient.invalidateQueries({ queryKey: keys.allocations(variables.householdId) });
+    },
+  });
+}
+
 export function useCreateCycleMutation() {
   const queryClient = useQueryClient();
   const auditUser = useAuditUser();

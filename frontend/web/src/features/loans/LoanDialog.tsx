@@ -107,7 +107,7 @@ export function LoanDialog({ accounts, loan, open, busy, onClose, onSave }: Prop
                 value={values.name}
                 onChange={(e) => set('name', e.target.value)}
               />
-              <Grid container spacing={1.5}>
+              <Grid container spacing={2}>
                 <Grid size={{ xs: 12, sm: 6 }}>
                   <TextField
                     fullWidth
@@ -145,7 +145,7 @@ export function LoanDialog({ accounts, loan, open, busy, onClose, onSave }: Prop
               </Typography>
             </Box>
             <Stack spacing={2} sx={{ px: { xs: 1, sm: 2 } }}>
-              <Grid container spacing={1.5}>
+              <Grid container spacing={2}>
                 <Grid size={{ xs: 12, sm: 6 }}>
                   <LocalizationProvider dateAdapter={AdapterDateFns}>
                     <DatePicker
@@ -177,7 +177,7 @@ export function LoanDialog({ accounts, loan, open, busy, onClose, onSave }: Prop
                   />
                 </Grid>
               </Grid>
-              <Grid container spacing={1.5}>
+              <Grid container spacing={2}>
                 <Grid size={{ xs: 12, sm: 6 }}>
                   <TextField
                     fullWidth

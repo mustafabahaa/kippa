@@ -1,4 +1,4 @@
-import { Suspense } from 'react';
+import { Suspense, useCallback, useEffect, useState } from 'react';
 import { Box, Container, PageScaffold, useTheme } from '@monochrome-ui/design-system';
 import { Outlet, useLocation } from 'react-router-dom';
 import { OfflineBanner } from '@/components/OfflineBanner';
@@ -10,6 +10,9 @@ import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { useThemeMode } from '@/hooks/useThemeMode';
 import { useLoanReminders } from '@/features/loans/useLoanReminders';
 import { AppLoadingScreen } from './AppLoadingScreen';
+import { AiConnectionContext } from '@/features/ai/AiConnectionContext';
+import type { AiConnectionStatus } from '@/features/ai/AiConnectionPanel';
+import { getAiConnection, isAiConnectionEnabled } from '@/features/ai/services/connection';
 
 const PAGE_TITLES: Record<string, string> = {
   '/': 'Dashboard',
@@ -35,6 +38,25 @@ export function AppShell() {
   const { modePref, setModePref } = useThemeMode();
   const theme = useTheme();
   const { pathname } = useLocation();
+  const [aiConnectionStatus, setAiConnectionStatus] = useState<AiConnectionStatus>(
+    isAiConnectionEnabled ? 'checking' : 'connected',
+  );
+  const updateAiConnectionStatus = useCallback((status: AiConnectionStatus) => setAiConnectionStatus(status), []);
+
+  useEffect(() => {
+    if (!isAiConnectionEnabled) return;
+    let active = true;
+    void getAiConnection()
+      .then((connection) => {
+        if (active) setAiConnectionStatus(connection.connected ? 'connected' : 'disconnected');
+      })
+      .catch(() => {
+        if (active) setAiConnectionStatus('disconnected');
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const logoSrc =
     theme.palette.mode === 'dark' ? '/icons/logo_white_transparent.png' : '/icons/logo_black_transparent.png';
@@ -42,57 +64,56 @@ export function AppShell() {
   useLoanReminders();
 
   return (
-    <>
-      <title>{pageTitle ? `Kippa — ${pageTitle}` : 'Kippa'}</title>
-      <Box
-        sx={{
-          position: 'relative',
-          zIndex: 1,
-          minHeight: '100dvh',
-          pb: pathname === '/ai' ? 0 : { xs: 10, md: 0 },
-          overflowX: 'clip',
-        }}
-      >
-        <OfflineBanner isOnline={isOnline} />
-        <SideNav />
+    <AiConnectionContext.Provider value={{ status: aiConnectionStatus, setStatus: updateAiConnectionStatus }}>
+      <>
+        <title>{pageTitle ? `Kippa — ${pageTitle}` : 'Kippa'}</title>
         <Box
-          component="main"
-          sx={{ ml: { md: '72px' }, minHeight: '100dvh', overflowX: 'clip' }}
+          sx={{
+            position: 'relative',
+            zIndex: 1,
+            minHeight: '100dvh',
+            pb: pathname === '/ai' ? 0 : { xs: 10, md: 0 },
+            overflowX: 'clip',
+          }}
         >
-          <TopBar
-            logoSrc={logoSrc}
-            modePref={modePref}
-            setModePref={setModePref}
-            userProfile={userProfile}
-            householdId={householdId}
-            userHouseholds={userHouseholds}
-            switchHousehold={switchHousehold}
-            logout={logout}
-          />
-          <Container
-            maxWidth={false}
-            sx={{
-              py: pathname === '/ai' ? 0 : { xs: 2, sm: 3 },
-              px: pathname === '/ai' ? 0 : { xs: 2, sm: 3 },
-              maxWidth: pathname === '/ai' ? 'none' : 1440,
-              mx: 'auto',
-              '& [data-page-heading] > *, & [data-page-heading] > * > *': { minWidth: 0, maxWidth: '100%' },
-              '& > .MuiContainer-root': {
-                maxWidth: 'none !important',
-                p: '0 !important',
-              },
-            }}
-          >
-            <PageScaffold>
-              <Suspense fallback={<AppLoadingScreen theme={theme} />}>
-                <Outlet />
-              </Suspense>
-            </PageScaffold>
-          </Container>
-        </Box>
+          <OfflineBanner isOnline={isOnline} />
+          <SideNav showKip={aiConnectionStatus === 'connected'} />
+          <Box component="main" sx={{ ml: { md: '72px' }, minHeight: '100dvh', overflowX: 'clip' }}>
+            <TopBar
+              logoSrc={logoSrc}
+              modePref={modePref}
+              setModePref={setModePref}
+              userProfile={userProfile}
+              householdId={householdId}
+              userHouseholds={userHouseholds}
+              switchHousehold={switchHousehold}
+              logout={logout}
+            />
+            <Container
+              maxWidth={false}
+              sx={{
+                py: pathname === '/ai' ? 0 : { xs: 2, sm: 3 },
+                px: pathname === '/ai' ? 0 : { xs: 2, sm: 3 },
+                maxWidth: pathname === '/ai' ? 'none' : 1440,
+                mx: 'auto',
+                '& [data-page-heading] > *, & [data-page-heading] > * > *': { minWidth: 0, maxWidth: '100%' },
+                '& > .MuiContainer-root': {
+                  maxWidth: 'none !important',
+                  p: '0 !important',
+                },
+              }}
+            >
+              <PageScaffold>
+                <Suspense fallback={<AppLoadingScreen theme={theme} />}>
+                  <Outlet />
+                </Suspense>
+              </PageScaffold>
+            </Container>
+          </Box>
 
-        <BottomNav />
-      </Box>
-    </>
+          <BottomNav />
+        </Box>
+      </>
+    </AiConnectionContext.Provider>
   );
 }

@@ -217,7 +217,7 @@ export function BudgetCycles() {
                       onToggleBudget={() => handleToggleBudgetForCycle(activeCycle.id)}
                     />
                   ) : (
-                    <Stack spacing={1} alignItems="flex-start">
+                    <Stack spacing={2} alignItems="flex-start">
                       <Typography variant="h5">No active budget cycle</Typography>
                       <Typography variant="body2" color="text.secondary">
                         Create a cycle to start allocating budgets and tracking expenses.

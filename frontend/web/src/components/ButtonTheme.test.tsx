@@ -66,7 +66,7 @@ describe('loading buttons', () => {
           Save <Typography component="span" color="text.secondary">changes</Typography>
         </Button>
         <Button variant="primaryAction" loading>Continue</Button>
-        <Button variant="assistantSend" loading>Send</Button>
+        <Button variant="sendAction" loading>Send</Button>
         <IconButton loading aria-label="Refresh"><span>Refresh icon</span></IconButton>
       </ThemeProvider>,
     );

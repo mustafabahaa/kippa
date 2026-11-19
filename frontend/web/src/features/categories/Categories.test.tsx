@@ -6,6 +6,8 @@ import { Categories } from './Categories';
 const mocks = vi.hoisted(() => ({
   mutateAsync: vi.fn().mockResolvedValue(undefined),
   createAsync: vi.fn().mockResolvedValue(undefined),
+  deleteAsync: vi.fn().mockResolvedValue(undefined),
+  isCategoryUsed: vi.fn().mockResolvedValue(false),
   enqueueSnackbar: vi.fn(),
 }));
 
@@ -24,16 +26,21 @@ vi.mock('@/hooks/useFinance', () => ({
         createdAt: '',
         merchantKeywords: ['Netflix'],
       },
+      { id: 'expense-2', householdId: 'household', name: 'Food', type: 'expense', isActive: true, createdAt: '' },
     ],
     isLoading: false,
   }),
   useCreateCategoryMutation: () => ({ isPending: false, mutateAsync: mocks.createAsync }),
   useUpdateCategoryMutation: () => ({ isPending: false, mutateAsync: mocks.mutateAsync }),
+  useDeleteCategoryMutation: () => ({ isPending: false, mutateAsync: mocks.deleteAsync }),
 }));
+vi.mock('@/libs/ledger', () => ({ ledgerLib: { isCategoryUsed: mocks.isCategoryUsed } }));
 
 describe('Categories edit', () => {
   beforeEach(() => {
     mocks.mutateAsync.mockClear();
+    mocks.deleteAsync.mockClear();
+    mocks.isCategoryUsed.mockReset().mockResolvedValue(false);
     mocks.enqueueSnackbar.mockClear();
   });
 
@@ -103,6 +110,42 @@ describe('Categories edit', () => {
     expect(mocks.createAsync).toHaveBeenCalledWith({
       householdId: 'household',
       category: { name: 'Coffee', type: 'expense', isActive: true, merchantKeywords: ['BEANOS'] },
+    });
+  });
+
+  it('deletes an unused category without asking for a replacement', async () => {
+    const user = userEvent.setup();
+    render(<Categories />);
+
+    await user.click(screen.getByRole('button', { name: 'Edit category Salary' }));
+    const dialog = screen.getByRole('dialog');
+    await user.click(within(dialog).getByRole('button', { name: 'Delete category' }));
+    expect(within(dialog).getByText(/has no linked transactions or budget allocations/)).toBeInTheDocument();
+    expect(within(dialog).queryByLabelText('Move records to')).not.toBeInTheDocument();
+    await user.click(within(dialog).getByRole('button', { name: 'Delete category' }));
+
+    expect(mocks.deleteAsync).toHaveBeenCalledWith({
+      householdId: 'household',
+      categoryId: 'income-1',
+      replacementCategoryId: undefined,
+    });
+  });
+
+  it('requires a same-type replacement when the category is used', async () => {
+    mocks.isCategoryUsed.mockResolvedValue(true);
+    const user = userEvent.setup();
+    render(<Categories />);
+
+    await user.click(screen.getByRole('button', { name: 'Edit category Subscriptions' }));
+    const dialog = screen.getByRole('dialog');
+    await user.click(within(dialog).getByRole('button', { name: 'Delete category' }));
+    expect(within(dialog).getByLabelText('Move records to')).toBeInTheDocument();
+    await user.click(within(dialog).getByRole('button', { name: 'Move & delete' }));
+
+    expect(mocks.deleteAsync).toHaveBeenCalledWith({
+      householdId: 'household',
+      categoryId: 'expense-1',
+      replacementCategoryId: 'expense-2',
     });
   });
 });

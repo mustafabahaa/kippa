@@ -24,7 +24,17 @@ import {
 
 import { useState } from 'react';
 import type { MouseEvent } from 'react';
-import { Box, ButtonBase, IconButton, ListItemIcon, ListItemText, Menu, MenuItem, Paper, Tooltip } from '@monochrome-ui/design-system';
+import {
+  Box,
+  ButtonBase,
+  IconButton,
+  ListItemIcon,
+  ListItemText,
+  Menu,
+  MenuItem,
+  Paper,
+  Tooltip,
+} from '@monochrome-ui/design-system';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTheme } from '@mui/material/styles';
 
@@ -87,7 +97,7 @@ const menuGroups: NavItem[][] = [
   ],
 ];
 
-export function SideNav() {
+export function SideNav({ showKip }: { showKip: boolean }) {
   const theme = useTheme();
   const navigate = useNavigate();
   const { pathname, search } = useLocation();
@@ -126,11 +136,7 @@ export function SideNav() {
       }}
     >
       <Tooltip title="Kippa" placement="right">
-        <ButtonBase
-          onClick={() => navigate('/')}
-          aria-label="Kippa home"
-          sx={{ width: 48, height: 48, mb: 2 }}
-        >
+        <ButtonBase onClick={() => navigate('/')} aria-label="Kippa home" sx={{ width: 48, height: 48, mb: 2 }}>
           <Box component="img" src={logoSrc} alt="" sx={{ width: 36, height: 36, objectFit: 'contain' }} />
         </ButtonBase>
       </Tooltip>
@@ -142,32 +148,32 @@ export function SideNav() {
       >
         {menuGroups.map((group, index) => (
           <Box key={index} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.75 }}>
-            {group.map((item) => {
-              const Icon = item.icon;
-              const active = isActive(item);
-              return (
-                <Tooltip key={item.path} title={item.label} placement="right">
-                  <ButtonBase
-                    className="ds-desktop-nav-item"
-                    aria-label={item.label}
-                    aria-current={active ? 'page' : undefined}
-                    aria-haspopup={item.children ? 'menu' : undefined}
-                    data-open={menu?.item.path === item.path ? 'true' : undefined}
-                    onClick={(event) => openItem(event, item)}
-                  >
-                    <Box
-                      className="kippa-nav-icon-wrap"
-                      sx={{ position: 'relative', width: 22, height: 22, display: 'grid', placeItems: 'center' }}
+            {group
+              .filter((item) => showKip || item.path !== '/ai')
+              .map((item) => {
+                const Icon = item.icon;
+                const active = isActive(item);
+                return (
+                  <Tooltip key={item.path} title={item.label} placement="right">
+                    <ButtonBase
+                      className="ds-desktop-nav-item"
+                      aria-label={item.label}
+                      aria-current={active ? 'page' : undefined}
+                      aria-haspopup={item.children ? 'menu' : undefined}
+                      data-open={menu?.item.path === item.path ? 'true' : undefined}
+                      onClick={(event) => openItem(event, item)}
                     >
-                      <Icon size={22} strokeWidth={1.8} />
-                      {item.children && (
-                        <ExpandMoreIcon className="ds-nav-submenu-caret" size={11} strokeWidth={2} />
-                      )}
-                    </Box>
-                  </ButtonBase>
-                </Tooltip>
-              );
-            })}
+                      <Box
+                        className="kippa-nav-icon-wrap"
+                        sx={{ position: 'relative', width: 22, height: 22, display: 'grid', placeItems: 'center' }}
+                      >
+                        <Icon size={22} strokeWidth={1.8} />
+                        {item.children && <ExpandMoreIcon className="ds-nav-submenu-caret" size={11} strokeWidth={2} />}
+                      </Box>
+                    </ButtonBase>
+                  </Tooltip>
+                );
+              })}
           </Box>
         ))}
       </Box>

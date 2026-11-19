@@ -33,9 +33,9 @@ export function AiConnectionPanel({ onStatusChange }: Props) {
         if (!active) return;
         updateStatus(connection.connected ? 'connected' : 'disconnected');
       })
-      .catch((caught) => {
+      .catch(() => {
         if (!active) return;
-        setError(caught instanceof Error ? caught.message : 'Kip could not check the connection.');
+        setError('Kip could not check the ChatGPT connection. Please try again shortly.');
         updateStatus('disconnected');
       });
     return () => {
@@ -54,9 +54,9 @@ export function AiConnectionPanel({ onStatusChange }: Props) {
     try {
       const connection = await startAiConnection((nextDevice) => setDevice(nextDevice), controller.signal);
       if (!controller.signal.aborted) updateStatus(connection.connected ? 'connected' : 'disconnected');
-    } catch (caught) {
+    } catch {
       if (!controller.signal.aborted) {
-        setError(caught instanceof Error ? caught.message : 'Kip could not connect to ChatGPT.');
+        setError('Kip could not connect to ChatGPT. Please try again.');
         updateStatus('disconnected');
       }
     } finally {
@@ -107,7 +107,7 @@ export function AiConnectionPanel({ onStatusChange }: Props) {
       justifyContent="center"
       sx={{ flex: 1, textAlign: 'center', py: { xs: 3, sm: 6 } }}
     >
-      <Paper variant="assistantAvatar">
+      <Paper variant="inverseIconBadge">
         <MessageIcon />
       </Paper>
       <Box>
@@ -122,8 +122,8 @@ export function AiConnectionPanel({ onStatusChange }: Props) {
         </Alert>
       )}
       {device && (
-        <Paper variant="assistantAction" sx={{ width: '100%', maxWidth: 520, textAlign: 'left' }}>
-          <Stack spacing={1.5}>
+        <Paper variant="actionPanel" sx={{ width: '100%', maxWidth: 520, textAlign: 'left' }}>
+          <Stack spacing={2}>
             <Box>
               <Typography variant="sectionLabel">Finish sign-in</Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
@@ -137,11 +137,11 @@ export function AiConnectionPanel({ onStatusChange }: Props) {
               </Typography>
               <Button
                 variant="segmented"
-                startIcon={<ContentCopyIcon />}
+                startIcon={isCopyingCode ? undefined : <ContentCopyIcon />}
                 onClick={() => void copyDeviceCode()}
                 loading={isCopyingCode}
               >
-                Copy
+                {isCopyingCode ? null : 'Copy'}
               </Button>
             </Stack>
             <Stack direction="row" spacing={1} justifyContent="flex-end">
@@ -154,25 +154,35 @@ export function AiConnectionPanel({ onStatusChange }: Props) {
               >
                 Open ChatGPT sign-in
               </Button>
-              <Button variant="segmented" startIcon={<CloseIcon />} onClick={() => void cancel()} loading={isCancelling}>
-                Cancel
+              <Button
+                variant="segmented"
+                startIcon={isCancelling ? undefined : <CloseIcon />}
+                onClick={() => void cancel()}
+                loading={isCancelling}
+              >
+                {isCancelling ? null : 'Cancel'}
               </Button>
             </Stack>
           </Stack>
         </Paper>
       )}
       {!device && (
-        <Button variant="primaryAction" onClick={() => void connect()} startIcon={<CheckCircleIcon />} loading={isConnecting}>
-          Connect ChatGPT
+        <Button
+          variant="primaryAction"
+          onClick={() => void connect()}
+          startIcon={isConnecting ? undefined : <CheckCircleIcon />}
+          loading={isConnecting}
+        >
+          {isConnecting ? null : 'Connect ChatGPT'}
         </Button>
       )}
       {isConnecting && !device && (
-        <Stack alignItems="center" spacing={1}>
+        <Stack alignItems="center" spacing={2}>
           <Typography variant="fieldHint" color="text.secondary">
             Waiting for sign-in…
           </Typography>
           <Button variant="segmented" onClick={() => void cancel()} loading={isCancelling}>
-            Cancel
+            {isCancelling ? null : 'Cancel'}
           </Button>
         </Stack>
       )}

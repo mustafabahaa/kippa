@@ -339,7 +339,7 @@ export function FastEntry() {
               )}
 
               {/* Note / Date Area */}
-              <Stack spacing={1.5} sx={{ width: '100%' }}>
+              <Stack spacing={2} sx={{ width: '100%' }}>
                 <Stack direction="row" alignItems="center" justifyContent="space-between">
                   <Typography variant="sectionTitle">Note (optional)</Typography>
                   <LocalizationProvider dateAdapter={AdapterDateFns}>
@@ -372,11 +372,11 @@ export function FastEntry() {
               <Button
                 variant="primaryAction"
                 loading={isSaving}
-                startIcon={<CheckCircleIcon fontSize="small" />}
+                startIcon={isSaving ? undefined : <CheckCircleIcon fontSize="small" />}
                 onClick={handleSave}
                 sx={{ display: { xs: 'none', lg: 'flex' }, alignSelf: 'flex-start' }}
               >
-                {saveLabel}
+                {isSaving ? null : saveLabel}
               </Button>
             </Stack>
           </Box>

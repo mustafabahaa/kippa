@@ -137,7 +137,7 @@ export function NotificationSettingsForm({ dbSettings, onSave, isSaving, househo
         <Box sx={{ width: '100%', maxWidth: 1250, alignSelf: 'center', pl: { xs: 0, md: 2 } }}>
           <Grid container columns={12} spacing={{ xs: 4, md: 5 }}>
             <Grid size={{ xs: 12, md: 8 }}>
-              <Stack spacing={2}>
+              <Stack spacing={3.5}>
                 <SectionHeading
                   icon={<NotificationsIcon />}
                   title="Alert preferences"

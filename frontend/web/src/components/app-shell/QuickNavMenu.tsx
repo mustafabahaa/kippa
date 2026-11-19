@@ -10,7 +10,7 @@ import {
   SwapHorizIcon,
 } from '@/components/AppIcon';
 
-import { Menu, MenuItem, Divider, ListItemIcon, ListItemText, Typography } from '@monochrome-ui/design-system';
+import { Menu, MenuItem, Divider, ListItemIcon, Typography } from '@monochrome-ui/design-system';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 interface QuickNavMenuProps {
@@ -23,26 +23,26 @@ const SECTIONS = [
   {
     title: 'Money',
     items: [
-      { label: 'Bank Accounts', icon: <AccountBalanceIcon size={22} strokeWidth={1.8} />, path: '/accounts' },
-      { label: 'Statements', icon: <ReceiptLongIcon size={22} strokeWidth={1.8} />, path: '/accounts/statements' },
-      { label: 'Transactions', icon: <ReceiptLongIcon size={22} strokeWidth={1.8} />, path: '/transactions' },
-      { label: 'Categories', icon: <CategoryIcon size={22} strokeWidth={1.8} />, path: '/categories' },
+      { label: 'Bank Accounts', icon: <AccountBalanceIcon size={18} color="action" strokeWidth={1.8} />, path: '/accounts' },
+      { label: 'Statements', icon: <ReceiptLongIcon size={18} color="action" strokeWidth={1.8} />, path: '/accounts/statements' },
+      { label: 'Transactions', icon: <ReceiptLongIcon size={18} color="action" strokeWidth={1.8} />, path: '/transactions' },
+      { label: 'Categories', icon: <CategoryIcon size={18} color="action" strokeWidth={1.8} />, path: '/categories' },
     ],
   },
   {
     title: 'Planning',
     items: [
-      { label: 'Budget Cycles', icon: <CalendarMonthIcon size={22} strokeWidth={1.8} />, path: '/cycles' },
-      { label: 'Cycle Reports', icon: <HistoryIcon size={22} strokeWidth={1.8} />, path: '/cycles/report' },
-      { label: 'Loans', icon: <PaymentsIcon size={22} strokeWidth={1.8} />, path: '/loans' },
-      { label: 'Reconciliation', icon: <SwapHorizIcon size={22} strokeWidth={1.8} />, path: '/reconciliation' },
+      { label: 'Budget Cycles', icon: <CalendarMonthIcon size={18} color="action" strokeWidth={1.8} />, path: '/cycles' },
+      { label: 'Cycle Reports', icon: <HistoryIcon size={18} color="action" strokeWidth={1.8} />, path: '/cycles/report' },
+      { label: 'Loans', icon: <PaymentsIcon size={18} color="action" strokeWidth={1.8} />, path: '/loans' },
+      { label: 'Reconciliation', icon: <SwapHorizIcon size={18} color="action" strokeWidth={1.8} />, path: '/reconciliation' },
     ],
   },
   {
     title: 'Household',
     items: [
-      { label: 'Household Sharing', icon: <HomeIcon size={22} strokeWidth={1.8} />, path: '/household' },
-      { label: 'Activity history', icon: <HistoryIcon size={22} strokeWidth={1.8} />, path: '/activity' },
+      { label: 'Household Sharing', icon: <HomeIcon size={18} color="action" strokeWidth={1.8} />, path: '/household' },
+      { label: 'Activity history', icon: <HistoryIcon size={18} color="action" strokeWidth={1.8} />, path: '/activity' },
     ],
   },
   {
@@ -50,7 +50,7 @@ const SECTIONS = [
     items: [
       {
         label: 'Reminders & Alerts',
-        icon: <NotificationsActiveIcon size={22} strokeWidth={1.8} />,
+        icon: <NotificationsActiveIcon size={18} color="action" strokeWidth={1.8} />,
         path: '/notifications',
       },
     ],
@@ -82,7 +82,7 @@ export function QuickNavMenu({ anchorEl, open, onClose }: QuickNavMenuProps) {
         paper: {
           elevation: 0,
           variant: 'navigationMenu',
-          sx: { mt: 1.5, minWidth: 280 },
+          sx: { mt: 1.5, minWidth: 292 },
         },
       }}
       transformOrigin={{ horizontal: 'right', vertical: 'top' }}
@@ -90,8 +90,8 @@ export function QuickNavMenu({ anchorEl, open, onClose }: QuickNavMenuProps) {
     >
       {SECTIONS.map((section, sIdx) => (
         <div key={section.title}>
-          {sIdx > 0 && <Divider sx={{ my: 1 }} />}
-          <Typography variant="overline" color="text.secondary" sx={{ px: 2.5, mt: 0.5, mb: 0.5, display: 'block' }}>
+          {sIdx > 0 && <Divider sx={{ my: 1.25 }} />}
+          <Typography variant="overline" color="text.primary" sx={{ px: 2.5, mt: 0.75, mb: 0.75, display: 'block' }}>
             {section.title}
           </Typography>
           {section.items.map((item) => {
@@ -101,9 +101,13 @@ export function QuickNavMenu({ anchorEl, open, onClose }: QuickNavMenuProps) {
                 key={item.path}
                 onClick={() => go(item.path)}
                 selected={isActive}
+                variant="navigationItem"
+                sx={{ px: 1.75 }}
               >
-                <ListItemIcon>{item.icon}</ListItemIcon>
-                <ListItemText primary={item.label} />
+                <ListItemIcon sx={{ minWidth: 36 }}>
+                  {item.icon}
+                </ListItemIcon>
+                <Typography variant="body2">{item.label}</Typography>
               </MenuItem>
             );
           })}

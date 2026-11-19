@@ -243,7 +243,7 @@ export function Reconciliation() {
 
                 <Box >
                   {accounts.length === 0 ? (
-                    <Stack spacing={1} alignItems="flex-start">
+                    <Stack spacing={2} alignItems="flex-start">
                       <Typography variant="body2" color="text.secondary">
                         Create an account first, then come back here to balance-check it.
                       </Typography>
@@ -295,7 +295,7 @@ export function Reconciliation() {
                           </Typography>
                         </Stack>
 
-                        <Stack spacing={0.5}>
+                        <Stack spacing={2}>
                           <Typography variant="fieldHint" color="text.secondary">
                             Actual
                           </Typography>

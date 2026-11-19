@@ -188,7 +188,7 @@ export function Household() {
     <Stack spacing={{ xs: 2, md: 3 }}>
       <PageHeader title="Household" subtitle="Manage members, shared access, and the financial spaces you belong to." />
 
-      <Box sx={{ width: '100%', maxWidth: 1250, alignSelf: 'center' }}>
+      <Box sx={{ width: '100%' }}>
         <Stack spacing={{ xs: 3, md: 4 }}>
           <Box component="section" >
             <Stack spacing={{ xs: 2, md: 2.5 }}>
@@ -197,7 +197,7 @@ export function Household() {
                 title="Your households"
                 subtitle={`${householdsList.length} financial ${householdsList.length === 1 ? 'space' : 'spaces'} available`}
                 trailing={
-                  <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems="flex-start">
+                  <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems="flex-start">
                     <Button variant="contained" startIcon={<AddHomeIcon />} onClick={() => setCreateDialogOpen(true)}>
                       Create household
                     </Button>
@@ -235,9 +235,14 @@ export function Household() {
               )}
 
               {activeHh && (
-                <Grid container columns={12} spacing={{ xs: 3, md: 4 }} >
+                <Grid
+                  container
+                  columns={12}
+                  spacing={{ xs: 3, md: 4 }}
+                  sx={{ paddingInlineStart: { xs: 1, sm: 2 } }}
+                >
                   <Grid size={{ xs: 12, md: isOwner ? 4 : 12 }}>
-                    <Stack spacing={{ xs: 2.5, md: 3 }}>
+                    <Stack spacing={{ xs: 3.5, md: 3.5 }}>
                       <SectionHeading
                         icon={<HomeIcon />}
                         title="Household details"
@@ -260,7 +265,7 @@ export function Household() {
                       />
 
                       <Stack spacing={{ xs: 2.5, md: 3 }} >
-                        <Stack spacing={1.25} alignItems="flex-start">
+                        <Stack spacing={2.5} alignItems="flex-start">
                           <Box>
                             <Typography variant="sectionLabel">Base currency</Typography>
                             <Typography variant="fieldHint" color="text.secondary">
@@ -281,7 +286,7 @@ export function Household() {
                           )}
                         </Stack>
 
-                        <Stack spacing={1} sx={{ minWidth: 0 }}>
+                        <Stack spacing={2} sx={{ minWidth: 0 }}>
                           <Typography variant="sectionLabel">Invite ID</Typography>
                           <Typography variant="fieldHint" color="text.secondary">
                             Share this ID. The household owner can approve join requests.
@@ -289,7 +294,7 @@ export function Household() {
                           <Stack
                             direction={{ xs: 'column', sm: 'row' }}
                             alignItems={{ xs: 'flex-start', sm: 'center' }}
-                            spacing={1}
+                            spacing={2}
                             sx={{ minWidth: 0 }}
                           >
                             <Typography

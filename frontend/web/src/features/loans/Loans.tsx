@@ -4,6 +4,7 @@ import type { Loan } from '@kippa/domain';
 import { Money } from '@/components/Money';
 import { PageHeader } from '@monochrome-ui/design-system';
 import { SectionHeading } from '@/features/shared/components/SectionHeading';
+import { EmptyLayout } from '@/features/shared/components/EmptyLayout';
 import { useAppContext } from '@/hooks/useAppContext';
 import {
   useAccounts,
@@ -65,7 +66,7 @@ export function Loans() {
   };
 
   return (
-    <Stack spacing={{ xs: 2, md: 3 }}>
+    <Stack spacing={{ xs: 2, md: 3 }} sx={{ width: '100%' }}>
       <PageHeader
         title="Loans"
         subtitle="Track repayments and keep each payment account ready."
@@ -90,7 +91,7 @@ export function Loans() {
           />
 
           <Box >
-            <Box sx={{ maxWidth: 1100 }}>
+          <Box sx={{ width: '100%', maxWidth: 1100, mx: 'auto' }}>
               {loading ? (
                 <Stack spacing={3} divider={<Divider />}>
                   {[1, 2].map((item) => (
@@ -102,12 +103,10 @@ export function Loans() {
                   ))}
                 </Stack>
               ) : loanItems.length === 0 ? (
-                <Stack spacing={1} alignItems="flex-start" sx={{ py: 1 }}>
-                  <Typography variant="h5">No loans yet</Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Add a fixed loan and Kippa will prepare its monthly installments automatically.
-                  </Typography>
-                </Stack>
+                <EmptyLayout
+                  title="No loans yet"
+                  description="Add a fixed loan and Kippa will prepare its monthly installments automatically."
+                />
               ) : (
                 <Stack spacing={{ xs: 3, md: 4 }} divider={<Divider />}>
                   {loanItems.map(({ loan, progress, account }) => {
@@ -130,7 +129,7 @@ export function Loans() {
                             direction={{ xs: 'column', sm: 'row' }}
                             justifyContent="space-between"
                             alignItems={{ xs: 'flex-start', sm: 'center' }}
-                            spacing={1.5}
+                            spacing={2}
                           >
                             <Box sx={{ minWidth: 0 }}>
                               <Typography variant="metricTitle">{loan.name}</Typography>
@@ -210,7 +209,7 @@ export function Loans() {
                             direction={{ xs: 'column', sm: 'row' }}
                             justifyContent="space-between"
                             alignItems={{ xs: 'flex-start', sm: 'center' }}
-                            spacing={1.5}
+                            spacing={2}
                           >
                             <Typography variant="body2" color="text.secondary">
                               {isPaid ? (

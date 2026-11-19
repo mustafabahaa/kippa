@@ -190,8 +190,8 @@ export function AuthScreen() {
               <Alert severity="info" icon={false}>
                 You can find your household invite ID in the profile menu after signing in.
               </Alert>
-              <Button variant="segmented" onClick={handleLogout} startIcon={<LogoutIcon fontSize="small" />} loading={loading}>
-                Sign out
+              <Button variant="segmented" onClick={handleLogout} startIcon={loading ? undefined : <LogoutIcon fontSize="small" />} loading={loading}>
+                {loading ? null : 'Sign out'}
               </Button>
             </Stack>
           </Stack>

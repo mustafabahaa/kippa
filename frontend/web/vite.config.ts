@@ -1,10 +1,10 @@
 /// <reference types="vitest/config" />
-import { defineConfig, type Plugin } from 'vite';
+import { defineConfig, loadEnv, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 import path from 'path';
 
-function localPreviewAuth(): Plugin {
+function localPreviewAuth(env: Record<string, string>): Plugin {
   return {
     name: 'kippa-local-preview-auth',
     apply: 'serve',
@@ -17,11 +17,21 @@ function localPreviewAuth(): Plugin {
           return;
         }
         try {
+          const emulatorMode = env.VITE_FIREBASE_EMULATORS === 'true';
+          const previewProjectId = emulatorMode ? env.VITE_FIREBASE_PROJECT_ID : process.env.KIPPA_PREVIEW_PROJECT_ID;
+          if (emulatorMode && !previewProjectId?.startsWith('demo-')) {
+            res.statusCode = 403;
+            res.end('Local preview requires a demo-* Firebase project');
+            return;
+          }
+          if (emulatorMode) {
+            process.env.FIREBASE_AUTH_EMULATOR_HOST = '127.0.0.1:9099';
+            process.env.FIRESTORE_EMULATOR_HOST = '127.0.0.1:8080';
+          }
           const [{ applicationDefault, getApps, initializeApp }, { getAuth }] = await Promise.all([
             import('firebase-admin/app'),
             import('firebase-admin/auth'),
           ]);
-          const previewProjectId = process.env.KIPPA_PREVIEW_PROJECT_ID;
           const previewApp =
             getApps().find((app) => app.name === 'kippa-local-preview-v2') ||
             initializeApp(
@@ -32,7 +42,10 @@ function localPreviewAuth(): Plugin {
               'kippa-local-preview-v2',
             );
           const uid = process.env.KIPPA_PREVIEW_UID || 'kippa-visual-demo';
-          const token = await getAuth(previewApp).createCustomToken(uid);
+          const token = await getAuth(previewApp).createCustomToken(
+            uid,
+            emulatorMode ? { kippaAccess: true } : undefined,
+          );
           res.setHeader('Content-Type', 'application/json');
           res.setHeader('Cache-Control', 'no-store');
           res.end(JSON.stringify({ token }));
@@ -48,14 +61,16 @@ function localPreviewAuth(): Plugin {
   };
 }
 
-export default defineConfig({
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), '');
+  return {
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
     },
   },
   plugins: [
-    localPreviewAuth(),
+    localPreviewAuth(env),
     react(),
     VitePWA({
       registerType: 'autoUpdate',
@@ -138,4 +153,5 @@ export default defineConfig({
       },
     },
   },
+  };
 });

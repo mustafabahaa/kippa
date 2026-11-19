@@ -26,7 +26,7 @@ export function MerchantKeywordsEditor({ keywords, onChange, disabled = false, e
   };
 
   return (
-    <Stack spacing={1.5}>
+    <Stack spacing={2}>
       <Stack direction="row" spacing={1} alignItems="center">
         <ShoppingCartIcon size={22} strokeWidth={1.8} />
         <Typography variant="sectionLabel">Merchants</Typography>

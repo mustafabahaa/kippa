@@ -278,6 +278,7 @@ export type AuditAction =
   | 'account_updated'
   | 'category_created'
   | 'category_updated'
+  | 'category_deleted'
   | 'cycle_created'
   | 'cycle_status_changed'
   | 'allocation_saved'

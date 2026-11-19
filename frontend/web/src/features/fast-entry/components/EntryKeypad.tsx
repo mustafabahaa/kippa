@@ -123,8 +123,8 @@ export function EntryKeypad(props: Props) {
           pb: 1.5,
         }}
       >
-        <Button variant="primaryAction" fullWidth loading={saving} startIcon={<CheckCircleIcon fontSize="small" />} onClick={onSave}>
-          {saveLabel}
+        <Button variant="primaryAction" fullWidth loading={saving} startIcon={saving ? undefined : <CheckCircleIcon fontSize="small" />} onClick={onSave}>
+          {saving ? null : saveLabel}
         </Button>
       </Paper>
       <Fab
