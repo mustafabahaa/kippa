@@ -89,7 +89,7 @@ export function LoanProgressSection({ loans, loansLoading }: { loans: Loan[]; lo
             />
 
             <Stack spacing={0.75}>
-              <LinearProgress size="large" color="primary" variant="determinate" value={progress.progressPercent} />
+              <LinearProgress size="large" color="success" variant="determinate" value={progress.progressPercent} />
               <Stack direction="row" justifyContent="space-between">
                 <Typography variant="metricMetadata" color="text.secondary">
                   {progress.paidInstallments} paid

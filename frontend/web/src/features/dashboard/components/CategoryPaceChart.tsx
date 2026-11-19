@@ -64,7 +64,7 @@ export function CategoryPaceChart({ categories }: { categories: CategoryPace[] }
                     alignItems: 'flex-start',
                     width: '100%',
                     minWidth: 0,
-                    minHeight: '2.5em',
+                    minHeight: '1.5em',
                   }}
                 >
                   <Typography
@@ -72,6 +72,7 @@ export function CategoryPaceChart({ categories }: { categories: CategoryPace[] }
                     color="text.secondary"
                     title={category.categoryName}
                     textAlign="center"
+                    noWrap
                     sx={{ width: '100%', minWidth: 0 }}
                   >
                     {category.categoryName}

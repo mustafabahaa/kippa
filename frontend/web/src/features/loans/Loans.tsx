@@ -163,7 +163,7 @@ export function Loans() {
                                 {progress.progressPercent.toFixed(0)}%
                               </Typography>
                             </Stack>
-                            <LinearProgress size="large" color="primary" variant="determinate" value={progress.progressPercent} />
+                            <LinearProgress size="large" color="success" variant="determinate" value={progress.progressPercent} />
                             <Stack direction="row" justifyContent="space-between" spacing={2}>
                               <Typography variant="metricMetadata" color="text.secondary">
                                 <Money amount={progress.paidAmount} code={loan.currency} maxDigits={2} /> paid
