@@ -31,19 +31,28 @@ export function CategoryPaceChart({ categories }: { categories: CategoryPace[] }
           }}
         >
           {visible.map((category) => {
-            const percent = category.planned > 0 ? (category.spent / category.planned) * 100 : 100;
-            const fill = Math.max(category.spent > 0 ? 5 : 0, Math.min(100, percent));
-            const over = percent > 100;
+            const hasUnplannedSpend = category.planned <= 0 && category.spent > 0;
+            const percent = category.planned > 0 ? (category.spent / category.planned) * 100 : 0;
+            const fill = hasUnplannedSpend ? 100 : Math.max(category.spent > 0 ? 5 : 0, Math.min(100, percent));
+            const over = category.spent > category.planned;
+            const fillVariant = over
+              ? 'capacityFillError'
+              : percent >= 80
+                ? 'capacityFillWarning'
+                : 'capacityFillSuccess';
+            const tooltip = hasUnplannedSpend
+              ? `${category.categoryName}: unplanned spend · ${category.spent.toLocaleString()} spent with no budget`
+              : `${category.categoryName}: ${Math.round(percent)}% used · ${category.spent.toLocaleString()} spent of ${category.planned.toLocaleString()} planned`;
             return (
               <Stack key={category.categoryId} spacing={2} alignItems="center" sx={{ minWidth: 0 }}>
                 <Tooltip
                   arrow
                   placement="top"
-                  title={`${category.categoryName}: ${Math.round(percent)}% used · ${category.spent.toLocaleString()} spent of ${category.planned.toLocaleString()} planned`}
+                  title={tooltip}
                 >
                   <Paper variant="capacityTrack" sx={{ width: '100%', maxWidth: 46, height: { xs: 72, sm: 88 } }}>
                     <Paper
-                      variant={over ? 'capacityOverflow' : 'capacityFill'}
+                      variant={fillVariant}
                       sx={{ height: `${fill}%` }}
                     />
                   </Paper>

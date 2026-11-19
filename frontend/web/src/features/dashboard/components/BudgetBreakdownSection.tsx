@@ -225,8 +225,10 @@ export function BudgetBreakdownSection() {
             ) : (
               data.categoryStatus.map((cat, idx) => {
                 const remaining = cat.planned - cat.spent;
-                const isOver = remaining < 0;
-                const percent = cat.planned > 0 ? (cat.spent / cat.planned) * 100 : cat.spent > 0 ? 100 : 0;
+                const hasUnplannedSpend = cat.planned <= 0 && cat.spent > 0;
+                const isOver = cat.spent > cat.planned;
+                const percent = cat.planned > 0 ? (cat.spent / cat.planned) * 100 : 0;
+                const utilizationTone = isOver ? 'error' : percent >= 80 ? 'warning' : 'success';
                 const catColor = chartColors[idx % chartColors.length];
 
                 return (
@@ -255,19 +257,19 @@ export function BudgetBreakdownSection() {
                       <Stack direction="row" alignItems="center" spacing={1}>
                         <LinearProgress
                           variant="determinate"
-                          value={Math.min(100, percent)}
-                          color={percent > 100 ? 'error' : 'success'}
+                          value={hasUnplannedSpend ? 100 : Math.min(100, percent)}
+                          color={utilizationTone}
                           sx={{ flex: 1 }}
                         />
                         <Typography
                           variant="metricPercent"
-                          color="text.secondary"
+                          color={isOver ? 'error.main' : utilizationTone === 'warning' ? 'warning.main' : 'text.secondary'}
                           sx={{
-                            minWidth: 34,
+                            minWidth: hasUnplannedSpend ? 70 : 34,
                             textAlign: 'right',
                           }}
                         >
-                          {Math.round(percent)}%
+                          {hasUnplannedSpend ? 'Unplanned' : `${Math.round(percent)}%`}
                         </Typography>
                       </Stack>
                       <Box

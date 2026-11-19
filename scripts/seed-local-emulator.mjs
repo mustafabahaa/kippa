@@ -69,6 +69,7 @@ const categories = [
   { id: 'demo-expense-health', name: 'Health', type: 'expense', isActive: true, essential: true },
   { id: 'demo-expense-fun', name: 'Eating out', type: 'expense', isActive: true },
   { id: 'demo-expense-over-budget', name: 'Demo over budget', type: 'expense', isActive: true },
+  { id: 'demo-expense-unplanned', name: 'Demo unplanned spend', type: 'expense', isActive: true },
   { id: 'demo-expense-source', name: 'Demo source category', type: 'expense', isActive: true },
   { id: 'demo-expense-target', name: 'Demo target category', type: 'expense', isActive: true },
   { id: 'demo-expense-unused', name: 'Unused demo category', type: 'expense', isActive: true },
@@ -175,6 +176,10 @@ addTransaction(
   [ledgerLine('demo-line-over-budget-november', 'demo-over-budget-november', 'demo-account', -1200)],
 );
 addTransaction(
+  transaction('demo-unplanned-november', 'expense', '2026-11-12', 'Unplanned category expense', 'demo-expense-unplanned', 'demo-cycle'),
+  [ledgerLine('demo-line-unplanned-november', 'demo-unplanned-november', 'demo-account', -1331)],
+);
+addTransaction(
   transaction('demo-dining-november', 'expense', '2026-11-10', 'Dinner with friends', 'demo-expense-fun', 'demo-cycle'),
   [ledgerLine('demo-line-dining-november', 'demo-dining-november', 'demo-credit-account', -1600)],
 );
@@ -237,6 +242,7 @@ for (const [cycleId, categoryId, plannedAmount] of [
   ['demo-cycle', 'demo-expense-health', 285],
   ['demo-cycle', 'demo-expense-fun', 1800],
   ['demo-cycle', 'demo-expense-over-budget', 800],
+  ['demo-cycle', 'demo-expense-unplanned', 0],
   ['demo-cycle-closed', 'demo-expense-housing', 8500],
   ['demo-cycle-closed', 'demo-expense-groceries', 3500],
 ]) {
