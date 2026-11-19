@@ -25,6 +25,7 @@
     "functions:test": "npm run test --workspace=kippa-functions",
     "emulators:local": "firebase emulators:start --config firebase.json.example --project demo-kippa-local --only auth,firestore",
     "seed:local": "node scripts/seed-local-emulator.mjs",
+    "seed:local:empty-budget": "KIPPA_SEED_SCENARIO=empty-budget node scripts/seed-local-emulator.mjs",
     "dev:local": "npm run dev --workspace=kippa-app -- --mode emulator --host 0.0.0.0",
     "deploy": "npm run build && firebase deploy",
     "deploy:web": "npm run build && firebase deploy --only hosting",

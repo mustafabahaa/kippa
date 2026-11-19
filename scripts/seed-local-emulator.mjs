@@ -68,6 +68,7 @@ const categories = [
   { id: 'demo-expense-transport', name: 'Transport', type: 'expense', isActive: true, essential: true },
   { id: 'demo-expense-health', name: 'Health', type: 'expense', isActive: true, essential: true },
   { id: 'demo-expense-fun', name: 'Eating out', type: 'expense', isActive: true },
+  { id: 'demo-expense-over-budget', name: 'Demo over budget', type: 'expense', isActive: true },
   { id: 'demo-expense-source', name: 'Demo source category', type: 'expense', isActive: true },
   { id: 'demo-expense-target', name: 'Demo target category', type: 'expense', isActive: true },
   { id: 'demo-expense-unused', name: 'Unused demo category', type: 'expense', isActive: true },
@@ -170,6 +171,10 @@ addTransaction(
   [ledgerLine('demo-line-health-november', 'demo-health-november', 'demo-account', -285)],
 );
 addTransaction(
+  transaction('demo-over-budget-november', 'expense', '2026-11-11', 'Unexpected home repair', 'demo-expense-over-budget', 'demo-cycle'),
+  [ledgerLine('demo-line-over-budget-november', 'demo-over-budget-november', 'demo-account', -1200)],
+);
+addTransaction(
   transaction('demo-dining-november', 'expense', '2026-11-10', 'Dinner with friends', 'demo-expense-fun', 'demo-cycle'),
   [ledgerLine('demo-line-dining-november', 'demo-dining-november', 'demo-credit-account', -1600)],
 );
@@ -229,8 +234,9 @@ for (const [cycleId, categoryId, plannedAmount] of [
   ['demo-cycle', 'demo-expense-housing', 9000],
   ['demo-cycle', 'demo-expense-groceries', 4000],
   ['demo-cycle', 'demo-expense-transport', 1500],
-  ['demo-cycle', 'demo-expense-health', 800],
+  ['demo-cycle', 'demo-expense-health', 285],
   ['demo-cycle', 'demo-expense-fun', 1800],
+  ['demo-cycle', 'demo-expense-over-budget', 800],
   ['demo-cycle-closed', 'demo-expense-housing', 8500],
   ['demo-cycle-closed', 'demo-expense-groceries', 3500],
 ]) {
@@ -313,5 +319,16 @@ for (const [categoryId, plannedAmount] of [
 }
 
 await batch.commit();
-console.log('Seeded isolated demo user, household, accounts, cards, transactions, budgets, loans, reconciliation, and review data.');
+
+if (process.env.KIPPA_SEED_SCENARIO === 'empty-budget') {
+  const allocations = await db.collection(`households/${householdId}/budgetAllocations`)
+    .where('budgetCycleId', '==', 'demo-cycle')
+    .get();
+  const emptyBudgetBatch = db.batch();
+  allocations.docs.forEach((allocation) => emptyBudgetBatch.delete(allocation.ref));
+  await emptyBudgetBatch.commit();
+  console.log('Seeded the local demo with an empty active budget cycle.');
+} else {
+  console.log('Seeded the local demo with budget utilization states from 0% to 150%.');
+}
 console.log('Open the local preview with ?visual-preview=1; all records are synthetic and emulator-only.');
