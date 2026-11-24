@@ -4,6 +4,7 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
+    "prebuild": "node ../../scripts/sync-shared-dependencies.mjs kippa-landing",
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview"
@@ -12,7 +13,7 @@
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
     "@fontsource-variable/plus-jakarta-sans": "^5.2.8",
-    "@monochrome-ui/design-system": "https://codeload.github.com/mustafabahaa/monochrome-ui/tar.gz/f9c067e",
+    "@monochrome-ui/design-system": "github:mustafabahaa/monochrome-ui#main",
     "@mui/icons-material": "^7.2.0",
     "@mui/material": "^7.2.0",
     "@phosphor-icons/react": "^2.1.10",

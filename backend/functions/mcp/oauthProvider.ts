@@ -7,7 +7,7 @@ import {
   publicOAuthClientMetadata,
   requireHttpsOrigin,
   sha256,
-} from '@monochrome-ai/core';
+} from '@agentic-ai/core';
 import { getAuth } from 'firebase-admin/auth';
 import { getFirestore } from 'firebase-admin/firestore';
 import type { Response } from 'express';

@@ -13,3 +13,15 @@
 - `npm run lint --workspace kippa-app` runs shared design-system rules, including `monochrome-ui/metric-caption-stacking` for percentage labels, and checks that every routed page listed in `frontend/web/eslint.config.js` inherits `PageScaffold` from the app shell. Keep that route list synchronized with `frontend/web/src/App.tsx`.
 - The app shell owns the shared `PageScaffold`. It keeps each page header on the shell baseline and applies the same responsive inset to page content, so page modules should not add another page-level indent.
 - Async Button and IconButton actions use the shared `loading` prop. Do not render `CircularProgress` inside a button or replace its stable action label with a spinner; `kippa-design/button-loading-prop` enforces this.
+
+## Shared package updates
+
+- Keep `@monochrome-ui/design-system` and `@agentic-ai/core` dependencies on their respective GitHub `main` branches using `github:mustafabahaa/monochrome-ui#main` and `github:mustafabahaa/agentic-ai#main` in every workspace that depends on them. Do not pin dependency versions or commit hashes in package manifests.
+- Commit lockfiles with the exact resolved commit so installs remain reproducible. The root build and each package build run `scripts/sync-shared-dependencies.mjs` before building; this checks `main` against the lockfile and installed package, and refreshes only stale dependencies.
+- Firebase Functions can build independently from `backend/functions`; keep its local sync script copy and prebuild hook aligned with the root script. The sync utility also serves the independently versioned AI package, so keep its messages and behavior product-neutral.
+
+## Shared package updates
+
+- Keep  and  dependencies on their respective GitHub  branches using  and  in every workspace that depends on them. Do not pin dependency versions or commit hashes in package manifests.
+- Commit lockfiles with the exact resolved commit so installs remain reproducible. The root build and each package build run  before building; this checks  against the lockfile and installed package, and refreshes only stale dependencies.
+- Firebase Functions can build independently from ; keep its local sync script copy and prebuild hook aligned with the root script.

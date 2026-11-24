@@ -35,9 +35,9 @@ const mocks = vi.hoisted(() => {
     documents,
     verifyIdToken: vi.fn(async (token: string) => {
       if (token !== 'signed-owner-session') throw new Error('invalid');
-      return { uid: 'owner' };
+      return { uid: 'owner', kippaAccess: true };
     }),
-    getUser: vi.fn(async () => ({ disabled: false })),
+    getUser: vi.fn(async () => ({ disabled: false, customClaims: { kippaAccess: true } })),
     firestore: {
       doc: ref,
       collection: (collection: string) => ({ doc: (id: string) => ref(`${collection}/${id}`) }),

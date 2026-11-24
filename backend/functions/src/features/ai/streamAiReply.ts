@@ -1,6 +1,6 @@
 import { getFirestore } from 'firebase-admin/firestore';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
-import { runCodexHarness } from '@monochrome-ai/core';
+import { runCodexHarness } from '@agentic-ai/core';
 import { requireAllowedUid } from '../../libs/allowedUsers.js';
 import { kippaAiEncryptionKey, withProviderCredential } from './credentialStore.js';
 

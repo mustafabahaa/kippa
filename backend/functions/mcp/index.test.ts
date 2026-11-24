@@ -8,7 +8,7 @@ import { z } from 'zod';
 
 const mocks = vi.hoisted(() => {
   const docs = new Map<string, Record<string, unknown>>();
-  let authUser: { disabled?: boolean } = {};
+  let authUser: { disabled?: boolean; customClaims?: Record<string, unknown> } = {};
   const get = vi.fn(async (path: string) => ({ data: () => docs.get(path) }));
   const getFirestore = vi.fn(() => ({
     collection: (name: string) => ({ doc: (id: string) => ({ get: () => get(`${name}/${id}`) }) }),
@@ -22,7 +22,7 @@ const mocks = vi.hoisted(() => {
     getUser,
     getApps: vi.fn(() => [{}]),
     initializeApp: vi.fn(),
-    setAuthUser: (value: { disabled?: boolean }) => { authUser = value; },
+    setAuthUser: (value: { disabled?: boolean; customClaims?: Record<string, unknown> }) => { authUser = value; },
     tools: {
       listRecords: {
         description: 'List records', risk: 'read', inputSchema: undefined as z.ZodType<unknown> | undefined,
@@ -59,12 +59,13 @@ describe('Kippa MCP HTTP endpoint', () => {
   let baseUrl: URL;
 
   beforeEach(async () => {
+    process.env.KIPPA_PUBLIC_URL = 'https://kippa.example';
     mocks.docs.clear();
     mocks.get.mockClear();
     mocks.getUser.mockClear();
     mocks.tools.listRecords.execute.mockClear();
     mocks.tools.createRecord.execute.mockClear();
-    mocks.setAuthUser({ disabled: false });
+    mocks.setAuthUser({ disabled: false, customClaims: { kippaAccess: true } });
     mocks.docs.set(`mcpCredentials/${HASH}`, {
       userId: USER_ID, householdId: HOUSEHOLD_ID, label: 'Test',
       createdAt: Date.now(), expiresAt: Date.now() + 60_000,

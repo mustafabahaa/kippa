@@ -75,7 +75,7 @@ describe('MCP credentials', () => {
     });
 
     const result = await (createMcpCredential as (request: unknown) => Promise<CreatedCredential>)({
-      auth: { uid },
+      auth: { uid, token: { kippaAccess: true } },
       data: { householdId, label: 'Personal MCP client' },
     });
 
@@ -91,7 +91,7 @@ describe('MCP credentials', () => {
 
     await expect(
       (createMcpCredential as (request: unknown) => Promise<unknown>)({
-        auth: { uid: 'member-2' },
+        auth: { uid: 'member-2', token: { kippaAccess: true } },
         data: { householdId, label: 'Personal MCP client' },
       }),
     ).rejects.toMatchObject({ code: 'permission-denied' });
@@ -105,7 +105,7 @@ describe('MCP credentials', () => {
 
     await expect(
       (revokeMcpCredential as (request: unknown) => Promise<unknown>)({
-        auth: { uid },
+        auth: { uid, token: { kippaAccess: true } },
         data: { householdId, credentialId },
       }),
     ).rejects.toMatchObject({ code: 'not-found' });
@@ -122,7 +122,7 @@ describe('MCP credentials', () => {
     const credentialId = 'c'.repeat(64);
     mocks.documents.set(`mcpCredentials/${credentialId}`, { householdId, grantId: 'grant-1' });
     await (revokeMcpCredential as (request: unknown) => Promise<unknown>)({
-      auth: { uid },
+      auth: { uid, token: { kippaAccess: true } },
       data: { householdId, credentialId },
     });
     expect(mocks.batchUpdate).toHaveBeenCalledTimes(2);

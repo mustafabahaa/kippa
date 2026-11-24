@@ -9,6 +9,7 @@
     "packages/*"
   ],
   "scripts": {
+    "prebuild": "node scripts/sync-shared-dependencies.mjs",
     "dev": "npm run dev --workspace=kippa-app",
     "build": "npm run functions:build && npm run build --workspace=kippa-app",
     "preview": "npm run preview --workspace=kippa-app",

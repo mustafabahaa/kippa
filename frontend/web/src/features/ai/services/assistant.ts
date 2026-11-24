@@ -1,6 +1,6 @@
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { APICallError, NoSuchToolError, stepCountIs, type ModelMessage } from 'ai';
-import { boundAssistantTextHistory, streamAssistantText, textHistoryToModelMessages, type AssistantStreamEvent } from '@monochrome-ai/core/chat';
+import { boundAssistantTextHistory, streamAssistantText, textHistoryToModelMessages, type AssistantStreamEvent } from '@agentic-ai/core/chat';
 import { AI_MODEL, requireGeminiApiKey } from './aiConfig';
 import { createAiToolRegistry, toAiSdkTools } from './readTools';
 import type { AiChartSpec, AiMessage, PendingAiAction } from '../types';

@@ -118,7 +118,7 @@ describe('Kippa OAuth provider', () => {
     process.env.KIPPA_PUBLIC_URL = 'https://kippa.example';
     mocks.documents.clear();
     mocks.getUser.mockReset();
-    mocks.getUser.mockResolvedValue({ disabled: false });
+    mocks.getUser.mockResolvedValue({ disabled: false, customClaims: { kippaAccess: true } });
     mocks.documents.set(`users/${userId}`, { householdIds: [householdId] });
     mocks.documents.set(`households/${householdId}/householdInfo/info`, { createdBy: userId });
   });

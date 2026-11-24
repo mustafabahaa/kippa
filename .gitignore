@@ -13,9 +13,12 @@ build/
 
 # Firebase
 .firebase/
-firebase-debug.log
-firestore-debug.log
-ui-debug.log
+firebase-debug*.log
+firestore-debug*.log
+database-debug*.log
+pubsub-debug*.log
+storage-debug*.log
+ui-debug*.log
 
 # Per-project Firebase config — copy the *.example files and fill in your own.
 .firebaserc
