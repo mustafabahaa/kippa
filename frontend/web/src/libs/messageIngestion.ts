@@ -25,6 +25,8 @@ export const messageIngestionLib = {
     categoryId?: string;
     accountId: string;
     destinationAccountId?: string;
+    amount?: number;
+    note?: string;
   }): Promise<string> {
     const callable = httpsCallable<typeof data, { transactionId: string }>(
       requireFunctions(),

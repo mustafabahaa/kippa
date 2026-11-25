@@ -1,6 +1,8 @@
+import { useEffect, useRef, useState } from 'react';
 import {
   Box,
   Button,
+  ButtonBase,
   Chip,
   Dialog,
   DialogActions,
@@ -12,6 +14,7 @@ import {
   MenuItem,
   Select,
   Stack,
+  TextField,
   Typography,
 } from '@monochrome-ui/design-system';
 import type { Account, Category, PendingFinancialMessage } from '@kippa/domain';
@@ -31,7 +34,7 @@ type Props = {
   destinationAccounts: Account[];
   item: PendingFinancialMessage | null;
   onAccountChange: (id: string) => void;
-  onApprove: () => void;
+  onApprove: (edits: { amount?: number; note?: string }) => void;
   onCategoryChange: (id: string) => void;
   onClose: () => void;
   onDestinationChange: (id: string) => void;
@@ -41,6 +44,10 @@ type Props = {
 };
 
 export function PendingReviewDialog(props: Props) {
+  return props.item ? <PendingReviewForm key={props.item.id} {...props} item={props.item} /> : null;
+}
+
+function PendingReviewForm(props: Props & { item: PendingFinancialMessage }) {
   const {
     accountId,
     accounts,
@@ -59,21 +66,32 @@ export function PendingReviewDialog(props: Props) {
     state,
     suggestedCategoryIds = [],
   } = props;
-  if (!item) return null;
+  const [amountDraft, setAmountDraft] = useState(String(item.amount));
+  const [editingAmount, setEditingAmount] = useState(false);
+  const [noteDraft, setNoteDraft] = useState('');
+  const amountEditor = useRef<HTMLSpanElement>(null);
+  useEffect(() => {
+    if (!editingAmount || !amountEditor.current) return;
+    const editor = amountEditor.current;
+    editor.focus();
+    window.getSelection()?.selectAllChildren(editor);
+  }, [editingAmount]);
   const transfer = item.kind === 'transfer';
   const crossCurrency = !!item.destinationCurrency && item.destinationCurrency !== item.currency;
   const halfPending = !!item.transferLeg;
   const loanPayment = !!item.suggestedLoanId;
+  const amount = Number(amountDraft);
+  const validAmount = /^\d*\.?\d+$/.test(amountDraft.trim()) && amount > 0 && amount <= Number.MAX_SAFE_INTEGER;
   const creditCardPurchase =
     !transfer &&
     !loanPayment &&
     item.kind === 'expense' &&
     accounts.find((account) => account.id === accountId)?.type === 'credit' &&
     item.currency === 'EGP';
-  const cardPayment = creditCardPurchase ? calculateCardPayment(item.amount, DEFAULT_CARD_FEE_RATE) : null;
-  const canApprove = transfer
+  const cardPayment = creditCardPurchase && validAmount ? calculateCardPayment(amount, DEFAULT_CARD_FEE_RATE) : null;
+  const canApprove = validAmount && (transfer
     ? !halfPending && !!accountId && !!destinationAccountId
-    : !!accountId && (loanPayment || !!categoryId);
+    : !!accountId && (loanPayment || !!categoryId));
   return (
     <Dialog open onClose={onClose} fullWidth maxWidth="xs">
       <DialogTitle>
@@ -85,23 +103,51 @@ export function PendingReviewDialog(props: Props) {
       <DialogContent>
         <Stack spacing={2.5}>
           <Box>
-            <Typography variant="amountValue">
-              <Money amount={item.amount} code={item.currency} maxDigits={2} />
-              {transfer && crossCurrency && (
-                <>
-                  {' '}
-                  →{' '}
-                  <Money
-                    amount={item.destinationAmount ?? 0}
-                    code={item.destinationCurrency ?? item.currency}
-                    maxDigits={2}
-                  />
-                </>
+            <Stack direction="row" alignItems="baseline" gap={1} flexWrap="wrap">
+              {editingAmount ? (
+                <Stack direction="row" alignItems="baseline" gap={1} sx={{ minWidth: 0, maxWidth: '100%' }}>
+                  <Typography component="span" variant="amountValue">{item.currency}</Typography>
+                  <Typography
+                    ref={amountEditor}
+                    component="span"
+                    variant="amountValue"
+                    role="textbox"
+                    aria-label={`Amount (${item.currency})`}
+                    aria-invalid={!validAmount}
+                    aria-disabled={busy}
+                    inputMode="decimal"
+                    contentEditable={busy ? false : 'plaintext-only'}
+                    suppressContentEditableWarning
+                    onInput={(event) => setAmountDraft(event.currentTarget.textContent ?? '')}
+                    onKeyDown={(event) => { if (event.key === 'Enter') event.preventDefault(); }}
+                    sx={{ minWidth: '1ch', overflowWrap: 'anywhere' }}
+                  >
+                    {String(item.amount)}
+                  </Typography>
+                </Stack>
+              ) : loanPayment ? (
+                <Typography variant="amountValue">
+                  <Money amount={item.amount} code={item.currency} maxDigits={2} />
+                </Typography>
+              ) : (
+                <ButtonBase aria-label="Edit amount" disabled={busy} onClick={() => setEditingAmount(true)}>
+                  <Typography variant="amountValue">
+                    <Money amount={item.amount} code={item.currency} maxDigits={2} />
+                  </Typography>
+                </ButtonBase>
               )}
-            </Typography>
+              {transfer && crossCurrency && (
+                <Typography variant="amountValue">
+                  → <Money amount={item.destinationAmount ?? 0} code={item.destinationCurrency ?? item.currency} maxDigits={2} />
+                </Typography>
+              )}
+            </Stack>
             <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
               {item.description}
             </Typography>
+            {editingAmount && !validAmount && (
+              <Typography variant="fieldHint" color="error">Enter a valid amount greater than zero.</Typography>
+            )}
             {cardPayment?.valid && (
               <Stack spacing={0.5} sx={{ mt: 1.25 }}>
                 <Stack direction="row" justifyContent="space-between" alignItems="center">
@@ -220,6 +266,16 @@ export function PendingReviewDialog(props: Props) {
               {item.messagePreview}
             </Typography>
           </Box>
+          <TextField
+            label="Note (optional)"
+            helperText="Added after the description from the bank message."
+            multiline
+            minRows={2}
+            value={noteDraft}
+            onChange={(event) => setNoteDraft(event.target.value)}
+            disabled={busy}
+            slotProps={{ htmlInput: { maxLength: 1000 } }}
+          />
         </Stack>
       </DialogContent>
       <DialogActions>
@@ -236,7 +292,10 @@ export function PendingReviewDialog(props: Props) {
           variant="contained"
           loading={state === 'approving'}
           startIcon={state === 'approving' ? undefined : <CheckCircleIcon />}
-          onClick={onApprove}
+          onClick={() => onApprove({
+            amount: amount === item.amount ? undefined : amount,
+            note: noteDraft.trim() || undefined,
+          })}
           disabled={!canApprove || busy}
         >
           {state === 'approving' ? null : 'Approve'}

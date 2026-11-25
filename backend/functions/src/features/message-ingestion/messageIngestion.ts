@@ -577,12 +577,26 @@ export const approvePendingFinancialMessage = onCall(async (request) => {
     categoryId?: unknown;
     accountId?: unknown;
     destinationAccountId?: unknown;
+    amount?: unknown;
+    note?: unknown;
   };
   const householdId = assertString(data.householdId, 'householdId');
   const pendingId = assertString(data.pendingId, 'pendingId');
   const categoryId = typeof data.categoryId === 'string' ? data.categoryId.trim() : '';
   const accountId = assertString(data.accountId, 'accountId');
   const destinationAccountId = typeof data.destinationAccountId === 'string' ? data.destinationAccountId.trim() : '';
+  const overrideAmount = data.amount;
+  if (overrideAmount !== undefined && (
+    typeof overrideAmount !== 'number' || !Number.isFinite(overrideAmount) ||
+    overrideAmount <= 0 || overrideAmount > Number.MAX_SAFE_INTEGER
+  )) {
+    throw new HttpsError('invalid-argument', 'Enter a valid amount greater than zero.');
+  }
+  if (data.note !== undefined && typeof data.note !== 'string') {
+    throw new HttpsError('invalid-argument', 'Note must be text.');
+  }
+  const note = data.note?.trim() ?? '';
+  if (note.length > 1000) throw new HttpsError('invalid-argument', 'Note must be 1,000 characters or fewer.');
   const profile = await requireHouseholdMember(uid, householdId);
   const db = getFirestore();
   const pendingRef = db.doc(`households/${householdId}/pendingFinancialMessages/${pendingId}`);
@@ -635,7 +649,11 @@ export const approvePendingFinancialMessage = onCall(async (request) => {
     const account = accountSnapshot.data() as Account | undefined;
     const loan = loanSnapshot?.data() as Loan | undefined;
     const isLoanPayment = !!suggestedLoanId && !!suggestedInstallment;
+    const amount = overrideAmount ?? pending.amount;
     if (isLoanPayment) {
+      if (amount !== pending.amount) {
+        throw new HttpsError('failed-precondition', 'The amount on a matched loan installment cannot be edited.');
+      }
       const expectedInstallment = (loan?.openingPaidInstallments ?? 0) + existingLoanPayments.length + 1;
       if (
         pending.suggestedLoanId !== suggestedLoanId ||
@@ -688,12 +706,12 @@ export const approvePendingFinancialMessage = onCall(async (request) => {
 
     const isCrossCurrency =
       pending.kind === 'transfer' && !!pending.destinationCurrency && pending.destinationCurrency !== pending.currency;
-    const destAmount = isCrossCurrency ? (pending.destinationAmount ?? pending.amount) : pending.amount;
+    const destAmount = isCrossCurrency ? (pending.destinationAmount ?? pending.amount) : amount;
     const destCurrency = isCrossCurrency ? (pending.destinationCurrency as string) : pending.currency;
 
     const now = new Date().toISOString();
     const sourceLedgerAmount = calculateCreditCardLedgerAmount({
-      amount: pending.amount,
+      amount,
       currency: pending.currency,
       accountType: account.type,
       transactionType: pending.kind,
@@ -704,7 +722,7 @@ export const approvePendingFinancialMessage = onCall(async (request) => {
       householdId,
       type: pending.kind,
       date: pending.date,
-      description: pending.description,
+      description: note ? [pending.description, note].filter(Boolean).join(' — ') : pending.description,
       categoryId: categoryId || null,
       budgetCycleId: activeCycleId,
       createdBy: uid,
@@ -740,9 +758,9 @@ export const approvePendingFinancialMessage = onCall(async (request) => {
           transactionId,
           fromCurrency: pending.currency,
           toCurrency: destCurrency,
-          fromAmount: pending.amount,
+          fromAmount: amount,
           toAmount: pending.destinationAmount,
-          effectiveRate: pending.destinationAmount / pending.amount,
+          effectiveRate: pending.destinationAmount / amount,
           rateSource: 'bank',
         });
       }
@@ -765,14 +783,14 @@ export const approvePendingFinancialMessage = onCall(async (request) => {
       userPhotoURL: profile.photoURL ?? null,
       action: isLoanPayment ? 'loan_payment_recorded' : 'transaction_created',
       summary: isLoanPayment
-        ? `${profile.displayName || 'User'} approved imported loan installment ${suggestedInstallment}/${loan?.totalInstallments}: ${pending.amount} ${pending.currency}`
+        ? `${profile.displayName || 'User'} approved imported loan installment ${suggestedInstallment}/${loan?.totalInstallments}: ${amount} ${pending.currency}`
         : isCrossCurrency
-          ? `${profile.displayName || 'User'} approved imported transfer: ${pending.amount} ${pending.currency} → ${destAmount} ${destCurrency} - ${pending.description}`
-          : `${profile.displayName || 'User'} approved imported ${pending.kind}: ${pending.amount} ${pending.currency} - ${pending.description}`,
+          ? `${profile.displayName || 'User'} approved imported transfer: ${amount} ${pending.currency} → ${destAmount} ${destCurrency} - ${pending.description}`
+          : `${profile.displayName || 'User'} approved imported ${pending.kind}: ${amount} ${pending.currency} - ${pending.description}`,
       details: {
         transactionId,
         type: pending.kind,
-        amount: pending.amount,
+        amount,
         currency: pending.currency,
         imported: true,
       },

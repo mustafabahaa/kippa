@@ -202,7 +202,7 @@ export function PendingTransactions() {
     setSelected(null);
   };
 
-  const approve = async () => {
+  const approve = async (edits: { amount?: number; note?: string }) => {
     if (
       !selected ||
       !accountId ||
@@ -224,6 +224,7 @@ export function PendingTransactions() {
         categoryId: selected.suggestedLoanId ? undefined : categoryId,
         accountId,
         destinationAccountId: selected.kind === 'transfer' ? destinationAccountId : undefined,
+        ...edits,
       });
       setItemStates((current) => ({ ...current, [pendingId]: 'settled' }));
       enqueueSnackbar('Transaction approved', { variant: 'success' });
