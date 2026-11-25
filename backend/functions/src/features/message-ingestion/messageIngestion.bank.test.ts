@@ -21,7 +21,10 @@ vi.mock('firebase-admin/firestore', () => ({
     }),
     collection: () => ({
       get: async () => ({ docs: [] }),
-      where: () => ({ get: async () => ({ docs: [] }) }),
+      where: () => ({
+        get: async () => ({ docs: [] }),
+        limit: () => ({ get: async () => ({ docs: [], empty: true }) }),
+      }),
     }),
     batch: () => ({
       create: (ref: { path: string }, data: Record<string, unknown>) => {
@@ -45,7 +48,7 @@ vi.mock('../../libs/notifications/sendToMany.js', () => ({
   sendToMany: async () => {},
 }));
 
-import { createMessageIngestionCredential, ingestFinancialMessage } from './messageIngestion.js';
+import { approvePendingFinancialMessage, createMessageIngestionCredential, ingestFinancialMessage } from './messageIngestion.js';
 
 const auth = { uid: 'test-user', token: { kippaAccess: true } };
 const createCredential = createMessageIngestionCredential as unknown as (request: {
@@ -82,6 +85,19 @@ describe('message connection bank routing', () => {
     mocks.documents.clear();
     mocks.pendingWrites.length = 0;
     mocks.documents.set(`users/${auth.uid}`, { householdIds: ['test-home'] });
+  });
+
+  it.each([
+    [{}, 'not-found'],
+    [{ amount: null, note: null }, 'not-found'],
+    [{ amount: 718.2, note: null }, 'not-found'],
+    [{ amount: 0, note: null }, 'invalid-argument'],
+    [{ amount: -1 }, 'invalid-argument'],
+    [{ amount: 718.2, note: 3 }, 'invalid-argument'],
+  ])('validates callable approval options %j before loading the pending item', async (edits, code) => {
+    const request = { auth, data: { householdId: 'test-home', pendingId: 'missing', accountId: 'test-bank', ...edits } };
+    const approve = approvePendingFinancialMessage as unknown as (input: typeof request) => Promise<unknown>;
+    await expect(approve(request)).rejects.toMatchObject({ code });
   });
 
   it('defaults an older create request to HSBC and persists explicit NBE selection', async () => {

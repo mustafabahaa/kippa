@@ -586,17 +586,19 @@ export const approvePendingFinancialMessage = onCall(async (request) => {
   const categoryId = typeof data.categoryId === 'string' ? data.categoryId.trim() : '';
   const accountId = assertString(data.accountId, 'accountId');
   const destinationAccountId = typeof data.destinationAccountId === 'string' ? data.destinationAccountId.trim() : '';
-  const overrideAmount = data.amount;
+  // Older callable clients encode undefined optional fields as null.
+  const overrideAmount = data.amount ?? undefined;
   if (overrideAmount !== undefined && (
     typeof overrideAmount !== 'number' || !Number.isFinite(overrideAmount) ||
     overrideAmount <= 0 || overrideAmount > Number.MAX_SAFE_INTEGER
   )) {
     throw new HttpsError('invalid-argument', 'Enter a valid amount greater than zero.');
   }
-  if (data.note !== undefined && typeof data.note !== 'string') {
+  const noteInput = data.note ?? undefined;
+  if (noteInput !== undefined && typeof noteInput !== 'string') {
     throw new HttpsError('invalid-argument', 'Note must be text.');
   }
-  const note = data.note?.trim() ?? '';
+  const note = noteInput?.trim() ?? '';
   if (note.length > 1000) throw new HttpsError('invalid-argument', 'Note must be 1,000 characters or fewer.');
   const profile = await requireHouseholdMember(uid, householdId);
   const db = getFirestore();

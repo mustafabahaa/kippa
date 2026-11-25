@@ -32,7 +32,12 @@ export const messageIngestionLib = {
       requireFunctions(),
       'approvePendingFinancialMessage',
     );
-    return (await callable(data)).data.transactionId;
+    const { amount, note, ...fields } = data;
+    return (await callable({
+      ...fields,
+      ...(amount !== undefined ? { amount } : {}),
+      ...(note !== undefined ? { note } : {}),
+    })).data.transactionId;
   },
 
   async discard(householdId: string, pendingId: string): Promise<void> {
