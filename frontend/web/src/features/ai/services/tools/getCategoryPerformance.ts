@@ -31,7 +31,7 @@ export const getCategoryPerformanceTool = defineAiTool({
         !!transaction.categoryId &&
         selectedIds.has(transaction.categoryId),
     );
-    const ledgerLines = await ledgerLib.getNormalizedTransactionLines(context.householdId, relevant);
+    const ledgerLines = await ledgerLib.getLedgerLinesBy(context.householdId, 'transactionId', relevant.map((entry) => entry.id));
     const transactionById = new Map(relevant.map((transaction) => [transaction.id, transaction]));
     const categoriesById = new Map(categories.map((category) => [category.id, category]));
     const totals: Record<string, Record<string, number>> = {};

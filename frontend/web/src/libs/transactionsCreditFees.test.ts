@@ -11,7 +11,6 @@ vi.mock('@/libs/db', () => ({ dbLib: dbMocks }));
 
 import { dbLib } from '@/libs/db';
 import { transactionsLib } from './transactions';
-import { ledgerLib } from './ledger';
 
 const credit: Account = {
   id: 'credit',
@@ -116,28 +115,4 @@ describe('transaction and ledger credit-card fee integration', () => {
     expect(updated.cardFee).toBeUndefined();
   });
 
-  it('returns centrally projected gross lines for legacy unpaid credit purchases', async () => {
-    const tx: FinanceTransaction = {
-      id: 'legacy',
-      householdId: 'h',
-      ...expense,
-      status: 'posted',
-      createdAt: '',
-      updatedAt: '',
-    };
-    const legacyLine: LedgerLine = {
-      id: 'legacy-line',
-      householdId: 'h',
-      transactionId: 'legacy',
-      accountId: 'credit',
-      signedAmount: -100,
-      currency: 'EGP',
-      createdAt: '',
-    };
-    dbMocks.getDocs.mockImplementation(async (...[, collection]: [string, string]) =>
-      collection === 'accounts' ? [credit] : collection === 'transactions' ? [tx] : [legacyLine],
-    );
-    const lines = await ledgerLib.getLedgerLines('h');
-    expect(lines).toEqual([expect.objectContaining({ signedAmount: -103, cardFee: { baseAmount: 100, rate: 3 } })]);
-  });
 });

@@ -1,5 +1,4 @@
 import { documentId, orderBy, where, type QueryConstraint, type QueryDocumentSnapshot } from 'firebase/firestore';
-import { accountsNeedingLegacyFeeHistory, includeUnrecordedCardFees } from './creditCardFees';
 import { dbLib } from '@/libs/db';
 import { auditLogLib } from '@/libs/auditLog';
 import { detectBaseCurrency, currencySymbol } from '@/libs/currencyMeta';
@@ -262,24 +261,6 @@ export const ledgerLib = {
   },
 
   // Raw Lines & Transactions Fetchers
-  async getLedgerLines(
-    householdId: string,
-    context?: { accounts: Account[]; transactions: FinanceTransaction[] },
-  ): Promise<LedgerLine[]> {
-    // Ledger lines don't have a budgetCycleId field — only transactions do.
-    // Callers already match lines to transactions in-memory via transactionId.
-    const [lines, accounts, transactions] = await Promise.all([
-      dbLib.getDocs(householdId, 'ledgerLines'),
-      context ? Promise.resolve(context.accounts) : dbLib.getDocs(householdId, 'accounts'),
-      context ? Promise.resolve(context.transactions) : dbLib.getDocs(householdId, 'transactions'),
-    ]);
-    return includeUnrecordedCardFees(
-      accounts as Account[],
-      transactions as FinanceTransaction[],
-      lines as LedgerLine[],
-    );
-  },
-
   async getTransactionHistoryPage(
     householdId: string,
     cycleId: string | undefined,
@@ -326,20 +307,6 @@ export const ledgerLib = {
     ]) as Promise<FinanceTransaction[]>;
   },
 
-  async getNormalizedTransactionLines(householdId: string, transactions: FinanceTransaction[], accounts?: Account[]) {
-    const lines = await this.getLedgerLinesBy(householdId, 'transactionId', transactions.map((transaction) => transaction.id));
-    return this.normalizeTransactionLines(householdId, transactions, lines, accounts);
-  },
-
-  async normalizeTransactionLines(householdId: string, transactions: FinanceTransaction[], lines: LedgerLine[], accounts?: Account[]) {
-    if (!lines.some((line) => line.currency === 'EGP' && line.signedAmount < 0 && !line.cardFee)) return lines;
-    const feeAccounts = accountsNeedingLegacyFeeHistory(accounts ?? await this.getAccounts(householdId), transactions, lines);
-    if (feeAccounts.length === 0) return lines;
-    const history = await this.getAccountHistory(householdId, feeAccounts);
-    const normalized = new Map(history.lines.map((line) => [line.id, line]));
-    return lines.map((line) => normalized.get(line.id) ?? line);
-  },
-
   async getLoanPaymentHistory(householdId: string, loanIds: string[]) {
     const batches = [];
     for (let offset = 0; offset < loanIds.length; offset += 30) {
@@ -363,7 +330,7 @@ export const ledgerLib = {
       pages.push(dbLib.getDocsPage(householdId, 'transactions', ids.length, undefined, [where(documentId(), 'in', ids)]));
     }
     const transactions = (await Promise.all(pages)).flatMap((page) => page.items) as FinanceTransaction[];
-    return { transactions, lines: includeUnrecordedCardFees(accounts, transactions, lines) };
+    return { transactions, lines };
   },
 
   async getTransactions(householdId: string, cycleId?: string): Promise<FinanceTransaction[]> {

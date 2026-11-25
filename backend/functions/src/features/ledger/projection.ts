@@ -1,5 +1,4 @@
-import type { Account, FinanceTransaction, LedgerLine } from '@kippa/domain';
-import { includeUnrecordedCardFees } from '../../domain/transactions/creditCardFees.js';
+import type { FinanceTransaction, LedgerLine } from '@kippa/domain';
 
 export const SUMMARY_COLLECTION = 'ledgerSummaries';
 export const SUMMARY_STATE = '_state';
@@ -30,7 +29,6 @@ export type LedgerState = {
   revision: number;
   cycleRevisions: Record<string, number>;
   balances: Record<string, number>;
-  legacyAccountIds: string[];
 };
 
 export type LedgerHistory = {
@@ -62,11 +60,6 @@ function add(target: Record<string, number>, key: string, amount: number) {
   const value = (Object.prototype.hasOwnProperty.call(target, key) ? target[key] : 0) + amount;
   if (Math.abs(value) < 1e-10) delete target[key];
   else Object.defineProperty(target, key, { value, enumerable: true, writable: true, configurable: true });
-}
-
-export function isLegacyFeeCandidate(transaction: FinanceTransaction | undefined, line: LedgerLine) {
-  return transaction?.status === 'posted' && transaction.type === 'expense' && !transaction.loanId &&
-    !transaction.description?.startsWith('Card fee (') && line.currency === 'EGP' && line.signedAmount < 0 && !line.cardFee;
 }
 
 function applyLine(projection: Projection, transaction: FinanceTransaction, line: LedgerLine, change: number) {
@@ -123,17 +116,6 @@ export function applyPostings(projection: Projection, history: LedgerHistory, di
     if (transaction.status !== 'posted' || !transaction.categoryId || !transaction.budgetCycleId) continue;
     addCategoryDay(accumulator(projection, transaction).categoryDays, transaction.categoryId, transaction.date,
       (outgoing.get(transaction.id) ?? 0) * direction, direction);
-  }
-}
-
-export function applyLegacyFees(projection: Projection, history: LedgerHistory, accounts: Account[], direction: 1 | -1) {
-  if (accounts.length === 0) return;
-  const normalized = includeUnrecordedCardFees(accounts, [...history.transactions.values()], [...history.lines.values()]);
-  for (const line of normalized) {
-    const source = history.lines.get(line.id);
-    const transaction = history.transactions.get(line.transactionId);
-    if (!source || !transaction || line.signedAmount === source.signedAmount) continue;
-    applyLine(projection, transaction, line, (line.signedAmount - source.signedAmount) * direction);
   }
 }
 

@@ -16,7 +16,7 @@ export const getYearlyIncomeAndSpendingTool = defineAiTool({
         transaction.date.startsWith(`${year}-`) &&
         (transaction.type === 'income' || transaction.type === 'expense'),
     );
-    const ledgerLines = await ledgerLib.getNormalizedTransactionLines(context.householdId, relevant);
+    const ledgerLines = await ledgerLib.getLedgerLinesBy(context.householdId, 'transactionId', relevant.map((entry) => entry.id));
     const transactionById = new Map(relevant.map((transaction) => [transaction.id, transaction]));
     const totals: Record<string, { income: number; spending: number }> = {};
     for (const line of getPostedLedgerLines(relevant, ledgerLines)) {

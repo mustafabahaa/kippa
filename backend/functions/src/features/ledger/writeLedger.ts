@@ -1,9 +1,11 @@
 import type { Account, FinanceTransaction, LedgerLine } from '@kippa/domain';
 import type { DocumentData, Firestore, Transaction } from 'firebase-admin/firestore';
 import {
-  applyLegacyFees, applyPostings, combineProjection, isLegacyFeeCandidate, SUMMARY_COLLECTION, SUMMARY_STATE,
+  applyPostings, combineProjection, SUMMARY_COLLECTION, SUMMARY_STATE,
   SUMMARY_VERSION, type CycleSummary, type LedgerHistory, type LedgerState, type Projection,
 } from './projection.js';
+
+import { recordCardFeesForWrite, requiresCardFeeDecision } from './canonicalCardFees.js';
 
 export const ledgerCollections = new Set(['transactions', 'ledgerLines', 'accounts', 'conversionDetails', 'cards']);
 
@@ -44,37 +46,65 @@ function projectDifference(before: LedgerHistory, after: LedgerHistory) {
   return delta;
 }
 
+type Household = ReturnType<Firestore['doc']>;
+
+function withRecordedFees(operations: LedgerOperation[], fees: Map<string, LedgerLine>) {
+  const replacements = [...fees].map(([docId, data]): LedgerOperation => ({
+    type: 'set', collectionName: 'ledgerLines', docId, data,
+  }));
+  return [...operations.filter((op) => op.collectionName !== 'ledgerLines' || !fees.has(op.docId)), ...replacements];
+}
+
+function commitOperations(transaction: Transaction, household: Household, operations: LedgerOperation[]) {
+  for (const operation of operations) {
+    const ref = household.collection(operation.collectionName).doc(operation.docId);
+    if (operation.type === 'delete') transaction.delete(ref);
+    else transaction.set(ref, operation.data!);
+  }
+}
+
+async function createLedgerSummary(transaction: Transaction, household: Household, operations: LedgerOperation[] = []) {
+  const summary = household.collection(SUMMARY_COLLECTION);
+  const [transactions, lines, accountDocs] = await Promise.all([
+    transaction.get(household.collection('transactions')),
+    transaction.get(household.collection('ledgerLines')),
+    operations.length ? transaction.get(household.collection('accounts')) : undefined,
+  ]);
+  const before = {
+    transactions: mapDocuments<FinanceTransaction>(transactions.docs),
+    lines: mapDocuments<LedgerLine>(lines.docs),
+  };
+  const after = {
+    transactions: applyOperations(before.transactions, operations, 'transactions'),
+    lines: applyOperations(before.lines, operations, 'ledgerLines'),
+  };
+  const accounts = applyOperations(mapDocuments<Account>(accountDocs?.docs ?? []), operations, 'accounts');
+  const fees = recordCardFeesForWrite(before, after, accounts);
+  for (const [id, line] of fees) after.lines.set(id, line);
+  const finalOperations = withRecordedFees(operations, fees);
+  const projection = emptyProjection();
+  applyPostings(projection, after, 1);
+  if (projection.cycles.size + finalOperations.length >= 499)
+    throw new Error('This ledger is too large to initialize in one transaction.');
+  const revision = 1;
+  const next: LedgerState = {
+    version: SUMMARY_VERSION, revision,
+    cycleRevisions: Object.fromEntries([...projection.cycles.keys()].map((id) => [id, revision])),
+    balances: projection.balances,
+  };
+  for (const [id, cycle] of projection.cycles) transaction.set(summary.doc(id), { ...cycle, revision });
+  transaction.set(summary.doc(SUMMARY_STATE), next);
+  commitOperations(transaction, household, finalOperations);
+  return next;
+}
+
 export async function initializeLedgerSummaries(db: Firestore, householdId: string) {
   const household = db.collection('households').doc(householdId);
-  const summary = household.collection(SUMMARY_COLLECTION);
   return db.runTransaction(async (transaction) => {
-    const stateRef = summary.doc(SUMMARY_STATE);
-    const current = (await transaction.get(stateRef)).data() as LedgerState | undefined;
-    if (current?.version === SUMMARY_VERSION) return current;
-    const [transactions, lines, accounts] = await Promise.all([
-      transaction.get(household.collection('transactions')),
-      transaction.get(household.collection('ledgerLines')),
-      transaction.get(household.collection('accounts')),
-    ]);
-    const history = { transactions: mapDocuments<FinanceTransaction>(transactions.docs), lines: mapDocuments<LedgerLine>(lines.docs) };
-    const projection = emptyProjection();
-    applyPostings(projection, history, 1);
-    const legacyAccountIds = new Set<string>();
-    for (const line of history.lines.values()) {
-      if (isLegacyFeeCandidate(history.transactions.get(line.transactionId), line)) legacyAccountIds.add(line.accountId);
-    }
-    applyLegacyFees(projection, history, [...mapDocuments<Account>(accounts.docs).values()].filter((account) =>
-      legacyAccountIds.has(account.id),
-    ), 1);
-    if (projection.cycles.size >= 499) throw new Error('Ledger migration requires a partitioned backfill for this household.');
-    const next: LedgerState = {
-      version: SUMMARY_VERSION, revision: 1,
-      cycleRevisions: Object.fromEntries([...projection.cycles.keys()].map((id) => [id, 1])),
-      balances: projection.balances, legacyAccountIds: [...legacyAccountIds],
-    };
-    for (const [id, cycle] of projection.cycles) transaction.set(summary.doc(id), { ...cycle, revision: 1 });
-    transaction.set(stateRef, next);
-    return next;
+    const state = (await transaction.get(household.collection(SUMMARY_COLLECTION).doc(SUMMARY_STATE))).data() as LedgerState | undefined;
+    if (state?.version === SUMMARY_VERSION) return state;
+    if (state && Number(state.version) !== 0) throw new Error('Ledger summary version is unsupported.');
+    return createLedgerSummary(transaction, household);
   });
 }
 
@@ -86,8 +116,11 @@ export async function writeLedger(db: Firestore, transaction: Transaction, house
   const stored = (await transaction.get(stateRef)).data();
   if (stored && stored.version !== 0 && stored.version !== SUMMARY_VERSION) throw new Error('Ledger summary version is unsupported.');
   const state = stored?.version === SUMMARY_VERSION ? stored as LedgerState : undefined;
-
-  if (state && operations.some((op) => op.collectionName !== 'conversionDetails' && op.collectionName !== 'cards')) {
+  if (!state) {
+    await createLedgerSummary(transaction, household, operations);
+    return;
+  }
+  if (operations.some((op) => op.collectionName !== 'conversionDetails' && op.collectionName !== 'cards')) {
     const lineWrites = operations.filter((op) => op.collectionName === 'ledgerLines');
     const priorWrittenLines = lineWrites.length ? mapDocuments<LedgerLine>(await transaction.getAll(
       ...lineWrites.map((op) => collection('ledgerLines').doc(op.docId)),
@@ -114,42 +147,16 @@ export async function writeLedger(db: Firestore, transaction: Transaction, house
       transactions: applyOperations(oldTransactions, operations, 'transactions'),
       lines: applyOperations(oldLines, operations, 'ledgerLines'),
     };
+    const feeAccounts = [...new Set([...after.lines.values()]
+      .filter((line) => requiresCardFeeDecision(after.transactions.get(line.transactionId), line))
+      .map((line) => line.accountId))];
+    if (feeAccounts.length) {
+      const accounts = mapDocuments<Account>(await transaction.getAll(...feeAccounts.map((id) => collection('accounts').doc(id))));
+      const fees = recordCardFeesForWrite(before, after, applyOperations(accounts, operations, 'accounts'));
+      for (const [id, line] of fees) after.lines.set(id, line);
+      operations = withRecordedFees(operations, fees);
+    }
     const delta = projectDifference(before, after);
-
-    const possibleLegacy = new Set(state.legacyAccountIds);
-    const affectedAccounts = new Set(operations.filter((op) => op.collectionName === 'accounts').map((op) => op.docId));
-    for (const line of oldLines.values()) affectedAccounts.add(line.accountId);
-    for (const line of after.lines.values()) {
-      affectedAccounts.add(line.accountId);
-      if (isLegacyFeeCandidate(after.transactions.get(line.transactionId), line)) possibleLegacy.add(line.accountId);
-    }
-    const impacted = [...affectedAccounts].filter((id) => possibleLegacy.has(id));
-    if (impacted.length) {
-      const oldAccounts = mapDocuments<Account>(await transaction.getAll(...impacted.map((id) => collection('accounts').doc(id))));
-      const newAccounts = applyOperations(oldAccounts, operations.filter((op) => impacted.includes(op.docId)), 'accounts');
-      const normalizationIds = impacted.filter((id) => [oldAccounts.get(id), newAccounts.get(id)].some((account) =>
-        account?.type === 'credit' && account.currency === 'EGP',
-      ));
-      if (normalizationIds.length) {
-        const legacyLines = await readLines('accountId', normalizationIds);
-        const otherIds = [...new Set([...legacyLines.values()].map((line) => line.transactionId))]
-          .filter((id) => !transactionIds.has(id));
-        const legacyTransactions = new Map([...oldTransactions, ...await readTransactions(otherIds)]);
-        const adjustedLines = applyOperations(legacyLines, lineWrites, 'ledgerLines');
-        // Admin queries do not all return in document ID order under an IN
-        // filter. Match the stable order that the original ledger uses for
-        // allocating card payments on the same calendar day.
-        const stableLines = (lines: Map<string, LedgerLine>) => new Map([...lines].sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0));
-        applyLegacyFees(delta, { transactions: legacyTransactions, lines: stableLines(legacyLines) }, [...oldAccounts.values()], -1);
-        const adjustedTransactions = applyOperations(legacyTransactions, operations, 'transactions');
-        applyLegacyFees(delta, { transactions: adjustedTransactions, lines: stableLines(adjustedLines) }, [...newAccounts.values()], 1);
-        for (const id of normalizationIds) {
-          if (![...adjustedLines.values()].some((line) => line.accountId === id && isLegacyFeeCandidate(adjustedTransactions.get(line.transactionId), line)))
-            possibleLegacy.delete(id);
-        }
-      }
-    }
-
     const cycleIds = [...delta.cycles.keys()];
     const snapshots = cycleIds.length
       ? await transaction.getAll(...cycleIds.map((id) => collection(SUMMARY_COLLECTION).doc(id))) : [];
@@ -165,17 +172,9 @@ export async function writeLedger(db: Firestore, transaction: Transaction, house
       cycleRevisions[id] = revision;
     }
     transaction.set(stateRef, {
-      ...state, revision, cycleRevisions, balances: projection.balances, legacyAccountIds: [...possibleLegacy],
+      ...state, revision, cycleRevisions, balances: projection.balances,
     } satisfies LedgerState);
-  } else if (!state) {
-    // Fence the initial backfill even when a concurrent commit adds a document
-    // that did not exist when the initializer read its collection queries.
-    transaction.set(stateRef, { version: 0 });
   }
 
-  for (const operation of operations) {
-    const ref = collection(operation.collectionName).doc(operation.docId);
-    if (operation.type === 'delete') transaction.delete(ref);
-    else transaction.set(ref, operation.data!);
-  }
+  commitOperations(transaction, household, operations);
 }

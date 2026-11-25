@@ -17,14 +17,6 @@ const line: LedgerLine = { id: 'line-1', householdId: 'h1', transactionId: 'purc
 describe('ledger read cost', () => {
   beforeEach(() => { vi.clearAllMocks(); mocks.getDocs.mockResolvedValue([line]); });
 
-  it('uses supplied accounts and transactions to apply legacy card fees without reading them again', async () => {
-    const result = await ledgerLib.getLedgerLines('h1', { accounts: [account], transactions: [transaction] });
-
-    expect(mocks.getDocs).toHaveBeenCalledTimes(1);
-    expect(mocks.getDocs).toHaveBeenCalledWith('h1', 'ledgerLines');
-    expect(result[0]).toMatchObject({ signedAmount: -103, cardFee: { baseAmount: 100, rate: 3 } });
-  });
-
   it('reads ledger entries only for the transactions on the requested history page', async () => {
     const cursor = {} as import('firebase/firestore').QueryDocumentSnapshot;
     mocks.getDocsPage.mockResolvedValue({ items: [transaction], nextCursor: cursor });
@@ -64,7 +56,7 @@ describe('ledger read cost', () => {
     expect(mocks.getDocsPage).toHaveBeenCalledExactlyOnceWith('h1', 'transactions', 1, undefined, [
       where(documentId(), 'in', [transaction.id]),
     ]);
-    expect(result.lines[0]).toMatchObject({ signedAmount: -103, cardFee: { baseAmount: 100, rate: 3 } });
+    expect(result.lines).toEqual([line]);
   });
 
   it('does not query ledger entries for an empty page', async () => {

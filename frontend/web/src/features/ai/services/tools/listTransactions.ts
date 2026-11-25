@@ -1,6 +1,5 @@
 import { z } from 'zod';
 import type { LedgerLine } from '@kippa/domain';
-import { accountsNeedingLegacyFeeHistory } from '@/libs/creditCardFees';
 import { ledgerLib } from '@/libs/ledger';
 import { defineAiTool } from '../toolRegistry';
 import { id, isoDate } from './shared';
@@ -51,21 +50,6 @@ export const listTransactionsTool = defineAiTool({
       (!categoryId || item.categoryId === categoryId) &&
       (!searchLower || (item.description ?? '').toLocaleLowerCase().includes(searchLower)),
     );
-    const candidateIds = new Set(candidates.map((item) => item.id));
-    const candidateLines = page.lines.filter((line) => candidateIds.has(line.transactionId));
-    const couldNeedFees = candidateLines.some((line) => line.currency === 'EGP' && line.signedAmount < 0 && !line.cardFee) &&
-      candidates.some((item) => item.type === 'expense' && item.status === 'posted');
-    if (couldNeedFees) {
-      const accounts = await ledgerLib.getAccounts(householdId);
-      const feeAccounts = accountsNeedingLegacyFeeHistory(accounts, candidates, candidateLines);
-      if (feeAccounts.length > 0) {
-        const feeHistory = await ledgerLib.getAccountHistory(householdId, feeAccounts);
-        const normalized = new Map(feeHistory.lines.map((line) => [line.id, line]));
-        for (const [id, lines] of linesByTransaction) {
-          linesByTransaction.set(id, lines.map((line) => normalized.get(line.id) ?? line));
-        }
-      }
-    }
     const amountOf = (transactionId: string) =>
       (linesByTransaction.get(transactionId) ?? []).reduce((total, line) => total + Math.abs(line.signedAmount), 0);
     const filtered = candidates.filter((item) =>

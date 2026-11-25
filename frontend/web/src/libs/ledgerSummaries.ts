@@ -26,7 +26,7 @@ export async function getLedgerSnapshot(householdId: string, scope?: Scope): Pro
 
   let documents = await read();
   let state = documents.find((document) => 'version' in document);
-  if (!state || (state.version as number) === 0) {
+  if (state?.version !== 1) {
     let pending = initializing.get(householdId);
     if (!pending) {
       pending = dbLib.initializeLedgerSummary(householdId).finally(() => initializing.delete(householdId));

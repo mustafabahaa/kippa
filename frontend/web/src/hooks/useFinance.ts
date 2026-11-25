@@ -110,7 +110,7 @@ export function useRecentLedgerActivity(householdId: string, pageSize: number) {
     queryKey: [...keys.transactions(householdId), 'recentLedger', pageSize],
     queryFn: async () => {
       const page = await ledgerLib.getTransactionHistoryPage(householdId, undefined, pageSize);
-      return { transactions: page.transactions, lines: await ledgerLib.normalizeTransactionLines(householdId, page.transactions, page.lines) };
+      return { transactions: page.transactions, lines: page.lines };
     },
     enabled: !!householdId,
   });
@@ -121,7 +121,7 @@ export function useCycleLedgerActivity(householdId: string, cycleId?: string) {
     queryKey: [...keys.transactions(householdId, cycleId), 'cycleLedger'],
     queryFn: async () => {
       const transactions = await ledgerLib.getTransactions(householdId, cycleId);
-      return { transactions, lines: await ledgerLib.getNormalizedTransactionLines(householdId, transactions) };
+      return { transactions, lines: await ledgerLib.getLedgerLinesBy(householdId, 'transactionId', transactions.map((entry) => entry.id)) };
     },
     enabled: !!householdId && !!cycleId,
   });
