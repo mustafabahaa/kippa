@@ -42,6 +42,15 @@
       ]
     },
     {
+      "collectionGroup": "transactions",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "categoryId", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "budgetCycleId", "order": "ASCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "messageIngestionReceipts",
       "queryScope": "COLLECTION",
       "fields": [
@@ -51,5 +60,14 @@
       ]
     }
   ],
-  "fieldOverrides": []
+  "fieldOverrides": [
+    { "collectionGroup": "ledgerSummaries", "fieldPath": "balances", "indexes": [] },
+    { "collectionGroup": "ledgerSummaries", "fieldPath": "cycleRevisions", "indexes": [] },
+    { "collectionGroup": "ledgerSummaries", "fieldPath": "legacyAccountIds", "indexes": [] },
+    { "collectionGroup": "ledgerSummaries", "fieldPath": "flows", "indexes": [] },
+    { "collectionGroup": "ledgerSummaries", "fieldPath": "transactionCounts", "indexes": [] },
+    { "collectionGroup": "ledgerSummaries", "fieldPath": "dailyBalances", "indexes": [] },
+    { "collectionGroup": "ledgerSummaries", "fieldPath": "categoryDays", "indexes": [] },
+    { "collectionGroup": "ledgerWriteRequests", "fieldPath": "operations", "indexes": [] }
+  ]
 }

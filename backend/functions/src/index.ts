@@ -11,6 +11,7 @@ export {
 } from './features/ai/codexConnection.js';
 export { streamAiReply, submitAiToolResult } from './features/ai/streamAiReply.js';
 
+export { commitLedgerOperations, commitQueuedLedgerOperations, initializeLedgerSummary } from './features/ledger/ledgerCallables.js';
 export { onTransactionCreated } from './features/transactions/onTransactionCreated.js';
 export { dailyReminderCron } from './features/notifications/dailyReminderCron.js';
 export {

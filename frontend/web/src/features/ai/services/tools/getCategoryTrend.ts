@@ -1,5 +1,5 @@
+import { getLedgerSnapshot, summaryActivity } from '@/libs/ledgerSummaries';
 import { z } from 'zod';
-import type { LedgerLine } from '@kippa/domain';
 import { ledgerLib } from '@/libs/ledger';
 import { cyclesLib } from '@/libs/cycles';
 import { currencyLib } from '@/libs/currency';
@@ -14,13 +14,13 @@ export const getCategoryTrendTool = defineAiTool({
   risk: 'read',
   async execute({ categoryId }, context) {
     await requireCategory(context.householdId, categoryId);
-    const [accounts, cycles, transactions, ledgerLines, household] = await Promise.all([
+    const [accounts, cycles, snapshot, household] = await Promise.all([
       ledgerLib.getAccounts(context.householdId),
       cyclesLib.getCycles(context.householdId),
-      ledgerLib.getTransactions(context.householdId),
-      ledgerLib.getLedgerLines(context.householdId) as Promise<LedgerLine[]>,
+      getLedgerSnapshot(context.householdId, 'all'),
       ledgerLib.getHouseholdInfo(context.householdId),
     ]);
+    const { transactions, lines: ledgerLines } = summaryActivity(snapshot.cycles);
     const baseCurrency = household?.baseCurrency ?? 'EGP';
     const rates = await currencyLib.getRatesToBase(
       baseCurrency,

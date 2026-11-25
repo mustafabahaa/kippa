@@ -1,3 +1,4 @@
+import { EmptyLayout } from '@/features/shared/components/EmptyLayout';
 import { ReceiptLongIcon } from '@/components/AppIcon';
 
 import { useState } from 'react';
@@ -6,8 +7,7 @@ import { useSnackbar } from 'notistack';
 import { Box, Card, CardContent, Chip, Skeleton, Stack, Typography } from '@monochrome-ui/design-system';
 import {
   useCategories,
-  useTransactions,
-  useLedgerLines,
+  useRecentLedgerActivity,
   useAccounts,
   useCards,
   useVoidTransactionMutation,
@@ -24,8 +24,9 @@ export function TransactionsSection() {
   const { enqueueSnackbar } = useSnackbar();
   const { householdId } = useAppContext();
   const { data: categories = [] } = useCategories(householdId);
-  const { data: transactions, isLoading: txsLoading } = useTransactions(householdId);
-  const { data: ledgerLines, isLoading: linesLoading } = useLedgerLines(householdId);
+  const { data: activity, isError: activityError } = useRecentLedgerActivity(householdId, RECENT_TRANSACTION_LIMIT);
+  const transactions = activity?.transactions;
+  const ledgerLines = activity?.lines;
   const { data: accounts = [] } = useAccounts(householdId);
   const { data: cards = [] } = useCards(householdId);
 
@@ -44,9 +45,8 @@ export function TransactionsSection() {
     }
   };
 
-  const isLoading = txsLoading || linesLoading;
-
-  if (isLoading || !transactions || !ledgerLines) {
+  if (activityError) return <EmptyLayout title="Could not load recent activity" />;
+  if (!transactions || !ledgerLines) {
     return (
       <Box>
         <Skeleton variant="text" width="40%" height={24} animation="wave" sx={{ mb: 1.5 }} />
@@ -118,7 +118,7 @@ export function TransactionsSection() {
       </Card>
 
       {/* Reusable Edit Dialog */}
-      {editingTx && <EditTransactionDialog open transaction={editingTx} onClose={() => setEditingTx(null)} />}
+      {editingTx && <EditTransactionDialog open transaction={editingTx} initialLedgerLines={ledgerLines} onClose={() => setEditingTx(null)} />}
       <VoidTransactionDialog
         open={Boolean(voidingTxId)}
         loading={voidMutation.isPending}

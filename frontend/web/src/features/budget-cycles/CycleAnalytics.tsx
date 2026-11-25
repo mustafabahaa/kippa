@@ -1,3 +1,4 @@
+import { EmptyLayout } from '@/features/shared/components/EmptyLayout';
 import { useState, useMemo } from 'react';
 import {
   Box,
@@ -19,8 +20,7 @@ import {
 } from '@monochrome-ui/design-system';
 import {
   useCycles,
-  useTransactions,
-  useLedgerLines,
+  useSummaryActivity,
   useCategories,
   useAccounts,
   useDisplayRates,
@@ -40,8 +40,9 @@ export function CycleAnalytics() {
 
   // Queries
   const { data: cycles = [], isLoading: cyclesLoading } = useCycles(householdId);
-  const { data: transactions = [], isLoading: txsLoading } = useTransactions(householdId);
-  const { data: ledgerLines = [], isLoading: linesLoading } = useLedgerLines(householdId);
+  const { activity, isLoading: summaryLoading, isError: summaryError } = useSummaryActivity(householdId, 'all');
+  const transactions = activity?.transactions;
+  const ledgerLines = activity?.lines;
   const { data: categories = [], isLoading: categoriesLoading } = useCategories(householdId);
   const { data: accounts = [] } = useAccounts(householdId);
   const baseCurrency = useHouseholdBaseCurrency();
@@ -58,7 +59,7 @@ export function CycleAnalytics() {
   const [selectedCategoryId, setSelectedCategoryId] = useState('masrof-bet');
 
   const isLoading =
-    cyclesLoading || txsLoading || linesLoading || categoriesLoading || allocsLoading || incomesLoading || loansLoading;
+    cyclesLoading || summaryLoading || categoriesLoading || allocsLoading || incomesLoading || loansLoading;
 
   // Chronologically sorted active or closed cycles
   const sortedCycles = useMemo(() => {
@@ -69,7 +70,7 @@ export function CycleAnalytics() {
 
   // Compute stats per cycle
   const cycleData = useMemo(() => {
-    if (isLoading || sortedCycles.length === 0) return [];
+    if (isLoading || sortedCycles.length === 0 || !transactions || !ledgerLines) return [];
     return calculateCycleData(
       sortedCycles,
       transactions,
@@ -94,7 +95,7 @@ export function CycleAnalytics() {
 
   // Compute category trends over cycles
   const categoryTrends = useMemo(() => {
-    if (isLoading || sortedCycles.length === 0 || !selectedCategoryId) return [];
+    if (isLoading || sortedCycles.length === 0 || !selectedCategoryId || !transactions || !ledgerLines) return [];
 
     return calculateCategoryTrends(
       sortedCycles,
@@ -112,6 +113,7 @@ export function CycleAnalytics() {
 
   const cashFlowSeries = useMemo(() => buildCashFlowSeries(cycleData), [cycleData]);
 
+  if (summaryError) return <EmptyLayout title="Could not load cycle totals" />;
   if (isLoading) {
     return <AnalyticsPlaceholder loading />;
   }

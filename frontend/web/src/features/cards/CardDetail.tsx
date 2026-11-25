@@ -13,7 +13,7 @@ import {
   LinearProgress,
 } from '@monochrome-ui/design-system';
 import { useAppContext } from '@/hooks/useAppContext';
-import { useTransactions, useLedgerLines, usePayCardMutation, useCategories, useCycles } from '@/hooks/useFinance';
+import { useAccounts, useAccountHistory, usePayCardMutation, useCategories, useCycles } from '@/hooks/useFinance';
 import type { Card } from '@kippa/domain';
 import { CardBackground, BankLogo, NetworkLogo, TierLabel, CardChip, ContactlessIcon } from './CardDesign';
 import { Money } from '@/components/Money';
@@ -30,8 +30,11 @@ export function CardDetail({ card, onClose }: { card: Card; onClose: () => void 
   const { householdId } = useAppContext();
   const formatMoney = useFormattedMoney();
   const { maskText, maskDigits } = usePrivacyMask();
-  const { data: allTransactions = [] } = useTransactions(householdId);
-  const { data: allLines = [] } = useLedgerLines(householdId);
+  const { data: accounts = [], isLoading: accountsLoading } = useAccounts(householdId);
+  const account = accounts.find((item) => item.id === card.parentAccountId);
+  const { data: accountHistory, isLoading: activityLoading, isError: activityError } =
+    useAccountHistory(householdId, account ? [account] : []);
+  const { transactions: allTransactions = [], lines: allLines = [] } = accountHistory ?? {};
   const payCard = usePayCardMutation();
   const { data: categories = [] } = useCategories(householdId);
   const { data: allCycles = [] } = useCycles(householdId);
@@ -268,7 +271,7 @@ export function CardDetail({ card, onClose }: { card: Card; onClose: () => void 
                         )}
                         <Button
                           variant="contained"
-                          disabled={totalDebt <= 0}
+                          disabled={!accountHistory || totalDebt <= 0}
                           onClick={openPayAll}
                           className="card-surface-pay-action"
                           sx={{ mt: 2 }}
@@ -294,16 +297,22 @@ export function CardDetail({ card, onClose }: { card: Card; onClose: () => void 
 
         {/* ── Activity Section ─────────────────────────────────────── */}
         <DialogContent sx={{ px: 3, pb: 3, pt: 2 }}>
-          <CardActivityList
-            card={card}
-            categories={categories}
-            groups={cycleGroups}
-            transactions={allTransactions}
-            mask={maskDigits}
-            onLoadMore={loadNextCycle}
-            onPay={openPayOne}
-            visibleCount={visibleCycleCount}
-          />
+          {accountsLoading || activityLoading ? (
+            <Typography color="text.secondary">Loading card activity…</Typography>
+          ) : activityError ? (
+            <Typography color="text.secondary">Could not load card activity.</Typography>
+          ) : (
+            <CardActivityList
+              card={card}
+              categories={categories}
+              groups={cycleGroups}
+              transactions={allTransactions}
+              mask={maskDigits}
+              onLoadMore={loadNextCycle}
+              onPay={openPayOne}
+              visibleCount={visibleCycleCount}
+            />
+          )}
         </DialogContent>
       </Dialog>
 

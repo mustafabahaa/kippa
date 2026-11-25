@@ -23,7 +23,6 @@ import { useSnackbar } from 'notistack';
 import {
   useAccounts,
   useCategories,
-  useLedgerLines,
   useUpdateTransactionMutation,
   useHouseholdBaseCurrency,
 } from '@/hooks/useFinance';
@@ -37,7 +36,7 @@ const EMPTY_LINES: LedgerLine[] = [];
 interface EditTransactionDialogProps {
   open: boolean;
   transaction: FinanceTransaction | null;
-  initialLedgerLines?: LedgerLine[];
+  initialLedgerLines: LedgerLine[] | undefined;
   onClose: () => void;
 }
 
@@ -47,10 +46,7 @@ export const EditTransactionDialog: React.FC<EditTransactionDialogProps> = ({ op
   const baseCurrency = useHouseholdBaseCurrency();
   const { data: accounts = [] } = useAccounts(householdId);
   const { data: categories = [] } = useCategories(householdId);
-  const { data: historyLines = EMPTY_LINES } = useLedgerLines(householdId, undefined, {
-    enabled: open && !!transaction && !initialLedgerLines,
-  });
-  const ledgerLines = initialLedgerLines ?? historyLines;
+  const ledgerLines = initialLedgerLines ?? EMPTY_LINES;
   const updateMutation = useUpdateTransactionMutation();
 
   const { fields, setField } = useTransactionEditFields(transaction, ledgerLines);

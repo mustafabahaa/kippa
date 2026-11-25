@@ -1,3 +1,9 @@
+import { FieldPath, type OrderByDirection, type WhereFilterOp } from 'firebase-admin/firestore';
+
+export type ReadConstraint =
+  | { kind: 'where'; field: string | FieldPath; operator: WhereFilterOp; value: unknown }
+  | { kind: 'orderBy'; field: string | FieldPath; direction: OrderByDirection };
+
 /**
  * Server-side stand-in for 'firebase/firestore'. Client libs import a few
  * helpers for their realtime subscription paths, which the MCP server never
@@ -7,8 +13,11 @@
 const dummy = () => ({ __kippaFirestoreStub: true });
 export const collection = dummy;
 export const query = dummy;
-export const where = dummy;
-export const orderBy = dummy;
+export const documentId = () => FieldPath.documentId();
+export const where = (field: string | FieldPath, operator: WhereFilterOp, value: unknown): ReadConstraint =>
+  ({ kind: 'where', field, operator, value });
+export const orderBy = (field: string | FieldPath, direction: OrderByDirection = 'asc'): ReadConstraint =>
+  ({ kind: 'orderBy', field, direction });
 export const limit = dummy;
 export const doc = dummy;
 export const getDoc = dummy;

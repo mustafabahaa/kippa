@@ -86,13 +86,31 @@ service cloud.firestore {
         allow write: if false;
       }
 
+      match /ledgerWriteRequests/{requestId} {
+        allow create: if isHouseholdMember(householdId)
+          && request.resource.data.keys().hasOnly(['createdBy', 'status', 'operations'])
+          && request.resource.data.createdBy == request.auth.uid
+          && request.resource.data.status == 'pending'
+          && request.resource.data.operations is list
+          && request.resource.data.operations.size() > 0
+          && request.resource.data.operations.size() <= 450;
+        allow read: if isHouseholdMember(householdId) && resource.data.createdBy == request.auth.uid;
+        allow update, delete: if false;
+      }
+
       // Direct household collections remain member-managed. Pending message
       // records are excluded because approval must be server-validated and
       // ledger writes must be atomic.
       match /{collectionName}/{documentId} {
-        allow read, write: if collectionName != 'pendingFinancialMessages'
+        allow read: if collectionName != 'pendingFinancialMessages'
           && collectionName != 'aiConversations'
           && collectionName != 'aiMemories'
+          && collectionName != 'ledgerWriteRequests'
+          && isHouseholdMember(householdId);
+        // These four source collections and their summaries are committed
+        // together by the authenticated ledger service.
+        allow write: if !(collectionName in ['pendingFinancialMessages', 'aiConversations', 'aiMemories',
+            'ledgerSummaries', 'ledgerWriteRequests', 'transactions', 'ledgerLines', 'accounts', 'conversionDetails'])
           && isHouseholdMember(householdId);
       }
 

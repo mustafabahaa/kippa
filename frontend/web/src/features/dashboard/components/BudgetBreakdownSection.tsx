@@ -1,3 +1,4 @@
+import { EmptyLayout } from '@/features/shared/components/EmptyLayout';
 import { BarChartIcon, PaymentsIcon, SavingsIcon } from '@/components/AppIcon';
 
 import {
@@ -15,8 +16,7 @@ import {
 import { MetricBadge, ChartColorMarker } from '@monochrome-ui/design-system';
 import {
   useAccounts,
-  useTransactions,
-  useLedgerLines,
+  useSummaryActivity,
   useCategories,
   useCycles,
   useDisplayRates,
@@ -40,8 +40,6 @@ export function BudgetBreakdownSection() {
 
   const chartColors = theme.palette.chart.colors;
   const { data: accounts = [] } = useAccounts(householdId);
-  const { data: transactions } = useTransactions(householdId);
-  const { data: ledgerLines } = useLedgerLines(householdId);
   const { data: categories = [] } = useCategories(householdId);
   const { data: cycles = [] } = useCycles(householdId);
   const baseCurrency = useHouseholdBaseCurrency();
@@ -50,12 +48,16 @@ export function BudgetBreakdownSection() {
 
   const activeCycle = cycles.find((c) => c.status === 'open') || null;
   const activeCycleId = activeCycle?.id;
+  const { data: snapshot, activity, isError: summaryError } = useSummaryActivity(householdId, activeCycleId);
+  const transactions = activity?.transactions;
+  const ledgerLines = activity?.lines;
 
   const { data: allocations, isLoading: allocsLoading } = useBudgetAllocations(householdId, activeCycleId);
   const { data: loans = [] } = useLoans(householdId);
 
   const isLoading = allocsLoading || !transactions || !ledgerLines;
 
+  if (summaryError) return <EmptyLayout title="Could not load budget totals" />;
   if (isLoading) {
     return (
       <Box>
@@ -76,6 +78,7 @@ export function BudgetBreakdownSection() {
     displayRates,
     baseCurrency,
     loans,
+    snapshot?.balances,
   );
 
   const totalPlanned = data.categoryStatus.reduce((sum, cat) => sum + cat.planned, 0);

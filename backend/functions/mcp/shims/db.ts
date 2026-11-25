@@ -1,5 +1,7 @@
-import { getFirestore, type DocumentData, type Query } from 'firebase-admin/firestore';
+import { getFirestore, type DocumentData, type Query, type QueryDocumentSnapshot } from 'firebase-admin/firestore';
 import { mcpRequestContext } from '../requestContext';
+import type { ReadConstraint } from './firestore';
+import { initializeLedgerSummaries, ledgerCollections, writeLedger } from '../../src/features/ledger/writeLedger.js';
 
 /**
  * Admin-backed implementation of the client dbLib surface. Path semantics are
@@ -31,6 +33,11 @@ function docPath(householdId: string, collectionName: string, docId: string, wri
 }
 
 export const dbLib = {
+  async initializeLedgerSummary(householdId: string) {
+    collectionPath(householdId, 'ledgerSummaries');
+    await initializeLedgerSummaries(getFirestore(), householdId);
+  },
+
   async getDoc(householdId: string, collectionName: string, docId: string): Promise<DocumentData | null> {
     const snapshot = await getFirestore()
       .doc(docPath(householdId, collectionName, docId))
@@ -41,7 +48,7 @@ export const dbLib = {
   async getDocs(
     householdId: string,
     collectionName: string,
-    filters?: { field: string; op: '==' | 'in' | 'array-contains'; value: unknown }[],
+    filters?: { field: string; op: '==' | 'in' | 'array-contains' | '>=' | '<='; value: unknown }[],
   ): Promise<DocumentData[]> {
     let query: Query = getFirestore().collection(collectionPath(householdId, collectionName));
     for (const filter of filters ?? []) {
@@ -51,11 +58,39 @@ export const dbLib = {
     return snapshot.docs.map((document) => document.data());
   },
 
+  async getDocsPage(
+    householdId: string,
+    collectionName: string,
+    pageSize: number,
+    cursor?: QueryDocumentSnapshot,
+    constraints: ReadConstraint[] = [],
+  ) {
+    let query: Query = getFirestore().collection(collectionPath(householdId, collectionName));
+    for (const constraint of constraints) {
+      query = constraint.kind === 'where'
+        ? query.where(constraint.field, constraint.operator, constraint.value)
+        : query.orderBy(constraint.field, constraint.direction);
+    }
+    if (cursor) query = query.startAfter(cursor);
+    const snapshot = await query.limit(pageSize).get();
+    return {
+      items: snapshot.docs.map((document) => ({ ...document.data(), id: document.id })),
+      nextCursor: snapshot.docs.at(-1) ?? null,
+    };
+  },
+
   subscribeDocs(): () => void {
     throw new Error('Realtime subscriptions are not available through the MCP server.');
   },
 
   async setDoc(householdId: string, collectionName: string, docId: string, data: DocumentData): Promise<void> {
+    if (ledgerCollections.has(collectionName)) {
+      docPath(householdId, collectionName, docId, true);
+      const db = getFirestore();
+      return db.runTransaction((transaction) => writeLedger(db, transaction, householdId, [
+        { type: 'set', collectionName, docId, data },
+      ]));
+    }
     await getFirestore()
       .doc(docPath(householdId, collectionName, docId, true))
       .set(data);
@@ -65,6 +100,14 @@ export const dbLib = {
     householdId: string,
     operations: { type: 'set' | 'delete'; collectionName: string; docId: string; data?: DocumentData }[],
   ): Promise<void> {
+    if (operations.some((operation) => ledgerCollections.has(operation.collectionName))) {
+      for (const operation of operations) {
+        docPath(householdId, operation.collectionName, operation.docId, true);
+        if (!ledgerCollections.has(operation.collectionName)) throw new Error('Invalid mixed ledger batch.');
+      }
+      const db = getFirestore();
+      return db.runTransaction((transaction) => writeLedger(db, transaction, householdId, operations));
+    }
     const batch = getFirestore().batch();
     for (const operation of operations) {
       const ref = getFirestore().doc(docPath(householdId, operation.collectionName, operation.docId, true));

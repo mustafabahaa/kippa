@@ -1,4 +1,4 @@
-import type { LedgerLine } from '@kippa/domain';
+import { getLedgerSnapshot, summaryActivity } from '@/libs/ledgerSummaries';
 import { ledgerLib } from '@/libs/ledger';
 import { cyclesLib } from '@/libs/cycles';
 import { currencyLib } from '@/libs/currency';
@@ -13,17 +13,16 @@ export const getCycleAnalyticsTool = defineAiTool({
   inputSchema: emptyInput,
   risk: 'read',
   async execute(...[, context]) {
-    const [accounts, cycles, transactions, ledgerLines, allocations, expectedIncomes, household, loans] =
-      await Promise.all([
-        ledgerLib.getAccounts(context.householdId),
-        cyclesLib.getCycles(context.householdId),
-        ledgerLib.getTransactions(context.householdId),
-        ledgerLib.getLedgerLines(context.householdId) as Promise<LedgerLine[]>,
-        cyclesLib.getAllBudgetAllocations(context.householdId),
-        cyclesLib.getAllExpectedIncomes(context.householdId),
-        ledgerLib.getHouseholdInfo(context.householdId),
-        loansLib.getLoans(context.householdId),
-      ]);
+    const [accounts, snapshot, cycles, allocations, expectedIncomes, household, loans] = await Promise.all([
+      ledgerLib.getAccounts(context.householdId),
+      getLedgerSnapshot(context.householdId, 'all'),
+      cyclesLib.getCycles(context.householdId),
+      cyclesLib.getAllBudgetAllocations(context.householdId),
+      cyclesLib.getAllExpectedIncomes(context.householdId),
+      ledgerLib.getHouseholdInfo(context.householdId),
+      loansLib.getLoans(context.householdId),
+    ]);
+    const { transactions, lines: ledgerLines } = summaryActivity(snapshot.cycles);
     const baseCurrency = household?.baseCurrency ?? 'EGP';
     const rates = await currencyLib.getRatesToBase(
       baseCurrency,

@@ -8,15 +8,13 @@ import {
   useUpdateAccountMutation,
   useCards,
   useUpdateCardMutation,
-  useLedgerLines,
-  useTransactions,
+  useLedgerSnapshot,
   useCardStatements,
   useDisplayRates,
   useHouseholdBaseCurrency,
 } from '@/hooks/useFinance';
 import { useAppContext } from '@/hooks/useAppContext';
 import { CardTile, AddCardDialog, CardDetail } from '@/features/cards';
-import { calculateAccountBalance } from '@/libs/financeCalculations';
 import { computeCardSummary } from '@/libs/cardSelectors';
 import { Money } from '@/components/Money';
 import { EmptyLayout } from '@/features/shared/components/EmptyLayout';
@@ -50,8 +48,7 @@ export function Accounts() {
 
   const { data: accounts = [], isLoading: accountsLoading } = useAccounts(householdId);
   const { data: cards = [], isLoading: cardsLoading } = useCards(householdId);
-  const { data: ledgerLines = [], isLoading: linesLoading } = useLedgerLines(householdId);
-  const { data: transactions = [], isLoading: transactionsLoading } = useTransactions(householdId);
+  const snapshot = useLedgerSnapshot(householdId);
   const { data: statements = [] } = useCardStatements(householdId);
   const foreignCurrencies = Array.from(
     new Set(accounts.map((account) => account.currency).filter((currency) => currency !== baseCurrency)),
@@ -61,7 +58,7 @@ export function Accounts() {
   const updateAccountMutation = useUpdateAccountMutation();
   const updateCard = useUpdateCardMutation();
 
-  const accountBalance = (accountId: string) => calculateAccountBalance(accountId, transactions, ledgerLines);
+  const accountBalance = (accountId: string) => snapshot.data?.balances[accountId] ?? 0;
 
   const summaryFor = (card: CardType) => {
     const creditBalance = accountBalance(card.parentAccountId);
@@ -100,7 +97,9 @@ export function Accounts() {
   };
 
   const visibleAccounts = accounts.filter((account) => account.type !== 'credit');
-  const isLoading = accountsLoading || cardsLoading || linesLoading || transactionsLoading;
+  const isLoading = accountsLoading || cardsLoading || !snapshot.data;
+
+  if (snapshot.isError) return <EmptyLayout title="Could not load balances" />;
 
   return (
     <Stack spacing={{ xs: 2, md: 3 }}>

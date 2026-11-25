@@ -1,5 +1,5 @@
-import { orderBy, where, type QueryConstraint, type QueryDocumentSnapshot } from 'firebase/firestore';
-import { includeUnrecordedCardFees } from './creditCardFees';
+import { documentId, orderBy, where, type QueryConstraint, type QueryDocumentSnapshot } from 'firebase/firestore';
+import { accountsNeedingLegacyFeeHistory, includeUnrecordedCardFees } from './creditCardFees';
 import { dbLib } from '@/libs/db';
 import { auditLogLib } from '@/libs/auditLog';
 import { detectBaseCurrency, currencySymbol } from '@/libs/currencyMeta';
@@ -19,6 +19,7 @@ import { allocationDocId, dedupeAllocations } from './allocations';
 type AuditUser = { uid: string; displayName: string; photoURL?: string };
 
 export const RECONCILIATION_HISTORY_PAGE_SIZE = 7;
+export const CATEGORY_HISTORY_LIMIT = 100;
 
 export const ledgerLib = {
   // Accounts
@@ -174,10 +175,10 @@ export const ledgerLib = {
     // Move transaction references in bounded batches. The source category is
     // deleted last, so a failed migration can be safely retried.
     const transactionRefs = transactions.filter((transaction) => transaction.categoryId === categoryId);
-    for (let offset = 0; offset < transactionRefs.length; offset += 450) {
+    for (let offset = 0; offset < transactionRefs.length; offset += 75) {
       await dbLib.executeBatch(
         householdId,
-        transactionRefs.slice(offset, offset + 450).map((transaction) => ({
+        transactionRefs.slice(offset, offset + 75).map((transaction) => ({
           type: 'set' as const,
           collectionName: 'transactions',
           docId: transaction.id,
@@ -284,9 +285,12 @@ export const ledgerLib = {
     cycleId: string | undefined,
     pageSize: number,
     cursor?: QueryDocumentSnapshot,
+    dates?: { startDate?: string; endDate?: string },
   ) {
     const constraints: QueryConstraint[] = [orderBy('date', 'desc'), orderBy('createdAt', 'desc')];
     if (cycleId) constraints.unshift(where('budgetCycleId', '==', cycleId));
+    if (dates?.startDate) constraints.unshift(where('date', '>=', dates.startDate));
+    if (dates?.endDate) constraints.unshift(where('date', '<=', dates.endDate));
     const page = await dbLib.getDocsPage(householdId, 'transactions', pageSize, cursor, constraints);
     const transactions = page.items as FinanceTransaction[];
     return {
@@ -305,6 +309,61 @@ export const ledgerLib = {
       ]));
     }
     return (await Promise.all(queries)).flat() as LedgerLine[];
+  },
+
+  async getRecentCategoryTransactions(householdId: string, since: string): Promise<FinanceTransaction[]> {
+    const { items } = await dbLib.getDocsPage(householdId, 'transactions', CATEGORY_HISTORY_LIMIT, undefined, [
+      where('date', '>=', since),
+      orderBy('date', 'desc'),
+    ]);
+    return items as FinanceTransaction[];
+  },
+
+  async getTransactionsInDateRange(householdId: string, startDate: string, endDate: string) {
+    return dbLib.getDocs(householdId, 'transactions', [
+      { field: 'date', op: '>=', value: startDate },
+      { field: 'date', op: '<=', value: endDate },
+    ]) as Promise<FinanceTransaction[]>;
+  },
+
+  async getNormalizedTransactionLines(householdId: string, transactions: FinanceTransaction[], accounts?: Account[]) {
+    const lines = await this.getLedgerLinesBy(householdId, 'transactionId', transactions.map((transaction) => transaction.id));
+    return this.normalizeTransactionLines(householdId, transactions, lines, accounts);
+  },
+
+  async normalizeTransactionLines(householdId: string, transactions: FinanceTransaction[], lines: LedgerLine[], accounts?: Account[]) {
+    if (!lines.some((line) => line.currency === 'EGP' && line.signedAmount < 0 && !line.cardFee)) return lines;
+    const feeAccounts = accountsNeedingLegacyFeeHistory(accounts ?? await this.getAccounts(householdId), transactions, lines);
+    if (feeAccounts.length === 0) return lines;
+    const history = await this.getAccountHistory(householdId, feeAccounts);
+    const normalized = new Map(history.lines.map((line) => [line.id, line]));
+    return lines.map((line) => normalized.get(line.id) ?? line);
+  },
+
+  async getLoanPaymentHistory(householdId: string, loanIds: string[]) {
+    const batches = [];
+    for (let offset = 0; offset < loanIds.length; offset += 30) {
+      batches.push(dbLib.getDocs(householdId, 'transactions', [
+        { field: 'loanId', op: 'in', value: loanIds.slice(offset, offset + 30) },
+      ]));
+    }
+    const transactions = (await Promise.all(batches)).flat() as FinanceTransaction[];
+    return {
+      transactions,
+      lines: await this.getLedgerLinesBy(householdId, 'transactionId', transactions.map((transaction) => transaction.id)),
+    };
+  },
+
+  async getAccountHistory(householdId: string, accounts: Account[]) {
+    const lines = await this.getLedgerLinesBy(householdId, 'accountId', accounts.map((account) => account.id));
+    const transactionIds = [...new Set(lines.map((line) => line.transactionId))];
+    const pages = [];
+    for (let offset = 0; offset < transactionIds.length; offset += 30) {
+      const ids = transactionIds.slice(offset, offset + 30);
+      pages.push(dbLib.getDocsPage(householdId, 'transactions', ids.length, undefined, [where(documentId(), 'in', ids)]));
+    }
+    const transactions = (await Promise.all(pages)).flatMap((page) => page.items) as FinanceTransaction[];
+    return { transactions, lines: includeUnrecordedCardFees(accounts, transactions, lines) };
   },
 
   async getTransactions(householdId: string, cycleId?: string): Promise<FinanceTransaction[]> {

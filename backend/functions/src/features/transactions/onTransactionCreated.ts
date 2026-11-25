@@ -1,3 +1,4 @@
+import { cycleSummaryId, SUMMARY_COLLECTION, type CycleSummary } from '../ledger/projection.js';
 import { onDocumentCreated } from 'firebase-functions/v2/firestore';
 import { getFirestore } from 'firebase-admin/firestore';
 import type {
@@ -107,6 +108,47 @@ export const onTransactionCreated = onDocumentCreated(
   },
 );
 
+async function readCategorySpending(
+  db: FirebaseFirestore.Firestore,
+  householdId: string,
+  cycleId: string,
+  categoryId: string,
+): Promise<SpendingEntry[]> {
+  // Fetch all posted expense transactions for this category in this cycle
+  const txnsSnap = await db
+    .collection(`households/${householdId}/transactions`)
+    .where('categoryId', '==', categoryId)
+    .where('status', '==', 'posted')
+    .where('budgetCycleId', '==', cycleId)
+    .get();
+  const postedTxns = txnsSnap.docs.map((d) => d.data() as FinanceTransaction);
+  if (postedTxns.length === 0) return [];
+
+  // Fetch ledger lines and sum spent
+  const postedTxnIds = new Set(postedTxns.map((t) => t.id));
+  const ledgerLines = db.collection(`households/${householdId}/ledgerLines`);
+  const postedTxnIdList = [...postedTxnIds];
+  const lineDocs: FirebaseFirestore.QueryDocumentSnapshot[] = [];
+  for (let i = 0; i < postedTxnIdList.length; i += 10) {
+    const ids = postedTxnIdList.slice(i, i + 10);
+    const linesSnap = await ledgerLines.where('transactionId', 'in', ids).get();
+    lineDocs.push(...linesSnap.docs);
+  }
+  const linesByTransaction = new Map<string, LedgerLine[]>();
+  for (const lineDoc of lineDocs) {
+    const line = lineDoc.data() as LedgerLine;
+    if (!postedTxnIds.has(line.transactionId)) continue;
+    const lines = linesByTransaction.get(line.transactionId) ?? [];
+    lines.push(line);
+    linesByTransaction.set(line.transactionId, lines);
+  }
+
+  return postedTxns.map((entry) => ({
+    date: entry.date,
+    amount: (linesByTransaction.get(entry.id) ?? []).reduce((sum, line) => sum + Math.max(0, -line.signedAmount), 0),
+  }));
+}
+
 export async function checkCategoryWarning(
   db: FirebaseFirestore.Firestore,
   householdId: string,
@@ -134,65 +176,19 @@ export async function checkCategoryWarning(
   const allocation = allocSnap.docs[0].data() as BudgetAllocation;
   if (allocation.plannedAmount <= 0) return;
 
-  // Fetch all posted expense transactions for this category in this cycle
-  const txnsSnap = await db
-    .collection(`households/${householdId}/transactions`)
-    .where('categoryId', '==', categoryId)
-    .where('status', '==', 'posted')
-    .get();
-  const postedTxns = txnsSnap.docs
-    .filter((d) => {
-      const data = d.data() as FinanceTransaction;
-      return data.budgetCycleId === cycleId;
-    })
-    .map((d) => d.data() as FinanceTransaction);
-  if (postedTxns.length === 0) return;
+  const summary = await db.doc(`households/${householdId}/${SUMMARY_COLLECTION}/${cycleSummaryId(cycleId)}`).get();
+  const categoryDays = (summary.data() as CycleSummary | undefined)?.categoryDays;
+  const entries = categoryDays
+    ? Object.entries(categoryDays[`category-${categoryId}`] ?? {}).map(([date, day]) => ({ date, amount: day.amount }))
+    : await readCategorySpending(db, householdId, cycleId, categoryId);
+  if (!entries.length) return;
 
-  // Fetch ledger lines and sum spent
-  const postedTxnIds = new Set(postedTxns.map((t) => t.id));
-  const ledgerLines = db.collection(`households/${householdId}/ledgerLines`);
-  const postedTxnIdList = [...postedTxnIds];
-  const lineDocs: FirebaseFirestore.QueryDocumentSnapshot[] = [];
-  for (let i = 0; i < postedTxnIdList.length; i += 10) {
-    const ids = postedTxnIdList.slice(i, i + 10);
-    const linesSnap = await ledgerLines.where('transactionId', 'in', ids).get();
-    lineDocs.push(...linesSnap.docs);
-  }
-  let spent = 0;
-  const linesByTransaction = new Map<string, LedgerLine[]>();
-  for (const lineDoc of lineDocs) {
-    const line = lineDoc.data() as LedgerLine;
-    if (!postedTxnIds.has(line.transactionId)) continue;
-    const lines = linesByTransaction.get(line.transactionId) ?? [];
-    lines.push(line);
-    linesByTransaction.set(line.transactionId, lines);
-    if (line.signedAmount < 0) spent += Math.abs(line.signedAmount);
-  }
-
-  // Check percentage thresholds
+  const spent = sumAmounts(entries);
   const threshold = checkPercentageThresholds(spent, allocation.plannedAmount);
-
-  // Check velocity spike — split transactions into earlier/recent periods
   const today = new Date();
-  const msPerDay = 1000 * 60 * 60 * 24;
-  const cutoffDate = new Date(today.getTime() - 7 * msPerDay);
-  const cutoffStr = cutoffDate.toISOString().slice(0, 10);
-
-  const earlierEntries: SpendingEntry[] = [];
-  const recentEntries: SpendingEntry[] = [];
-  for (const t of postedTxns) {
-    const entry: SpendingEntry = { amount: 0, date: t.date };
-    for (const line of linesByTransaction.get(t.id) ?? []) {
-      if (line.signedAmount < 0) {
-        entry.amount += Math.abs(line.signedAmount);
-      }
-    }
-    if (t.date < cutoffStr) {
-      earlierEntries.push(entry);
-    } else {
-      recentEntries.push(entry);
-    }
-  }
+  const cutoffStr = new Date(today.getTime() - 7 * 86_400_000).toISOString().slice(0, 10);
+  const earlierEntries = entries.filter((entry) => entry.date < cutoffStr);
+  const recentEntries = entries.filter((entry) => entry.date >= cutoffStr);
 
   let velocityContext: VelocityContext | null = null;
   if (checkVelocitySpike(earlierEntries, recentEntries, allocation.plannedAmount)) {

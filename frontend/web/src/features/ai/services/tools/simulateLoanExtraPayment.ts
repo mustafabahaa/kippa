@@ -1,5 +1,4 @@
 import { z } from 'zod';
-import type { LedgerLine } from '@kippa/domain';
 import { ledgerLib } from '@/libs/ledger';
 import { loansLib } from '@/libs/loans';
 import { getLoanProgress } from '@/libs/loanCalculations';
@@ -12,13 +11,10 @@ export const simulateLoanExtraPaymentTool = defineAiTool({
   inputSchema: z.object({ loanId: id, extraAmount: money }).strict(),
   risk: 'read',
   async execute({ loanId, extraAmount }, context) {
-    const [loans, transactions, lines] = await Promise.all([
-      loansLib.getLoans(context.householdId),
-      ledgerLib.getTransactions(context.householdId),
-      ledgerLib.getLedgerLines(context.householdId) as Promise<LedgerLine[]>,
-    ]);
+    const loans = await loansLib.getLoans(context.householdId);
     const loan = loans.find((item) => item.id === loanId);
     if (!loan) throw new Error('Loan not found.');
+    const { transactions, lines } = await ledgerLib.getLoanPaymentHistory(context.householdId, [loan.id]);
     const progress = getLoanProgress(loan, transactions, lines);
     const newRemaining = Math.max(0, progress.remainingAmount - extraAmount);
     const installmentsSaved = Math.max(

@@ -4,10 +4,10 @@ import type { Loan } from '@kippa/domain';
 
 const mocks = vi.hoisted(() => ({
   loans: [] as Loan[],
-  transactionsReady: false,
-  linesReady: false,
-  transactionOptions: [] as { enabled?: boolean }[],
-  lineOptions: [] as { enabled?: boolean }[],
+  paymentsReady: false,
+  fundingReady: false,
+  loanIds: [] as string[],
+  balanceEnabled: false,
   enqueueSnackbar: vi.fn(),
 }));
 
@@ -16,17 +16,16 @@ vi.mock('@/hooks/useAppContext', () => ({ useAppContext: () => ({ householdId: '
 vi.mock('@/hooks/useFinance', () => ({
   useLoans: () => ({ data: mocks.loans }),
   useAccounts: () => ({ data: [{ id: 'cash', type: 'running', currency: 'USD' }] }),
-  useTransactions: (_householdId: string, _cycleId: string | undefined, options: { enabled?: boolean }) => {
+  useLoanPaymentHistory: (_householdId: string, ids: string[]) => {
     void _householdId;
-    void _cycleId;
-    mocks.transactionOptions.push(options);
-    return { data: [], isSuccess: mocks.transactionsReady };
+    mocks.loanIds = ids;
+    return { data: mocks.paymentsReady ? { transactions: [], lines: [] } : undefined };
   },
-  useLedgerLines: (_householdId: string, _cycleId: string | undefined, options: { enabled?: boolean }) => {
+  useLedgerSnapshot: (_householdId: string, _scope: undefined, enabled: boolean) => {
     void _householdId;
-    void _cycleId;
-    mocks.lineOptions.push(options);
-    return { data: [], isSuccess: mocks.linesReady };
+    void _scope;
+    mocks.balanceEnabled = enabled;
+    return { data: mocks.fundingReady ? { balances: { cash: 0 } } : undefined };
   },
 }));
 
@@ -42,10 +41,10 @@ const activeLoan: Loan = {
 describe('useLoanReminders history query costs', () => {
   beforeEach(() => {
     mocks.loans = [];
-    mocks.transactionsReady = false;
-    mocks.linesReady = false;
-    mocks.transactionOptions = [];
-    mocks.lineOptions = [];
+    mocks.paymentsReady = false;
+    mocks.fundingReady = false;
+    mocks.loanIds = [];
+    mocks.balanceEnabled = false;
     mocks.enqueueSnackbar.mockClear();
     localStorage.clear();
     vi.stubGlobal('Notification', { permission: 'default' });
@@ -55,23 +54,24 @@ describe('useLoanReminders history query costs', () => {
     mocks.loans = [{ ...activeLoan, status: 'paid' }];
     renderHook(() => useLoanReminders());
 
-    expect(mocks.transactionOptions.at(-1)).toEqual({ enabled: false });
-    expect(mocks.lineOptions.at(-1)).toEqual({ enabled: false });
+    expect(mocks.loanIds).toEqual([]);
+    expect(mocks.balanceEnabled).toBe(false);
     expect(mocks.enqueueSnackbar).not.toHaveBeenCalled();
   });
 
-  it('enables histories for active loans and waits for both before showing a shortfall reminder', async () => {
+  it('reads only loan payments and the stored funding-account balance before showing a shortfall reminder', async () => {
     mocks.loans = [activeLoan];
     const { rerender } = renderHook(() => useLoanReminders());
-    expect(mocks.transactionOptions.at(-1)).toEqual({ enabled: true });
-    expect(mocks.lineOptions.at(-1)).toEqual({ enabled: true });
+    expect(mocks.loanIds).toEqual(['loan-1']);
+    expect(mocks.balanceEnabled).toBe(false);
     expect(mocks.enqueueSnackbar).not.toHaveBeenCalled();
 
-    mocks.transactionsReady = true;
+    mocks.paymentsReady = true;
     rerender();
+    expect(mocks.balanceEnabled).toBe(true);
     expect(mocks.enqueueSnackbar).not.toHaveBeenCalled();
 
-    mocks.linesReady = true;
+    mocks.fundingReady = true;
     rerender();
     await waitFor(() => expect(mocks.enqueueSnackbar).toHaveBeenCalledWith(
       expect.stringContaining('Car loan: add 100 USD before'),

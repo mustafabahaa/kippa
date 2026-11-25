@@ -1,8 +1,7 @@
 import { z } from 'zod';
-import type { LedgerLine } from '@kippa/domain';
 import { ledgerLib } from '@/libs/ledger';
 import { transactionsLib } from '@/libs/transactions';
-import { calculateAccountBalances } from '@/libs/financeCalculations';
+import { calculateAccountBalance } from '@/libs/financeCalculations';
 import { defineAiTool } from '../toolRegistry';
 import { auditUser, id, isoDate, requireAccount } from './shared';
 
@@ -21,12 +20,9 @@ export const reconcileAccountTool = defineAiTool({
   risk: 'write',
   confirmation: (input) => `Reconcile account to ${input.actualBalance}`,
   async execute({ accountId, actualBalance, date, note, budgetCycleId }, context) {
-    const [account, transactions, ledgerLines] = await Promise.all([
-      requireAccount(context.householdId, accountId),
-      ledgerLib.getTransactions(context.householdId),
-      ledgerLib.getLedgerLines(context.householdId) as Promise<LedgerLine[]>,
-    ]);
-    const calculatedBalance = calculateAccountBalances([account], transactions, ledgerLines)[accountId] ?? 0;
+    const account = await requireAccount(context.householdId, accountId);
+    const { transactions, lines } = await ledgerLib.getAccountHistory(context.householdId, [account]);
+    const calculatedBalance = calculateAccountBalance(accountId, transactions, lines);
     const difference = Number((actualBalance - calculatedBalance).toFixed(2));
     let adjustmentTransactionId: string | null = null;
     if (Math.abs(difference) > 0.001)

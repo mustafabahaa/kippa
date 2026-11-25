@@ -1,4 +1,4 @@
-import { orderBy, where } from 'firebase/firestore';
+import { documentId, orderBy, where } from 'firebase/firestore';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Account, FinanceTransaction, LedgerLine } from '@kippa/domain';
 
@@ -40,6 +40,31 @@ describe('ledger read cost', () => {
       { field: 'transactionId', op: 'in', value: [transaction.id] },
     ]);
     expect(result).toEqual({ transactions: [transaction], lines: [line], nextCursor: cursor });
+  });
+
+  it('bounds category ranking to 100 recent transactions', async () => {
+    mocks.getDocsPage.mockResolvedValue({ items: [transaction], nextCursor: null });
+
+    expect(await ledgerLib.getRecentCategoryTransactions('h1', '2026-01-01')).toEqual([transaction]);
+    expect(mocks.getDocsPage).toHaveBeenCalledExactlyOnceWith('h1', 'transactions', 100, undefined, [
+      where('date', '>=', '2026-01-01'),
+      orderBy('date', 'desc'),
+    ]);
+    expect(mocks.getDocs).not.toHaveBeenCalled();
+  });
+
+  it('reads only the account ledger and matching transaction documents for a balance', async () => {
+    mocks.getDocsPage.mockResolvedValue({ items: [transaction], nextCursor: null });
+
+    const result = await ledgerLib.getAccountHistory('h1', [account]);
+
+    expect(mocks.getDocs).toHaveBeenCalledExactlyOnceWith('h1', 'ledgerLines', [
+      { field: 'accountId', op: 'in', value: [account.id] },
+    ]);
+    expect(mocks.getDocsPage).toHaveBeenCalledExactlyOnceWith('h1', 'transactions', 1, undefined, [
+      where(documentId(), 'in', [transaction.id]),
+    ]);
+    expect(result.lines[0]).toMatchObject({ signedAmount: -103, cardFee: { baseAmount: 100, rate: 3 } });
   });
 
   it('does not query ledger entries for an empty page', async () => {

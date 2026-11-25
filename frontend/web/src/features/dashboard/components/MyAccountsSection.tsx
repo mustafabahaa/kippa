@@ -4,8 +4,7 @@ import { useState } from 'react';
 import { Box, Card, CardContent, Chip, Divider, Paper, Skeleton, Stack, Typography } from '@monochrome-ui/design-system';
 import {
   useAccounts,
-  useTransactions,
-  useLedgerLines,
+  useLedgerSnapshot,
   useCards,
   useDisplayRates,
   useHouseholdBaseCurrency,
@@ -17,14 +16,12 @@ import { computeCardSummary } from '@/libs/cardSelectors';
 import { Money } from '@/components/Money';
 import type { Card as CardType } from '@kippa/domain';
 import { ForeignBalanceTooltip } from '@/features/shared/components/ForeignBalanceTooltip';
-import { calculateAccountBalances } from '@/libs/financeCalculations';
 import { DashboardSectionHeading } from './DashboardSectionHeading';
 
 export function MyAccountsSection() {
   const { householdId } = useAppContext();
   const { data: accounts, isLoading: accountsLoading } = useAccounts(householdId);
-  const { data: transactions, isLoading: txsLoading } = useTransactions(householdId);
-  const { data: ledgerLines, isLoading: linesLoading } = useLedgerLines(householdId);
+  const snapshot = useLedgerSnapshot(householdId);
   const { data: cards = [] } = useCards(householdId);
   const baseCurrency = useHouseholdBaseCurrency();
   const foreignCurrencies = Array.from(
@@ -48,9 +45,10 @@ export function MyAccountsSection() {
     }
   };
 
-  const isLoading = accountsLoading || txsLoading || linesLoading;
+  if (snapshot.isError) return <EmptyLayout title="Could not load balances" />;
+  const isLoading = accountsLoading || snapshot.isLoading;
 
-  if (isLoading || !accounts || !transactions || !ledgerLines) {
+  if (isLoading || !accounts || !snapshot.data) {
     return (
       <Box>
         <Skeleton variant="text" width="30%" height={24} animation="wave" sx={{ mb: 1.5 }} />
@@ -74,7 +72,7 @@ export function MyAccountsSection() {
     );
   }
 
-  const balancesMap = calculateAccountBalances(accounts, transactions, ledgerLines);
+  const balancesMap = snapshot.data.balances;
 
   // Credit accounts are debt buckets — hide from the accounts list.
   const visibleAccounts = accounts.filter((a) => a.type !== 'credit');

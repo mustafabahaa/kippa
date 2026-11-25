@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
+import { useInfiniteQuery } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
 import { Autocomplete, Box, Stack, TextField, Skeleton, Button, Chip } from '@monochrome-ui/design-system';
@@ -8,8 +8,7 @@ import {
   useAccounts,
   useCards,
   useCategories,
-  useTransactions,
-  useLedgerLines,
+  useAccountHistory,
   useVoidTransactionMutation,
   useCycles,
   useActiveCycle,
@@ -26,6 +25,7 @@ import { MultiSelectFilter } from '@/features/shared/components/MultiSelectFilte
 
 import { financeQueryKeys } from '@/hooks/financeQueryKeys';
 import { ledgerLib } from '@/libs/ledger';
+import { accountsNeedingLegacyFeeHistory } from '@/libs/creditCardFees';
 import type { LedgerLine } from '@kippa/domain';
 
 const EMPTY_LINES: LedgerLine[] = [];
@@ -40,8 +40,6 @@ export function TransactionHistory() {
   // Filter States
   const {
     editingTx,
-    loadMore,
-    resetPage,
     searchTerm,
     selectedAccountIds,
     selectedCategoryIds,
@@ -51,29 +49,23 @@ export function TransactionHistory() {
     setSelectedAccountIds,
     setSelectedCategoryIds,
     setSelectedCycleId,
-    visibleCount,
   } = useTransactionHistoryUi();
   const selectedType = searchParams.get('type') ?? 'all';
 
   const handleSearch = (value: string) => {
     setSearchTerm(value);
-    resetPage();
   };
   const handleCategoryChange = (value: string[] | null) => {
     setSelectedCategoryIds(value);
-    resetPage();
   };
   const handleAccountChange = (value: string[] | null) => {
     setSelectedAccountIds(value);
-    resetPage();
   };
   const handleTypeChange = (value: string) => {
     setSearchParams(value === 'all' ? {} : { type: value });
-    resetPage();
   };
   const handleCycleChange = (value: string | null) => {
     setSelectedCycleId(value ?? 'all');
-    resetPage();
   };
 
   // Queries & Mutations
@@ -98,20 +90,10 @@ export function TransactionHistory() {
       ledgerLib.getTransactionHistoryPage(householdId, queryCycleId, TRANSACTION_PAGE_SIZE, pageParam),
     initialPageParam: undefined as import('firebase/firestore').QueryDocumentSnapshot | undefined,
     getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
-    enabled: !!householdId && cycleReady && !hasFilters,
+    enabled: !!householdId && cycleReady && canMatchFilters,
   });
-  // Description substring and ledger account filters must cover the whole selected cycle.
-  const matchingCycle = useTransactions(householdId, queryCycleId, {
-    enabled: cycleReady && hasFilters && canMatchFilters,
-  });
-  const accountLines = useQuery({
-    queryKey: [...financeQueryKeys.ledgerLines(householdId), 'accounts', selectedAccountIds],
-    queryFn: () => ledgerLib.getLedgerLinesBy(householdId, 'accountId', selectedAccountIds ?? []),
-    enabled: !!householdId && canMatchFilters && selectedAccountIds !== null,
-  });
-  const transactions = hasFilters
-    ? (canMatchFilters ? matchingCycle.data ?? [] : [])
-    : history.data?.pages.flatMap((page) => page.transactions) ?? [];
+  const transactions = canMatchFilters ? history.data?.pages.flatMap((page) => page.transactions) ?? [] : [];
+  const pageLines = useMemo(() => history.data?.pages.flatMap((page) => page.lines) ?? EMPTY_LINES, [history.data]);
 
   const accountOptions = accounts.map((account) => ({
     id: account.id,
@@ -148,63 +130,30 @@ export function TransactionHistory() {
     }
   };
 
-  const accountTransactionIds = new Set(accountLines.data?.map((line) => line.transactionId));
-  const filteredTxs = transactions.filter((tx) => {
-    // 1. Text Search
-    const searchMatch = (tx.description || '').toLowerCase().includes(searchTerm.toLowerCase());
+  const accountTransactionIds = new Set(pageLines
+    .filter((line) => selectedAccountIds?.includes(line.accountId))
+    .map((line) => line.transactionId));
+  const normalizedSearch = searchTerm.toLowerCase();
+  const filteredTxs = transactions.filter((tx) =>
+    (tx.description ?? '').toLowerCase().includes(normalizedSearch) &&
+    (selectedCategoryIds === null || selectedCategoryIds.includes(tx.categoryId ?? '')) &&
+    (selectedAccountIds === null || accountTransactionIds.has(tx.id)) &&
+    (selectedType === 'all' || tx.type === selectedType),
+  );
 
-    // 2. Category Filter
-    let catMatch = true;
-    if (selectedCategoryIds !== null) {
-      catMatch = selectedCategoryIds.includes(tx.categoryId ?? '');
-    }
-
-    // 3. Account Filter
-    let accMatch = true;
-    if (selectedAccountIds !== null) {
-      accMatch = accountTransactionIds.has(tx.id);
-    }
-
-    // 4. Type Filter
-    let typeMatch = true;
-    if (selectedType !== 'all') {
-      typeMatch = tx.type === selectedType;
-    }
-
-    return searchMatch && catMatch && accMatch && typeMatch;
-  });
-
-  const visibleTransactions = hasFilters ? filteredTxs.slice(0, visibleCount) : filteredTxs;
-  const visibleIds = visibleTransactions.map((tx) => tx.id);
-  const filteredLines = useQuery({
-    queryKey: [...financeQueryKeys.ledgerLines(householdId), 'transactionRows', visibleIds],
-    queryFn: () => ledgerLib.getLedgerLinesBy(householdId, 'transactionId', visibleIds),
-    enabled: !!householdId && hasFilters && visibleIds.length > 0,
-  });
-  const pageLines = useMemo(() => history.data?.pages.flatMap((page) => page.lines) ?? EMPTY_LINES, [history.data]);
-  const rawLines = hasFilters ? filteredLines.data ?? EMPTY_LINES : pageLines;
-  const creditAccountIds = new Set(accounts.filter((account) => account.type === 'credit' && account.currency === 'EGP')
-    .map((account) => account.id));
-  const expenseIds = new Set(visibleTransactions.filter((tx) =>
-    tx.type === 'expense' && tx.status === 'posted' && !tx.loanId && !tx.description?.startsWith('Card fee ('),
-  ).map((tx) => tx.id));
-  // Legacy purchases without a recorded fee need settlement history to tell whether they are paid.
-  const needsFeeHistory = rawLines.some((line) => line.currency === 'EGP' && line.signedAmount < 0 &&
-    !line.cardFee && creditAccountIds.has(line.accountId) && expenseIds.has(line.transactionId));
-  const feeHistory = useLedgerLines(householdId, undefined, { enabled: needsFeeHistory });
-  const ledgerLines = needsFeeHistory ? feeHistory.data ?? rawLines : rawLines;
+  // Legacy purchases without a recorded fee need settlement history for their credit account.
+  const feeAccounts = accountsNeedingLegacyFeeHistory(accounts, filteredTxs, pageLines);
+  const feeHistory = useAccountHistory(householdId, feeAccounts);
+  const ledgerLines = useMemo(() => {
+    if (!feeHistory.data) return pageLines;
+    const normalized = new Map(feeHistory.data.lines.map((line) => [line.id, line]));
+    return pageLines.map((line) => normalized.get(line.id) ?? line);
+  }, [feeHistory.data, pageLines]);
   const isLoading = accountsLoading || categoriesLoading || !cycleReady ||
-    (hasFilters ? canMatchFilters && (matchingCycle.isLoading || accountLines.isLoading) : history.isLoading);
-  const activityError = (needsFeeHistory && feeHistory.isError) || (hasFilters
-    ? canMatchFilters && (matchingCycle.isError || (selectedAccountIds !== null && accountLines.isError) ||
-      (visibleIds.length > 0 && filteredLines.isError))
-    : history.isError);
-  const hasMore = hasFilters ? visibleCount < filteredTxs.length : history.hasNextPage;
-  const loadNext = () => {
-    if (hasFilters) loadMore();
-    else void history.fetchNextPage();
-  };
-  const rowsLoading = (hasFilters && filteredLines.isLoading) || (needsFeeHistory && feeHistory.isLoading);
+    (canMatchFilters && history.isLoading);
+  const activityError = feeHistory.isError || (canMatchFilters && history.isError);
+  const hasMore = canMatchFilters && history.hasNextPage;
+  const rowsLoading = feeHistory.isLoading;
   const editingLines = useMemo(
     () => editingTx ? ledgerLines.filter((line) => line.transactionId === editingTx.id) : undefined,
     [editingTx, ledgerLines],
@@ -348,55 +297,47 @@ export function TransactionHistory() {
 
         <Box component="section" >
           <Stack spacing={{ xs: 3, md: 4 }}>
-            <SectionHeading title="Activity" trailing={<Chip size="small" label={`${filteredTxs.length} ${hasFilters || !hasMore ? 'results' : 'loaded'}`} />} />
+            <SectionHeading title="Activity" trailing={<Chip size="small" label={`${filteredTxs.length} ${hasMore ? 'loaded' : 'results'}`} />} />
             <Stack spacing={1.5} >
               {activityError && <EmptyLayout
                 title="Could not load transactions"
                 description="Try loading the activity again."
                 action={<Button onClick={() => {
-                  if (needsFeeHistory && feeHistory.isError) void feeHistory.refetch();
-                  else if (!hasFilters) {
-                    if (history.isFetchNextPageError) void history.fetchNextPage();
-                    else void history.refetch();
-                  } else {
-                    if (matchingCycle.isError) void matchingCycle.refetch();
-                    if (accountLines.isError) void accountLines.refetch();
-                    if (filteredLines.isError) void filteredLines.refetch();
-                  }
+                  if (feeHistory.isError) void feeHistory.refetch();
+                  else if (history.isFetchNextPageError) void history.fetchNextPage();
+                  else void history.refetch();
                 }}>Try again</Button>}
               />}
               {!activityError && !rowsLoading && filteredTxs.length === 0 ? (
                 <EmptyLayout
-                  title="No matching transactions"
-                  description="Try changing your search or filters to find what you’re looking for."
+                  title={hasMore ? 'No matches in loaded transactions' : 'No matching transactions'}
+                  description={hasMore ? 'Load more to search older transactions.' : 'Try changing your search or filters to find what you’re looking for.'}
                 />
               ) : (
-                <>
-                  <Stack
-                    className="ds-stepper"
-                    spacing={{ xs: 1.25, sm: 1.5 }}
-                    sx={{ '--ds-stepper-gap-half': { xs: '5px', sm: '6px' } }}
-                  >
-                    {(!rowsLoading && (!needsFeeHistory || feeHistory.data) && (!hasFilters || !!filteredLines.data) ? visibleTransactions : []).map((transaction) => (
-                      <TransactionsListItem
-                        key={transaction.id}
-                        tx={transaction}
-                        categories={categories}
-                        ledgerLines={ledgerLines}
-                        accounts={accounts}
-                        cards={cards}
-                        onEdit={setEditingTx}
-                        onVoid={setVoidingTxId}
-                      />
-                    ))}
-                  </Stack>
-                  {rowsLoading && <Skeleton variant="rounded" height={56} />}
-                  {hasMore && !activityError && (
-                    <Button variant="segmented" onClick={loadNext} loading={history.isFetchingNextPage || rowsLoading} sx={{ alignSelf: 'center' }}>
-                      {hasFilters ? `Load more · ${filteredTxs.length - visibleCount} remaining` : 'Load more'}
-                    </Button>
-                  )}
-                </>
+                <Stack
+                  className="ds-stepper"
+                  spacing={{ xs: 1.25, sm: 1.5 }}
+                  sx={{ '--ds-stepper-gap-half': { xs: '5px', sm: '6px' } }}
+                >
+                  {(!rowsLoading && !feeHistory.isError ? filteredTxs : []).map((transaction) => (
+                    <TransactionsListItem
+                      key={transaction.id}
+                      tx={transaction}
+                      categories={categories}
+                      ledgerLines={ledgerLines}
+                      accounts={accounts}
+                      cards={cards}
+                      onEdit={setEditingTx}
+                      onVoid={setVoidingTxId}
+                    />
+                  ))}
+                </Stack>
+              )}
+              {rowsLoading && <Skeleton variant="rounded" height={56} />}
+              {hasMore && !activityError && (
+                <Button variant="segmented" onClick={() => void history.fetchNextPage()} loading={history.isFetchingNextPage || rowsLoading} sx={{ alignSelf: 'center' }}>
+                  {hasFilters ? 'Search older transactions' : 'Load more'}
+                </Button>
               )}
             </Stack>
           </Stack>

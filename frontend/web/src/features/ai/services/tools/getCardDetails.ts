@@ -1,9 +1,8 @@
 import { z } from 'zod';
-import type { LedgerLine } from '@kippa/domain';
 import { ledgerLib } from '@/libs/ledger';
 import { cyclesLib } from '@/libs/cycles';
 import { cardsLib } from '@/libs/cards';
-import { calculateAccountBalances } from '@/libs/financeCalculations';
+import { calculateAccountBalance } from '@/libs/financeCalculations';
 import { calculateCardActivity } from '@/libs/cardActivity';
 import { computeCardSummary, currentCyclePurchases } from '@/libs/cardSelectors';
 import { defineAiTool } from '../toolRegistry';
@@ -15,19 +14,21 @@ export const getCardDetailsTool = defineAiTool({
   inputSchema: z.object({ cardId: id, includeFullHistory: z.boolean().optional() }).strict(),
   risk: 'read',
   async execute({ cardId, includeFullHistory }, context) {
-    const [cards, statements, accounts, transactions, ledgerLines, cycles] = await Promise.all([
+    const [cards, statements, accounts, cycles] = await Promise.all([
       cardsLib.getCards(context.householdId),
       cardsLib.getStatements(context.householdId, cardId),
       ledgerLib.getAccounts(context.householdId),
-      ledgerLib.getTransactions(context.householdId),
-      ledgerLib.getLedgerLines(context.householdId) as Promise<LedgerLine[]>,
       cyclesLib.getCycles(context.householdId),
     ]);
     const card = cards.find((item) => item.id === cardId);
     if (!card) throw new Error('Card not found.');
-    const balances = calculateAccountBalances(accounts, transactions, ledgerLines);
+    const { transactions, lines: ledgerLines } = await ledgerLib.getAccountHistory(
+      context.householdId,
+      accounts.filter((account) => account.id === card.parentAccountId),
+    );
+    const balance = calculateAccountBalance(card.parentAccountId, transactions, ledgerLines);
     const lastStatement = statements[0] ?? null;
-    const summary = computeCardSummary(card, balances[card.parentAccountId] ?? 0, lastStatement);
+    const summary = computeCardSummary(card, balance, lastStatement);
     summary.currentCyclePurchases = currentCyclePurchases(
       ledgerLines,
       transactions,

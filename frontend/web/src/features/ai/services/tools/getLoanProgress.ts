@@ -1,7 +1,6 @@
 import { z } from 'zod';
-import type { LedgerLine } from '@kippa/domain';
 import { ledgerLib } from '@/libs/ledger';
-import { calculateAccountBalances } from '@/libs/financeCalculations';
+import { calculateAccountBalance } from '@/libs/financeCalculations';
 import { loansLib } from '@/libs/loans';
 import { getLoanProgress } from '@/libs/loanCalculations';
 import { defineAiTool } from '../toolRegistry';
@@ -12,17 +11,16 @@ export const getLoanProgressTool = defineAiTool({
   inputSchema: z.object({ loanId: id }).strict(),
   risk: 'read',
   async execute({ loanId }, context) {
-    const [loans, transactions, lines, accounts] = await Promise.all([
-      loansLib.getLoans(context.householdId),
-      ledgerLib.getTransactions(context.householdId),
-      ledgerLib.getLedgerLines(context.householdId) as Promise<LedgerLine[]>,
-      ledgerLib.getAccounts(context.householdId),
-    ]);
+    const { householdId } = context;
+    const [loans, accounts] = await Promise.all([loansLib.getLoans(householdId), ledgerLib.getAccounts(householdId)]);
     const loan = loans.find((item) => item.id === loanId);
     if (!loan) throw new Error('Loan not found.');
-    const progress = getLoanProgress(loan, transactions, lines);
-    const balances = calculateAccountBalances(accounts, transactions, lines);
-    const accountBalance = balances[loan.paymentAccountId] ?? 0;
+    const [paymentHistory, accountHistory] = await Promise.all([
+      ledgerLib.getLoanPaymentHistory(householdId, [loan.id]),
+      ledgerLib.getAccountHistory(householdId, accounts.filter((account) => account.id === loan.paymentAccountId)),
+    ]);
+    const progress = getLoanProgress(loan, paymentHistory.transactions, paymentHistory.lines);
+    const accountBalance = calculateAccountBalance(loan.paymentAccountId, accountHistory.transactions, accountHistory.lines);
     return {
       loan,
       ...progress,

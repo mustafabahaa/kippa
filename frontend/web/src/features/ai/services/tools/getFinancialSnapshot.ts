@@ -1,6 +1,5 @@
-import type { LedgerLine } from '@kippa/domain';
 import { ledgerLib } from '@/libs/ledger';
-import { calculateAccountBalances } from '@/libs/financeCalculations';
+import { getLedgerSnapshot } from '@/libs/ledgerSummaries';
 import { defineAiTool } from '../toolRegistry';
 import { emptyInput } from './shared';
 
@@ -10,13 +9,12 @@ export const getFinancialSnapshotTool = defineAiTool({
   inputSchema: emptyInput,
   risk: 'read',
   async execute(...[, context]) {
-    const [accounts, transactions, ledgerLines, household] = await Promise.all([
+    const [accounts, snapshot, household] = await Promise.all([
       ledgerLib.getAccounts(context.householdId),
-      ledgerLib.getTransactions(context.householdId),
-      ledgerLib.getLedgerLines(context.householdId) as Promise<LedgerLine[]>,
+      getLedgerSnapshot(context.householdId),
       ledgerLib.getHouseholdInfo(context.householdId),
     ]);
-    const balances = calculateAccountBalances(accounts, transactions, ledgerLines);
+    const { balances } = snapshot;
     return {
       asOf: new Date().toISOString(),
       baseCurrency: household?.baseCurrency ?? null,

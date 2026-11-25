@@ -1,11 +1,11 @@
+import { EmptyLayout } from '@/features/shared/components/EmptyLayout';
 import { useState, useMemo, useRef } from 'react';
 import { useSnackbar } from 'notistack';
 import { Box, Stack, Typography, Button, Grid, Skeleton, Divider } from '@monochrome-ui/design-system';
 import {
   useCategories,
   useCycles,
-  useTransactions,
-  useLedgerLines,
+  useSummaryActivity,
   useAllBudgetAllocations,
   useAllExpectedIncomes,
   useAccounts,
@@ -61,8 +61,9 @@ export function BudgetCycles() {
   // Per-cycle analytics (planned/spent/saved) + transaction counts for history items.
   // Mirrors the data already computed in CycleAnalytics so no new queries beyond what
   // that panel already loads.
-  const { data: transactions = [] } = useTransactions(householdId);
-  const { data: ledgerLines = [] } = useLedgerLines(householdId);
+  const { activity, isError: summaryError } = useSummaryActivity(householdId, 'all');
+  const transactions = activity?.transactions;
+  const ledgerLines = activity?.lines;
   const { data: allAllocations = [] } = useAllBudgetAllocations(householdId);
   const { data: allExpectedIncomes = [] } = useAllExpectedIncomes(householdId);
   const { data: accounts = [] } = useAccounts(householdId);
@@ -72,7 +73,7 @@ export function BudgetCycles() {
 
   const cycleStatsById = useMemo(() => {
     const map = new Map<string, CycleHistoryStats>();
-    if (cycles.length === 0) return map;
+    if (cycles.length === 0 || !transactions || !ledgerLines) return map;
     const cycleData = calculateCycleData(
       cycles,
       transactions,
@@ -180,6 +181,8 @@ export function BudgetCycles() {
   }
 
   const activeDaysInfo = activeCycle ? getDaysInfo(activeCycle.startDate, activeCycle.endDate) : null;
+
+  if (summaryError) return <EmptyLayout title="Could not load cycle totals" />;
 
   return (
     <Stack spacing={{ xs: 2, md: 3 }}>

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
-import { ledgerLib, RECONCILIATION_HISTORY_PAGE_SIZE } from '@/libs/ledger';
+import { CATEGORY_HISTORY_LIMIT, ledgerLib, RECONCILIATION_HISTORY_PAGE_SIZE } from '@/libs/ledger';
+import { getLedgerSnapshot, summaryActivity } from '@/libs/ledgerSummaries';
 import { cyclesLib } from '@/libs/cycles';
 import { transactionsLib } from '@/libs/transactions';
 import { loansLib, type LoanInput } from '@/libs/loans';
@@ -15,7 +16,7 @@ import { useAppContext } from '@/hooks/useAppContext';
 import { useSnackbar } from 'notistack';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { notifyOfflineAwareSuccess } from '@/lib/offlineToast';
-import { computeFrequencyScores } from '@/utils/categoryFrequency';
+import { computeFrequencyScores, WINDOW_DAYS } from '@/utils/categoryFrequency';
 import { financeQueryKeys as keys } from './financeQueryKeys';
 import {
   Account,
@@ -90,11 +91,39 @@ export function useCycles(householdId: string) {
   });
 }
 
-export function useTransactions(householdId: string, cycleId?: string, options: { enabled?: boolean } = {}) {
+export function useLedgerSnapshot(householdId: string, scope?: string, enabled = true) {
   return useQuery({
-    queryKey: keys.transactions(householdId, cycleId),
-    queryFn: () => ledgerLib.getTransactions(householdId, cycleId),
-    enabled: !!householdId && options.enabled !== false,
+    queryKey: [...keys.transactions(householdId), 'ledgerSnapshot', scope],
+    queryFn: () => getLedgerSnapshot(householdId, scope),
+    enabled: !!householdId && enabled,
+  });
+}
+
+export function useSummaryActivity(householdId: string, scope?: string) {
+  const snapshot = useLedgerSnapshot(householdId, scope);
+  const activity = useMemo(() => snapshot.data ? summaryActivity(snapshot.data.cycles) : undefined, [snapshot.data]);
+  return { ...snapshot, activity };
+}
+
+export function useRecentLedgerActivity(householdId: string, pageSize: number) {
+  return useQuery({
+    queryKey: [...keys.transactions(householdId), 'recentLedger', pageSize],
+    queryFn: async () => {
+      const page = await ledgerLib.getTransactionHistoryPage(householdId, undefined, pageSize);
+      return { transactions: page.transactions, lines: await ledgerLib.normalizeTransactionLines(householdId, page.transactions, page.lines) };
+    },
+    enabled: !!householdId,
+  });
+}
+
+export function useCycleLedgerActivity(householdId: string, cycleId?: string) {
+  return useQuery({
+    queryKey: [...keys.transactions(householdId, cycleId), 'cycleLedger'],
+    queryFn: async () => {
+      const transactions = await ledgerLib.getTransactions(householdId, cycleId);
+      return { transactions, lines: await ledgerLib.getNormalizedTransactionLines(householdId, transactions) };
+    },
+    enabled: !!householdId && !!cycleId,
   });
 }
 
@@ -210,35 +239,58 @@ export function useRestoreDiscardedPendingFinancialMessageMutation() {
  * based on transactions in the last 30 days. For sorting category chips
  * in Fast Entry so frequently-used categories appear first.
  */
-export function useCategoryFrequency(householdId: string, type: 'income' | 'expense'): Record<string, number> {
-  const { data: transactions } = useTransactions(householdId);
-  return useMemo(() => {
-    const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
-    return computeFrequencyScores(transactions, type, today);
-  }, [transactions, type]);
+export function useCategoryFrequency(
+  householdId: string,
+  type: 'income' | 'expense',
+  enabled = true,
+): Record<string, number> {
+  const queryClient = useQueryClient();
+  const now = new Date();
+  const today = now.toISOString().slice(0, 10);
+  now.setUTCDate(now.getUTCDate() - WINDOW_DAYS);
+  const since = now.toISOString().slice(0, 10);
+  const { data: transactions } = useQuery({
+    queryKey: ['categoryFrequency', householdId, since],
+    staleTime: 15 * 60_000,
+    enabled: !!householdId && enabled,
+    queryFn: () => {
+      const cached = queryClient.getQueryState<FinanceTransaction[]>(keys.transactions(householdId));
+      if (cached?.data && !cached.isInvalidated && Date.now() - cached.dataUpdatedAt < 60_000) {
+        return cached.data.filter((transaction) => transaction.date >= since).slice(0, CATEGORY_HISTORY_LIMIT);
+      }
+      return ledgerLib.getRecentCategoryTransactions(householdId, since);
+    },
+  });
+  return useMemo(() => computeFrequencyScores(transactions, type, today), [transactions, type, today]);
 }
 
-export function useLedgerLines(householdId: string, cycleId?: string, options: { enabled?: boolean } = {}) {
-  const queryClient = useQueryClient();
+export function useLoanPaymentHistory(householdId: string, loanIds: string[]) {
+  const ids = [...loanIds].sort();
   return useQuery({
-    queryKey: keys.ledgerLines(householdId, cycleId),
-    queryFn: async () => {
-      // Reuse (and deduplicate in-flight) the same account and transaction
-      // queries used by balance widgets; fee compatibility needs their full
-      // context, but must not download it a second time behind the cache.
-      const [accounts, transactions] = await Promise.all([
-        queryClient.fetchQuery({
-          queryKey: keys.accounts(householdId),
-          queryFn: () => ledgerLib.getAccounts(householdId),
-        }),
-        queryClient.fetchQuery({
-          queryKey: keys.transactions(householdId),
-          queryFn: () => ledgerLib.getTransactions(householdId),
-        }),
-      ]);
-      return ledgerLib.getLedgerLines(householdId, { accounts, transactions });
+    queryKey: [...keys.transactions(householdId), 'loanPayments', ids],
+    enabled: !!householdId && ids.length > 0,
+    queryFn: () => ledgerLib.getLoanPaymentHistory(householdId, ids),
+  });
+}
+
+export function useAccountHistory(householdId: string, accounts: Account[]) {
+  const queryClient = useQueryClient();
+  const ids = accounts.map((account) => account.id).sort();
+  return useQuery({
+    queryKey: [...keys.ledgerLines(householdId), 'accountHistory', ids],
+    enabled: !!householdId && ids.length > 0,
+    queryFn: () => {
+      const transactions = queryClient.getQueryState<FinanceTransaction[]>(keys.transactions(householdId));
+      const ledger = queryClient.getQueryState<LedgerLine[]>(keys.ledgerLines(householdId));
+      if (transactions?.data && ledger?.data && !transactions.isInvalidated && !ledger.isInvalidated
+        && Date.now() - Math.min(transactions.dataUpdatedAt, ledger.dataUpdatedAt) < 60_000) {
+        const idSet = new Set(ids);
+        const lines = ledger.data.filter((line) => idSet.has(line.accountId));
+        const transactionIds = new Set(lines.map((line) => line.transactionId));
+        return { transactions: transactions.data.filter((transaction) => transactionIds.has(transaction.id)), lines };
+      }
+      return ledgerLib.getAccountHistory(householdId, accounts);
     },
-    enabled: !!householdId && options.enabled !== false,
   });
 }
 
@@ -518,6 +570,7 @@ export function useRecordLoanPaymentMutation() {
   const auditUser = useAuditUser();
   const notifyOfflineSuccess = useOfflineSuccessNotifier();
   return useMutation({
+    networkMode: 'always',
     mutationFn: ({
       householdId,
       loanId,
@@ -547,6 +600,7 @@ export function useCreateTransactionMutation() {
   const auditUser = useAuditUser();
   const notifyOfflineSuccess = useOfflineSuccessNotifier();
   return useMutation({
+    networkMode: 'always',
     mutationFn: (data: {
       householdId: string;
       transaction: Omit<FinanceTransaction, 'id' | 'householdId' | 'createdAt' | 'updatedAt' | 'status'>;
@@ -573,6 +627,7 @@ export function useVoidTransactionMutation() {
   const auditUser = useAuditUser();
   const notifyOfflineSuccess = useOfflineSuccessNotifier();
   return useMutation({
+    networkMode: 'always',
     mutationFn: (data: { householdId: string; transactionId: string }) =>
       transactionsLib.voidTransaction(data.householdId, data.transactionId, auditUser),
     onSuccess: (...[, variables]) => {
@@ -588,6 +643,7 @@ export function useUpdateTransactionMutation() {
   const auditUser = useAuditUser();
   const notifyOfflineSuccess = useOfflineSuccessNotifier();
   return useMutation({
+    networkMode: 'always',
     mutationFn: (data: {
       householdId: string;
       transactionId: string;
@@ -614,6 +670,7 @@ export function useCreateAccountMutation() {
   const auditUser = useAuditUser();
   const notifyOfflineSuccess = useOfflineSuccessNotifier();
   return useMutation({
+    networkMode: 'always',
     mutationFn: (data: { householdId: string; account: Omit<Account, 'id' | 'householdId' | 'createdAt'> }) =>
       ledgerLib.createAccount(data.householdId, data.account, auditUser),
     onSuccess: (...[, variables]) => {
@@ -628,11 +685,14 @@ export function useUpdateAccountMutation() {
   const auditUser = useAuditUser();
   const notifyOfflineSuccess = useOfflineSuccessNotifier();
   return useMutation({
+    networkMode: 'always',
     mutationFn: (data: { householdId: string; accountId: string; updated: Account }) =>
       ledgerLib.updateAccount(data.householdId, data.accountId, data.updated, auditUser),
     onSuccess: (...[, variables]) => {
       notifyOfflineSuccess();
       queryClient.invalidateQueries({ queryKey: keys.accounts(variables.householdId) });
+      queryClient.invalidateQueries({ queryKey: keys.transactions(variables.householdId) });
+      queryClient.invalidateQueries({ queryKey: keys.ledgerLines(variables.householdId) });
     },
   });
 }
@@ -657,6 +717,7 @@ export function useCreateCreditCardMutation() {
   const auditUser = useAuditUser();
   const notifyOfflineSuccess = useOfflineSuccessNotifier();
   return useMutation({
+    networkMode: 'always',
     mutationFn: (data: { householdId: string; card: CardInput; accounts: Account[]; sortOrder: number }) =>
       cardsLib.createCreditCard(data.householdId, data.card, data.accounts, data.sortOrder, auditUser),
     onSuccess: (...[, variables]) => {
@@ -702,6 +763,7 @@ export function usePayCardMutation() {
   const auditUser = useAuditUser();
   const notifyOfflineSuccess = useOfflineSuccessNotifier();
   return useMutation({
+    networkMode: 'always',
     mutationFn: (data: {
       householdId: string;
       card: Card;
@@ -782,6 +844,7 @@ export function useDeleteCategoryMutation() {
   const auditUser = useAuditUser();
   const notifyOfflineSuccess = useOfflineSuccessNotifier();
   return useMutation({
+    networkMode: 'always',
     mutationFn: (data: { householdId: string; categoryId: string; replacementCategoryId?: string }) =>
       ledgerLib.deleteCategoryAndReassign(
         data.householdId,

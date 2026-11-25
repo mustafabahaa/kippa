@@ -1,5 +1,5 @@
+import { cycleReportInputs, getLedgerSnapshot } from '@/libs/ledgerSummaries';
 import { z } from 'zod';
-import type { LedgerLine } from '@kippa/domain';
 import { ledgerLib } from '@/libs/ledger';
 import { cyclesLib } from '@/libs/cycles';
 import { currencyLib } from '@/libs/currency';
@@ -13,12 +13,11 @@ export const getCycleReportTool = defineAiTool({
   inputSchema: z.object({ cycleId: id.optional() }).strict(),
   risk: 'read',
   async execute({ cycleId }, context) {
-    const [accounts, categories, cycles, transactions, ledgerLines, allocations, household] = await Promise.all([
+    const [accounts, snapshot, categories, cycles, allocations, household] = await Promise.all([
       ledgerLib.getAccounts(context.householdId),
+      getLedgerSnapshot(context.householdId, 'all'),
       ledgerLib.getCategories(context.householdId),
       cyclesLib.getCycles(context.householdId),
-      ledgerLib.getTransactions(context.householdId),
-      ledgerLib.getLedgerLines(context.householdId) as Promise<LedgerLine[]>,
       cyclesLib.getAllBudgetAllocations(context.householdId),
       ledgerLib.getHouseholdInfo(context.householdId),
     ]);
@@ -30,16 +29,18 @@ export const getCycleReportTool = defineAiTool({
       baseCurrency,
       accounts.map((account) => account.currency),
     );
+    const activity = cycleReportInputs(snapshot, cycle, cycles);
     const full = calculateCycleReport(
       cycle,
       accounts,
       categories,
-      transactions,
-      ledgerLines,
+      activity.transactions,
+      activity.lines,
       allocations,
       baseCurrency,
       rates,
       cycles,
+      activity,
     );
     // Loan payments are fixed commitments tracked outside category budgets by
     // design; keeping them inside the categories list made models read them as

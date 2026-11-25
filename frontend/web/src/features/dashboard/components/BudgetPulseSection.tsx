@@ -1,3 +1,4 @@
+import { EmptyLayout } from '@/features/shared/components/EmptyLayout';
 import { BarChartIcon } from '@/components/AppIcon';
 
 import { Box, Card, CardContent, Skeleton, Stack } from '@monochrome-ui/design-system';
@@ -13,8 +14,7 @@ import {
 } from '@monochrome-ui/design-system';
 import {
   useAccounts,
-  useTransactions,
-  useLedgerLines,
+  useSummaryActivity,
   useCategories,
   useCycles,
   useDisplayRates,
@@ -31,8 +31,6 @@ import { DashboardSectionHeading } from './DashboardSectionHeading';
 export function BudgetPulseSection() {
   const { householdId } = useAppContext();
   const { data: accounts } = useAccounts(householdId);
-  const { data: transactions } = useTransactions(householdId);
-  const { data: ledgerLines } = useLedgerLines(householdId);
   const { data: categories = [] } = useCategories(householdId);
   const { data: cycles = [] } = useCycles(householdId);
   const baseCurrency = useHouseholdBaseCurrency();
@@ -41,6 +39,9 @@ export function BudgetPulseSection() {
 
   const activeCycle = cycles.find((c) => c.status === 'open') || null;
   const activeCycleId = activeCycle?.id;
+  const { data: snapshot, activity, isError: summaryError } = useSummaryActivity(householdId, activeCycleId);
+  const transactions = activity?.transactions;
+  const ledgerLines = activity?.lines;
 
   const { data: allocations = [], isLoading: allocationsLoading } = useBudgetAllocations(householdId, activeCycleId);
   const { data: expectedIncomes = [] } = useExpectedIncomes(householdId, activeCycleId);
@@ -59,6 +60,7 @@ export function BudgetPulseSection() {
     return status === 'warning' ? 'warning' : 'error';
   };
 
+  if (summaryError) return <EmptyLayout title="Could not load budget totals" />;
   if (isLoading) {
     return (
       <Card variant="sectionSurface">
@@ -105,6 +107,7 @@ export function BudgetPulseSection() {
     displayRates,
     baseCurrency,
     loans,
+    snapshot?.balances,
   );
   const remainingPercent =
     data.spending.plannedBudget > 0

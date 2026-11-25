@@ -1,5 +1,4 @@
 import { z } from 'zod';
-import type { LedgerLine } from '@kippa/domain';
 import { ledgerLib } from '@/libs/ledger';
 import { getPostedLedgerLines } from '@/libs/financeCalculations';
 import { defineAiTool } from '../toolRegistry';
@@ -10,22 +9,17 @@ export const getYearlyIncomeAndSpendingTool = defineAiTool({
   inputSchema: z.object({ year: z.number().int().min(2000).max(2100) }).strict(),
   risk: 'read',
   async execute({ year }, context) {
-    const [transactions, ledgerLines] = await Promise.all([
-      ledgerLib.getTransactions(context.householdId),
-      ledgerLib.getLedgerLines(context.householdId) as Promise<LedgerLine[]>,
-    ]);
+    const transactions = await ledgerLib.getTransactionsInDateRange(context.householdId, `${year}-01-01`, `${year}-12-31`);
     const relevant = transactions.filter(
       (transaction) =>
         transaction.status === 'posted' &&
         transaction.date.startsWith(`${year}-`) &&
         (transaction.type === 'income' || transaction.type === 'expense'),
     );
-    const relevantIds = new Set(relevant.map((transaction) => transaction.id));
+    const ledgerLines = await ledgerLib.getNormalizedTransactionLines(context.householdId, relevant);
     const transactionById = new Map(relevant.map((transaction) => [transaction.id, transaction]));
     const totals: Record<string, { income: number; spending: number }> = {};
-    for (const line of getPostedLedgerLines(relevant, ledgerLines).filter((line) =>
-      relevantIds.has(line.transactionId),
-    )) {
+    for (const line of getPostedLedgerLines(relevant, ledgerLines)) {
       const transaction = transactionById.get(line.transactionId);
       if (!transaction) continue;
       const bucket = totals[line.currency] ?? { income: 0, spending: 0 };

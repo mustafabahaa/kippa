@@ -6,7 +6,6 @@ type State = {
   selectedAccountIds: string[] | null;
   selectedCategoryIds: string[] | null;
   selectedCycleId: string;
-  visibleCount: number;
 };
 type Action = { [Key in keyof State]-?: { key: Key; value: SetStateAction<State[Key]> } }[keyof State];
 export const TRANSACTION_PAGE_SIZE = 25;
@@ -25,7 +24,6 @@ export function useTransactionHistoryUi() {
       selectedAccountIds: null,
       selectedCategoryIds: null,
       selectedCycleId: 'active',
-      visibleCount: TRANSACTION_PAGE_SIZE,
     },
   );
   const setter =
@@ -34,8 +32,6 @@ export function useTransactionHistoryUi() {
       dispatch({ key, value } as Action);
   return {
     ...state,
-    loadMore: () => dispatch({ key: 'visibleCount', value: (previous: number) => previous + TRANSACTION_PAGE_SIZE }),
-    resetPage: () => dispatch({ key: 'visibleCount', value: TRANSACTION_PAGE_SIZE }),
     setEditingTx: setter('editingTx'),
     setSearchTerm: setter('searchTerm'),
     setSelectedAccountIds: setter('selectedAccountIds'),

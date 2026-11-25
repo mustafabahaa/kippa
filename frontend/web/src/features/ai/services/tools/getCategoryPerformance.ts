@@ -1,5 +1,4 @@
 import { z } from 'zod';
-import type { LedgerLine } from '@kippa/domain';
 import { ledgerLib } from '@/libs/ledger';
 import { getPostedLedgerLines } from '@/libs/financeCalculations';
 import { defineAiTool } from '../toolRegistry';
@@ -13,10 +12,9 @@ export const getCategoryPerformanceTool = defineAiTool({
     .refine((value) => value.startDate <= value.endDate, { message: 'startDate must be on or before endDate' }),
   risk: 'read',
   async execute({ startDate, endDate, categoryName }, context) {
-    const [categories, transactions, ledgerLines] = await Promise.all([
+    const [categories, transactions] = await Promise.all([
       ledgerLib.getCategories(context.householdId),
-      ledgerLib.getTransactions(context.householdId),
-      ledgerLib.getLedgerLines(context.householdId) as Promise<LedgerLine[]>,
+      ledgerLib.getTransactionsInDateRange(context.householdId, startDate, endDate),
     ]);
     const normalized = categoryName?.toLocaleLowerCase();
     const selected = normalized
@@ -33,6 +31,7 @@ export const getCategoryPerformanceTool = defineAiTool({
         !!transaction.categoryId &&
         selectedIds.has(transaction.categoryId),
     );
+    const ledgerLines = await ledgerLib.getNormalizedTransactionLines(context.householdId, relevant);
     const transactionById = new Map(relevant.map((transaction) => [transaction.id, transaction]));
     const categoriesById = new Map(categories.map((category) => [category.id, category]));
     const totals: Record<string, Record<string, number>> = {};

@@ -19,8 +19,7 @@ import {
 import type { AccountType, Reconciliation as ReconModel } from '@kippa/domain';
 import {
   useAccounts,
-  useTransactions,
-  useLedgerLines,
+  useLedgerSnapshot,
   useCycles,
   useReconciliationHistory,
   useCreateTransactionMutation,
@@ -31,7 +30,6 @@ import { useAppContext } from '@/hooks/useAppContext';
 import { PageHeader } from '@monochrome-ui/design-system';
 import { SectionHeading } from '@/features/shared/components/SectionHeading';
 import { usePrivacyMask } from '@/hooks/usePrivacyMask';
-import { calculateAccountBalances } from '@/libs/financeCalculations';
 import { ReconciliationHistory } from './components/ReconciliationHistory';
 import { AccountBalanceIcon, CheckCircleIcon, PaymentsIcon, SavingsIcon } from '@/components/AppIcon';
 
@@ -61,8 +59,6 @@ export function Reconciliation() {
   const { maskDigits, privacyMode } = usePrivacyMask();
 
   const { data: accounts = [], isLoading: accountsLoading } = useAccounts(householdId);
-  const { data: transactions = [], isLoading: txsLoading } = useTransactions(householdId);
-  const { data: ledgerLines = [], isLoading: linesLoading } = useLedgerLines(householdId);
   const { data: cycles = [] } = useCycles(householdId);
   const {
     data: historyData,
@@ -87,15 +83,16 @@ export function Reconciliation() {
 
   const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null);
   const selectedAccount = accounts.find((account) => account.id === selectedAccountId) || sortedAccounts[0] || null;
+  const { data: snapshot, isLoading: balanceLoading, isError: balanceError } =
+    useLedgerSnapshot(householdId, undefined, !!selectedAccount);
   const [actualBalanceInput, setActualBalanceInput] = useState('');
   const [reason, setReason] = useState<AdjustmentReason>('forgotten expense');
   const [note, setNote] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const activeCycle = cycles.find((cycle) => cycle.status === 'open') || null;
-  const isLoading = accountsLoading || txsLoading || linesLoading || historyLoading;
+  const isLoading = accountsLoading || balanceLoading || historyLoading;
 
-  const balancesMap = calculateAccountBalances(accounts, transactions, ledgerLines);
-  const calculatedBalance = selectedAccount ? balancesMap[selectedAccount.id] || 0 : 0;
+  const calculatedBalance = selectedAccount ? snapshot?.balances[selectedAccount.id] ?? 0 : 0;
   const parsedActualBalance = actualBalanceInput.trim() ? Number(actualBalanceInput) : null;
   const hasActualBalance = parsedActualBalance !== null && Number.isFinite(parsedActualBalance);
   const actualBalance = parsedActualBalance ?? 0;
@@ -109,7 +106,7 @@ export function Reconciliation() {
   };
 
   const handleResolve = async () => {
-    if (!selectedAccount || !hasActualBalance || !userProfile) return;
+    if (!selectedAccount || !snapshot || !hasActualBalance || !userProfile) return;
     setIsProcessing(true);
 
     try {
@@ -249,6 +246,8 @@ export function Reconciliation() {
                       </Typography>
                       <Button onClick={() => navigate('/accounts')}>Go to accounts</Button>
                     </Stack>
+                  ) : balanceError ? (
+                    <Typography color="text.secondary">Could not load the account balance.</Typography>
                   ) : selectedAccount ? (
                     <Stack spacing={{ xs: 2.5, md: 3 }}>
                       <Box sx={{ width: '100%', maxWidth: 420 }}>

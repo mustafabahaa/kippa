@@ -10,13 +10,12 @@ import {
   useAccounts,
   useActiveCycle,
   useCreateLoanMutation,
-  useLedgerLines,
+  useLedgerSnapshot,
+  useLoanPaymentHistory,
   useLoans,
   useRecordLoanPaymentMutation,
-  useTransactions,
   useUpdateLoanMutation,
 } from '@/hooks/useFinance';
-import { calculateAccountBalance } from '@/libs/financeCalculations';
 import { getLoanProgress } from '@/libs/loanCalculations';
 import type { LoanInput } from '@/libs/loans';
 import { LoanDialog } from './LoanDialog';
@@ -30,21 +29,21 @@ export function Loans() {
   const [paying, setPaying] = useState<Loan | null>(null);
   const { data: loans = [], isLoading: loansLoading } = useLoans(householdId);
   const { data: accounts = [], isLoading: accountsLoading } = useAccounts(householdId);
-  const { data: transactions = [], isLoading: txLoading } = useTransactions(householdId);
-  const { data: lines = [], isLoading: linesLoading } = useLedgerLines(householdId);
+  const paymentHistory = useLoanPaymentHistory(householdId, loans.map((loan) => loan.id));
+  const snapshot = useLedgerSnapshot(householdId, undefined, loans.length > 0);
   const { data: activeCycle } = useActiveCycle(householdId);
   const createLoan = useCreateLoanMutation();
   const updateLoan = useUpdateLoanMutation();
   const recordPayment = useRecordLoanPaymentMutation();
-  const loading = loansLoading || accountsLoading || txLoading || linesLoading;
+  const loading = loansLoading || accountsLoading || paymentHistory.isLoading || snapshot.isLoading;
   const loanItems = useMemo(
     () =>
       loans.map((loan) => ({
         loan,
-        progress: getLoanProgress(loan, transactions, lines),
+        progress: getLoanProgress(loan, paymentHistory.data?.transactions ?? [], paymentHistory.data?.lines ?? []),
         account: accounts.find((a) => a.id === loan.paymentAccountId),
       })),
-    [loans, transactions, lines, accounts],
+    [loans, paymentHistory.data, accounts],
   );
   const save = async (input: LoanInput) => {
     if (editing) await updateLoan.mutateAsync({ householdId, loanId: editing.id, loan: input });
@@ -102,6 +101,8 @@ export function Loans() {
                     </Stack>
                   ))}
                 </Stack>
+              ) : paymentHistory.isError || snapshot.isError ? (
+                <EmptyLayout title="Could not load loan activity" />
               ) : loanItems.length === 0 ? (
                 <EmptyLayout
                   title="No loans yet"
@@ -110,7 +111,7 @@ export function Loans() {
               ) : (
                 <Stack spacing={{ xs: 3, md: 4 }} divider={<Divider />}>
                   {loanItems.map(({ loan, progress, account }) => {
-                    const balance = account ? calculateAccountBalance(account.id, transactions, lines) : 0;
+                    const balance = account ? snapshot.data?.balances[account.id] ?? 0 : 0;
                     const shortfall = Math.max(0, loan.installmentAmount - balance);
                     const isPaid = loan.status === 'paid' || progress.remainingAmount <= 0;
                     const shortDate = (date: string | null) =>

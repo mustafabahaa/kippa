@@ -3,16 +3,12 @@ import { AccountBalanceIcon } from '@/components/AppIcon';
 import { Box, Card, CardContent, Chip, Paper, Skeleton, Stack, Typography } from '@monochrome-ui/design-system';
 import {
   useAccounts,
-  useTransactions,
-  useLedgerLines,
-  useCategories,
-  useCycles,
+  useLedgerSnapshot,
   useDisplayRates,
   useHouseholdBaseCurrency,
-  useBudgetAllocations,
-  useExpectedIncomes,
 } from '@/hooks/useFinance';
-import { computeDashboard } from '@/libs/selectors';
+import { convertToBaseCurrency } from '@/libs/financeCalculations';
+import { EmptyLayout } from '@/features/shared/components/EmptyLayout';
 import { Money } from '@/components/Money';
 import { useAppContext } from '@/hooks/useAppContext';
 import { InfoTooltip } from '@/features/shared/components/InfoTooltip';
@@ -23,23 +19,13 @@ import { DashboardSectionHeading } from './DashboardSectionHeading';
 export function TotalBalanceHeroSection() {
   const { householdId } = useAppContext();
   const { data: accounts, isLoading: accountsLoading } = useAccounts(householdId);
-  const { data: transactions, isLoading: txsLoading } = useTransactions(householdId);
-  const { data: ledgerLines, isLoading: linesLoading } = useLedgerLines(householdId);
-  const { data: categories = [] } = useCategories(householdId);
-  const { data: cycles = [] } = useCycles(householdId);
+  const snapshot = useLedgerSnapshot(householdId);
   const baseCurrency = useHouseholdBaseCurrency();
   const foreignCodes = Array.from(new Set((accounts ?? []).map((a) => a.currency).filter((c) => c !== baseCurrency)));
   const { data: displayRates = {} } = useDisplayRates(baseCurrency, foreignCodes);
 
-  const activeCycle = cycles.find((c) => c.status === 'open') || null;
-  const activeCycleId = activeCycle?.id;
-
-  const { data: allocations = [] } = useBudgetAllocations(householdId, activeCycleId);
-  const { data: expectedIncomes = [] } = useExpectedIncomes(householdId, activeCycleId);
-
-  const isLoading = accountsLoading || txsLoading || linesLoading;
-
-  if (isLoading || !accounts || !transactions || !ledgerLines) {
+  if (snapshot.isError) return <EmptyLayout title="Could not load balances" />;
+  if (accountsLoading || !accounts || !snapshot.data) {
     return (
       <Card variant="sectionSurface">
         <CardContent>
@@ -56,19 +42,10 @@ export function TotalBalanceHeroSection() {
     );
   }
 
-  const data = computeDashboard(
-    accounts,
-    transactions,
-    ledgerLines,
-    categories,
-    activeCycle,
-    allocations,
-    expectedIncomes,
-    displayRates,
-    baseCurrency,
-  );
-  const balanceFor = (accountId: string) =>
-    data.accountBalances.find((item) => item.accountId === accountId)?.balance ?? 0;
+  const { balances } = snapshot.data;
+  const balanceFor = (accountId: string) => balances[accountId] ?? 0;
+  const total = accounts.reduce((sum, account) =>
+    sum + convertToBaseCurrency(balanceFor(account.id), account.currency, baseCurrency, displayRates), 0);
 
   return (
     <Card variant="sectionSurface">
@@ -87,7 +64,7 @@ export function TotalBalanceHeroSection() {
               </Box>
             </Typography>
             <Typography variant="amountValue" color="text.primary" sx={{ mt: 0.5 }}>
-              <Money amount={data.totalBaseEquivalent} code={baseCurrency} maxDigits={2} />
+              <Money amount={total} code={baseCurrency} maxDigits={2} />
             </Typography>
           </Box>
 

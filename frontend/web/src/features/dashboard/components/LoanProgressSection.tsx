@@ -1,11 +1,11 @@
+import { EmptyLayout } from '@/features/shared/components/EmptyLayout';
 import { CalendarMonthIcon, PaymentsIcon } from '@/components/AppIcon';
 
 import { Box, Button, Card, CardContent, Chip, Divider, LinearProgress, Skeleton, Stack, Typography } from '@monochrome-ui/design-system';
 import { useNavigate } from 'react-router-dom';
 import { Money } from '@/components/Money';
 import { useAppContext } from '@/hooks/useAppContext';
-import { useAccounts, useLedgerLines, useTransactions } from '@/hooks/useFinance';
-import { calculateAccountBalance } from '@/libs/financeCalculations';
+import { useAccounts, useLedgerSnapshot, useLoanPaymentHistory } from '@/hooks/useFinance';
 import { getLoanProgress } from '@/libs/loanCalculations';
 import type { Loan } from '@kippa/domain';
 import { DashboardSectionHeading } from './DashboardSectionHeading';
@@ -14,10 +14,11 @@ export function LoanProgressSection({ loans, loansLoading }: { loans: Loan[]; lo
   const navigate = useNavigate();
   const { householdId } = useAppContext();
   const { data: accounts = [], isLoading: accountsLoading } = useAccounts(householdId);
-  const { data: transactions = [], isLoading: transactionsLoading } = useTransactions(householdId);
-  const { data: lines = [], isLoading: linesLoading } = useLedgerLines(householdId);
+  const payments = useLoanPaymentHistory(householdId, loans.map((loan) => loan.id));
+  const snapshot = useLedgerSnapshot(householdId);
 
-  if (loansLoading || accountsLoading || transactionsLoading || linesLoading) {
+  if (payments.isError || snapshot.isError) return <EmptyLayout title="Could not load loan progress" />;
+  if (loansLoading || accountsLoading || payments.isLoading || !snapshot.data) {
     return (
       <Card variant="sectionSurface">
         <CardContent>
@@ -61,7 +62,7 @@ export function LoanProgressSection({ loans, loansLoading }: { loans: Loan[]; lo
   }
 
   const candidates = loans
-    .map((loan) => ({ loan, progress: getLoanProgress(loan, transactions, lines) }))
+    .map((loan) => ({ loan, progress: getLoanProgress(loan, payments.data?.transactions ?? [], payments.data?.lines ?? []) }))
     .sort((a, b) => (a.progress.nextDueDate ?? '').localeCompare(b.progress.nextDueDate ?? ''));
   const selected = candidates[0];
 
@@ -69,7 +70,7 @@ export function LoanProgressSection({ loans, loansLoading }: { loans: Loan[]; lo
 
   const { loan, progress } = selected;
   const account = accounts.find((item) => item.id === loan.paymentAccountId);
-  const accountBalance = account ? calculateAccountBalance(account.id, transactions, lines) : 0;
+  const accountBalance = account ? snapshot.data.balances[account.id] ?? 0 : 0;
   const shortfall = Math.max(0, loan.installmentAmount - accountBalance);
   const shortDate = (date: string | null) =>
     date

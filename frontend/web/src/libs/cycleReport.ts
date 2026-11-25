@@ -64,6 +64,7 @@ export function calculateCycleReport(
   baseCurrency: CurrencyCode,
   displayRates: DisplayRates,
   allCycles: BudgetCycle[] = [],
+  openingAndCounts?: { opening: Map<string, number>; transactionCounts: Record<string, number> },
 ): CycleReport {
   const posted = new Map(
     transactions
@@ -90,7 +91,7 @@ export function calculateCycleReport(
       .map((transaction) => transaction.id),
   );
 
-  const openingByAccount = new Map<string, number>();
+  const openingByAccount = openingAndCounts?.opening ?? new Map<string, number>();
   const activityByAccount = new Map<string, { moneyIn: number; moneyOut: number; net: number; ids: Set<string> }>();
   const categorySpent = new Map<string | null, number>();
   let totalIncome = 0;
@@ -100,7 +101,7 @@ export function calculateCycleReport(
     const transaction = posted.get(line.transactionId);
     if (!transaction) continue;
 
-    if (openingIds.has(transaction.id)) {
+    if (!openingAndCounts && openingIds.has(transaction.id)) {
       openingByAccount.set(line.accountId, (openingByAccount.get(line.accountId) ?? 0) + line.signedAmount);
     }
     if (!cycleIds.has(transaction.id)) continue;
@@ -143,7 +144,7 @@ export function calculateCycleReport(
         moneyIn,
         moneyOut,
         closingBalance: openingBalance + moneyIn - moneyOut,
-        transactionCount: activity?.ids.size ?? 0,
+        transactionCount: openingAndCounts ? (openingAndCounts.transactionCounts[account.id] ?? 0) : (activity?.ids.size ?? 0),
       };
     });
 

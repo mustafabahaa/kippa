@@ -68,7 +68,7 @@ export function FastEntry() {
   const { data: cycles = [] } = useCycles(householdId);
   const createTxMutation = useCreateTransactionMutation();
 
-  const frequencyScores = useCategoryFrequency(householdId, mode === 'income' ? 'income' : 'expense');
+  const frequencyScores = useCategoryFrequency(householdId, mode === 'income' ? 'income' : 'expense', mode !== 'transfer');
 
   const activeCycle = cycles.find((c) => c.status === 'open') || null;
   // YYYY-MM-DD string submitted to the backend

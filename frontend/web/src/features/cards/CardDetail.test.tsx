@@ -17,8 +17,8 @@ vi.mock('@/hooks/usePrivacyMask', () => ({
   usePrivacyMask: () => ({ maskText: (value: string) => value, maskDigits: (value: string) => value }),
 }));
 vi.mock('@/hooks/useFinance', () => ({
-  useTransactions: () => ({ data: [] }),
-  useLedgerLines: () => ({ data: [] }),
+  useAccounts: () => ({ data: [] }),
+  useAccountHistory: () => ({ data: { transactions: [], lines: [] } }),
   useCategories: () => ({ data: [] }),
   useCycles: () => ({ data: [{ id: 'cycle', status: 'open', name: 'Current', startDate: '2026-01-01' }] }),
   usePayCardMutation: () => ({ isPending: false, mutateAsync: mocks.mutateAsync }),

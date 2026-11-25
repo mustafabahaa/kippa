@@ -26,7 +26,7 @@ import type { TransactionType } from '@kippa/domain';
 import { Money } from '@/components/Money';
 import { useAppContext } from '@/hooks/useAppContext';
 import { usePrivacyMask } from '@/hooks/usePrivacyMask';
-import { useAccounts, useCategories, useLedgerLines, useTransactions } from '@/hooks/useFinance';
+import { useAccounts, useAccountHistory, useCategories } from '@/hooks/useFinance';
 import { calculateAccountBalance } from '@/libs/financeCalculations';
 import { buildAccountStatement } from '@/libs/accountStatement';
 import { PageHeader } from '@monochrome-ui/design-system';
@@ -69,8 +69,6 @@ export function AccountStatements() {
 
   const { data: accounts = [], isLoading: accountsLoading } = useAccounts(householdId);
   const { data: categories = [], isLoading: categoriesLoading } = useCategories(householdId);
-  const { data: transactions = [], isLoading: transactionsLoading } = useTransactions(householdId);
-  const { data: ledgerLines = [], isLoading: linesLoading } = useLedgerLines(householdId);
 
   const statementAccounts = useMemo(
     () => accounts.filter((account) => account.type !== 'credit' && account.isActive),
@@ -79,6 +77,10 @@ export function AccountStatements() {
   const requestedAccountId = searchParams.get('account');
   const selectedAccount =
     statementAccounts.find((account) => account.id === requestedAccountId) ?? statementAccounts[0] ?? null;
+
+  const { data: accountHistory, isLoading: historyLoading, isError: historyError } =
+    useAccountHistory(householdId, selectedAccount ? [selectedAccount] : []);
+
 
   useEffect(() => {
     if (!selectedAccount || requestedAccountId === selectedAccount.id) return;
@@ -94,14 +96,14 @@ export function AccountStatements() {
 
   const resetPage = () => setPage(0);
   const entries = useMemo(
-    () => (selectedAccount ? buildAccountStatement(selectedAccount.id, transactions, ledgerLines, { search }) : []),
-    [ledgerLines, search, selectedAccount, transactions],
+    () => (selectedAccount && accountHistory ? buildAccountStatement(selectedAccount.id, accountHistory.transactions, accountHistory.lines, { search }) : []),
+    [accountHistory, search, selectedAccount],
   );
 
   const visibleEntries = entries.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
-  const currentBalance = selectedAccount ? calculateAccountBalance(selectedAccount.id, transactions, ledgerLines) : 0;
+  const currentBalance = selectedAccount && accountHistory ? calculateAccountBalance(selectedAccount.id, accountHistory.transactions, accountHistory.lines) : 0;
   const categoryName = (id?: string | null) => categories.find((category) => category.id === id)?.name;
-  const isLoading = accountsLoading || categoriesLoading || transactionsLoading || linesLoading;
+  const isLoading = accountsLoading || categoriesLoading || historyLoading;
   const accountSelector = statementAccounts.length > 1 && selectedAccount && (
     <Box sx={{ width: { xs: '100%', sm: 300 } }}>
       <FormControl fullWidth>
@@ -219,7 +221,7 @@ export function AccountStatements() {
 
       <Box component="section" >
         <Stack spacing={{ xs: 2, md: 3 }}>
-          {selectedAccount && (
+          {selectedAccount && !historyError && (
             <SectionHeading
               icon={<AccountBalanceIcon variant="Linear" />}
               title={selectedAccount.name}
@@ -239,7 +241,9 @@ export function AccountStatements() {
 
           <Box >
             <Box sx={{ width: '100%', maxWidth: 1100, mx: 'auto', minWidth: 0 }}>
-              {selectedAccount ? (
+              {historyError ? (
+                <Typography color="text.secondary">Could not load account activity.</Typography>
+              ) : selectedAccount ? (
                 <Stack spacing={2}>
                   <Stack
                     direction={{ xs: 'column', sm: 'row' }}

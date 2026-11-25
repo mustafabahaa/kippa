@@ -21,6 +21,7 @@ import {
 } from '../../domain/message-ingestion/parser.js';
 import { buildMessagePayload } from '../../domain/notifications/payload.js';
 import { getTokensForUsers, sendToMany } from '../../libs/notifications/sendToMany.js';
+import { writeLedger, type LedgerOperation } from '../ledger/writeLedger.js';
 import { calculateCreditCardLedgerAmount } from '../../domain/transactions/creditCardFee.js';
 import { getCredentialDeletionStatus } from '../../domain/message-ingestion/deleteCredential.js';
 import { requireAllowedUid } from '../../libs/allowedUsers.js';
@@ -717,7 +718,8 @@ export const approvePendingFinancialMessage = onCall(async (request) => {
       transactionType: pending.kind,
       isLoanPayment,
     });
-    transaction.create(transactionRef, {
+    const operations: LedgerOperation[] = [
+      { type: 'set', collectionName: 'transactions', docId: transactionId, data: {
       id: transactionId,
       householdId,
       type: pending.kind,
@@ -732,8 +734,8 @@ export const approvePendingFinancialMessage = onCall(async (request) => {
       loanId: isLoanPayment ? suggestedLoanId : null,
       loanInstallmentNumber: isLoanPayment ? suggestedInstallment : null,
       importedFrom: { kind: 'financial-message', pendingId, provider: pending.provider, source: pending.source },
-    });
-    transaction.create(db.doc(`households/${householdId}/ledgerLines/${transactionId}_source`), {
+      } },
+      { type: 'set', collectionName: 'ledgerLines', docId: `${transactionId}_source`, data: {
       id: `${transactionId}_source`,
       householdId,
       transactionId,
@@ -742,9 +744,10 @@ export const approvePendingFinancialMessage = onCall(async (request) => {
       ...(sourceLedgerAmount.cardFee ? { cardFee: sourceLedgerAmount.cardFee } : {}),
       currency: pending.currency,
       createdAt: now,
-    });
+      } },
+    ];
     if (pending.kind === 'transfer' && destinationAccount) {
-      transaction.create(db.doc(`households/${householdId}/ledgerLines/${transactionId}_destination`), {
+      operations.push({ type: 'set', collectionName: 'ledgerLines', docId: `${transactionId}_destination`, data: {
         id: `${transactionId}_destination`,
         householdId,
         transactionId,
@@ -752,9 +755,9 @@ export const approvePendingFinancialMessage = onCall(async (request) => {
         signedAmount: destAmount,
         currency: destCurrency,
         createdAt: now,
-      });
+      } });
       if (isCrossCurrency && pending.destinationAmount) {
-        transaction.create(db.doc(`households/${householdId}/conversionDetails/${transactionId}`), {
+        operations.push({ type: 'set', collectionName: 'conversionDetails', docId: transactionId, data: {
           transactionId,
           fromCurrency: pending.currency,
           toCurrency: destCurrency,
@@ -762,9 +765,10 @@ export const approvePendingFinancialMessage = onCall(async (request) => {
           toAmount: pending.destinationAmount,
           effectiveRate: pending.destinationAmount / amount,
           rateSource: 'bank',
-        });
+        } });
       }
     }
+    await writeLedger(db, transaction, householdId, operations);
     if (isLoanPayment && paymentLockRef && loan) {
       transaction.create(paymentLockRef, {
         loanId: suggestedLoanId,

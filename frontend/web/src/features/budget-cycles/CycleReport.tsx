@@ -1,3 +1,4 @@
+import { cycleReportInputs } from '@/libs/ledgerSummaries';
 import { ExpandLessIcon } from '@/components/AppIcon';
 
 import { Fragment, useEffect, useMemo, useState } from 'react';
@@ -32,10 +33,10 @@ import {
   useAllBudgetAllocations,
   useCategories,
   useCycles,
+  useLedgerSnapshot,
+  useCycleLedgerActivity,
   useDisplayRates,
   useHouseholdBaseCurrency,
-  useLedgerLines,
-  useTransactions,
 } from '@/hooks/useFinance';
 import type { FinanceTransaction } from '@kippa/domain';
 import { convertToBaseCurrency, getPostedTransactions } from '@/libs/financeCalculations';
@@ -70,8 +71,7 @@ export function CycleReport() {
   const { data: cycles = [], isLoading: cyclesLoading } = useCycles(householdId);
   const { data: accounts = [], isLoading: accountsLoading } = useAccounts(householdId);
   const { data: categories = [], isLoading: categoriesLoading } = useCategories(householdId);
-  const { data: transactions = [], isLoading: transactionsLoading } = useTransactions(householdId);
-  const { data: ledgerLines = [], isLoading: linesLoading } = useLedgerLines(householdId);
+  const snapshot = useLedgerSnapshot(householdId, 'all');
   const { data: allocations = [], isLoading: allocationsLoading } = useAllBudgetAllocations(householdId);
   const foreignCurrencies = Array.from(
     new Set(accounts.map((account) => account.currency).filter((currency) => currency !== baseCurrency)),
@@ -86,31 +86,26 @@ export function CycleReport() {
   const requestedCycleId = searchParams.get('cycle');
   const selectedCycle = reportCycles.find((cycle) => cycle.id === requestedCycleId) ?? reportCycles[0] ?? null;
 
+  const cycleActivity = useCycleLedgerActivity(householdId, selectedCycle?.id);
+  const transactions = cycleActivity.data?.transactions;
+  const ledgerLines = cycleActivity.data?.lines;
+
   useEffect(() => {
     if (!selectedCycle || requestedCycleId === selectedCycle.id) return;
     setSearchParams({ cycle: selectedCycle.id }, { replace: true });
   }, [requestedCycleId, selectedCycle, setSearchParams]);
 
-  const report = useMemo(
-    () =>
-      selectedCycle
-        ? calculateCycleReport(
-            selectedCycle,
-            accounts,
-            categories,
-            transactions,
-            ledgerLines,
-            allocations,
-            baseCurrency,
-            displayRates,
-            cycles,
-          )
-        : null,
-    [accounts, allocations, baseCurrency, categories, cycles, displayRates, ledgerLines, selectedCycle, transactions],
-  );
+  const report = useMemo(() => {
+    if (!selectedCycle || !snapshot.data) return null;
+    const activity = cycleReportInputs(snapshot.data, selectedCycle, cycles);
+    return calculateCycleReport(
+      selectedCycle, accounts, categories, activity.transactions, activity.lines,
+      allocations, baseCurrency, displayRates, cycles, activity,
+    );
+  }, [accounts, allocations, baseCurrency, categories, cycles, displayRates, selectedCycle, snapshot.data]);
 
   const allCycleTransactions = useMemo(() => {
-    if (!selectedCycle) return [];
+    if (!selectedCycle || !transactions) return [];
     return getPostedTransactions(transactions)
       .filter((transaction) => transaction.budgetCycleId === selectedCycle.id)
       .sort((a, b) => b.date.localeCompare(a.date) || b.createdAt.localeCompare(a.createdAt));
@@ -120,7 +115,7 @@ export function CycleReport() {
     return allCycleTransactions.filter(
       (transaction) =>
         accountFilter === 'all' ||
-        ledgerLines.some((line) => line.transactionId === transaction.id && line.accountId === accountFilter),
+        (ledgerLines ?? []).some((line) => line.transactionId === transaction.id && line.accountId === accountFilter),
     );
   }, [accountFilter, allCycleTransactions, ledgerLines]);
 
@@ -131,8 +126,8 @@ export function CycleReport() {
     cyclesLoading ||
     accountsLoading ||
     categoriesLoading ||
-    transactionsLoading ||
-    linesLoading ||
+    snapshot.isLoading ||
+    cycleActivity.isLoading ||
     allocationsLoading ||
     ratesLoading;
 
@@ -163,7 +158,7 @@ export function CycleReport() {
     });
 
   const categoryTransactionAmount = (transaction: FinanceTransaction) =>
-    ledgerLines
+    (ledgerLines ?? [])
       .filter((line) => line.transactionId === transaction.id && line.signedAmount < 0)
       .reduce(
         (total, line) => total + convertToBaseCurrency(-line.signedAmount, line.currency, baseCurrency, displayRates),
@@ -176,7 +171,7 @@ export function CycleReport() {
       <Collapse in={expandedCategories.has(key)} timeout="auto" unmountOnExit>
         <Stack divider={<Divider flexItem />} sx={{ py: 1 }}>
           {categoryTransactions.map((transaction) => {
-            const lines = ledgerLines.filter((line) => line.transactionId === transaction.id);
+            const lines = (ledgerLines ?? []).filter((line) => line.transactionId === transaction.id);
             const accountNames = Array.from(
               new Set(lines.map((line) => accountById.get(line.accountId)?.name).filter(Boolean)),
             ).join(' → ');
@@ -211,7 +206,7 @@ export function CycleReport() {
   };
 
   const transactionDisplay = (transaction: FinanceTransaction) => {
-    const lines = ledgerLines.filter((line) => line.transactionId === transaction.id);
+    const lines = (ledgerLines ?? []).filter((line) => line.transactionId === transaction.id);
     const names = Array.from(new Set(lines.map((line) => accountById.get(line.accountId)?.name).filter(Boolean))).join(
       ' → ',
     );
@@ -232,6 +227,7 @@ export function CycleReport() {
     return { amount, currency, names, title };
   };
 
+  if (snapshot.isError || cycleActivity.isError) return <EmptyLayout title="Could not load the cycle report" />;
   if (isLoading) {
     return (
       <Stack spacing={{ xs: 2, md: 3 }} sx={{ width: '100%' }}>

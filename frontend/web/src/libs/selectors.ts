@@ -68,13 +68,14 @@ export function computeDashboard(
   displayRates: Record<string, number>,
   baseCurrency: CurrencyCode,
   loans: Loan[] = [],
+  storedBalances?: Record<string, number>,
 ): DashboardData {
   // 1. Filter out voided transactions
   const activeTxs = getPostedTransactions(transactions);
   const activeLines = getPostedLedgerLines(transactions, ledgerLines);
 
   // 2. Account balances
-  const balancesMap = calculateAccountBalances(accounts, transactions, ledgerLines);
+  const balancesMap = storedBalances ?? calculateAccountBalances(accounts, transactions, ledgerLines);
 
   const accountBalances = accounts.map((acc) => ({
     accountId: acc.id,

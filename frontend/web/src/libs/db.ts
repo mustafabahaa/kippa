@@ -8,13 +8,15 @@ import {
   query,
   startAfter,
   limit,
+  type DocumentData,
   type QueryConstraint,
   type QueryDocumentSnapshot,
   where,
   onSnapshot,
   Firestore,
 } from 'firebase/firestore';
-import { db, isFirebaseConfigured } from '@/config/firebase';
+import { httpsCallable } from 'firebase/functions';
+import { auth, db, functions, isFirebaseConfigured } from '@/config/firebase';
 
 const FIREBASE_REQUIRED_MSG =
   'Firebase is not configured. Copy .env.example to .env and set VITE_FIREBASE_* credentials.';
@@ -26,7 +28,45 @@ function requireFirestore(): Firestore {
   return db;
 }
 
+const ledgerCollections = new Set(['transactions', 'ledgerLines', 'accounts', 'conversionDetails']);
+
+type WriteOperation = { type: 'set' | 'delete'; collectionName: string; docId: string; data?: any };
+
+async function queueLedgerWrite(householdId: string, operations: WriteOperation[]) {
+  const uid = auth?.currentUser?.uid;
+  if (!uid) throw new Error('Sign in to save changes.');
+  const ref = doc(requireFirestore(), `households/${householdId}/ledgerWriteRequests/${crypto.randomUUID()}`);
+  await firestoreSetDoc(ref, { createdBy: uid, status: 'pending', operations });
+  await new Promise<void>((resolve, reject) => {
+    const unsubscribe = onSnapshot(ref, (snapshot) => {
+      const result = snapshot.data();
+      if (result?.status === 'committed') {
+        unsubscribe();
+        resolve();
+      }
+      if (result?.status === 'rejected') {
+        unsubscribe();
+        reject(new Error(result.error));
+      }
+    }, (error) => {
+      unsubscribe();
+      reject(error);
+    });
+  });
+}
+
+async function commitLedger(householdId: string, operations: WriteOperation[]) {
+  if (!functions) throw new Error(FIREBASE_REQUIRED_MSG);
+  if (typeof navigator !== 'undefined' && !navigator.onLine) return queueLedgerWrite(householdId, operations);
+  await httpsCallable(functions, 'commitLedgerOperations')({ householdId, operations });
+}
+
 export const dbLib = {
+  async initializeLedgerSummary(householdId: string) {
+    if (!functions) throw new Error(FIREBASE_REQUIRED_MSG);
+    await httpsCallable(functions, 'initializeLedgerSummary', { timeout: 300_000 })({ householdId });
+  },
+
   async getDoc(householdId: string, collectionName: string, docId: string): Promise<any | null> {
     const firestore = requireFirestore();
     const path =
@@ -39,7 +79,7 @@ export const dbLib = {
   async getDocs(
     householdId: string,
     collectionName: string,
-    filters?: { field: string; op: '==' | 'in' | 'array-contains'; value: any }[],
+    filters?: { field: string; op: '==' | 'in' | 'array-contains' | '>=' | '<='; value: any }[],
   ): Promise<any[]> {
     const firestore = requireFirestore();
     const path = householdId === 'system' ? collectionName : `households/${householdId}/${collectionName}`;
@@ -100,6 +140,7 @@ export const dbLib = {
   },
 
   async setDoc(householdId: string, collectionName: string, docId: string, data: any): Promise<void> {
+    if (ledgerCollections.has(collectionName)) return commitLedger(householdId, [{ type: 'set', collectionName, docId, data }]);
     const firestore = requireFirestore();
     const path =
       householdId === 'system' ? `${collectionName}/${docId}` : `households/${householdId}/${collectionName}/${docId}`;
@@ -109,8 +150,10 @@ export const dbLib = {
 
   async executeBatch(
     householdId: string,
-    operations: { type: 'set' | 'delete'; collectionName: string; docId: string; data?: any }[],
+    operations: WriteOperation[],
   ): Promise<void> {
+    if (operations.some((operation) => ledgerCollections.has(operation.collectionName)))
+      return commitLedger(householdId, operations);
     const firestore = requireFirestore();
     const batch = firestoreWriteBatch(firestore);
     for (const op of operations) {
@@ -120,7 +163,7 @@ export const dbLib = {
           : `households/${householdId}/${op.collectionName}/${op.docId}`;
       const docRef = doc(firestore, path);
       if (op.type === 'set') {
-        batch.set(docRef, op.data);
+        batch.set(docRef, op.data as DocumentData);
       } else if (op.type === 'delete') {
         batch.delete(docRef);
       }

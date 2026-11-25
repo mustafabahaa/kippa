@@ -67,7 +67,31 @@ describe('checkCategoryWarning Firestore reads', () => {
     const ledgerReads = mocks.reads.filter((read) => read.path.endsWith('/ledgerLines'));
     expect(ledgerReads).toHaveLength(1);
     expect(ledgerReads[0].filters).toContainEqual(['transactionId', 'in', ['old-a', 'old-b', 'old-c', 'recent-a', 'recent-b']]);
-    expect(mocks.reads.find((read) => read.path.endsWith('/transactions'))?.filters).toEqual([['categoryId', '==', categoryId], ['status', '==', 'posted']]);
+    expect(mocks.reads.find((read) => read.path.endsWith('/transactions'))?.filters).toEqual([['categoryId', '==', categoryId], ['status', '==', 'posted'], ['budgetCycleId', '==', cycleId]]);
+    expect(mocks.warning).toHaveBeenCalledWith(expect.objectContaining({
+      spent: 55,
+      threshold: 100,
+      velocityContext: { earlierAvg: 5, recentAvg: 20 },
+    }));
+  });
+
+  it('uses stored category days without querying transactions or ledger lines after the backfill', async () => {
+    const collection = `households/${householdId}`;
+    mocks.rows.set(`${collection}/budgetCycles`, [{ id: cycleId, status: 'open' }]);
+    mocks.rows.set(`${collection}/budgetAllocations`, [{ id: 'alloc', budgetCycleId: cycleId, categoryId, plannedAmount: 40, currency: 'USD' }]);
+    mocks.rows.set(`${collection}/ledgerSummaries/cycle-${cycleId}`, [{
+      categoryDays: { [`category-${categoryId}`]: {
+        [ago(12)]: { amount: 5, count: 1 },
+        [ago(11)]: { amount: 5, count: 1 },
+        [ago(10)]: { amount: 5, count: 1 },
+        [ago(3)]: { amount: 20, count: 3 },
+        [ago(2)]: { amount: 20, count: 1 },
+      } },
+    }]);
+
+    await checkCategoryWarning(mockDb() as never, householdId, { categoryId } as never);
+
+    expect(mocks.reads.some(({ path }) => path.endsWith('/transactions') || path.endsWith('/ledgerLines'))).toBe(false);
     expect(mocks.warning).toHaveBeenCalledWith(expect.objectContaining({
       spent: 55,
       threshold: 100,
